@@ -1,5 +1,5 @@
 # vue-component
-A high quality  Vue UI Toolkit for Web 
+这是一套基于 Vue.js 的高质量 开源UI组件库。
 
-
+ 
 ---Links-----

@@ -19,3 +19,12 @@
 ### Demo
 
 [demo](https://spring21cn.github.io/vue-component/index.html)
+
+
+### Donation
+you can buy us a cup of coffee 
+如果觉得不错，可以请我们喝杯咖啡
+
+https://spring21cn.github.io/vue-component/images/alipay.png
+
+![](https://spring21cn.github.io/vue-component/images/alipay.png =100x100)

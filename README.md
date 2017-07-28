@@ -18,4 +18,4 @@
 
 ### Demo
 
-[demo]{ https://spring21cn.github.io/vue-component/index.html}
+[demo](https://spring21cn.github.io/vue-component/index.html)

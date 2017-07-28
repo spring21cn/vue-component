@@ -25,4 +25,4 @@
 you can buy us a cup of coffee 
 如果觉得不错，可以请我们喝杯咖啡
  
-<img src="./image/alipay.jpg " /> 
+<img src="./image/alipay.jpg " width="200"/> 

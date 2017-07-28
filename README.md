@@ -3,7 +3,7 @@
 
  
  
-#安装
+###安装
 在页面上引入 js 和 css 文件即可开始使用。
 
 ~~~
@@ -14,12 +14,15 @@
 <!-- import component -->
 <script src="./js/vue-component-all.min.js"></script>
 ~~~
+
 ---Links-----
 
 ### Demo
 
 [demo](https://spring21cn.github.io/vue-component/index.html)
 
+### License
+MIT
 
 ### Donation
 you can buy us a cup of coffee 

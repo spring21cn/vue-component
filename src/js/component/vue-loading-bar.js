@@ -119,7 +119,7 @@
 			setTimeout(function() {
 				update({percent: 0});
 			}, 200);
-		}, 800);
+		}, 500);
 	}
 	var clearTimer = function() {
 		if (timer) {
@@ -175,6 +175,5 @@
 			instance.destroy();
 		}
 	}
-	Vue.Loading = VueLoadingBar;
-	Vue.prototype.$Loading = VueLoadingBar;
+	Vue.loadingBar = VueLoadingBar;
 });

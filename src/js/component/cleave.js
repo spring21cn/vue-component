@@ -307,10 +307,10 @@
 			target.onCreditCardTypeChanged = opts.onCreditCardTypeChanged || (function() {}
 			);
 			target.phone = !!opts.phone;
-			target.phoneRegionCode = opts.phoneRegionCode || 'AU';
+			target.phoneRegionCode = opts.phoneRegionCode || 'CN';
 			target.phoneFormatter = {};
 			target.date = !!opts.date;
-			target.datePattern = opts.datePattern || ['d', 'm', 'Y'];
+			target.datePattern = opts.datePattern || ['Y', 'm', 'd'];
 			target.dateFormatter = {};
 			target.numeral = !!opts.numeral;
 			target.numeralDecimalScale = opts.numeralDecimalScale >= 0 ? opts.numeralDecimalScale : 2;

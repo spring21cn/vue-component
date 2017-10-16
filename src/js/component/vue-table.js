@@ -1,38 +1,38 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VuePopper', 'VuePopup', 'VueCheckbox', 'VueCheckboxGroup', 'VueTag', 'VueTooltip'], definition);
+		define(['Vue', 'VueUtil', 'VuePopper'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper'], context['VuePopup'], context['VueCheckbox'], context['VueCheckboxGroup'], context['VueTag'], context['VueTooltip']);
+		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper']);
 		delete context[name];
 	}
-})('VueTable', this, function(Vue, VueUtil, VuePopper, VuePopup, VueCheckbox, VueCheckboxGroup, VueTag, VueTooltip) {
+})('VueTable', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
+	var mouseEvents = VueUtil.component.mouseEvents;
 	var isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-	var SIZE, REMAIN;
-	var bodyScrollLeft = 0;
-	var bodyScrollTop = 0;
-	var dropdowns = [];
 	var Dropdown = {
+		dropdowns: [],
 		open: function(instance) {
 			if (instance) {
-				dropdowns.push(instance);
+				this.dropdowns.push(instance);
 			}
 		},
 		close: function(instance) {
-			var index = dropdowns.indexOf(instance);
+			var index = this.dropdowns.indexOf(instance);
 			if (index !== -1) {
-				dropdowns.splice(instance, 1);
+				this.dropdowns.splice(instance, 1);
 			}
 		}
 	};
 	var scrollFilter = function(slots, delta) {
-		if (delta.keeps === 0) {
+		if (delta.keeps === 0 || slots.length <= delta.keeps) {
+			delta.paddingTop = 0;
+			delta.allPadding = 0;
 			return slots;
 		}
 		delta.total = slots.length;
-		delta.paddingTop = SIZE * delta.start;
-		delta.allPadding = SIZE * (slots.length - delta.keeps);
+		delta.paddingTop = delta.size * delta.start;
+		delta.allPadding = delta.size * (slots.length - delta.keeps);
 		delta.paddingTop < 0 ? delta.paddingTop = 0 : undefined;
 		delta.allPadding < 0 ? delta.allPadding = 0 : undefined;
 		delta.allPadding < delta.paddingTop ? delta.allPadding = delta.paddingTop : undefined;
@@ -42,7 +42,9 @@
 	};
 	var mousewheel = function(element, callback) {
 		if (element && element.addEventListener) {
-			element.addEventListener(isFirefox ? 'DOMMouseScroll' : 'mousewheel', callback);
+			element.addEventListener(isFirefox ? 'DOMMouseScroll' : 'mousewheel', callback, {
+				passive: true
+			});
 		}
 	};
 	var getValueByPath = function(object, prop) {
@@ -140,8 +142,7 @@
 		var order = (reverse && reverse < 0) ? -1 : 1;
 		return array.slice().sort(sortMethod ? function(a, b) {
 			return sortMethod(a, b) ? order : -order;
-		}
-		: function(a, b) {
+		} : function(a, b) {
 			if (sortKey !== '$key') {
 				if (isObject(a) && '$value'in a)
 					a = a.$value;
@@ -151,8 +152,7 @@
 			a = isObject(a) ? getValueByPath(a, sortKey) : a;
 			b = isObject(b) ? getValueByPath(b, sortKey) : b;
 			return a === b ? 0 : a > b ? order : -order;
-		}
-		);
+		});
 	};
 	var getColumnById = function(table, columnId) {
 		var column = null;
@@ -292,14 +292,24 @@
 					console.warn('WARN: rowKey is required when reserve-selection is enabled.');
 				}
 			}
-			var defaultExpandAll = states.defaultExpandAll;
-			var self = this;
-			if (defaultExpandAll) {
-				self.states.expandRows = (states.data || []).slice(0);
+			if (states.defaultExpandAll) {
+				this.states.expandRows = (states.data || []).slice(0);
+			}
+			var table = this.table;
+			if (table.$refs.tableBody && table.$refs.tableBody.delta.keeps !== 0) {
+				var delta = table.$refs.tableBody.delta;
+				delta.start = 0;
+				if (data.length <= delta.remain) {
+					delta.end = data.length;
+					delta.keeps = data.length;
+				} else {
+					delta.end = delta.remain;
+					delta.keeps = delta.remain;
+				}
 			}
 			Vue.nextTick(function() {
-				self.table.updateScrollY();
-				self.table.resizeZone();
+				table.updateScrollY();
+				table.resizeZone();
 			});
 		},
 		changeSortCondition: function(states) {
@@ -316,9 +326,9 @@
 		},
 		filterChange: function(states, options) {
 			var self = this;
-			var values = options.values,
-				column = options.column,
-				silent = options.silent;
+			var values = options.values;
+			var column = options.column;
+			var silent = options.silent;
 			if (values && !Array.isArray(values)) {
 				values = [values];
 			}
@@ -339,14 +349,14 @@
 					if (column.filterMethod) {
 						data = data.filter(function(row) {
 							return values.some(function(value) {
-								column.filterMethod.call(null, value, row)
+								return column.filterMethod.call(null, value, row)
 							});
 						});
 					} else {
 						var columnKey = column.property
 						data = data.filter(function(row) {
 							return values.some(function(value) {
-								return row[columnKey] === value;;
+								return row[columnKey] === value;
 							});
 						});
 					}
@@ -357,9 +367,21 @@
 			if (!silent) {
 				self.table.$emit('filter-change', filters);
 			}
+			var table = this.table;
+			if (table.$refs.tableBody && table.$refs.tableBody.delta.keeps !== 0) {
+				var delta = table.$refs.tableBody.delta;
+				delta.start = 0;
+				if (data.length <= delta.remain) {
+					delta.end = data.length;
+					delta.keeps = data.length;
+				} else {
+					delta.end = delta.remain;
+					delta.keeps = delta.remain;
+				}
+			}
 			Vue.nextTick(function() {
-				self.table.updateScrollY();
-				self.table.resizeZone();
+				table.updateScrollY();
+				table.resizeZone();
 			});
 		},
 		insertColumn: function(states, column, index, parent) {
@@ -468,11 +490,20 @@
 	TableStore.prototype.updateColumns = function() {
 		var states = this.states;
 		var _columns = states._columns || [];
+		_columns = _columns.filter(function(column) {
+			return column.visible
+		});
 		states.fixedColumns = _columns.filter(function(column) {
 			return column.fixed === true || column.fixed === 'left'
 		});
+		states.fixedColumns.sort(function(a, b) {
+			return a.fixedIndex > b.fixedIndex;
+		});
 		states.rightFixedColumns = _columns.filter(function(column) {
 			return column.fixed === 'right'
+		});
+		states.rightFixedColumns.sort(function(a, b) {
+			return a.fixedIndex < b.fixedIndex;
 		});
 		if (states.fixedColumns.length > 0 && _columns[0] && _columns[0].type === 'selection' && !_columns[0].fixed) {
 			_columns[0].fixed = true;
@@ -687,7 +718,7 @@
 			}
 		}
 		this.updateHeight();
-	};
+	}
 	TableLayout.prototype.updateHeight = function() {
 		var height = this.tableHeight = this.table.$el.clientHeight;
 		var noData = !this.table.data || this.table.data.length === 0;
@@ -710,7 +741,7 @@
 			this.fixedBodyHeight = this.scrollX ? bodyHeight - this.gutterWidth : bodyHeight;
 		}
 		this.viewportHeight = height;
-	};
+	}
 	TableLayout.prototype.update = function() {
 		var fit = this.fit;
 		var columns = this.table.columns;
@@ -754,17 +785,13 @@
 			} else {
 				this.scrollX = true;
 				flexColumns.forEach(function(column) {
-					column.realWidth = column.minWidth;
+					column.realWidth = column.minWidth || 80;
 				});
 			}
 			this.bodyWidth = Math.max(bodyMinWidth, bodyWidth);
 		} else {
 			flattenColumns.forEach(function(column) {
-				if (!column.width && !column.minWidth) {
-					column.realWidth = 80;
-				} else {
-					column.realWidth = column.width || column.minWidth;
-				}
+				column.realWidth = column.width || column.minWidth || 80;
 				bodyMinWidth += column.realWidth;
 			});
 			this.scrollX = bodyMinWidth > bodyWidth;
@@ -774,7 +801,7 @@
 		if (fixedColumns.length > 0) {
 			var fixedWidth = 0;
 			fixedColumns.forEach(function(column) {
-				fixedWidth += column.realWidth;
+				fixedWidth += column.realWidth || 80;
 			});
 			this.fixedWidth = fixedWidth;
 		}
@@ -782,21 +809,17 @@
 		if (rightFixedColumns.length > 0) {
 			var rightFixedWidth = 0;
 			rightFixedColumns.forEach(function(column) {
-				rightFixedWidth += column.realWidth;
+				rightFixedWidth += column.realWidth || 80;
 			});
 			this.rightFixedWidth = rightFixedWidth;
 		}
-	};
+	}
 	var VueTableFilterPanel = {
 		template: '<transition name="vue-zoom-in-top" @after-leave="doDestroy"><div class="vue-table-filter" v-if="multiple" v-show="showPopper" v-clickoutside="handleOutsideClick"><div class="vue-table-filter__content"><vue-checkbox-group class="vue-table-filter__checkbox-group" v-model="filteredValue"><vue-checkbox v-for="filter in filters" :key="filter.value" :label="filter.value">{{ filter.text }}</vue-checkbox></vue-checkbox-group></div><div class="vue-table-filter__bottom"><button @click="handleConfirm" :class="{ \'is-disabled\': filteredValue.length === 0 }" :disabled="filteredValue.length === 0">{{ $t(\'vue.table.confirmFilter\') }}</button><button @click="handleReset">{{ $t(\'vue.table.resetFilter\') }}</button></div></div><div class="vue-table-filter" v-else v-show="showPopper"><ul class="vue-table-filter__list"><li class="vue-table-filter__list-item" :class="{ \'is-active\': !filterValue }" @click="handleSelect(null)">{{ $t(\'vue.table.clearFilter\') }}</li><li class="vue-table-filter__list-item" v-for="filter in filters" :key="filter.value" :label="filter.value" :class="{ \'is-active\': isActive(filter) }" @click="handleSelect(filter.value)" >{{ filter.text }}</li></ul></div></transition>',
 		name: 'VueTableFilterPanel',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
-		},
-		components: {
-			VueCheckbox: VueCheckbox(),
-			VueCheckboxGroup: VueCheckboxGroup()
 		},
 		props: {
 			placement: {
@@ -916,17 +939,13 @@
 		},
 		watch: {
 			showPopper: function(val) {
-				if (val === true && parseInt(this.popperJS._popper.style.zIndex, 10) < VuePopup().PopupManager.zIndex) {
-					this.popperJS._popper.style.zIndex = VuePopup().PopupManager.nextZIndex();
+				if (val === true && parseInt(this.popperJS._popper.style.zIndex, 10) < VueUtil.component.popupManager.zIndex) {
+					this.popperJS._popper.style.zIndex = VueUtil.component.popupManager.nextZIndex();
 				}
 			}
 		}
 	};
 	var TableBody = {
-		components: {
-			VueCheckbox: VueCheckbox(),
-			VueTooltip: VueTooltip()
-		},
 		props: {
 			store: {
 				required: true
@@ -942,14 +961,14 @@
 			expandClassName: [String, Function]
 		},
 		render: function(createElement) {
-			var delta = this.$options.delta;
+			var delta = this.delta;
 			var self = this;
 			var columnsHidden = self.columns.map(function(column, index) {
 				return self.isColumnHidden(index);
 			});
-			var selfData = scrollFilter(self.data ,delta);
-			var paddingTop = delta.paddingTop
-			 , allPadding = delta.allPadding;
+			var selfData = scrollFilter(self.data, delta);
+			var paddingTop = delta.paddingTop;
+			var allPadding = delta.allPadding;
 			return createElement('table', {
 				class: 'vue-table__body',
 				attrs: {
@@ -957,15 +976,23 @@
 					cellpadding: '0',
 					border: '0'
 				},
-				style: {'padding-top': paddingTop + 'px', 'padding-bottom': allPadding - paddingTop + 'px'}
+				style: {
+					'padding-top': paddingTop + 'px',
+					'padding-bottom': allPadding - paddingTop + 'px'
+				}
 			}, [createElement('colgroup', null, [self._l(self.columns, function(column) {
 				return createElement('col', {
 					attrs: {
 						name: column.id,
-						width: column.realWidth || column.width
+						width: column.realWidth || column.width || 80
 					}
 				}, [])
-			})]), createElement('tbody', null, [self._l(selfData, function(row, $index) {
+			}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('col', {
+				attrs: {
+					name: 'gutter',
+					width: 0
+				}
+			}, []) : '']), createElement('tbody', null, [self._l(selfData, function(row, $index) {
 				$index = self.data.indexOf(row);
 				return [createElement('tr', {
 					style: self.rowStyle ? self.getRowStyle(row, $index) : null,
@@ -1015,22 +1042,42 @@
 					row: row,
 					$index: $index,
 					store: self.store
-				}) : ''])]) : '']}).concat(self._self.$parent.$slots.append).concat(createElement('vue-tooltip', {attrs: {effect: self.table.tooltipEffect, placement: "top", content: self.tooltipContent}, ref: "tooltip"}, []))
-			])]);
+				}) : ''])]) : '']
+			}).concat(self._self.$parent.$slots.append).concat(createElement('vue-tooltip', {
+				attrs: {
+					effect: self.table.tooltipEffect,
+					placement: "top",
+					content: self.tooltipContent
+				},
+				ref: "tooltip"
+			}, []))])]);
 		},
 		watch: {
 			'store.states.hoverRow': function(newVal, oldVal) {
-				if (!this.store.states.isComplex)
+				var self = this;
+				if (!self.store.states.isComplex)
 					return;
-				var el = this.$el;
+				var el = self.$el;
 				if (!el)
 					return;
+				var data;
+				var storeData = self.store.states.data;
+				if (self.delta.keeps !== 0) {
+					data = storeData.filter(function(data, index) {
+						return index >= self.delta.start && index <= self.delta.end;
+					});
+				} else {
+					data = storeData;
+				}
 				var rows = el.querySelectorAll('tbody > tr');
-				var oldRow = rows[oldVal];
-				var newRow = rows[newVal];
+				var oldRow = rows[data.indexOf(storeData[oldVal])];
+				var newRow = rows[data.indexOf(storeData[newVal])];
 				if (oldRow) {
 					oldRow.classList.remove('hover-row');
 				}
+				[].forEach.call(rows, function(row) {
+					row.classList.remove('hover-row')
+				});
 				if (newRow) {
 					newRow.classList.add('hover-row');
 				}
@@ -1042,22 +1089,24 @@
 				var el = self.$el;
 				if (!el)
 					return;
-				var data = self.store.states.data;
-				if (self.$options.delta.keeps !== 0) {
-					data = self.store.states.data.filter(function(data, index) {
-						return index >= self.$options.delta.start && index <= self.$options.delta.end;
+				var data;
+				var storeData = self.store.states.data;
+				if (self.delta.keeps !== 0) {
+					data = storeData.filter(function(data, index) {
+						return index >= self.delta.start && index <= self.delta.end;
 					});
+				} else {
+					data = storeData;
 				}
 				var rows = el.querySelectorAll('tbody > tr');
 				var oldRow = rows[data.indexOf(oldVal)];
 				var newRow = rows[data.indexOf(newVal)];
 				if (oldRow) {
 					oldRow.classList.remove('current-row');
-				} else if (rows) {
-					[].forEach.call(rows, function(row) {
-						row.classList.remove('current-row')
-					});
 				}
+				[].forEach.call(rows, function(row) {
+					row.classList.remove('current-row')
+				});
 				if (newRow) {
 					newRow.classList.add('current-row');
 				}
@@ -1085,22 +1134,35 @@
 		},
 		data: function() {
 			return {
+				delta: {
+					start: 0,
+					end: 0,
+					total: 0,
+					keeps: 0,
+					allPadding: 0,
+					paddingTop: 0,
+					size: 0,
+					remain: 0
+				},
 				tooltipContent: ''
 			};
 		},
 		created: function() {
-			this.activateTooltip = VueUtil.component.debounce(50, function(tooltip) {return tooltip.handleShowPopper();});
+			this.activateTooltip = VueUtil.component.debounce(50, function(tooltip) {
+				return tooltip.handleShowPopper();
+			});
 		},
 		methods: {
 			updateZone: function(offset) {
-				var delta = this.$options.delta;
-				var overs = Math.floor(offset / SIZE);
+				var delta = this.delta;
+				if (delta.total <= delta.keeps) return;
+				var overs = Math.floor(offset / delta.size);
 				if (!offset) {
 					this.$emit('toTop');
 				}
 				var start = overs ? overs : 0;
 				var end = overs ? (overs + delta.keeps) : delta.keeps;
-				if (overs + REMAIN >= delta.total) {
+				if (overs + delta.keeps >= delta.total) {
 					end = delta.total;
 					start = delta.total - delta.keeps;
 					this.$emit('toBottom');
@@ -1109,21 +1171,21 @@
 				delta.start = start;
 				this.$forceUpdate();
 			},
-			updateCurrentRowClass: function() {
+			updateHoverCurrentClass: function() {
 				var self = this;
-				if (!self.highlight)
-					return;
 				var el = self.$el;
-				if (!el)
-					return;
+				if (!el) return;
 				var data = self.data.filter(function(data, index) {
-					return index >= self.$options.delta.start && index <= self.$options.delta.end;
+					return index >= self.delta.start && index <= self.delta.end;
 				});
 				var rows = el.querySelectorAll('tbody > tr');
-				var newRow = rows[data.indexOf(self.store.states.currentRow)];
+				var currentRow;
+				if (self.highlight)
+					currentRow = rows[data.indexOf(self.store.states.currentRow)];
 				[].forEach.call(rows, function(row) {
 					row.classList.remove('current-row');
-					if (newRow && row === newRow) {
+					row.classList.remove('hover-row')
+					if (currentRow && row === currentRow) {
 						row.classList.add('current-row');
 					}
 				});
@@ -1237,23 +1299,15 @@
 				this.store.commit('toggleRowExpanded', row);
 			}
 		},
-		delta: {
-			start: 0,
-			end: 0,
-			total: 0,
-			keeps: 0,
-			allPadding: 0,
-			paddingTop: 0
-		},
 		mounted: function() {
 			var tableHeight = this.table.height;
 			if (tableHeight) {
-				var delta = this.$options.delta;
+				var delta = this.delta;
 				var tdObj = this.$el.querySelector('td');
-				SIZE = (tdObj && tdObj.offsetHeight) || 40;
-				REMAIN = Math.round(tableHeight*1 / SIZE);
-				delta.end = REMAIN;
-				delta.keeps = REMAIN;
+				delta.size = (tdObj && tdObj.offsetHeight) || 40;
+				delta.remain = Math.round(tableHeight * 1 / delta.size);
+				delta.end = delta.remain;
+				delta.keeps = delta.remain;
 			}
 		}
 	};
@@ -1274,13 +1328,13 @@
 				return createElement('col', {
 					attrs: {
 						name: column.id,
-						width: column.realWidth || column.width
+						width: column.realWidth || column.width || 80
 					}
 				}, [])
-			}), !self.fixed && self.layout.gutterWidth ? createElement('col', {
+			}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('col', {
 				attrs: {
 					name: 'gutter',
-					width: self.layout.scrollY ? self.layout.gutterWidth : ''
+					width: self.layout.gutterWidth
 				}
 			}, []) : '']), createElement('thead', null, [self._l(columnRows, function(columns, rowIndex) {
 				return createElement('tr', null, [self._l(columns, function(column, cellIndex) {
@@ -1295,6 +1349,9 @@
 							},
 							mouseout: self.handleMouseOut,
 							mousedown: function(e) {
+								return self.handleMouseDown(e, column)
+							},
+							touchstart: function(e) {
 								return self.handleMouseDown(e, column)
 							},
 							click: function(e) {
@@ -1340,10 +1397,10 @@
 					}, [createElement('i', {
 						class: ['vue-icon-arrow-down', column.filterOpened ? 'vue-icon-arrow-up' : '']
 					}, [])]) : ''])])
-				}), !self.fixed && self.layout.gutterWidth ? createElement('th', {
+				}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('th', {
 					class: 'gutter',
 					style: {
-						width: self.layout.scrollX ? self.layout.gutterWidth + 'px' : 0
+						width: self.layout.gutterWidth + 'px'
 					}
 				}, []) : ''])
 			})])]);
@@ -1366,10 +1423,6 @@
 					};
 				}
 			}
-		},
-		components: {
-			VueCheckbox: VueCheckbox(),
-			VueTag: VueTag()
 		},
 		computed: {
 			isAllSelected: function() {
@@ -1469,11 +1522,15 @@
 				var self = this;
 				if (self.$isServer)
 					return;
+				if (event.touches) {
+					self.handleMouseMove(event, column);
+				}
 				if (column.children && column.children.length > 0)
 					return;
 				if (self.draggingColumn && self.border) {
 					self.dragging = true;
 					self.$parent.resizeProxyVisible = true;
+					var table = self.$parent;
 					var tableEl = self.$parent.$el;
 					var tableLeft = tableEl.getBoundingClientRect().left;
 					var columnEl = self.$el.querySelector('th.' + column.id);
@@ -1481,7 +1538,7 @@
 					var minLeft = columnRect.left - tableLeft + 30;
 					columnEl.classList.add('noclick');
 					self.dragState = {
-						startMouseLeft: event.clientX,
+						startMouseLeft: event.clientX || event.touches[0].clientX,
 						startLeft: columnRect.right - tableLeft,
 						startColumnLeft: columnRect.left - tableLeft,
 						tableLeft: tableLeft
@@ -1495,32 +1552,34 @@
 						return false;
 					}
 					var handleMouseMove = function(event) {
-						var deltaLeft = event.clientX - self.dragState.startMouseLeft;
+						var deltaLeft = (event.clientX || event.touches[0].clientX) - self.dragState.startMouseLeft;
 						var proxyLeft = self.dragState.startLeft + deltaLeft;
 						resizeProxy.style.left = Math.max(minLeft, proxyLeft) + 'px';
 					};
 					var handleMouseUp = function() {
 						if (self.dragging) {
 							var finalLeft = parseInt(resizeProxy.style.left, 10);
-							var columnWidth = finalLeft - self.dragState.startColumnLeft;
+							var startLeft = self.dragState.startLeft;
+							var startColumnLeft = self.dragState.startColumnLeft;
+							var columnWidth = finalLeft - startColumnLeft;
 							column.width = column.realWidth = columnWidth;
-							self.store.scheduleLayout();
+							table.$emit('header-dragend', column.width, startLeft - startColumnLeft, column, event);
 							document.body.style.cursor = '';
 							self.dragging = false;
 							self.draggingColumn = null;
 							self.dragState = {};
 							self.$parent.resizeProxyVisible = false;
 						}
-						document.removeEventListener('mousemove', handleMouseMove);
-						document.removeEventListener('mouseup', handleMouseUp);
+						document.removeEventListener(mouseEvents.move, handleMouseMove);
+						document.removeEventListener(mouseEvents.up, handleMouseUp);
 						document.onselectstart = null;
 						document.ondragstart = null;
 						setTimeout(function() {
 							columnEl.classList.remove('noclick');
 						}, 0);
 					};
-					document.addEventListener('mousemove', handleMouseMove);
-					document.addEventListener('mouseup', handleMouseUp);
+					document.addEventListener(mouseEvents.move, handleMouseMove);
+					document.addEventListener(mouseEvents.up, handleMouseUp);
 				}
 			},
 			handleMouseMove: function(event, column) {
@@ -1535,7 +1594,7 @@
 				if (!this.dragging && this.border) {
 					var rect = target.getBoundingClientRect();
 					var bodyStyle = document.body.style;
-					if (rect.width > 12 && rect.right - event.pageX < 8) {
+					if (rect.width > 12 && rect.right - (event.pageX || event.touches[0].pageX) < 8) {
 						bodyStyle.cursor = 'col-resize';
 						this.draggingColumn = column;
 					} else if (!this.dragging) {
@@ -1608,7 +1667,9 @@
 					sums[index] = self.sumText;
 					return;
 				}
-				var values = self.store.states.data.map(function(item) {return Number(item[column.property])});
+				var values = self.store.states.data.map(function(item) {
+					return Number(item[column.property])
+				});
 				var precisions = [];
 				var notNumber = true;
 				values.forEach(function(value) {
@@ -1632,46 +1693,44 @@
 					sums[index] = '';
 				}
 			});
-			return createElement('table',
-			{
+			return createElement('table', {
 				class: 'vue-table__footer',
-				attrs: { cellspacing: '0', cellpadding: '0', border: '0' }
-			}, [
-				createElement('colgroup',
-					null,
-					[
-						self._l(self.columns, function(column) {
-							return createElement('col', {attrs: {name: column.id, width: column.realWidth || column.width}}, []);
-						}),
-						!self.fixed && self.layout.gutterWidth ? createElement('col', {attrs: {name: 'gutter', width: self.layout.scrollY ? self.layout.gutterWidth : '' }}, []) : ''
-					]
-				),
-				createElement('tbody',
-					null,
-					[
-						createElement('tr',
-							null,
-							[
-								self._l(self.columns, function(column, cellIndex) {
-									return createElement('td',
-										{
-											attrs: {colspan: column.colSpan, rowspan: column.rowSpan},
-											class: [column.id, column.align, column.className || '', self.isCellHidden(cellIndex, self.columns) ? 'is-hidden' : '', !column.children ? 'is-leaf' : '', column.labelClassName]
-										},
-										[
-											createElement('div',
-												{class: ['cell', column.labelClassName]},
-												[self.summaryMethod ? self.summaryMethod({columns: self.columns, data: self.store.states.data})[cellIndex] : sums[cellIndex]]
-											)
-										]
-									)
-								}),
-								!self.fixed && self.layout.gutterWidth ? createElement('td',	{class: 'gutter', style: { width: self.layout.scrollY ? self.layout.gutterWidth + 'px' : '0' }}, []) : ''
-							]
-						)
-					]
-				)
-			]);
+				attrs: {
+					cellspacing: '0',
+					cellpadding: '0',
+					border: '0'
+				}
+			}, [createElement('colgroup', null, [self._l(self.columns, function(column) {
+				return createElement('col', {
+					attrs: {
+						name: column.id,
+						width: column.realWidth || column.width || 80
+					}
+				}, []);
+			}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('col', {
+				attrs: {
+					name: 'gutter',
+					width: self.layout.gutterWidth
+				}
+			}, []) : '']), createElement('tbody', null, [createElement('tr', null, [self._l(self.columns, function(column, cellIndex) {
+				return createElement('th', {
+					attrs: {
+						colspan: column.colSpan,
+						rowspan: column.rowSpan
+					},
+					class: [column.id, column.align, column.className || '', self.isCellHidden(cellIndex, self.columns) ? 'is-hidden' : '', !column.children ? 'is-leaf' : '', column.labelClassName]
+				}, [createElement('div', {
+					class: ['cell', column.labelClassName]
+				}, [self.summaryMethod ? self.summaryMethod({
+					columns: self.columns,
+					data: self.store.states.data
+				})[cellIndex] : sums[cellIndex]])])
+			}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('th', {
+				class: 'gutter',
+				style: {
+					width: self.layout.gutterWidth + 'px'
+				}
+			}, []) : ''])])]);
 		},
 		props: {
 			fixed: String,
@@ -1727,8 +1786,167 @@
 			}
 		}
 	};
+	var TableContextMenu = {
+		template: '<vue-dialog v-model="dialogVisible" custom-class="vue-table-context-menu" :title="$t(\'vue.table.contextMenu\')" show-close @close="closeHandle" clear-modal><vue-tabs><vue-tab-pane :label="$t(\'vue.table.pin\')"><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.leftPin\')"><vue-select v-model="pinForm.leftPin" multiple @change="leftPin" @remove-tag="noPin"><vue-option v-for="(column, index) in tableColumns" :key="index" :label="column.property" :value="column" :disabled="!!column.fixed"></vue-option></vue-select></vue-form-item><vue-form-item :label="$t(\'vue.table.rightPin\')"><vue-select v-model="pinForm.rightPin" multiple @change="rightPin" @remove-tag="noPin"><vue-option v-for="(column, index) in tableColumns" :key="index" :label="column.property" :value="column" :disabled="!!column.fixed"></vue-option></vue-select></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.sort\')"><vue-list :height="150"><vue-list-item v-for="(column, index) in tableColumns" :key="index"><vue-button type="text" style="padding-left:15px" @click="removeSortColumn(column)">{{column.property}}</vue-button><div style="float:right;"><vue-button style="padding:10px 0 0 0;" :style="{ color: column.sortOrder === \'ascending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" icon="vue-icon-caret-top" type="text" @click="sortColumn(column)"></vue-button><vue-button style="padding:10px 15px 0 0;" :style="{ color: column.sortOrder === \'descending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" icon="vue-icon-caret-bottom" type="text" @click="sortColumn(column, true)"></vue-button></div><vue-divider v-if="index!==tableColumns.length-1"></vue-divider></vue-list-item></vue-list><vue-form label-width="70px"><vue-form-item :label="$t(\'vue.table.sortBy\')"><vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in sortList" :key="index" closable type="info" @close="removeSortColumn(column)">{{column.property}}<i style="padding:5px 0 0 5px;" :class="[{\'vue-icon-caret-top\': column.sortOrder === \'ascending\'}, {\'vue-icon-caret-bottom\': column.sortOrder === \'descending\'}]"></i></vue-tag></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.filter\')"><vue-form label-width="100px" :model="filterForm"><vue-form-item :label="$t(\'vue.table.column\')"><vue-select v-model="filterForm.filterColumn"><vue-option v-for="(column, index) in tableColumns" :key="index" :label="column.property" :value="column"></vue-option></vue-select></vue-form-item><vue-form-item :label="$t(\'vue.table.conditions\')"><vue-input icon="vue-icon-search" v-model="filterForm.conditions" :on-icon-click="filterColumn" @keydown.enter.native="filterColumn" ref="filterInput"><vue-select slot="prepend" v-model="filterForm.operations" style="width:80px;font-size:21px;" @change="operationsChange"><vue-option v-for="(item, index) in operations" :key="index" :label="item" :value="item"></vue-option></vue-select></vue-input></vue-form-item></vue-form><vue-divider></vue-divider><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.filterBy\')"><vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in filterList" :key="index" closable type="info" @close="removeFilterColumn(column)">{{column.property}} {{column.operations}} {{column.conditions}}</vue-tag></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.display\')"><vue-list :height="150"><vue-list-item v-for="(column, index) in tableColumns" :key="index" @select="displayColumn(column)" style="cursor:pointer;"><vue-button type="text" style="padding-left:15px">{{column.property}}</vue-button><div style="float:right;"><vue-button style="padding:10px 15px 0 0;" :style="{color: column.visible ? \'#13ce66\' : \'#a94442\'}" :icon="column.visible ? \'vue-icon-circle-check\' : \'vue-icon-circle-cross\'" type="text"></vue-button></div><vue-divider v-if="index!==tableColumns.length-1"></vue-divider></vue-list-item></vue-list></vue-tab-pane></vue-tabs></vue-dialog>',
+		data: function() {
+			return {
+				tableColumns: [],
+				pinForm: {
+					leftPin: null,
+					rightPin: null
+				},
+				filterForm:{
+					filterColumn: null,
+					conditions: null,
+					operations: '='
+				},
+				operations: ['=', '<', '>', '<=', '>=', '<>', '%'],
+				sortList: [],
+				filterList: [],
+				dialogVisible: false
+			}
+		},
+		props: {
+			visible: {
+				type: Boolean,
+				default: false
+			},
+			store: {
+				required: true
+			}
+		},
+		model: {
+			prop: 'visible'
+		},
+		watch: {
+			visible: function(val) {
+				this.dialogVisible = val;
+			}
+		},
+		methods: {
+			closeHandle: function() {
+				this.$parent.showContextMenu = false;
+			},
+			operationsChange: function() {
+				this.$nextTick(this.$refs.filterInput.focus);
+			},
+			noPin: function(column) {
+				column.value.fixed = false;
+				this.store.scheduleLayout();
+			},
+			leftPin: function(columns) {
+				columns.forEach(function(column, index){
+					column.fixed = 'left';
+					column.fixedIndex = index;
+				});
+				this.store.scheduleLayout();
+			},
+			rightPin: function(columns) {
+				columns.forEach(function(column, index){
+					column.fixed = 'right';
+					column.fixedIndex = index;
+				});
+				this.store.scheduleLayout();
+			},
+			sortColumn: function(column, descFlg) {
+				if (descFlg) {
+					column.sortOrder = "descending"
+				} else {
+					column.sortOrder = "ascending"
+				}
+				var existflg = false;
+				this.sortList.forEach(function(sortObj){
+					if (column.property === sortObj.property) {
+						sortObj.sortOrder = column.sortOrder;
+						existflg = true;
+					}
+				});
+				if (!existflg) {
+					this.sortList.push(column);
+				}
+				this.doSort();
+			},
+			removeSortColumn: function(column) {
+				var sortIndex = this.sortList.indexOf(column);
+				if (sortIndex === -1) return;
+				column.sortOrder = "";
+				this.sortList.splice(sortIndex, 1);
+				this.doSort();
+			},
+			doSort: function() {
+				this.store.table.multipleColumnSort(this.sortList);
+				this.$forceUpdate();
+			},
+			filterColumn: function() {
+				var filterColumn = this.filterForm.filterColumn;
+				filterColumn.conditions = this.filterForm.conditions;
+				filterColumn.operations = this.filterForm.operations;
+				if (typeof filterColumn.filterMethod === 'function' && !filterColumn.orgFilterMethod) {
+					filterColumn.orgFilterMethod = filterColumn.filterMethod;
+				}
+				filterColumn.filterMethod = function(value, row) {
+					switch (filterColumn.operations) {
+						case '=':
+							return row[filterColumn.property] === filterColumn.conditions;
+						case '>':
+							return row[filterColumn.property] > filterColumn.conditions;
+						case '<':
+							return row[filterColumn.property] < filterColumn.conditions;
+						case '<=':
+							return row[filterColumn.property] <= filterColumn.conditions;
+						case '>=':
+							return row[filterColumn.property] >= filterColumn.conditions;
+						case '<>':
+							return row[filterColumn.property] !== filterColumn.conditions;
+						case '%':
+							return row[filterColumn.property].indexOf(filterColumn.conditions) !== -1;
+					}
+				}
+				var existflg = false;
+				this.filterList.forEach(function(filterObj){
+					if (filterColumn.property === filterObj.property) {
+						existflg = true;
+					}
+				});
+				if (filterColumn && !existflg) {
+					this.filterList.push(filterColumn);
+				}
+				this.doFilter();
+			},
+			removeFilterColumn: function(column) {
+				var store = this.store;
+				store.commit('filterChange', {
+					column: column,
+					values: []
+				});
+				if (column.orgFilterMethod) {
+					column.filterMethod = column.orgFilterMethod;
+					column.orgFilterMethod = null;
+				}
+				this.filterList.splice(this.filterList.indexOf(column), 1);
+			},
+			doFilter: function() {
+				var store = this.store;
+				var filterList = this.filterList;
+				filterList.forEach(function(filterColumn) {
+					store.commit('filterChange', {
+						column: filterColumn,
+						values: 'filter'
+					});
+				})
+				this.$forceUpdate();
+			},
+			displayColumn: function(column) {
+				column.visible = !column.visible;
+				this.store.scheduleLayout();
+			}
+		},
+		mounted: function() {
+			if (this.store) this.tableColumns = this.store.states.columns;
+		}
+	};
 	var VueTable = {
-		template: '<div class="vue-table":class="{ \'vue-table--fit\': fit, \'vue-table--striped\': stripe, \'vue-table--border\': border, \'vue-table--enable-row-hover\': !store.states.isComplex, \'vue-table--enable-row-transition\': true || (store.states.data || []).length !== 0 && (store.states.data || []).length < 100}" @mouseleave="handleMouseLeave($event)" :style="[tableWidth]"><div class="hidden-columns" ref="hiddenColumns"><slot></slot></div><div class="vue-table__header-wrapper" ref="headerWrapper" v-if="showHeader"><table-header :store="store" :layout="layout" :border="border" :default-sort="defaultSort" :style="{ width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__body-wrapper" ref="bodyWrapper" :style="[wrapperWidth, bodyHeight]"> <table-body :context="context" :store="store" :layout="layout" :expand-class-name="expandClassName" :row-class-name="rowClassName" :row-style="rowStyle" :highlight="highlightCurrentRow" :style="{ width: bodyWidth }"></table-body><div :style="{ width: bodyWidth }" class="vue-table__empty-block" v-if="!data || data.length === 0"><span class="vue-table__empty-text"><slot name="empty">{{ emptyText || $t(\'vue.table.emptyText\') }}</slot></span></div></div><div class="vue-table__footer-wrapper" ref="footerWrapper" v-if="showSummary && data && data.length > 0"><table-footer :store="store" :layout="layout" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :default-sort="defaultSort" :style="{ width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\' }"></table-footer></div><div class="vue-table__fixed" ref="fixedWrapper" v-if="fixedColumns.length > 0" :style="[ { width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }, fixedHeight ]"><div class="vue-table__fixed-header-wrapper" ref="fixedHeaderWrapper" v-if="showHeader"><table-header fixed="left" :border="border" :store="store" :layout="layout" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="fixedBodyWrapper" :style="[ { top: layout.headerHeight + \'px\' }, fixedBodyHeight ]"><table-body fixed="left" :store="store" :layout="layout" :highlight="highlightCurrentRow" :row-class-name="rowClassName" :row-style="rowStyle" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="fixedFooterWrapper" v-if="showSummary && data && data.length > 0"><table-footer fixed="left" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :store="store" :layout="layout" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-footer></div></div><div class="vue-table__fixed-right" ref="rightFixedWrapper" v-if="rightFixedColumns.length > 0" :style="[ { width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }, { right: layout.scrollY ? (border ? layout.gutterWidth : (layout.gutterWidth || 1)) + \'px\' : \'\' }, fixedHeight ]"><div class="vue-table__fixed-header-wrapper" ref="rightFixedHeaderWrapper" v-if="showHeader"><table-header fixed="right" :border="border" :store="store" :layout="layout" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="rightFixedBodyWrapper" :style="[ { top: layout.headerHeight + \'px\' }, fixedBodyHeight]"><table-body fixed="right" :store="store" :layout="layout" :row-class-name="rowClassName" :row-style="rowStyle" :highlight="highlightCurrentRow" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="rightFixedFooterWrapper" v-if="showSummary && data && data.length > 0"><table-footer fixed="right" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :store="store" :layout="layout" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-footer></div></div><div class="vue-table__fixed-right-patch" v-if="rightFixedColumns.length > 0" :style="{ width: layout.scrollY ? layout.gutterWidth + \'px\' : \'0\', height: layout.headerHeight + \'px\' }"></div><div class="vue-table__column-resize-proxy" ref="resizeProxy" v-show="resizeProxyVisible"></div></div>',
+		template: '<div class="vue-table":class="{ \'vue-table--fit\': fit, \'vue-table--striped\': stripe, \'vue-table--border\': border, \'vue-table--enable-row-hover\': !store.states.isComplex, \'vue-table--enable-row-transition\': true || (store.states.data || []).length !== 0 && (store.states.data || []).length < 100}" @mouseleave="handleMouseLeave($event)" :style="{ width: layout.bodyWidth <= 0 ? \'0px\' : \'\' }"><div class="hidden-columns" ref="hiddenColumns"><slot></slot></div><div class="vue-table__header-wrapper" ref="headerWrapper" v-if="showHeader"><table-header :store="store" :layout="layout" :border="border" :default-sort="defaultSort" :style="{ width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__body-wrapper" ref="bodyWrapper" :style="[bodyHeight]"><table-body ref="tableBody" :context="context" :store="store" :layout="layout" :expand-class-name="expandClassName" :row-class-name="rowClassName" :row-style="rowStyle" :highlight="highlightCurrentRow" :style="{ width: bodyWidth }"></table-body><div :style="{ width: bodyWidth }" class="vue-table__empty-block" v-if="!data || data.length === 0"><span class="vue-table__empty-text"><slot name="empty">{{ emptyText || $t(\'vue.table.emptyText\') }}</slot></span></div></div><div class="vue-table__footer-wrapper" ref="footerWrapper" v-if="showSummary && data && data.length > 0"><table-footer :store="store" :layout="layout" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :default-sort="defaultSort" :style="{ width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\' }"></table-footer></div><div class="vue-table__fixed" ref="fixedWrapper" v-if="fixedColumns.length > 0" :style="[ { width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }, fixedHeight ]"><div class="vue-table__fixed-header-wrapper" ref="fixedHeaderWrapper" v-if="showHeader"><table-header fixed="left" :border="border" :store="store" :layout="layout" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="fixedBodyWrapper" :style="[ { top: layout.headerHeight + \'px\' }, fixedBodyHeight ]"><table-body ref="fixedBody" fixed="left" :store="store" :layout="layout" :highlight="highlightCurrentRow" :row-class-name="rowClassName" :expand-class-name="expandClassName" :row-style="rowStyle" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="fixedFooterWrapper" v-if="showSummary && data && data.length > 0"><table-footer fixed="left" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :store="store" :layout="layout" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-footer></div></div><div class="vue-table__fixed-right" ref="rightFixedWrapper" v-if="rightFixedColumns.length > 0" :style="[ { width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }, { right: layout.scrollY ? (border ? layout.gutterWidth : (layout.gutterWidth || 1)) + \'px\' : \'\' }, fixedHeight ]"><div class="vue-table__fixed-header-wrapper" ref="rightFixedHeaderWrapper" v-if="showHeader"><table-header fixed="right" :border="border" :store="store" :layout="layout" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="rightFixedBodyWrapper" :style="[ { top: layout.headerHeight + \'px\' }, fixedBodyHeight]"><table-body ref="rightFixedBody" fixed="right" :store="store" :layout="layout" :row-class-name="rowClassName" :row-style="rowStyle" :highlight="highlightCurrentRow" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="rightFixedFooterWrapper" v-if="showSummary && data && data.length > 0"><table-footer fixed="right" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :store="store" :layout="layout" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-footer></div></div><div class="vue-table__fixed-right-patch" v-if="rightFixedColumns.length > 0" :style="{ width: layout.scrollY ? layout.gutterWidth + \'px\' : \'0\', height: layout.headerHeight + \'px\' }"></div><div class="vue-table__column-resize-proxy" ref="resizeProxy" v-show="resizeProxyVisible"></div><table-context-menu v-if="contextMenu" v-model="showContextMenu" :store="store"></table-context-menu></div>',
 		name: 'VueTable',
 		props: {
 			data: {
@@ -1754,6 +1972,10 @@
 				type: Boolean,
 				default: false
 			},
+			contextMenu: {
+				type: Boolean,
+				default: false
+			},
 			sumText: String,
 			summaryMethod: Function,
 			rowClassName: [String, Function],
@@ -1764,15 +1986,46 @@
 			expandRowKeys: Array,
 			defaultExpandAll: Boolean,
 			defaultSort: Object,
+			tooltipEffect: String,
 			expandClassName: [String, Function]
 		},
 		components: {
 			TableHeader: TableHeader,
 			TableBody: TableBody,
 			TableFooter: TableFooter,
-			VueCheckbox: VueCheckbox()
+			TableContextMenu: TableContextMenu
 		},
 		methods: {
+			columnFilter: function(column, value) {
+				this.store.commit('filterChange', {
+					column: column,
+					values: value
+				});
+			},
+			multipleColumnSort: function(sortList) {
+				var states = this.store.states;
+				var _data = (states.filteredData || states._data || []);
+				if (sortList.length > 0) {
+					states.data = _data.slice().sort(function(data1, data2) {
+						for (var i = 0, l = sortList.length; i < l; i++) {
+							var column = sortList[i];
+							var value1 = data1[column.property];
+							var value2 = data2[column.property];
+							var sortOrder = 1;
+							if (column.sortOrder === "descending") {
+								sortOrder = -1
+							}
+							if (value1 < value2) return -1 * sortOrder;
+							if (value1 > value2) return 1 * sortOrder;
+						}
+					});
+				} else {
+					states.data = _data;
+				}
+			},
+			toggleContextMenu: function() {
+				this.showContextMenu = !this.showContextMenu;
+			},
 			setCurrentRow: function(row) {
 				this.store.commit('setCurrentRow', row);
 			},
@@ -1790,34 +2043,47 @@
 			},
 			updateScrollY: function() {
 				this.layout.updateScrollY();
+				var refs = this.$refs;
+				if (refs.fixedBodyWrapper)
+					refs.fixedBodyWrapper.scrollTop = this.bodyScroll.top;
+				if (refs.rightFixedBodyWrapper)
+					refs.rightFixedBodyWrapper.scrollTop = this.bodyScroll.top;
 			},
 			bindEvents: function() {
 				var self = this;
 				var refs = self.$refs;
-				var headerWrapper = refs.headerWrapper,
-					footerWrapper = refs.footerWrapper;
 				self.bodyWrapper.addEventListener('scroll', function() {
 					var scrollLeft = this.scrollLeft;
 					var scrollTop = this.scrollTop;
-					if (bodyScrollLeft !== scrollLeft) {
-						if (headerWrapper) headerWrapper.scrollLeft = scrollLeft;
-						if (footerWrapper) footerWrapper.scrollLeft = scrollLeft;
-						bodyScrollLeft = scrollLeft;
+					if (self.bodyScroll.left !== scrollLeft) {
+						if (refs.headerWrapper)
+							refs.headerWrapper.scrollLeft = scrollLeft;
+						if (refs.footerWrapper)
+							refs.footerWrapper.scrollLeft = scrollLeft;
+						self.bodyScroll.left = scrollLeft;
 					}
-					if (bodyScrollTop !== scrollTop) {
-						self.$children.forEach(function(child){
-							if (child.updateZone && child.$options.delta.keeps !== 0) {
-								child.updateZone(scrollTop);
-								child.updateCurrentRowClass();
+					if (self.bodyScroll.top !== scrollTop) {
+						if (refs.tableBody && refs.tableBody.delta.keeps !== 0) {
+							refs.tableBody.updateZone(scrollTop);
+							refs.tableBody.updateHoverCurrentClass();
+							if (refs.fixedBody) {
+								refs.fixedBody.updateZone(scrollTop);
+								refs.fixedBody.updateHoverCurrentClass();
 							}
-						});
-						if (refs.fixedBodyWrapper) refs.fixedBodyWrapper.scrollTop = scrollTop;
-						if (refs.rightFixedBodyWrapper) refs.rightFixedBodyWrapper.scrollTop = scrollTop;
-						bodyScrollTop = scrollTop;
+							if (refs.rightFixedBody) {
+								refs.rightFixedBody.updateZone(scrollTop);
+								refs.rightFixedBody.updateHoverCurrentClass();
+							}
+						}
+						if (refs.fixedBodyWrapper)
+							refs.fixedBodyWrapper.scrollTop = scrollTop;
+						if (refs.rightFixedBodyWrapper)
+							refs.rightFixedBodyWrapper.scrollTop = scrollTop;
+						self.bodyScroll.top = scrollTop;
 					}
 				});
-				if (headerWrapper) {
-					mousewheel(headerWrapper, VueUtil.component.throttle(16, function(event) {
+				if (refs.headerWrapper) {
+					mousewheel(refs.headerWrapper, VueUtil.component.throttle(16, function(event) {
 						var deltaX = event.deltaX;
 						if (deltaX > 0) {
 							self.bodyWrapper.scrollLeft += 10;
@@ -1835,34 +2101,42 @@
 				}
 			},
 			resizeZone: function() {
-				var scrollTop = this.bodyWrapper.scrollTop;
-				this.$children.forEach(function(child){
-					if (child.updateZone && child.$options.delta.keeps !== 0) {
-						child.updateZone(scrollTop);
-						child.updateCurrentRowClass();
+				var refs = this.$refs;
+				if (refs.tableBody && refs.tableBody.delta.keeps !== 0) {
+					var scrollTop = this.bodyScroll.top;
+					refs.tableBody.updateZone(scrollTop);
+					refs.tableBody.updateHoverCurrentClass();
+					if (refs.fixedBody) {
+						refs.fixedBody.updateZone(scrollTop);
+						refs.fixedBody.updateHoverCurrentClass();
 					}
-				});
+					if (refs.rightFixedBody) {
+						refs.rightFixedBody.updateZone(scrollTop);
+						refs.rightFixedBody.updateHoverCurrentClass();
+					}
+				}
 			},
 			doLayout: function() {
 				var self = this;
 				self.store.updateColumns();
 				self.layout.update();
-				self.updateScrollY();
 				self.$nextTick(function() {
 					if (self.height) {
 						self.layout.setHeight(self.height);
 					} else if (self.shouldUpdateHeight) {
 						self.layout.updateHeight();
 					}
+					self.updateScrollY();
+					self.resizeZone();
 				});
 			}
 		},
 		created: function() {
 			var self = this;
 			self.tableId = 'vue-table_1_';
-			self.debouncedLayout = VueUtil.component.debounce(50, function() {
-				self.doLayout()
-			});
+			self.debouncedLayout = function() {
+				self.$nextTick(self.doLayout);
+			}
 		},
 		computed: {
 			bodyWrapper: function() {
@@ -1898,21 +2172,6 @@
 			bodyWidth: function() {
 				var layout = this.layout;
 				return layout.bodyWidth ? layout.bodyWidth - (layout.scrollY ? layout.gutterWidth : 0) + 'px' : '';
-			},
-			tableWidth: function() {
-				var layout = this.layout;
-				return {width: layout.bodyWidth ? layout.bodyWidth + (layout.scrollY ? layout.gutterWidth : 0) + 2 + 'px' : ''};
-			},
-			wrapperWidth: function() {
-				var layout = this.layout;
-				if (this.$el && parseInt(this.$el.style.width) < layout.bodyWidth + layout.gutterWidth) return '';
-				var colLen = this.columns.length;
-				if (colLen> 0 && this.columns[colLen-1].fixed === 'right') return '';
-				if (colLen > 0 && this.columns[colLen-1].width) {
-					return {width: layout.bodyWidth ? layout.bodyWidth + (layout.scrollY ? layout.gutterWidth : 0) + 'px' : ''};
-				} else {
-					return {width: layout.bodyWidth ? layout.bodyWidth + 'px' : ''};
-				}
 			},
 			fixedBodyHeight: function() {
 				var style = {};
@@ -1956,7 +2215,6 @@
 		},
 		mounted: function() {
 			var self = this;
-			self.bindEvents();
 			self.doLayout();
 			self.store.states.columns.forEach(function(column) {
 				if (column.filteredValue && column.filteredValue.length) {
@@ -1968,7 +2226,9 @@
 				}
 			});
 			self.$ready = true;
-			self.doLayout();
+			self.$nextTick(function(){
+				self.bindEvents();
+			});
 		},
 		data: function() {
 			var self = this;
@@ -1986,7 +2246,9 @@
 				store: store,
 				layout: layout,
 				renderExpanded: null,
-				resizeProxyVisible: false
+				resizeProxyVisible: false,
+				showContextMenu: false,
+				bodyScroll: {left:0, top:0}
 			};
 		}
 	};

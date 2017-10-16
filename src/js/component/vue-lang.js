@@ -96,7 +96,18 @@
 					confirmFilter: '筛选',
 					resetFilter: '重置',
 					clearFilter: '全部',
-					sumText: '合计'
+					sumText: '合计',
+					contextMenu: '快捷菜单',
+					pin: '固定列',
+					leftPin: '固定至左边',
+					rightPin: '固定至右边',
+					sort: '排序',
+					sortBy: '排序集',
+					filter: '过滤',
+					column: '字段',
+					conditions: '条件',
+					filterBy: '过滤集',
+					display: '列显示'
 				},
 				tree: {
 					emptyText: '暂无数据'
@@ -193,7 +204,18 @@
 					confirmFilter: '確認',
 					resetFilter: '初期化',
 					clearFilter: 'すべて',
-					sumText: '合計'
+					sumText: '合計',
+					contextMenu: 'コンテキスト・メニュー',
+					pin: '固定列',
+					leftPin: '左に固定',
+					rightPin: '右に固定',
+					sort: 'ソート',
+					sortBy: 'ソート集',
+					filter: 'フィルター',
+					column: 'カラム',
+					conditions: '条件',
+					filterBy: 'フィルター集',
+					display: '列表示'
 				},
 				tree: {
 					emptyText: 'データなし'
@@ -290,7 +312,18 @@
 					confirmFilter: 'Confirm',
 					resetFilter: 'Reset',
 					clearFilter: 'All',
-					sumText: 'Sum'
+					sumText: 'Sum',
+					contextMenu: 'Context Menu',
+					pin: 'Pin',
+					leftPin: 'Left Pin',
+					rightPin: 'Right Pin',
+					sort: 'Sort',
+					sortBy: 'Sort By',
+					filter: 'Filter',
+					column: 'Column',
+					conditions: 'Conditions',
+					filterBy: 'Filter By',
+					display: 'Display'
 				},
 				tree: {
 					emptyText: 'No Data'

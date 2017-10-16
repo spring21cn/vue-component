@@ -4,6 +4,7 @@
 		define(['Vue', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueCheckboxGroup', this, function(Vue, VueUtil) {
 	'use strict';
@@ -28,7 +29,4 @@
 		}
 	};
 	Vue.component(VueCheckboxGroup.name, VueCheckboxGroup);
-	return function() {
-		return VueCheckboxGroup;
-	}
 });

@@ -4,11 +4,12 @@
 		define(['Vue', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueOption', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueOption = {
-		template: '<li @mouseenter="hoverItem" @click.stop="selectOptionClick" class="vue-select-dropdown__item" v-show="visible" :class="{\'selected\': itemSelected, \'is-disabled\': disabled || groupDisabled || limitReached}"><slot><span>{{ currentLabel }}</span></slot></li>',
+		template: '<li @mouseenter="hoverItem" @click.stop="selectOptionClick" class="vue-select-dropdown__item" v-show="visible" :class="{\'selected\': itemSelected, \'is-disabled\': disabled || groupDisabled || limitReached, \'hover\': itemHover}"><slot><span>{{ currentLabel }}</span></slot></li>',
 		name: 'VueOption',
 		componentName: 'VueOption',
 		mixins: [VueUtil.component.emitter],
@@ -55,6 +56,9 @@
 				} else {
 					return this.parent.value.indexOf(this.value) > -1;
 				}
+			},
+			itemHover: function(){
+				return this.parent.hoverIndex === this.parent.options.indexOf(this);
 			},
 			limitReached: function() {
 				if (this.parent.multiple) {
@@ -117,7 +121,4 @@
 		}
 	};
 	Vue.component(VueOption.name, VueOption);
-	return function() {
-		return VueOption;
-	}
 });

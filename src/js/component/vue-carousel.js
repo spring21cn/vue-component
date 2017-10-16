@@ -9,7 +9,7 @@
 })('VueCarousel', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueCarousel = {
-		template: '<div class="vue-carousel" :class="{ \'vue-carousvue--card\': type === \'card\' }" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave"><div class="vue-carousel__container" :style="{ height: height }"><transition name="carousvue-arrow-left"><button v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousvue-arrow-right"><button v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul class="vue-carousel__indicators" v-if="indicatorPosition !== \'none\'" :class="{ \'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\' }"><li v-for="(item, index) in items" class="vue-carousel__indicator" :class="{ \'is-active\': index === activeIndex }" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button class="vue-carousel__button"></button></li></ul></div>',
+		template: '<div class="vue-carousel" :class="{ \'vue-carousvue--card\': type === \'card\' }" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave"><div class="vue-carousel__container" :style="{ height: height }"><transition name="carousel-arrow-left"><button v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousel-arrow-right"><button v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul class="vue-carousel__indicators" v-if="indicatorPosition !== \'none\'" :class="{ \'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\' }"><li v-for="(item, index) in items" class="vue-carousel__indicator" :class="{ \'is-active\': index === activeIndex }" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button class="vue-carousel__button"></button></li></ul></div>',
 		name: 'VueCarousel',
 		props: {
 			initialIndex: {
@@ -38,6 +38,10 @@
 				type: String,
 				default: 'hover'
 			},
+			hoverStop: {
+				type: Boolean,
+				default: true
+			},
 			type: String
 		},
 		data: function() {
@@ -62,11 +66,11 @@
 		methods: {
 			handleMouseEnter: function() {
 				this.hover = true;
-				this.pauseTimer();
+				if (this.hoverStop) this.pauseTimer();
 			},
 			handleMouseLeave: function() {
 				this.hover = false;
-				this.startTimer();
+				if (this.hoverStop) this.startTimer();
 			},
 			itemInStage: function(item, index) {
 				var length = this.items.length;
@@ -91,9 +95,6 @@
 					item.hover = self;
 				});
 			},
-			handleItemChange: VueUtil.component.debounce(100, function() {
-				this.updateItems();
-			}),
 			updateItems: function() {
 				this.items = this.$children.filter(function(child) {
 					return child.$options.name === 'VueCarouselItem';

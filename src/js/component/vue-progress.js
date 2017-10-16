@@ -4,6 +4,7 @@
 		define(['Vue'], definition);
 	} else {
 		context[name] = definition(context['Vue']);
+		delete context[name];
 	}
 })('VueProgress', this, function(Vue) {
 	'use strict';
@@ -19,7 +20,6 @@
 			percentage: {
 				type: Number,
 				default: 0,
-				required: true,
 				validator: function(val) {return val >= 0 && val <= 100;}
 			},
 			status: {
@@ -94,7 +94,4 @@
 		}
 	};
 	Vue.component(VueProgress.name, VueProgress);
-	return function() {
-		return VueProgress;
-	}
 });

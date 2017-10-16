@@ -91,14 +91,16 @@
 							bottom: self.offsetBottom + 'px',
 							left: elOffset.left + 'px',
 							width: self.$el.offsetWidth + 'px',
-							position: 'fixed'
+							position: 'fixed',
+							zIndex: VueUtil.component.popupManager.nextZIndex()
 						};
 					} else {
 						self.styles = {
 							top: self.offsetTop + 'px',
 							left: elOffset.left + 'px',
 							width: self.$el.offsetWidth + 'px',
-							position: 'fixed'
+							position: 'fixed',
+							zIndex: VueUtil.component.popupManager.nextZIndex()
 						};
 					}
 				} else {
@@ -127,7 +129,8 @@
 						top: this.offsetTop + 'px',
 						left: elOffset.left + 'px',
 						width: this.$el.offsetWidth + 'px',
-						position: 'fixed'
+						position: 'fixed',
+						zIndex: VueUtil.component.popupManager.nextZIndex()
 					};
 					this.$emit('change', true);
 				} else if ((elOffset.top - this.offsetTop) > scrollTop && this.offsetType == 'top' && pin) {
@@ -141,7 +144,8 @@
 						bottom: this.offsetBottom + 'px',
 						left: elOffset.left + 'px',
 						width: this.$el.offsetWidth + 'px',
-						position: 'fixed'
+						position: 'fixed',
+						zIndex: VueUtil.component.popupManager.nextZIndex()
 					};
 					this.$emit('change', true);
 				} else if ((elOffset.top + this.offsetBottom + elHeight) < (scrollTop + windowHeight) && this.offsetType == 'bottom' && pin) {

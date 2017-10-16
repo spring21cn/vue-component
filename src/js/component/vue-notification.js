@@ -1,12 +1,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VuePopup'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopup']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueNotification', this, function(Vue, VueUtil, VuePopup) {
+})('VueNotification', this, function(Vue, VueUtil) {
 	'use strict';
 	var typeMap = {
 		success: 'circle-check',
@@ -15,7 +15,7 @@
 		error: 'circle-cross'
 	};
 	var VueNotification = {
-		template: '<transition :name="isLeft ? \'vue-notification-fade-left\' : isTop ? \'vue-notification-fade-top\' : isBottom ? \'vue-notification-fade-bottom\' : isCenter? \'vue-notification-fade-center\' : \'vue-notification-fade\'"><div class="vue-notification" :class="[{\'vue-notification-translateX\':centerX, \'vue-notification-translateY\':centerY},customClass]" v-show="visible" :style="{ top: top ? top + \'px\' : \'auto\', bottom: bottom ? bottom + \'px\' : \'auto\', left: left ? left + \'px\' : \'auto\', right: right ? right + \'px\' : \'auto\' }" @mouseenter="clearTimer()" @mouseleave="startTimer()"><i class="vue-notification__icon" :class="[ typeClass, iconClass ]" v-if="type || iconClass"></i><div class="vue-notification__group" :class="{ \'is-with-icon\': typeClass || iconClass }"><h2 class="vue-notification__title" v-text="title"></h2><div class="vue-notification__content"><slot>{{ message }}</slot></div><div class="vue-notification__closeBtn vue-icon-close" @click="close"></div></div></div></transition>',
+		template: '<transition :name="isLeft ? \'vue-notification-fade-left\' : isTop ? \'vue-notification-fade-top\' : isBottom ? \'vue-notification-fade-bottom\' : isCenter? \'vue-notification-fade-center\' : \'vue-notification-fade\'"><div class="vue-notification" :class="[{\'vue-notification-translateX\':centerX, \'vue-notification-translateY\':centerY},customClass]" v-show="visible" :style="{ top: top ? top + \'px\' : \'auto\', bottom: bottom ? bottom + \'px\' : \'auto\', left: left ? left + \'px\' : \'auto\', right: right ? right + \'px\' : \'auto\' }"><i class="vue-notification__icon" :class="[ typeClass, iconClass ]" v-if="type || iconClass"></i><div class="vue-notification__group"><h2 class="vue-notification__title" v-text="title" v-if="showTitle"></h2><div class="vue-notification__content" v-if="showMessage" :style="{\'margin-top\':showTitle?\'10px\':\'\'}"><slot>{{ message }}</slot></div><div class="vue-notification__closeBtn vue-icon-close" @click="close" v-if="duration===0"></div></div></div></transition>',
 		data: function() {
 			return {
 				visible: false,
@@ -33,7 +33,7 @@
 				right: null,
 				centerX: false,
 				centerY: false,
-				position: 'right-top',
+				position: 'top-right',
 				timer: null,
 				isLeft: false,
 				isTop: false,
@@ -42,41 +42,27 @@
 			};
 		},
 		computed: {
-			typeClass: function() {
-				return this.type && typeMap[this.type] ? 'vue-icon-' + typeMap[this.type] : '';
-			}
-		},
-		watch: {
-			closed: function(newVal) {
-				if (newVal) {
-					this.visible = false;
-					this.$el.addEventListener('transitionend', this.destroyElement);
+			showTitle: function() {
+				if (VueUtil.trim(this.title) === "") {
+					return false;
 				}
+				return true;
+			},
+			showMessage: function() {
+				if (VueUtil.trim(this.message) === "" && !this.$slots.default) {
+					return false;
+				}
+				return true;
+			},
+			typeClass: function() {
+				return this.type && typeMap[this.type.toLowerCase()] ? 'vue-icon-' + typeMap[this.type.toLowerCase()] : '';
 			}
 		},
 		methods: {
-			destroyElement: function() {
-				this.$el.removeEventListener('transitionend', this.destroyElement);
-				this.$destroy(true);
-				this.$el.parentNode.removeChild(this.$el);
-			},
 			close: function() {
 				this.closed = true;
 				if (typeof this.onClose === 'function') {
 					this.onClose();
-				}
-			},
-			clearTimer: function() {
-				clearTimeout(this.timer);
-			},
-			startTimer: function() {
-				var self = this;
-				if (self.duration > 0) {
-					self.timer = setTimeout(function() {
-						if (!self.closed) {
-							self.close();
-						}
-					}, self.duration);
 				}
 			}
 		},
@@ -91,11 +77,7 @@
 			}
 		}
 	};
-	var isVNode = function(node) {
-		return typeof node === 'object' && Object.prototype.hasOwnProperty.call(node, 'componentOptions');
-	};
 	var NotificationConstructor = Vue.extend(VueNotification);
-	var instance;
 	var instances = [];
 	var leftTopInstances = [];
 	var leftBottomInstances = [];
@@ -113,31 +95,32 @@
 		options.onClose = function() {
 			Notification.close(id, userOnClose);
 		};
-		instance = new NotificationConstructor({
+		var instance = new NotificationConstructor({
 			data: options
 		});
-		if (isVNode(options.message)) {
+		if (VueUtil.component.isVNode(options.message)) {
 			instance.$slots.default = [options.message];
 			options.message = '';
 		}
 		instance.id = id;
 		instance.vm = instance.$mount();
-		document.body.appendChild(instance.vm.$el);
 		instance.vm.visible = true;
 		instance.dom = instance.vm.$el;
-		instance.dom.style.zIndex = VuePopup().PopupManager.nextZIndex();
-		var positionX = instance.position.split("-")[0];
-		var positionY = instance.position.split("-")[1];
-		if (!positionX || !positionY) {
-			positionX = 'right';
-			positionY = 'top'
-		}
+		instance.dom.style.zIndex = VueUtil.component.popupManager.nextZIndex();
+		var instancePosition = instance.position.split("-");
+		var positionX = instancePosition[1];
+		var positionY = instancePosition[0];
 		var isLeft = positionX.indexOf('left')!==-1;
 		var isCenterX = positionX.indexOf('center')!==-1;
 		var isRight = positionX.indexOf('right')!==-1;
 		var isTop = positionY.indexOf('top')!==-1;
 		var isCenterY = positionY.indexOf('center')!==-1;
 		var isBottom = positionY.indexOf('bottom')!==-1;
+		if ((!isLeft && !isCenterX && !isRight) || (!isTop && !isCenterY && !isBottom)) {
+			VueUtil.removeNode(instance.dom);
+			instance.$destroy();
+			return;
+		}
 		instance.isLeft = false;
 		instance.isBottom = false;
 		instance.top = false;
@@ -146,7 +129,7 @@
 			instance.centerY = true;
 		}
 		if (isLeft) {
-			instance.left = 0;
+			instance.left = 8;
 			instance.isLeft = true;
 		}
 		if (isCenterX) {
@@ -154,7 +137,7 @@
 			instance.isCenter = true;
 		}
 		if (isRight) {
-			instance.right = 16;
+			instance.right = 8;
 		}
 		if (isBottom) {
 			if (isLeft) {
@@ -212,28 +195,29 @@
 		}
 		instance.dom.style.display = "";
 		instances.push(instance);
-		return instance.vm;
+		try {
+			top.document.body.appendChild(instance.vm.$el);
+		} catch (e) {
+			document.body.appendChild(instance.vm.$el);
+		}
 	};
 	['success', 'warning', 'info', 'error'].forEach(function(type) {
 		Notification[type] = function(options) {
-			if (typeof options === 'string' || isVNode(options)) {
-				options = {
-					message: options
-				};
-			}
 			options.type = type;
-			return Notification(options);
+			Notification(options);
 		};
 	});
 	Notification.close = function(id, userOnClose) {
 		for (var i = 0, len = instances.length; i < len; i++) {
-			if (id === instances[i].id) {
+			var instance = instances[i];
+			if (id === instance.id) {
 				if (typeof userOnClose === 'function') {
-					userOnClose(instances[i]);
+					userOnClose(instance);
 				}
-				var removedHeight = instances[i].dom.offsetHeight + offHeight;
-				var positionX = instances[i].position.split("-")[0]||"right";
-				var positionY = instances[i].position.split("-")[1]||"top";
+				var removedHeight = instance.dom.offsetHeight + offHeight;
+				var instancesPosition = instance.position.split("-");
+				var positionX = instancesPosition[1];
+				var positionY = instancesPosition[0];
 				var isLeft = positionX.indexOf('left')!==-1;
 				var isCenterX = positionX.indexOf('center')!==-1;
 				var isRight = positionX.indexOf('right')!==-1;
@@ -241,50 +225,58 @@
 				var isBottom = positionY.indexOf('bottom')!==-1;
 				if (isBottom) {
 					if (isLeft) {
-						leftBottomInstances.splice(i, 1);
-						for (var lbi = i, lbj = leftBottomInstances.length; lbi < lbj ; lbi++) {
+						var lbi = leftBottomInstances.indexOf(instance);
+						leftBottomInstances.splice(lbi, 1);
+						for (var lbj = leftBottomInstances.length; lbi < lbj ; lbi++) {
 							leftBottomInstances[lbi].dom.style.bottom = parseInt(leftBottomInstances[lbi].dom.style.bottom, 10) - removedHeight + 'px';
 						}
 					}
 					if (isCenterX) {
-						centerBottomInstances.splice(i, 1);
-						for (var cbi = i, cbj = centerBottomInstances.length; cbi < cbj ; cbi++) {
+						var cbi = centerBottomInstances.indexOf(instance);
+						centerBottomInstances.splice(cbi, 1);
+						for (var cbj = centerBottomInstances.length; cbi < cbj ; cbi++) {
 							centerBottomInstances[cbi].dom.style.bottom = parseInt(centerBottomInstances[cbi].dom.style.bottom, 10) - removedHeight + 'px';
 						}
 					}
 					if (isRight) {
-						rightBottomInstances.splice(i, 1);
-						for (var rbi = i, rbj = rightBottomInstances.length; rbi < rbj ; rbi++) {
+						var rbi = rightBottomInstances.indexOf(instance);
+						rightBottomInstances.splice(rbi, 1);
+						for (var rbj = rightBottomInstances.length; rbi < rbj ; rbi++) {
 							rightBottomInstances[rbi].dom.style.bottom = parseInt(rightBottomInstances[rbi].dom.style.bottom, 10) - removedHeight + 'px';
 						}
 					}
 				}
 				if (isTop) {
 					if (isLeft) {
-						leftTopInstances.splice(i, 1);
-						for (var lti = i, ltj = leftTopInstances.length; lti < ltj ; lti++) {
+						var lti = leftTopInstances.indexOf(instance);
+						leftTopInstances.splice(lti, 1);
+						for (var ltj = leftTopInstances.length; lti < ltj ; lti++) {
 							leftTopInstances[lti].dom.style.top = parseInt(leftTopInstances[lti].dom.style.top, 10) - removedHeight + 'px';
 						}
 					}
 					if (isCenterX) {
-						centerTopInstances.splice(i, 1);
-						for (var cti = i, ctj = centerTopInstances.length; cti < ctj ; cti++) {
+						var cti = centerTopInstances.indexOf(instance);
+						centerTopInstances.splice(cti, 1);
+						for (var ctj = centerTopInstances.length; cti < ctj ; cti++) {
 							centerTopInstances[cti].dom.style.top = parseInt(centerTopInstances[cti].dom.style.top, 10) - removedHeight + 'px';
 						}
 					
 					}
 					if (isRight) {
-						rightTopInstances.splice(i, 1);
-						for (var rti = i, rtj = rightTopInstances.length; rti < rtj ; rti++) {
+						var rti = rightTopInstances.indexOf(instance);
+						rightTopInstances.splice(rti, 1);
+						for (var rtj = rightTopInstances.length; rti < rtj ; rti++) {
 							rightTopInstances[rti].dom.style.top = parseInt(rightTopInstances[rti].dom.style.top, 10) - removedHeight + 'px';
 						}
 					}
 				}
-				instances[i].dom.parentElement.removeChild(instances[i].dom);
+				VueUtil.removeNode(instance.dom);
+				instance.$destroy();
 				instances.splice(i, 1);
 				break;
 			}
 		}
 	};
 	Vue.prototype.$notify = Notification;
+	Vue.notify = Notification;
 });

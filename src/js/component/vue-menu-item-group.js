@@ -1,12 +1,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueMenuItemGroup', this, function(Vue) {
+})('VueMenuItemGroup', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueMenuItemGroup = {
 		template: '<li class="vue-menu-item-group"><div class="vue-menu-item-group__title" :style="{paddingLeft: levelPadding + \'px\'}" v-if="showTitle"><template v-if="!$slots.title">{{title}}</template><slot v-else name="title"></slot></div><ul><slot></slot></ul></li>',
@@ -25,7 +25,7 @@
 		},
 		computed: {
 			showTitle: function() {
-				if (this.title.replace(/^\s+|\s+$/g, "") === "" && !this.$slots.title) {
+				if (VueUtil.trim(this.title) === "" && !this.$slots.title) {
 					return false;
 				}
 				return true;

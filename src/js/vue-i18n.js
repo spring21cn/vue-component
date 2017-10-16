@@ -5,9 +5,9 @@
  */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(['Vue'],factory) :
+  typeof define === 'function' && define.amd ? define(['Vue'], factory) :
   (global.VueI18n = factory(global.Vue));
-}(this, (function (Vue) { 'use strict';
+}(this, (function (globalVue) { 'use strict';
 
 /**
  * warn
@@ -18,12 +18,12 @@
  */
 
 function warn (msg, err) {
-//  if (window.console) {
-//    console.warn('[vue-i18n] ' + msg);
-//    if (err) {
-//      console.warn(err.stack);
-//    }
-//  }
+  if (window.console) {
+    console.warn('[vue-i18n] ' + msg);
+    if (err) {
+      console.warn(err.stack);
+    }
+  }
 }
 
 var Asset = function (Vue, langVM) {
@@ -46,8 +46,6 @@ var Asset = function (Vue, langVM) {
         setLocale(id, definition, function (locale) {
           if (locale) {
             langVM.$set(langVM.locales, id, locale);
-          } else {
-            warn('failed set `' + id + '` locale');
           }
           cb && cb();
         });
@@ -737,7 +735,7 @@ var Extend = function (Vue) {
     if (Array.isArray(val)) { return val }
     if (isNil(val)) { val = locale[key]; }
     if (isNil(val)) { return null }
-    if (typeof val !== 'string') { warn("Value of key '" + key + "' is not a string!"); return null }
+    if (typeof val !== 'string') { return null }
 
     // Check for the existance of links within the translated string
     if (val.indexOf('@:') >= 0) {
@@ -770,10 +768,6 @@ var Extend = function (Vue) {
 
     res = interpolate(getter(fallback), key, params);
     if (!isNil(res)) {
-      {
-        warn('Fall back to translate the keypath "' + key + '" with "' +
-          fallback + '" language.');
-      }
       return res
     } else {
       return null
@@ -785,11 +779,6 @@ var Extend = function (Vue) {
     if (!isNil(result)) { return result }
     if (Vue.config.missingHandler) {
       Vue.config.missingHandler.apply(null, [lang, key, vm]);
-    } else {
-      {
-        warn('Cannot translate the value of keypath "' + key + '". ' +
-          'Use the value of keypath as default');
-      }
     }
     return key
   }
@@ -1004,9 +993,7 @@ function setupLangVM (Vue, lang) {
 
 plugin.version = '5.0.3';
 
-if (typeof window !== 'undefined' && Vue) {
-  Vue.use(plugin);
-}
+globalVue.use(plugin);
 
 return plugin;
 

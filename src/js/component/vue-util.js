@@ -44,6 +44,74 @@
 	var ieVersion = isServer ? 0 : Number(document.documentMode);
 	var SPECIAL_CHARS_REGEXP = /([\:\-\_]+(.))/g;
 	var MOZ_HACK_REGEXP = /^moz([A-Z])/;
+	var isVNode = function(node) {
+		return typeof node === 'object' && Object.prototype.hasOwnProperty.call(node, 'componentOptions');
+	};
+	var isArray = Array.isArray || function(obj) {
+		return toString.call(obj) === '[object Array]';
+	};
+	var isFunction = function(obj) {
+		return typeof obj == 'function' || false;
+	};
+	var isObject = function(obj) {
+		var type = typeof obj;
+		return type === 'function' || type === 'object' && !!obj;
+	};
+	var instances = {};
+	var popupManager = {
+		zIndex: 2000,
+		getInstance: function(id) {
+			return instances[id];
+		},
+		register: function(id, instance) {
+			if (id && instance) {
+				instances[id] = instance;
+			}
+		},
+		deregister: function(id) {
+			if (id) {
+				instances[id] = null;
+				delete instances[id];
+			}
+		},
+		nextZIndex: function() {
+			return popupManager.zIndex++;
+		},
+		modalStack: [],
+		openModal: function(id, zIndex) {
+			if (Vue.prototype.$isServer)
+				return;
+			if (!id || zIndex === undefined)
+				return;
+			var modalStack = this.modalStack;
+			for (var i = 0, j = modalStack.length; i < j; i++) {
+				var item = modalStack[i];
+				if (item.id === id) {
+					return;
+				}
+			}
+			this.modalStack.push({
+				id: id,
+				zIndex: zIndex
+			});
+		},
+		closeModal: function(id) {
+			var modalStack = this.modalStack;
+			if (modalStack.length > 0) {
+				var topItem = modalStack[modalStack.length - 1];
+				if (topItem.id === id) {
+					modalStack.pop();
+				} else {
+					for (var i = modalStack.length - 1; i >= 0; i--) {
+						if (modalStack[i].id === id) {
+							modalStack.splice(i, 1);
+							break;
+						}
+					}
+				}
+			}
+		}
+	};
 	var on = (function() {
 		if (!isServer && document.addEventListener) {
 			return function(element, event, handler) {
@@ -84,7 +152,8 @@
 		on(el, event, listener);
 	};
 	var trim = function(string) {
-		return (string || '').replace(/^[\s\uFEFF]+|[\s\uFEFF]+$/g, '');
+		if (typeof string !== 'string') string = '';
+		return string.replace(/^[\s\uFEFF]+|[\s\uFEFF]+$/g, '');
 	};
 	var hasClass = function(el, clazz) {
 		if (!el || !clazz)
@@ -153,14 +222,14 @@
 		}
 		try {
 			switch (styleName) {
-				case 'opacity':
-					try {
-						return element.filters.item('alpha').opacity / 100;
-					} catch (e) {
-						return 1.0;
-					}
-				default:
-					return (element.style[styleName] || element.currentStyle ? element.currentStyle[styleName] : null);
+			case 'opacity':
+				try {
+					return element.filters.item('alpha').opacity / 100;
+				} catch (e) {
+					return 1.0;
+				}
+			default:
+				return (element.style[styleName] || element.currentStyle ? element.currentStyle[styleName] : null);
 			}
 		} catch (e) {
 			return element.style[styleName];
@@ -207,6 +276,20 @@
 			}
 		}
 		return target;
+	};
+	var mergeArray = function(arr) {
+		if (isArray(arr)) {
+			for (var i = 0, arr2 = Array(arr.length), j = arr.length; i < j; i++) {
+				var arrObj = arr[i];
+				if (isObject(arrObj)) {
+					arr2[i] = merge({}, arrObj);
+				} else {
+					arr2[i] = arrObj;
+				}
+			}
+			return arr2;
+		}
+		return [];
 	};
 	var broadcast = function(componentName, eventName, params) {
 		this.$children.forEach(function(child) {
@@ -282,8 +365,7 @@
 			}
 		}
 	};
-	var transition = function() {
-	};
+	var transition = function() {};
 	transition.prototype.beforeEnter = function(el) {
 		if (!el.dataset)
 			el.dataset = {};
@@ -292,7 +374,7 @@
 		el.style.height = '0';
 		el.style.paddingTop = 0;
 		el.style.paddingBottom = 0;
-	};
+	}
 	transition.prototype.enter = function(el) {
 		el.dataset.oldOverflow = el.style.overflow;
 		if (el.scrollHeight !== 0) {
@@ -305,11 +387,11 @@
 			el.style.paddingBottom = el.dataset.oldPaddingBottom;
 		}
 		el.style.overflow = 'hidden';
-	};
+	}
 	transition.prototype.afterEnter = function(el) {
 		el.style.height = '';
 		el.style.overflow = el.dataset.oldOverflow;
-	};
+	}
 	transition.prototype.beforeLeave = function(el) {
 		if (!el.dataset)
 			el.dataset = {};
@@ -318,20 +400,20 @@
 		el.dataset.oldOverflow = el.style.overflow;
 		el.style.height = el.scrollHeight + 'px';
 		el.style.overflow = 'hidden';
-	};
+	}
 	transition.prototype.leave = function(el) {
 		if (el.scrollHeight !== 0) {
 			el.style.height = 0;
 			el.style.paddingTop = 0;
 			el.style.paddingBottom = 0;
 		}
-	};
+	}
 	transition.prototype.afterLeave = function(el) {
 		el.style.height = '';
 		el.style.overflow = el.dataset.oldOverflow;
 		el.style.paddingTop = el.dataset.oldPaddingTop;
 		el.style.paddingBottom = el.dataset.oldPaddingBottom;
-	};
+	}
 	var collapseTransition = {
 		functional: true,
 		render: function(createElement, obj) {
@@ -339,7 +421,7 @@
 			var data = {
 				on: new transition()
 			};
-			children.map(function(child) {
+			children.forEach(function(child) {
 				child.data.class = ['collapse-transition'];
 			});
 			return createElement('transition', data, children);
@@ -606,6 +688,7 @@
 		return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
 	};
 	var prevMonth = function(src) {
+		src = toDate(src);
 		var year = src.getFullYear();
 		var month = src.getMonth();
 		var date = src.getDate();
@@ -620,6 +703,7 @@
 		return new Date(src.getTime());
 	};
 	var nextMonth = function(src) {
+		src = toDate(src);
 		var year = src.getFullYear();
 		var month = src.getMonth();
 		var date = src.getDate();
@@ -637,7 +721,9 @@
 		var hours = [];
 		var disabledHours = [];
 		(ranges || []).forEach(function(range) {
-			var value = range.map(function(date) {return date.getHours();});
+			var value = range.map(function(date) {
+				return date.getHours();
+			});
 			disabledHours = disabledHours.concat(newArray(value[0], value[1]));
 		});
 		if (disabledHours.length) {
@@ -670,7 +756,7 @@
 		});
 		return date < minDate ? minDate : maxDate;
 	};
-	var setLang = function (lang) {
+	var setLang = function(lang) {
 		if (lang) {
 			Vue.config.lang = lang;
 		}
@@ -678,6 +764,9 @@
 	var setLocale = function(lang, langObjs) {
 		langObjs = merge({}, Vue.locale(lang), langObjs);
 		Vue.locale(lang, langObjs);
+	};
+	var noLog = function() {
+		Vue.config.silent = true;
 	};
 	var arrayfrom = function(arr) {
 		var isCallable = function(fn) {
@@ -733,8 +822,8 @@
 		return from(arr);
 	};
 	var toConsumableArray = function(arr) {
-		if (Array.isArray(arr)) {
-			for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+		if (isArray(arr)) {
+			for (var i = 0, arr2 = Array(arr.length), j = arr.length; i < j; i++) {
 				arr2[i] = arr[i];
 			}
 			return arr2;
@@ -743,18 +832,16 @@
 		}
 	};
 	var removeNode = function(node) {
-		node.parentElement.removeChild(node);
+		node && node.parentElement && node.parentElement.removeChild(node);
 	};
 	var insertNodeAt = function(fatherNode, node, position) {
-		if (position < fatherNode.children.length) {
-			fatherNode.insertBefore(node, fatherNode.children[position]);
-		} else {
-			fatherNode.appendChild(node);
-		}
+		if (typeof position === 'undefined') position = 0;
+		var refNode = (position === 0) ? fatherNode.children[0] : fatherNode.children[position - 1].nextSibling
+		fatherNode.insertBefore(node, refNode)
 	};
 	var arrayToObject = function(arr) {
 		var res = {};
-		for (var i = 0, j=arr.length; i < j; i++) {
+		for (var i = 0, j = arr.length; i < j; i++) {
 			var arrObj = arr[i];
 			if (arrObj) {
 				for (var key in arrObj) {
@@ -764,7 +851,7 @@
 		}
 		return res;
 	};
-	var loadVue = function(url, mountId, option, callbackFn){
+	var loadVue = function(url, mountId, option, callbackFn) {
 		var mountElement = document.querySelector(mountId);
 		if (mountElement) {
 			mountElement.innerHTML = '';
@@ -773,7 +860,7 @@
 				var tmpDiv = document.createElement('DIV');
 				tmpDiv.innerHTML = response.bodyText;
 				var vueStyle = tmpDiv.querySelector('style');
-				if (vueStyle.id && !document.querySelector('#'+vueStyle.id)) {
+				if (vueStyle.id && !document.querySelector('#' + vueStyle.id)) {
 					mountElement.appendChild(vueStyle);
 				}
 				var vueScript = tmpDiv.querySelector('script');
@@ -791,14 +878,117 @@
 			});
 		}
 	};
-	var screenfull = function(){
+	var screenfull = function() {
 		if (!Screenfull.enabled) {
-			this.$alert(this.$t('vue.screenfull.canot'),{
+			this.$alert(this.$t('vue.screenfull.canot'), {
 				type: 'warning'
 			});
 			return false;
 		}
 		Screenfull.toggle();
+	};
+	var hasProperty = function(obj, path) {
+		if (!isArray(path)) {
+			return obj != null && hasOwnProperty.call(obj, path);
+		}
+		var length = path.length;
+		for (var i = 0; i < length; i++) {
+			var key = path[i];
+			if (obj == null || !hasOwnProperty.call(obj, key)) {
+				return false;
+			}
+			obj = obj[key];
+		}
+		return !!length;
+	};
+	var objKeys = function(obj) {
+		if (!isObject(obj)) return [];
+		if (Object.keys) return Object.keys(obj);
+		var keys = [];
+		for (var key in obj) if (hasProperty(obj, key)) keys.push(key);
+		if (hasEnumBug) collectNonEnumProps(obj, keys);
+		return keys;
+	};
+	var eq = function(a, b, aStack, bStack) {
+		if (a === b)
+			return a !== 0 || 1 / a === 1 / b;
+		if (a == null || b == null)
+			return false;
+		if (a !== a)
+			return b !== b;
+		var type = typeof a;
+		if (type !== 'function' && type !== 'object' && typeof b != 'object')
+			return false;
+		return deepEq(a, b, aStack, bStack);
+	};
+	var deepEq = function(a, b, aStack, bStack) {
+		var className = toString.call(a);
+		if (className !== toString.call(b))
+			return false;
+		switch (className) {
+		case '[object RegExp]':
+		case '[object String]':
+			return '' + a === '' + b;
+		case '[object Number]':
+			if (+a !== +a)
+				return +b !== +b;
+			return +a === 0 ? 1 / +a === 1 / b : +a === +b;
+		case '[object Date]':
+		case '[object Boolean]':
+			return +a === +b;
+		case '[object Symbol]':
+			return SymbolProto.valueOf.call(a) === SymbolProto.valueOf.call(b);
+		}
+		var areArrays = className === '[object Array]';
+		if (!areArrays) {
+			if (typeof a != 'object' || typeof b != 'object')
+				return false;
+			var aCtor = a.constructor;
+			var bCtor = b.constructor;
+			if (aCtor !== bCtor && !(isFunction(aCtor) && aCtor instanceof aCtor && isFunction(bCtor) && bCtor instanceof bCtor) && ('constructor'in a && 'constructor'in b)) {
+				return false;
+			}
+		}
+		aStack = aStack || [];
+		bStack = bStack || [];
+		var length = aStack.length;
+		while (length--) {
+			if (aStack[length] === a)
+				return bStack[length] === b;
+		}
+		aStack.push(a);
+		bStack.push(b);
+		if (areArrays) {
+			length = a.length;
+			if (length !== b.length)
+				return false;
+			while (length--) {
+				if (!eq(a[length], b[length], aStack, bStack))
+					return false;
+			}
+		} else {
+			var keys = objKeys(a), key;
+			length = keys.length;
+			if (objKeys(b).length !== length)
+				return false;
+			while (length--) {
+				key = keys[length];
+				if (!(hasProperty(b, key) && eq(a[key], b[key], aStack, bStack)))
+					return false;
+			}
+		}
+		aStack.pop();
+		bStack.pop();
+		return true;
+	};
+	var mouseEvents = ('ontouchstart' in window) ? {
+		down: 'touchstart',
+		move: 'touchmove',
+		up: 'touchend'
+	} : {
+		down: 'mousedown',
+		move: 'mousemove',
+		up: 'mouseup'
 	};
 	return {
 		on: on,
@@ -811,6 +1001,7 @@
 		getStyle: getStyle,
 		setStyle: setStyle,
 		merge: merge,
+		mergeArray: mergeArray,
 		addResizeListener: addResizeListener,
 		removeResizeListener: removeResizeListener,
 		parseDate: parseDate,
@@ -824,7 +1015,11 @@
 		arrayToObject: arrayToObject,
 		screenfull: screenfull,
 		loadVue: loadVue,
-		component:{
+		isEqual: eq,
+		prevMonth: prevMonth,
+		nextMonth: nextMonth,
+		noLog: noLog,
+		component: {
 			menumixin: menumixin,
 			emitter: emitter,
 			collapseTransition: collapseTransition,
@@ -839,8 +1034,9 @@
 			getFirstDayOfMonth: getFirstDayOfMonth,
 			getWeekNumber: getWeekNumber,
 			toConsumableArray: toConsumableArray,
-			prevMonth: prevMonth,
-			nextMonth: nextMonth
+			isVNode: isVNode,
+			popupManager: popupManager,
+			mouseEvents: mouseEvents
 		}
 	}
 });

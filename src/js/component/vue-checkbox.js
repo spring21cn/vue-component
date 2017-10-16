@@ -4,6 +4,7 @@
 		define(['Vue', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueCheckbox', this, function(Vue, VueUtil) {
 	'use strict';
@@ -93,7 +94,4 @@
 		}
 	};
 	Vue.component(VueCheckbox.name, VueCheckbox);
-	return function() {
-		return VueCheckbox;
-	}
 });

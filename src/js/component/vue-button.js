@@ -4,11 +4,12 @@
 		define(['Vue'], definition);
 	} else {
 		context[name] = definition(context['Vue']);
+		delete context[name];
 	}
 })('VueButton', this, function(Vue) {
 	'use strict';
 	var VueButton = {
-		template: '<button :disabled="disabled" class="vue-button" @click="handleClick" :autofocus="autofocus" :type="nativeType" :class="[type ? \'vue-button--\' + type : \'\', size ? \'vue-button--\' + size : \'\', { \'is-disabled\': disabled, \'is-loading\': loading, \'is-plain\': plain, \'is-circle\': circle } ]"><i class="vue-icon-loading" v-if="loading"></i><i :class="icon" v-if="icon && !loading"></i><span v-if="$slots.default"><slot></slot></span></button>',
+		template: '<button :disabled="disabled || loading" class="vue-button" @click="handleClick" :autofocus="autofocus" :type="nativeType" :class="[type ? \'vue-button--\' + type : \'\', size ? \'vue-button--\' + size : \'\', { \'is-disabled\': disabled, \'is-loading\': loading, \'is-plain\': plain, \'is-circle\': circle } ]"><i class="vue-icon-loading" v-if="loading"></i><i :class="icon" v-if="icon && !loading"></i><span v-if="$slots.default"><slot></slot></span></button>',
 		name: 'VueButton',
 		props: {
 			type: {
@@ -31,13 +32,13 @@
 			autofocus: Boolean
 		},
 		methods: {
+			focus: function() {
+				this.$el.focus();
+			},
 			handleClick: function(evt) {
 				this.$emit('click', evt);
 			}
 		}
 	};
 	Vue.component(VueButton.name, VueButton);
-	return function() {
-		return VueButton;
-	}
 });

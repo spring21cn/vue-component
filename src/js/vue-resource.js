@@ -8,7 +8,7 @@
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(['Vue'], factory) :
 	(global.VueResource = factory(global.Vue));
-}(this, (function (Vue) { 'use strict';
+}(this, (function (globalVue) { 'use strict';
 
 /**
  * Promises/A+ polyfill v1.1.4 (https://github.com/bramstein/promis)
@@ -1565,9 +1565,7 @@ function plugin(Vue) {
     });
 }
 
-if (typeof window !== 'undefined') {
-    Vue.use(plugin);
-}
+globalVue.use(plugin);
 
 return plugin;
 

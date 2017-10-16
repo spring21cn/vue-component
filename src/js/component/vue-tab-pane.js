@@ -1,12 +1,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueTabPane', this, function(Vue) {
+})('VueTabPane', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueTabPane = {
 		template: '<div class="vue-tab-pane" v-show="active"><slot></slot></div>',
@@ -36,9 +36,7 @@
 			this.$parent.addPanes(this);
 		},
 		destroyed: function() {
-			if (this.$el && this.$el.parentNode) {
-				this.$el.parentNode.removeChild(this.$el);
-			}
+			VueUtil.removeNode(this.$el);
 			this.$parent.removePanes(this);
 		},
 		watch: {

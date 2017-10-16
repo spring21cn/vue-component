@@ -1,11 +1,11 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePicker', 'VueUtil', 'VueTimePicker', 'VueInput'], definition);
+		define(['Vue', 'VuePicker', 'VueUtil', 'VueTimePicker'], definition);
 	} else {
-		context['VueDatePicker'] = definition(context['Vue'], context['VuePicker'], context['VueUtil'], context['VueTimePicker'], context['VueInput']);
+		context['VueDatePicker'] = definition(context['Vue'], context['VuePicker'], context['VueUtil'], context['VueTimePicker']);
 	}
-})('VueDatePicker', this, function(Vue, VuePicker, VueUtil, VueTimePicker, VueInput) {
+})('VueDatePicker', this, function(Vue, VuePicker, VueUtil, VueTimePicker) {
 	'use strict';
 	var DAY_DURATION = 86400000;
 	var WEEKS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -637,11 +637,10 @@
 			}
 		},
 		components: {
-			TimePicker: VueTimePicker().TimePicker,
+			TimePicker: VueTimePicker,
 			YearTable: YearTable,
 			MonthTable: MonthTable,
-			DateTable: DateTable,
-			VueInput: VueInput()
+			DateTable: DateTable
 		},
 		mounted: function() {
 			if (this.date && !this.year) {
@@ -743,9 +742,8 @@
 	var DateRangePanel = {
 		template: '<transition name="vue-zoom-in-top" @after-leave="$emit(\'dodestroy\')"><div v-show="visible" :style="{ width: width + \'px\' }" class="vue-picker-panel vue-date-range-picker" :class="[{\'has-sidebar\': $slots.sidebar || shortcuts,\'has-time\': showTime}, popperClass]"><div class="vue-picker-panel__body-wrapper"><slot name="sidebar" class="vue-picker-panel__sidebar"></slot><div class="vue-picker-panel__sidebar" v-if="shortcuts"><button type="button" class="vue-picker-panel__shortcut" v-for="shortcut in shortcuts" @click="handleShortcutClick(shortcut)">{{ shortcut.text }}</button></div><div class="vue-picker-panel__body"><div class="vue-date-range-picker__time-header" v-if="showTime"><span class="vue-date-range-picker__editors-wrap"><span class="vue-date-range-picker__time-picker-wrap"><vue-input size="small" :placeholder="$t(\'vue.datepicker.startDate\')" ref="minInput" class="vue-date-range-picker__editor" :value="minVisibleDate" @input.native="handleDateInput($event, \'min\')" @change.native="handleDateChange($event, \'min\')" /></span><span class="vue-date-range-picker__time-picker-wrap"><vue-input size="small" :placeholder="$t(\'vue.datepicker.startTime\')" class="vue-date-range-picker__editor" :value="minVisibleTime" @focus="minTimePickerVisible = !minTimePickerVisible" @change.native="handleTimeChange($event, \'min\')" /><time-picker :picker-width="minPickerWidth" ref="minTimePicker" :date="minDate" @pick="handleMinTimePick" :visible="minTimePickerVisible"></time-picker></span></span><span class="vue-icon-arrow-right"></span><span class="vue-date-range-picker__editors-wrap is-right"><span class="vue-date-range-picker__time-picker-wrap"><vue-input size="small" :placeholder="$t(\'vue.datepicker.endDate\')" class="vue-date-range-picker__editor" :value="maxVisibleDate" :readonly="!minDate" @input.native="handleDateInput($event, \'max\')" @change.native="handleDateChange($event, \'max\')" /></span><span class="vue-date-range-picker__time-picker-wrap"><vue-input size="small" :placeholder="$t(\'vue.datepicker.endTime\')" ref="maxInput" class="vue-date-range-picker__editor" :value="maxVisibleTime" @focus="minDate && (maxTimePickerVisible = !maxTimePickerVisible)" :readonly="!minDate" @change.native="handleTimeChange($event, \'max\')" /><time-picker :picker-width="maxPickerWidth" ref="maxTimePicker" :date="maxDate" @pick="handleMaxTimePick" :visible="maxTimePickerVisible"></time-picker></span></span></div><div class="vue-picker-panel__content vue-date-range-picker__content is-left"><div class="vue-date-range-picker__header"><button type="button" @click="prevYear" class="vue-picker-panel__icon-btn vue-icon-d-arrow-left"></button><button type="button" @click="prevMonth" class="vue-picker-panel__icon-btn vue-icon-arrow-left"></button><div>{{ leftLabel }}</div></div><date-table selection-mode="range" :date="date" :year="leftYear" :month="leftMonth" :min-date="minDate" :max-date="maxDate" :range-state="rangeState" :disabled-date="disabledDate" @changerange="handleChangeRange" :first-day-of-week="firstDayOfWeek" @pick="handleRangePick"></date-table></div><div class="vue-picker-panel__content vue-date-range-picker__content is-right"><div class="vue-date-range-picker__header"><button type="button" @click="nextYear" class="vue-picker-panel__icon-btn vue-icon-d-arrow-right"></button><button type="button" @click="nextMonth" class="vue-picker-panel__icon-btn vue-icon-arrow-right"></button><div>{{ rightLabel }}</div></div><date-table selection-mode="range" :date="rightDate" :year="rightYear" :month="rightMonth" :min-date="minDate" :max-date="maxDate" :range-state="rangeState" :disabled-date="disabledDate" @changerange="handleChangeRange" :first-day-of-week="firstDayOfWeek" @pick="handleRangePick"></date-table></div></div></div><div class="vue-picker-panel__footer" v-if="showTime"><a class="vue-picker-panel__link-btn" @click="handleClear">{{ clearLabel }}</a><button type="button" class="vue-picker-panel__btn" @click="handleConfirm()" :disabled="btnDisabled">{{ confirmLabel }}</button></div></div></transition>',
 		components: {
-			TimePicker: VueTimePicker().TimePicker,
-			DateTable: DateTable,
-			VueInput: VueInput()
+			TimePicker: VueTimePicker,
+			DateTable: DateTable
 		},
 		computed: {
 			btnDisabled: function() {
@@ -1005,10 +1003,10 @@
 				}
 			},
 			prevMonth: function() {
-				this.date = VueUtil.component.prevMonth(this.date);
+				this.date = VueUtil.prevMonth(this.date);
 			},
 			nextMonth: function() {
-				this.date = VueUtil.component.nextMonth(this.date);
+				this.date = VueUtil.nextMonth(this.date);
 			},
 			nextYear: function() {
 				var date = this.date;
@@ -1036,7 +1034,7 @@
 		return DatePanel;
 	};
 	var VueDatePicker = {
-		mixins: [VuePicker()],
+		mixins: [VuePicker],
 		name: 'VueDatePicker',
 		props: {
 			type: {

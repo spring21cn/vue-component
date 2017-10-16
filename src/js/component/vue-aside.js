@@ -1,25 +1,26 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePopup'], definition);
+		define(['Vue', 'VuePopup', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VuePopup']);
+		context[name] = definition(context['Vue'], context['VuePopup'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueAside', this, function(Vue, VuePopup) {
+})('VueAside', this, function(Vue, VuePopup, VueUtil) {
 	'use strict';
 	var VueAside = {
-		template: '<div :class="[{\'vue-aside__initial\':relative}]"><div v-show="visible" class="vue-aside__wrapper" :class="[{\'vue-aside__absolute\':relative}]" @click.self="handleWrapperClick"></div><transition :name="left ? \'vue-aside-left\' : \'vue-aside-right\'"><div v-show="visible" class="vue-aside" :class="[{\'vue-aside-left\':left, \'vue-aside__absolute\':relative},sizeClass,setClass]" ref="dialog" :style="setStyle"><div v-if="showClose" class="vue-aside__headerbtn"><i class="vue-aside__close vue-icon vue-icon-close" @click=\'handleClose\'></i></div><div class="vue-aside__header"><span class="vue-aside__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot></div><div class="vue-aside__body"><slot></slot></div><div class="vue-aside__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></transition></div>',
+		template: '<div :class="[{\'vue-aside__static\':relative}]"><div v-show="visibleaside" class="vue-aside__wrapper" :class="[{\'vue-aside__absolute\':relative}, {\'is-clear\': clearModal}]" @click.self="handleWrapperClick"></div><transition :name="left ? \'vue-aside-left\' : \'vue-aside-right\'"><div v-show="visibleaside" class="vue-aside" :class="[{\'vue-aside-left\':left, \'vue-aside__absolute\':relative},sizeClass,customClass]" ref="aside"><div v-if="showClose" class="vue-aside__headerbtn"><i class="vue-aside__close vue-icon vue-icon-close" @click=\'handleClose\'></i></div><div class="vue-aside__header"><span class="vue-aside__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot></div><div class="vue-aside__body"><slot></slot></div><div class="vue-aside__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></transition></div>',
 		name: 'VueAside',
-		mixins: [VuePopup().VuePopup],
+		mixins: [VuePopup],
+		data: function(){
+			return {
+				visibleaside: false
+			}
+		},
 		props: {
 			title: {
 				type: String,
 				default: ''
-			},
-			lockScroll: {
-				type: Boolean,
-				default: true
 			},
 			closeOnClickModal: {
 				type: Boolean,
@@ -45,53 +46,64 @@
 				type: Boolean,
 				default: false
 			},
-			asideClass: {
+			customClass: {
 				type: String,
 				default: ""
 			},
-			asideStyle: {
-				type: String,
-				default: ""
-			}
+			clearModal: {
+				type: Boolean,
+				default: false
+			},
+			beforeClose: Function
 		},
 		watch: {
-			visible: function(val) {
+			visibleaside: function(val){
 				if (val) {
+					this.opened = true;
 					this.$emit('open');
 					this.$el.addEventListener('scroll', this.updatePopper);
-					this.$el.firstElementChild.addEventListener('touchmove', function(event) {
-						event.preventDefault();
-						event.stopPropagation();
-					});
-					var refsDialog = this.$refs.dialog;
+					var refsAside = this.$refs.aside;
 					this.$nextTick(function() {
-						refsDialog.scrollTop = 0;
+						refsAside.scrollTop = 0;
 					});
 				} else {
+					this.opened = false;
 					this.$el.removeEventListener('scroll', this.updatePopper);
-					this.$el.firstElementChild.removeEventListener('touchmove', function(event) {
-						event.preventDefault();
-						event.stopPropagation();
-					});
 					this.$emit('close');
 				}
+			},
+			visible: function(val) {
+				if (val) {
+					this.visibleaside = val;
+				} else {
+					if (typeof this.beforeClose === 'function') {
+						var self = this;
+						var done = function(resolve) {
+							if (resolve === undefined) resolve = true;
+							if (resolve) {
+								self.$nextTick(function() {
+									self.visibleaside = val;
+								});
+							} else {
+								self.$emit('visible-change', true);
+							}
+						};
+						self.beforeClose(done);
+					} else {
+						this.visibleaside = val
+					}
+				} 
 			}
 		},
 		computed: {
 			showTitle: function() {
-				if (this.title.replace(/^\s+|\s+$/g, "") === "") {
+				if (VueUtil.trim(this.title) === "") {
 					return false;
 				}
 				return true;
 			},
 			sizeClass: function() {
 				return 'vue-aside--' + this.size;
-			},
-			setClass: function() {
-				return this.asideClass;
-			},
-			setStyle: function() {
-				return this.asideStyle;
 			}
 		},
 		methods: {
@@ -100,9 +112,6 @@
 				this.handleClose();
 			},
 			handleClose: function() {
-				if (typeof this.beforeClose === 'function') {
-					this.beforeClose();
-				}
 				this.$emit('visible-change', false);
 			}
 		}

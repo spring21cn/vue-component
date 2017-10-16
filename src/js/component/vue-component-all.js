@@ -1,4 +1,4 @@
-﻿!(function(name, context, definition) {
+!(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
 		define(definition);
@@ -307,10 +307,10 @@
 			target.onCreditCardTypeChanged = opts.onCreditCardTypeChanged || (function() {}
 			);
 			target.phone = !!opts.phone;
-			target.phoneRegionCode = opts.phoneRegionCode || 'AU';
+			target.phoneRegionCode = opts.phoneRegionCode || 'CN';
 			target.phoneFormatter = {};
 			target.date = !!opts.date;
-			target.datePattern = opts.datePattern || ['d', 'm', 'Y'];
+			target.datePattern = opts.datePattern || ['Y', 'm', 'd'];
 			target.dateFormatter = {};
 			target.numeral = !!opts.numeral;
 			target.numeralDecimalScale = opts.numeralDecimalScale >= 0 ? opts.numeralDecimalScale : 2;
@@ -2425,7 +2425,7 @@
 			selector = selector.split('.');
 			var tag = selector.shift().toUpperCase()
 			  , re = new RegExp('\\s(' + selector.join('|') + ')(?=\\s)','g');
-			return ( (tag === '' || el.nodeName.toUpperCase() == tag) && (!selector.length || ((' ' + el.className + ' ').match(re) || []).length == selector.length)) ;
+			return ((tag === '' || el.nodeName.toUpperCase() == tag) && (!selector.length || ((' ' + el.className + ' ').match(re) || []).length == selector.length));
 		}
 		return false;
 	}
@@ -2548,6 +2548,74 @@
 	var ieVersion = isServer ? 0 : Number(document.documentMode);
 	var SPECIAL_CHARS_REGEXP = /([\:\-\_]+(.))/g;
 	var MOZ_HACK_REGEXP = /^moz([A-Z])/;
+	var isVNode = function(node) {
+		return typeof node === 'object' && Object.prototype.hasOwnProperty.call(node, 'componentOptions');
+	};
+	var isArray = Array.isArray || function(obj) {
+		return toString.call(obj) === '[object Array]';
+	};
+	var isFunction = function(obj) {
+		return typeof obj == 'function' || false;
+	};
+	var isObject = function(obj) {
+		var type = typeof obj;
+		return type === 'function' || type === 'object' && !!obj;
+	};
+	var instances = {};
+	var popupManager = {
+		zIndex: 2000,
+		getInstance: function(id) {
+			return instances[id];
+		},
+		register: function(id, instance) {
+			if (id && instance) {
+				instances[id] = instance;
+			}
+		},
+		deregister: function(id) {
+			if (id) {
+				instances[id] = null;
+				delete instances[id];
+			}
+		},
+		nextZIndex: function() {
+			return popupManager.zIndex++;
+		},
+		modalStack: [],
+		openModal: function(id, zIndex) {
+			if (Vue.prototype.$isServer)
+				return;
+			if (!id || zIndex === undefined)
+				return;
+			var modalStack = this.modalStack;
+			for (var i = 0, j = modalStack.length; i < j; i++) {
+				var item = modalStack[i];
+				if (item.id === id) {
+					return;
+				}
+			}
+			this.modalStack.push({
+				id: id,
+				zIndex: zIndex
+			});
+		},
+		closeModal: function(id) {
+			var modalStack = this.modalStack;
+			if (modalStack.length > 0) {
+				var topItem = modalStack[modalStack.length - 1];
+				if (topItem.id === id) {
+					modalStack.pop();
+				} else {
+					for (var i = modalStack.length - 1; i >= 0; i--) {
+						if (modalStack[i].id === id) {
+							modalStack.splice(i, 1);
+							break;
+						}
+					}
+				}
+			}
+		}
+	};
 	var on = (function() {
 		if (!isServer && document.addEventListener) {
 			return function(element, event, handler) {
@@ -2588,7 +2656,8 @@
 		on(el, event, listener);
 	};
 	var trim = function(string) {
-		return (string || '').replace(/^[\s\uFEFF]+|[\s\uFEFF]+$/g, '');
+		if (typeof string !== 'string') string = '';
+		return string.replace(/^[\s\uFEFF]+|[\s\uFEFF]+$/g, '');
 	};
 	var hasClass = function(el, clazz) {
 		if (!el || !clazz)
@@ -2657,14 +2726,14 @@
 		}
 		try {
 			switch (styleName) {
-				case 'opacity':
-					try {
-						return element.filters.item('alpha').opacity / 100;
-					} catch (e) {
-						return 1.0;
-					}
-				default:
-					return (element.style[styleName] || element.currentStyle ? element.currentStyle[styleName] : null);
+			case 'opacity':
+				try {
+					return element.filters.item('alpha').opacity / 100;
+				} catch (e) {
+					return 1.0;
+				}
+			default:
+				return (element.style[styleName] || element.currentStyle ? element.currentStyle[styleName] : null);
 			}
 		} catch (e) {
 			return element.style[styleName];
@@ -2711,6 +2780,20 @@
 			}
 		}
 		return target;
+	};
+	var mergeArray = function(arr) {
+		if (isArray(arr)) {
+			for (var i = 0, arr2 = Array(arr.length), j = arr.length; i < j; i++) {
+				var arrObj = arr[i];
+				if (isObject(arrObj)) {
+					arr2[i] = merge({}, arrObj);
+				} else {
+					arr2[i] = arrObj;
+				}
+			}
+			return arr2;
+		}
+		return [];
 	};
 	var broadcast = function(componentName, eventName, params) {
 		this.$children.forEach(function(child) {
@@ -2786,8 +2869,7 @@
 			}
 		}
 	};
-	var transition = function() {
-	};
+	var transition = function() {};
 	transition.prototype.beforeEnter = function(el) {
 		if (!el.dataset)
 			el.dataset = {};
@@ -2796,7 +2878,7 @@
 		el.style.height = '0';
 		el.style.paddingTop = 0;
 		el.style.paddingBottom = 0;
-	};
+	}
 	transition.prototype.enter = function(el) {
 		el.dataset.oldOverflow = el.style.overflow;
 		if (el.scrollHeight !== 0) {
@@ -2809,11 +2891,11 @@
 			el.style.paddingBottom = el.dataset.oldPaddingBottom;
 		}
 		el.style.overflow = 'hidden';
-	};
+	}
 	transition.prototype.afterEnter = function(el) {
 		el.style.height = '';
 		el.style.overflow = el.dataset.oldOverflow;
-	};
+	}
 	transition.prototype.beforeLeave = function(el) {
 		if (!el.dataset)
 			el.dataset = {};
@@ -2822,20 +2904,20 @@
 		el.dataset.oldOverflow = el.style.overflow;
 		el.style.height = el.scrollHeight + 'px';
 		el.style.overflow = 'hidden';
-	};
+	}
 	transition.prototype.leave = function(el) {
 		if (el.scrollHeight !== 0) {
 			el.style.height = 0;
 			el.style.paddingTop = 0;
 			el.style.paddingBottom = 0;
 		}
-	};
+	}
 	transition.prototype.afterLeave = function(el) {
 		el.style.height = '';
 		el.style.overflow = el.dataset.oldOverflow;
 		el.style.paddingTop = el.dataset.oldPaddingTop;
 		el.style.paddingBottom = el.dataset.oldPaddingBottom;
-	};
+	}
 	var collapseTransition = {
 		functional: true,
 		render: function(createElement, obj) {
@@ -2843,7 +2925,7 @@
 			var data = {
 				on: new transition()
 			};
-			children.map(function(child) {
+			children.forEach(function(child) {
 				child.data.class = ['collapse-transition'];
 			});
 			return createElement('transition', data, children);
@@ -3110,6 +3192,7 @@
 		return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
 	};
 	var prevMonth = function(src) {
+		src = toDate(src);
 		var year = src.getFullYear();
 		var month = src.getMonth();
 		var date = src.getDate();
@@ -3124,6 +3207,7 @@
 		return new Date(src.getTime());
 	};
 	var nextMonth = function(src) {
+		src = toDate(src);
 		var year = src.getFullYear();
 		var month = src.getMonth();
 		var date = src.getDate();
@@ -3141,7 +3225,9 @@
 		var hours = [];
 		var disabledHours = [];
 		(ranges || []).forEach(function(range) {
-			var value = range.map(function(date) {return date.getHours();});
+			var value = range.map(function(date) {
+				return date.getHours();
+			});
 			disabledHours = disabledHours.concat(newArray(value[0], value[1]));
 		});
 		if (disabledHours.length) {
@@ -3174,7 +3260,7 @@
 		});
 		return date < minDate ? minDate : maxDate;
 	};
-	var setLang = function (lang) {
+	var setLang = function(lang) {
 		if (lang) {
 			Vue.config.lang = lang;
 		}
@@ -3182,6 +3268,9 @@
 	var setLocale = function(lang, langObjs) {
 		langObjs = merge({}, Vue.locale(lang), langObjs);
 		Vue.locale(lang, langObjs);
+	};
+	var noLog = function() {
+		Vue.config.silent = true;
 	};
 	var arrayfrom = function(arr) {
 		var isCallable = function(fn) {
@@ -3237,8 +3326,8 @@
 		return from(arr);
 	};
 	var toConsumableArray = function(arr) {
-		if (Array.isArray(arr)) {
-			for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+		if (isArray(arr)) {
+			for (var i = 0, arr2 = Array(arr.length), j = arr.length; i < j; i++) {
 				arr2[i] = arr[i];
 			}
 			return arr2;
@@ -3247,18 +3336,16 @@
 		}
 	};
 	var removeNode = function(node) {
-		node.parentElement.removeChild(node);
+		node && node.parentElement && node.parentElement.removeChild(node);
 	};
 	var insertNodeAt = function(fatherNode, node, position) {
-		if (position < fatherNode.children.length) {
-			fatherNode.insertBefore(node, fatherNode.children[position]);
-		} else {
-			fatherNode.appendChild(node);
-		}
+		if (typeof position === 'undefined') position = 0;
+		var refNode = (position === 0) ? fatherNode.children[0] : fatherNode.children[position - 1].nextSibling
+		fatherNode.insertBefore(node, refNode)
 	};
 	var arrayToObject = function(arr) {
 		var res = {};
-		for (var i = 0, j=arr.length; i < j; i++) {
+		for (var i = 0, j = arr.length; i < j; i++) {
 			var arrObj = arr[i];
 			if (arrObj) {
 				for (var key in arrObj) {
@@ -3268,7 +3355,7 @@
 		}
 		return res;
 	};
-	var loadVue = function(url, mountId, option, callbackFn){
+	var loadVue = function(url, mountId, option, callbackFn) {
 		var mountElement = document.querySelector(mountId);
 		if (mountElement) {
 			mountElement.innerHTML = '';
@@ -3277,7 +3364,7 @@
 				var tmpDiv = document.createElement('DIV');
 				tmpDiv.innerHTML = response.bodyText;
 				var vueStyle = tmpDiv.querySelector('style');
-				if (vueStyle.id && !document.querySelector('#'+vueStyle.id)) {
+				if (vueStyle.id && !document.querySelector('#' + vueStyle.id)) {
 					mountElement.appendChild(vueStyle);
 				}
 				var vueScript = tmpDiv.querySelector('script');
@@ -3295,14 +3382,117 @@
 			});
 		}
 	};
-	var screenfull = function(){
+	var screenfull = function() {
 		if (!Screenfull.enabled) {
-			this.$alert(this.$t('vue.screenfull.canot'),{
+			this.$alert(this.$t('vue.screenfull.canot'), {
 				type: 'warning'
 			});
 			return false;
 		}
 		Screenfull.toggle();
+	};
+	var hasProperty = function(obj, path) {
+		if (!isArray(path)) {
+			return obj != null && hasOwnProperty.call(obj, path);
+		}
+		var length = path.length;
+		for (var i = 0; i < length; i++) {
+			var key = path[i];
+			if (obj == null || !hasOwnProperty.call(obj, key)) {
+				return false;
+			}
+			obj = obj[key];
+		}
+		return !!length;
+	};
+	var objKeys = function(obj) {
+		if (!isObject(obj)) return [];
+		if (Object.keys) return Object.keys(obj);
+		var keys = [];
+		for (var key in obj) if (hasProperty(obj, key)) keys.push(key);
+		if (hasEnumBug) collectNonEnumProps(obj, keys);
+		return keys;
+	};
+	var eq = function(a, b, aStack, bStack) {
+		if (a === b)
+			return a !== 0 || 1 / a === 1 / b;
+		if (a == null || b == null)
+			return false;
+		if (a !== a)
+			return b !== b;
+		var type = typeof a;
+		if (type !== 'function' && type !== 'object' && typeof b != 'object')
+			return false;
+		return deepEq(a, b, aStack, bStack);
+	};
+	var deepEq = function(a, b, aStack, bStack) {
+		var className = toString.call(a);
+		if (className !== toString.call(b))
+			return false;
+		switch (className) {
+		case '[object RegExp]':
+		case '[object String]':
+			return '' + a === '' + b;
+		case '[object Number]':
+			if (+a !== +a)
+				return +b !== +b;
+			return +a === 0 ? 1 / +a === 1 / b : +a === +b;
+		case '[object Date]':
+		case '[object Boolean]':
+			return +a === +b;
+		case '[object Symbol]':
+			return SymbolProto.valueOf.call(a) === SymbolProto.valueOf.call(b);
+		}
+		var areArrays = className === '[object Array]';
+		if (!areArrays) {
+			if (typeof a != 'object' || typeof b != 'object')
+				return false;
+			var aCtor = a.constructor;
+			var bCtor = b.constructor;
+			if (aCtor !== bCtor && !(isFunction(aCtor) && aCtor instanceof aCtor && isFunction(bCtor) && bCtor instanceof bCtor) && ('constructor'in a && 'constructor'in b)) {
+				return false;
+			}
+		}
+		aStack = aStack || [];
+		bStack = bStack || [];
+		var length = aStack.length;
+		while (length--) {
+			if (aStack[length] === a)
+				return bStack[length] === b;
+		}
+		aStack.push(a);
+		bStack.push(b);
+		if (areArrays) {
+			length = a.length;
+			if (length !== b.length)
+				return false;
+			while (length--) {
+				if (!eq(a[length], b[length], aStack, bStack))
+					return false;
+			}
+		} else {
+			var keys = objKeys(a), key;
+			length = keys.length;
+			if (objKeys(b).length !== length)
+				return false;
+			while (length--) {
+				key = keys[length];
+				if (!(hasProperty(b, key) && eq(a[key], b[key], aStack, bStack)))
+					return false;
+			}
+		}
+		aStack.pop();
+		bStack.pop();
+		return true;
+	};
+	var mouseEvents = ('ontouchstart' in window) ? {
+		down: 'touchstart',
+		move: 'touchmove',
+		up: 'touchend'
+	} : {
+		down: 'mousedown',
+		move: 'mousemove',
+		up: 'mouseup'
 	};
 	return {
 		on: on,
@@ -3315,6 +3505,7 @@
 		getStyle: getStyle,
 		setStyle: setStyle,
 		merge: merge,
+		mergeArray: mergeArray,
 		addResizeListener: addResizeListener,
 		removeResizeListener: removeResizeListener,
 		parseDate: parseDate,
@@ -3328,7 +3519,11 @@
 		arrayToObject: arrayToObject,
 		screenfull: screenfull,
 		loadVue: loadVue,
-		component:{
+		isEqual: eq,
+		prevMonth: prevMonth,
+		nextMonth: nextMonth,
+		noLog: noLog,
+		component: {
 			menumixin: menumixin,
 			emitter: emitter,
 			collapseTransition: collapseTransition,
@@ -3343,8 +3538,9 @@
 			getFirstDayOfMonth: getFirstDayOfMonth,
 			getWeekNumber: getWeekNumber,
 			toConsumableArray: toConsumableArray,
-			prevMonth: prevMonth,
-			nextMonth: nextMonth
+			isVNode: isVNode,
+			popupManager: popupManager,
+			mouseEvents: mouseEvents
 		}
 	}
 });
@@ -3446,7 +3642,18 @@
 					confirmFilter: '筛选',
 					resetFilter: '重置',
 					clearFilter: '全部',
-					sumText: '合计'
+					sumText: '合计',
+					contextMenu: '快捷菜单',
+					pin: '固定列',
+					leftPin: '固定至左边',
+					rightPin: '固定至右边',
+					sort: '排序',
+					sortBy: '排序集',
+					filter: '过滤',
+					column: '字段',
+					conditions: '条件',
+					filterBy: '过滤集',
+					display: '列显示'
 				},
 				tree: {
 					emptyText: '暂无数据'
@@ -3543,7 +3750,18 @@
 					confirmFilter: '確認',
 					resetFilter: '初期化',
 					clearFilter: 'すべて',
-					sumText: '合計'
+					sumText: '合計',
+					contextMenu: 'コンテキスト・メニュー',
+					pin: '固定列',
+					leftPin: '左に固定',
+					rightPin: '右に固定',
+					sort: 'ソート',
+					sortBy: 'ソート集',
+					filter: 'フィルター',
+					column: 'カラム',
+					conditions: '条件',
+					filterBy: 'フィルター集',
+					display: '列表示'
 				},
 				tree: {
 					emptyText: 'データなし'
@@ -3640,7 +3858,18 @@
 					confirmFilter: 'Confirm',
 					resetFilter: 'Reset',
 					clearFilter: 'All',
-					sumText: 'Sum'
+					sumText: 'Sum',
+					contextMenu: 'Context Menu',
+					pin: 'Pin',
+					leftPin: 'Left Pin',
+					rightPin: 'Right Pin',
+					sort: 'Sort',
+					sortBy: 'Sort By',
+					filter: 'Filter',
+					column: 'Column',
+					conditions: 'Conditions',
+					filterBy: 'Filter By',
+					display: 'Display'
 				},
 				tree: {
 					emptyText: 'No Data'
@@ -4443,71 +4672,7 @@
 	}
 })('VuePopup', this, function(Vue, VueUtil) {
 	'use strict';
-	var instances = {};
-	var PopupManager = {
-		zIndex: 2000,
-		getInstance: function(id) {
-			return instances[id];
-		},
-		register: function(id, instance) {
-			if (id && instance) {
-				instances[id] = instance;
-			}
-		},
-		deregister: function(id) {
-			if (id) {
-				instances[id] = null;
-				delete instances[id];
-			}
-		},
-		nextZIndex: function() {
-			return PopupManager.zIndex++;
-		},
-		modalStack: [],
-		doOnModalClick: function() {
-			var topItem = this.modalStack[this.modalStack.length - 1];
-			if (!topItem)
-				return;
-			var instance = this.getInstance(topItem.id);
-			if (instance && instance.closeOnClickModal) {
-				instance.close();
-			}
-		},
-		openModal: function(id, zIndex, dom, modalClass) {
-			if (Vue.prototype.$isServer)
-				return;
-			if (!id || zIndex === undefined)
-				return;
-			var modalStack = this.modalStack;
-			for (var i = 0, j = modalStack.length; i < j; i++) {
-				var item = modalStack[i];
-				if (item.id === id) {
-					return;
-				}
-			}
-			this.modalStack.push({
-				id: id,
-				zIndex: zIndex,
-				modalClass: modalClass
-			});
-		},
-		closeModal: function(id) {
-			var modalStack = this.modalStack;
-			if (modalStack.length > 0) {
-				var topItem = modalStack[modalStack.length - 1];
-				if (topItem.id === id) {
-					modalStack.pop();
-				} else {
-					for (var i = modalStack.length - 1; i >= 0; i--) {
-						if (modalStack[i].id === id) {
-							modalStack.splice(i, 1);
-							break;
-						}
-					}
-				}
-			}
-		}
-	};
+	var PopupManager = VueUtil.component.popupManager;
 	!Vue.prototype.$isServer && window.addEventListener('keydown', function(event) {
 		if (event.keyCode === 27) {
 			if (PopupManager.modalStack.length > 0) {
@@ -4516,41 +4681,12 @@
 					return;
 				var instance = PopupManager.getInstance(topItem.id);
 				if (instance.closeOnPressEscape) {
-					instance.close();
+					instance.$emit('visible-change', false);
 				}
 			}
 		}
 	});
 	var idSeed = 1;
-	var transitions = [];
-	var hookTransition = function(transition) {
-		if (transitions.indexOf(transition) !== -1)
-			return;
-		var getVueInstance = function(element) {
-			var instance = element.__vue__;
-			if (!instance) {
-				var textNode = element.previousSibling;
-				if (textNode.__vue__) {
-					instance = textNode.__vue__;
-				}
-			}
-			return instance;
-		};
-		Vue.transition(transition, {
-			afterEnter: function(el) {
-				var instance = getVueInstance(el);
-				if (instance) {
-					instance.doAfterOpen && instance.doAfterOpen();
-				}
-			},
-			afterLeave: function(el) {
-				var instance = getVueInstance(el);
-				if (instance) {
-					instance.doAfterClose && instance.doAfterClose();
-				}
-			}
-		});
-	};
 	var scrollBarWidth;
 	var getDOM = function(dom) {
 		if (dom.nodeType === 3) {
@@ -4569,40 +4705,14 @@
 			type: Boolean,
 			default: false
 		},
-		transition: {
-			type: String,
-			default: ''
-		},
 		openDelay: {},
 		closeDelay: {},
 		zIndex: {},
-		modal: {
-			type: Boolean,
-			default: true
-		},
-		modalClass: {},
-		modalAppendToBody: {
-			type: Boolean,
-			default: false
-		},
-		lockScroll: {
-			type: Boolean,
-			default: true
-		},
 		closeOnPressEscape: {
 			type: Boolean,
 			default: true
-		},
-		closeOnClickModal: {
-			type: Boolean,
-			default: false
 		}
 	};
-	VuePopup.created = function() {
-		if (this.transition) {
-			hookTransition(this.transition);
-		}
-	}
 	VuePopup.beforeMount = function() {
 		this._popupId = 'popup-' + idSeed++;
 		PopupManager.register(this._popupId, this);
@@ -4610,169 +4720,48 @@
 	VuePopup.beforeDestroy = function() {
 		PopupManager.deregister(this._popupId);
 		PopupManager.closeModal(this._popupId);
-		if (this.modal && this.bodyOverflow !== null && this.bodyOverflow !== 'hidden') {
-			document.body.style.overflow = this.bodyOverflow;
-			document.body.style.paddingRight = this.bodyPaddingRight;
-		}
-		this.bodyOverflow = null;
-		this.bodyPaddingRight = null;
 	}
 	VuePopup.data = function() {
 		return {
-			opened: false,
-			bodyOverflow: null,
-			bodyPaddingRight: null,
-			rendered: false
+			opened: false
 		};
 	}
 	VuePopup.watch = {
 		visible: function(val) {
+			var self = this;
 			if (val) {
-				if (this._opening)
-					return;
-				if (!this.rendered) {
-					var self = this;
-					this.rendered = true;
-					Vue.nextTick(function() {
-						self.open();
+				if (!self.opened) {
+					self.$nextTick(function() {
+						var dom = getDOM(self.$el);
+						if (getComputedStyle(dom).position === 'static') {
+							dom.style.position = 'absolute';
+						}
+						dom.style.zIndex = PopupManager.nextZIndex();
+						if (self.closeOnPressEscape)
+							PopupManager.openModal(self._popupId, dom.style.zIndex);
 					});
-				} else {
-					this.open();
 				}
 			} else {
-				this.close();
+				PopupManager.closeModal(self._popupId);
+				self.$nextTick(function() {
+					if (self.opened && self.closeOnPressEscape) {
+						var dom = getDOM(self.$el);
+						PopupManager.openModal(self._popupId, dom.style.zIndex);
+					}
+				});
 			}
 		}
 	};
-	VuePopup.methods = {
-		open: function(options) {
-			var self = this;
-			if (!self.rendered) {
-				self.rendered = true;
-				self.$emit('visible-change', true);
-			}
-			var props = VueUtil.merge({}, self, options);
-			if (self._closeTimer) {
-				clearTimeout(self._closeTimer);
-				self._closeTimer = null;
-			}
-			clearTimeout(self._openTimer);
-			var openDelay = Number(props.openDelay);
-			if (openDelay > 0) {
-				self._openTimer = setTimeout(function() {
-					self._openTimer = null;
-					self.doOpen(props);
-				}, openDelay);
-			} else {
-				self.doOpen(props);
-			}
-		},
-		doOpen: function(props) {
-			if (this.$isServer)
-				return;
-			if (this.willOpen && !this.willOpen())
-				return;
-			if (this.opened)
-				return;
-			this._opening = true;
-			this.$emit('visible-change', true);
-			var dom = getDOM(this.$el);
-			var modal = props.modal;
-			var zIndex = props.zIndex;
-			if (zIndex) {
-				PopupManager.zIndex = zIndex;
-			}
-			if (modal) {
-				if (this._closing) {
-					PopupManager.closeModal(this._popupId);
-					this._closing = false;
-				}
-				PopupManager.openModal(this._popupId, PopupManager.nextZIndex(), dom, props.modalClass);
-				if (props.lockScroll) {
-					if (!this.bodyOverflow) {
-						this.bodyPaddingRight = document.body.style.paddingRight;
-						this.bodyOverflow = document.body.style.overflow;
-					}
-					scrollBarWidth = VueUtil.component.scrollBarWidth();
-					var bodyHasOverflow = document.documentElement.clientHeight < document.body.scrollHeight;
-					if (scrollBarWidth > 0 && bodyHasOverflow) {
-						document.body.style.paddingRight = scrollBarWidth + 'px';
-					}
-					document.body.style.overflow = 'hidden';
-				}
-			}
-			if (getComputedStyle(dom).position === 'static') {
-				dom.style.position = 'absolute';
-			}
-			dom.style.zIndex = PopupManager.nextZIndex();
-			this.opened = true;
-			this.onOpen && this.onOpen();
-			if (!this.transition) {
-				this.doAfterOpen();
-			}
-		},
-		doAfterOpen: function() {
-			this._opening = false;
-		},
-		close: function() {
-			var self = this;
-			if (self.willClose && !self.willClose())
-				return;
-			if (self._openTimer !== null) {
-				clearTimeout(self._openTimer);
-				self._openTimer = null;
-			}
-			clearTimeout(self._closeTimer);
-			var closeDelay = Number(self.closeDelay);
-			if (closeDelay > 0) {
-				self._closeTimer = setTimeout(function() {
-					self._closeTimer = null;
-					self.doClose();
-				}, closeDelay);
-			} else {
-				self.doClose();
-			}
-		},
-		doClose: function() {
-			var self = this;
-			self.$emit('visible-change', false);
-			self._closing = true;
-			self.onClose && self.onClose();
-			if (self.lockScroll) {
-				setTimeout(function() {
-					if (self.modal && self.bodyOverflow !== 'hidden') {
-						document.body.style.overflow = self.bodyOverflow;
-						document.body.style.paddingRight = self.bodyPaddingRight;
-					}
-					self.bodyOverflow = null;
-					self.bodyPaddingRight = null;
-				}, 200);
-			}
-			self.opened = false;
-			if (!self.transition) {
-				self.doAfterClose();
-			}
-		},
-		doAfterClose: function() {
-			PopupManager.closeModal(this._popupId);
-			this._closing = false;
-		}
-	};
-	return function() {
-		return {
-			VuePopup: VuePopup,
-			PopupManager: PopupManager
-		};
-	}
+	return VuePopup;
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'Popper', 'VuePopup'], definition);
+		define(['Vue', 'Popper', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['Popper'], context['VuePopup']);
+		context[name] = definition(context['Vue'], context['Popper'], context['VueUtil']);
 	}
-})('VuePopper', this, function(Vue, Popper, VuePopup) {
+})('VuePopper', this, function(Vue, Popper, VueUtil) {
 	'use strict';
 	var PopperJS = Vue.prototype.$isServer ? function() {} : Popper;
 	var stop = function(e) {
@@ -4863,7 +4852,7 @@
 				if (typeof options.onUpdate === 'function') {
 					self.popperJS.onUpdate(options.onUpdate);
 				}
-				self.popperJS._popper.style.zIndex = VuePopup().PopupManager.nextZIndex();
+				self.popperJS._popper.style.zIndex = VueUtil.component.popupManager.nextZIndex();
 				self.popperElm.addEventListener('click', stop);
 			},
 			updatePopper: function() {
@@ -4923,9 +4912,7 @@
 			this.$options.beforeDestroy[0].call(this);
 		}
 	};
-	return function() {
-		return VuePopper;
-	}
+	return VuePopper;
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -4933,6 +4920,7 @@
 		define(['Vue', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueScrollbar', this, function(Vue, VueUtil) {
 	'use strict';
@@ -5011,11 +4999,11 @@
 		methods: {
 			clickThumbHandler: function(e) {
 				this.startDrag(e);
-				this[this.bar.axis] = (e.currentTarget[this.bar.offset] - (e[this.bar.client] - e.currentTarget.getBoundingClientRect()[this.bar.direction]));
+				this[this.bar.axis] = e.currentTarget[this.bar.offset] - (e[this.bar.client] - e.currentTarget.getBoundingClientRect()[this.bar.direction]);
 			},
 			clickTrackHandler: function(e) {
 				var offset = Math.abs(e.target.getBoundingClientRect()[this.bar.direction] - e[this.bar.client]);
-				var thumbHalf = (this.$refs.thumb[this.bar.offset] / 2);
+				var thumbHalf = this.$refs.thumb[this.bar.offset] / 2;
 				var thumbPositionPercentage = (offset - thumbHalf) * 100 / this.$el[this.bar.offset];
 				this.wrap[this.bar.scroll] = thumbPositionPercentage * this.wrap[this.bar.scrollSize] / 100;
 			},
@@ -5029,14 +5017,12 @@
 				}
 			},
 			mouseMoveDocumentHandler: function(e) {
-				if (this.cursorDown === false)
-					return;
+				if (this.cursorDown === false) return;
 				var prevPage = this[this.bar.axis];
-				if (!prevPage)
-					return;
-				var offset = ((this.$el.getBoundingClientRect()[this.bar.direction] - e[this.bar.client]) * -1);
-				var thumbClickPosition = (this.$refs.thumb[this.bar.offset] - prevPage);
-				var thumbPositionPercentage = ((offset - thumbClickPosition) * 100 / this.$el[this.bar.offset]);
+				if (!prevPage) return;
+				var offset = (this.$el.getBoundingClientRect()[this.bar.direction] - e[this.bar.client]) * -1;
+				var thumbClickPosition = this.$refs.thumb[this.bar.offset] - prevPage;
+				var thumbPositionPercentage = (offset - thumbClickPosition) * 100 / this.$el[this.bar.offset];
 				this.wrap[this.bar.scroll] = thumbPositionPercentage * this.wrap[this.bar.scrollSize] / 100;
 			},
 			mouseUpDocumentHandler: function(e) {
@@ -5086,14 +5072,7 @@
 			var style = self.wrapStyle;
 			if (gutter) {
 				var gutterWith = "-" + gutter + "px";
-				var gutterHeight = "auto";
-				if (self.$parent.$el) {
-					var clientHeight = parseInt(self.$parent.$el.style.height);
-					if (clientHeight > 0) {
-						gutterHeight = clientHeight + gutter + 'px';
-					}
-				}
-				var gutterStyle = 'margin-bottom: ' + gutterWith + '; margin-right: ' + gutterWith + ';height: ' + gutterHeight + ';';
+				var gutterStyle = 'margin-bottom: ' + gutterWith + '; margin-right: ' + gutterWith + ';';
 				if (Array.isArray(self.wrapStyle)) {
 					style = VueUtil.arrayToObject(self.wrapStyle);
 					style.marginRight = style.marginBottom = gutterWith;
@@ -5137,7 +5116,6 @@
 					style: style
 				}, [[view]])];
 			}
-			this.$nextTick(this.update);
 			return createElement('div', {
 				class: 'vue-scrollbar'
 			}, nodes);
@@ -5169,9 +5147,6 @@
 		}
 	};
 	Vue.component(VueScrollbar.name, VueScrollbar);
-	return function() {
-		return VueScrollbar;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -5289,9 +5264,10 @@
 		if (vnodes) {
 			return vnodes.map(function(elt) {
 				return elt.elm;
-			}).indexOf(element);
+			}).indexOf(element)
+		} else {
+			return -1;
 		}
-		return -1;
 	}
 	var computeIndexes = function(slots, children) {
 		if (!slots) {
@@ -5300,8 +5276,11 @@
 		var elmFromNodes = slots.map(function(elt) {
 			return elt.elm;
 		});
-		return [].concat(VueUtil.component.toConsumableArray(children)).map(function(elt) {
-			return elmFromNodes.indexOf(elt);
+		var rawIndexes = [].concat(VueUtil.component.toConsumableArray(children)).map(function(elt) {
+				return elmFromNodes.indexOf(elt);
+		});
+		return rawIndexes.filter(function(index){
+			return index !== -1;
 		});
 	}
 	var emit = function(evtName, evtData) {
@@ -5329,19 +5308,9 @@
 		name: 'VueSortable',
 		props: {
 			options: Object,
-			list: {
-				type: Array,
-				required: false,
-				default: null
-			},
 			value: {
 				type: Array,
-				required: false,
 				default: null
-			},
-			noTransitionOnDrag: {
-				type: Boolean,
-				default: false
 			},
 			clone: {
 				type: Function,
@@ -5360,25 +5329,15 @@
 		},
 		data: function() {
 			return {
-				transitionMode: false,
 				componentMode: false
 			};
 		},
 		render: function(createElement) {
-			if (this.$slots.default && this.$slots.default.length === 1) {
-				var child = this.$slots.default[0];
-				if (child.componentOptions && child.componentOptions.tag === "transition-group") {
-					this.transitionMode = true;
-				}
-			}
 			return createElement(this.element, null, this.$slots.default);
 		},
 		mounted: function() {
 			var self = this;
 			self.componentMode = self.element.toLowerCase() !== self.$el.nodeName.toLowerCase();
-			if (self.componentMode && self.transitionMode) {
-				throw new Error('Transition-group inside component is not suppported. Please alter element value or remove transition-group. Current element value: ' + self.element);
-			}
 			var optionsAdded = {};
 			eventsListened.forEach(function(elt) {
 				optionsAdded['on' + elt] = delegateAndEmit.call(self, elt);
@@ -5387,10 +5346,11 @@
 				optionsAdded['on' + elt] = emit.bind(self, elt);
 			});
 			var options = VueUtil.merge({}, self.options, optionsAdded, {
-				onMove: function(evt) {
-					return self.onDragMove(evt);
+				onMove: function(evt, originalEvent) {
+					return self.onDragMove(evt, originalEvent);
 				}
 			});
+			!('draggable'in options) && (options.draggable = '>*');
 			self._sortable = new Sortable(self.rootContainer,options);
 			self.computeIndexes();
 		},
@@ -5399,22 +5359,25 @@
 		},
 		computed: {
 			rootContainer: function() {
-				return this.transitionMode ? this.$el.children[0] : this.$el;
+				return this.$el;
 			},
 			isCloning: function() {
 				return !!this.options && !!this.options.group && this.options.group.pull === 'clone';
 			},
 			realList: function() {
-				return !!this.list ? this.list : this.value;
+				return this.value;
 			}
 		},
 		watch: {
-			options: function(newOptionValue) {
-				for (var property in newOptionValue) {
-					if (readonlyProperties.indexOf(property) == -1) {
-						this._sortable.option(property, newOptionValue[property]);
+			options: {
+				handler: function(newOptionValue) {
+					for (var property in newOptionValue) {
+						if (readonlyProperties.indexOf(property) === -1) {
+							this._sortable.option(property, newOptionValue[property]);
+						}
 					}
-				}
+				},
+				deep: true
 			},
 			realList: function() {
 				this.computeIndexes();
@@ -5425,8 +5388,7 @@
 				if (this.componentMode) {
 					return this.$children[0].$slots.default;
 				}
-				var rawNodes = this.$slots.default;
-				return this.transitionMode ? rawNodes[0].child.$slots.default : rawNodes;
+				return this.$slots.default;
 			},
 			computeIndexes: function() {
 				var self = this;
@@ -5436,18 +5398,16 @@
 			},
 			getUnderlyingVm: function(htmlElt) {
 				var index = computeVmIndex(this.getChildrenNodes(), htmlElt);
+				if (index === -1)
+					return null;
 				var element = this.realList[index];
 				return {
 					index: index,
 					element: element
 				};
 			},
-			getUnderlyingPotencialDraggableComponent: function(_ref) {
-				var __vue__ = _ref.__vue__;
-				if (!__vue__ || !__vue__.$options || __vue__.$options._componentTag !== "transition-group") {
-					return __vue__;
-				}
-				return __vue__.$parent;
+			getUnderlyingPotencialDraggableComponent: function(ref) {
+				return ref.__vue__;
 			},
 			emitChanges: function(evt) {
 				var self = this;
@@ -5456,30 +5416,26 @@
 				});
 			},
 			alterList: function(onList) {
-				if (!!this.list) {
-					onList(this.list);
-				} else {
-					var newList = [].concat(VueUtil.component.toConsumableArray(this.value));
-					onList(newList);
-					this.$emit('input', newList);
-				}
+				var newList = [].concat(VueUtil.component.toConsumableArray(this.value));
+				onList(newList);
+				this.$emit('input', newList);
 			},
 			spliceList: function() {
 				var _arguments = arguments;
-				var spliceList = function spliceList(list) {
+				var spliceList = function(list) {
 					return list.splice.apply(list, _arguments);
 				};
 				this.alterList(spliceList);
 			},
 			updatePosition: function(oldIndex, newIndex) {
-				var updatePosition = function updatePosition(list) {
+				var updatePosition = function(list) {
 					return list.splice(newIndex, 0, list.splice(oldIndex, 1)[0]);
 				};
 				this.alterList(updatePosition);
 			},
-			getRelatedContextFromMoveEvent: function(_ref2) {
-				var to = _ref2.to
-				 , related = _ref2.related;
+			getRelatedContextFromMoveEvent: function(ref) {
+				var to = ref.to
+				var related = ref.related;
 				var component = this.getUnderlyingPotencialDraggableComponent(to);
 				if (!component) {
 					return {
@@ -5493,34 +5449,19 @@
 				};
 				if (to !== related && list && component.getUnderlyingVm) {
 					var destination = component.getUnderlyingVm(related);
-					return VueUtil.merge(destination, context);
+					if (destination) {
+						return VueUtil.merge(destination, context);
+					}
 				}
 				return context;
 			},
 			getVmIndex: function(domIndex) {
 				var indexes = this.visibleIndexes;
 				var numberIndexes = indexes.length;
-				var vmIndex;
-				if (domIndex > numberIndexes - 1) {
-					vmIndex = numberIndexes||0;
-				} else {
-					vmIndex = indexes[domIndex]||0;
-				}
-				vmIndex < 0 ? vmIndex = 0 : undefined;
-				return vmIndex;
+				return (domIndex > numberIndexes - 1) ? numberIndexes : indexes[domIndex]
 			},
 			getComponent: function() {
 				return this.$slots.default[0].componentInstance;
-			},
-			resetTransitionData: function(index) {
-				if (!this.noTransitionOnDrag || !this.transitionMode) {
-					return;
-				}
-				var nodes = this.getChildrenNodes();
-				nodes[index].data = null;
-				var transitionContainer = this.getComponent();
-				transitionContainer.children = [];
-				transitionContainer.kept = undefined;
 			},
 			onDragStart: function(evt) {
 				this.context = this.getUnderlyingVm(evt.item);
@@ -5533,7 +5474,7 @@
 					return;
 				}
 				VueUtil.removeNode(evt.item);
-				var newIndex = evt.newIndex;
+				var newIndex = this.getVmIndex(evt.newIndex);
 				this.spliceList(newIndex, 0, element);
 				this.computeIndexes();
 				var added = {
@@ -5556,16 +5497,15 @@
 					element: this.context.element,
 					oldIndex: oldIndex
 				};
-				this.resetTransitionData(oldIndex);
 				this.emitChanges({
 					removed: removed
 				});
 			},
 			onDragUpdate: function(evt) {
-				var oldIndex = evt.oldIndex;
-				var newIndex = evt.newIndex;
+				var oldIndex = this.context.index;
+				var newIndex = this.getVmIndex(evt.newIndex);
 				VueUtil.removeNode(evt.item);
-				VueUtil.insertNodeAt(evt.from, evt.item, oldIndex);
+				VueUtil.insertNodeAt(evt.from, evt.item, evt.oldIndex);
 				this.updatePosition(oldIndex, newIndex);
 				var moved = {
 					element: this.context.element,
@@ -5580,11 +5520,13 @@
 				if (!relatedContext.element) {
 					return 0;
 				}
-				var domChildren = [].concat(VueUtil.component.toConsumableArray(evt.to.children));
+				var domChildren = [].concat(VueUtil.component.toConsumableArray(evt.to.children)).filter(function(el) {
+					return el.style['display'] !== 'none';
+				});
 				var currentDOMIndex = domChildren.indexOf(evt.related);
 				var currentIndex = relatedContext.component.getVmIndex(currentDOMIndex);
 				var draggedInList = domChildren.indexOf(draggingElement) != -1;
-				return draggedInList ? currentIndex : currentIndex + 1;
+				return (draggedInList || !evt.willInsertAfter) ? currentIndex : currentIndex + 1
 			},
 			onDragMove: function(evt) {
 				var onMove = this.move;
@@ -5614,15 +5556,15 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueForm', this, function(Vue) {
+})('VueForm', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueForm = {
-		template: '<form class="vue-form" :class="[ labelPosition ? \'vue-form--label-\' + labelPosition : \'\', { \'vue-form--inline\': inline } ]"><slot></slot></form>',
+		template: '<form class="vue-form" :class="[ labelPosition ? \'vue-form--label-\' + labelPosition : \'\', { \'vue-form--inline\': inline } ]"><slot></slot><input style="display:none" /></form>',
 		name: 'VueForm',
 		componentName: 'VueForm',
 		props: {
@@ -5636,6 +5578,10 @@
 			},
 			inline: Boolean,
 			showMessage: {
+				type: Boolean,
+				default: true
+			},
+			labelResponsive: {
 				type: Boolean,
 				default: true
 			}
@@ -5685,7 +5631,7 @@
 			},
 			validateField: function(prop, cb) {
 				var field = this.fields.filter(function(field) {
-					return ( field.prop === prop)
+					return (field.prop === prop)
 				})[0];
 				if (!field) {
 					throw new Error('must call validateField with valid prop string!');
@@ -5728,7 +5674,7 @@
 		};
 	}
 	var VueFormItem = {
-		template: '<div class="vue-form-item" :class="{\'is-error\': validateState === \'error\',\'is-validating\': validateState === \'validating\',\'is-required\': isRequired || required}"><label :for="prop" class="vue-form-item__label" v-bind:style="labelStyle" v-if="label">{{label + form.labelSuffix}}</label><div class="vue-form-item__content" v-bind:style="contentStyle"><slot></slot><transition name="vue-zoom-in-top"><div class="vue-form-item__error" v-if="validateState === \'error\' && showMessage && form.showMessage">{{validateMessage}}</div></transition></div></div>',
+		template: '<div class="vue-form-item" :class="{\'is-error\': validateState === \'error\',\'is-validating\': validateState === \'validating\',\'is-required\': isRequired || required}"><label :for="prop" class="vue-form-item__label" v-bind:style="labelStyle" v-if="label" ref="label">{{label + form.labelSuffix}}</label><div class="vue-form-item__content" v-bind:style="contentStyle" ref="content"><slot></slot><transition name="vue-zoom-in-top"><div class="vue-form-item__error" v-if="validateState === \'error\' && showMessage && form.showMessage">{{validateMessage}}</div></transition></div></div>',
 		name: 'VueFormItem',
 		componentName: 'VueFormItem',
 		mixins: [VueUtil.component.emitter],
@@ -5757,21 +5703,17 @@
 		computed: {
 			labelStyle: function() {
 				var ret = {};
-				if (this.form.labelPosition === 'top')
-					return ret;
-				var labelWidth = this.labelWidth || this.form.labelWidth;
-				if (labelWidth) {
-					ret.width = labelWidth;
+				var labelStyleWidth = this.labelStyleWidth();
+				if (labelStyleWidth) {
+					ret.width = labelStyleWidth;
 				}
 				return ret;
 			},
 			contentStyle: function() {
 				var ret = {};
-				if (this.form.labelPosition === 'top')
-					return ret;
-				var labelWidth = this.labelWidth || this.form.labelWidth;
-				if (labelWidth) {
-					ret.marginLeft = labelWidth;
+				var labelStyleWidth = this.labelStyleWidth();
+				if (labelStyleWidth) {
+					ret.marginLeft = labelStyleWidth;
 				}
 				return ret;
 			},
@@ -5807,6 +5749,24 @@
 			};
 		},
 		methods: {
+			labelStyleWidth: function() {
+				if (this.form.labelPosition === 'top' || (this.form.labelResponsive && VueUtil.getStyle(this.$refs.label, 'display') === 'inline-block'))
+					return null;
+				var labelWidth = this.labelWidth || this.form.labelWidth;
+				return labelWidth;
+			},
+			resetLabelWidth: function() {
+				if (this.form.labelResponsive  && VueUtil.getStyle(this.$refs.label, 'display') === 'inline-block') {
+					this.$refs.label.style="";
+					this.$refs.content.style="";
+				} else {
+					var labelStyleWidth = this.labelStyleWidth();
+					if (labelStyleWidth) {
+						this.$refs.label.style.width = labelStyleWidth;
+						this.$refs.content.style.marginLeft = labelStyleWidth;
+					}
+				}
+			},
 			validate: function(trigger, callback) {
 				var self = this;
 				callback = callback || noop;
@@ -5889,9 +5849,15 @@
 					self.$on('vue.form.change', self.onFieldChange);
 				}
 			}
+			if (self.$refs.label) {
+				VueUtil.addResizeListener(document.body, self.resetLabelWidth);
+			}
 		},
 		beforeDestroy: function() {
 			this.dispatch('VueForm', 'vue.form.removeField', [this]);
+			if (this.$refs.label) {
+				VueUtil.removeResizeListener(document.body, this.resetLabelWidth);
+			}
 		}
 	};
 	Vue.component(VueFormItem.name, VueFormItem);
@@ -5902,6 +5868,7 @@
 		define(['Vue', 'VueUtil', 'Cleave'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil'], context['Cleave']);
+		delete context[name];
 	}
 })('VueInput', this, function(Vue, VueUtil, Cleave) {
 	'use strict';
@@ -5954,7 +5921,7 @@
 		return VueUtil.merge({height: height + 'px'}, options);
 	};
 	var VueInput = {
-		template: '<div :class="[ type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', size ? \'vue-input--\' + size : \'\', { \'is-disabled\': disabled, \'vue-input-group\': $slots.prepend || $slots.append, \'vue-input-group--append\': $slots.append, \'vue-input-group--prepend\': $slots.prepend, \'is-readonly\': readonly } ]"><template v-if="type !== \'textarea\'"><div class="vue-input-group__prepend" v-if="$slots.prepend"><slot name="prepend"></slot></div><slot name="icon"><i class="vue-input__icon" :class="[ icon, onIconClick ? \'is-clickable\' : \'\' ]" v-if="icon" @click="handleIconClick"></i></slot><input v-if="type !== \'textarea\'" class="vue-input__inner" :type="type" :name="name" :placeholder="placeholder" :disabled="disabled" :readonly="readonly" :maxlength="maxlength" :minlength="minlength" :autocomplete="autoComplete" :autofocus="autofocus" :min="min" :max="max" :form="form" :value="currentValue" ref="input" @input="handleInput" @focus="handleFocus" @blur="handleBlur" ><i class="vue-input__icon vue-icon-loading" v-if="validating"></i><div class="vue-input-group__append" v-if="$slots.append"><slot name="append"></slot></div></template><textarea v-else class="vue-textarea__inner" :value="currentValue" @input="handleInput" ref="textarea" :name="name" :placeholder="placeholder" :disabled="disabled" :style="textareaStyle" :readonly="readonly" :rows="rows" :form="form" :autofocus="autofocus" :maxlength="maxlength" :minlength="minlength" @focus="handleFocus" @blur="handleBlur"></textarea></div>',
+		template: '<div :class="[ type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', size ? \'vue-input--\' + size : \'\', { \'is-disabled\': disabled, \'vue-input-group\': $slots.prepend || $slots.append, \'vue-input-group--append\': $slots.append, \'vue-input-group--prepend\': $slots.prepend, \'is-readonly\': readonly } ]"><template v-if="type !== \'textarea\'"><div class="vue-input-group__prepend" v-if="$slots.prepend"><slot name="prepend"></slot></div><slot name="icon"><i class="vue-input__icon" :class="[ icon, onIconClick ? \'is-clickable\' : \'\' ]" v-if="icon" @click="handleIconClick"></i></slot><input v-if="type !== \'textarea\'" class="vue-input__inner" :type="type" :name="name" :placeholder="placeholder" :disabled="disabled" :readonly="readonly" :maxlength="maxlength" :minlength="minlength" :autocomplete="autoComplete" :autofocus="autofocus" :tabindex="tabindex" :min="min" :max="max" :form="form" :value="currentValue" ref="input" @input="handleInput" @focus="handleFocus" @blur="handleBlur" ><i class="vue-input__icon vue-icon-loading" v-if="validating"></i><div class="vue-input-group__append" v-if="$slots.append"><slot name="append"></slot></div></template><textarea v-else class="vue-textarea__inner" :value="currentValue" @input="handleInput" ref="textarea" :name="name" :placeholder="placeholder" :disabled="disabled" :style="textareaStyle" :readonly="readonly" :rows="rows" :form="form" :autofocus="autofocus" :tabindex="tabindex" :maxlength="maxlength" :minlength="minlength" @focus="handleFocus" @blur="handleBlur"></textarea></div>',
 		name: 'VueInput',
 		componentName: 'VueInput',
 		mixins: [VueUtil.component.emitter],
@@ -5972,6 +5939,7 @@
 			readonly: Boolean,
 			autofocus: Boolean,
 			icon: String,
+			tabindex: Number,
 			disabled: Boolean,
 			type: {
 				type: String,
@@ -6016,6 +5984,13 @@
 			}
 		},
 		methods: {
+			focus: function() {
+				if (this.type !== 'textarea') {
+					this.$refs.input.focus();
+				} else {
+					this.$refs.textarea.focus();
+				}
+			},
 			handleBlur: function(event) {
 				this.$emit('blur', event);
 				if (this.validateEvent) {
@@ -6058,8 +6033,8 @@
 					self.resizeTextarea();
 				});
 				if (self.type !== 'textarea' && self.cleave !== null) {
-					self.$el.querySelector('input').value = value;
-					var cleaveObj = new Cleave(self.$el.querySelector('input'), self.cleave);
+					self.$refs.input.value = value;
+					var cleaveObj = new Cleave(self.$refs.input, self.cleave);
 					self.currentValue = cleaveObj.getFormattedValue();
 					if (cleaveObj.getFormattedValue().length >= value.length && !watchFlg) {
 						self.currentValue = value;
@@ -6085,9 +6060,6 @@
 		}
 	};
 	Vue.component(VueInput.name, VueInput);
-	return function() {
-		return VueInput;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -6105,7 +6077,7 @@
 		'error': 'vue-icon-circle-cross'
 	};
 	var VueAlert = {
-		template: '<transition name="vue-alert-fade"><div class="vue-alert" :class="[ typeClass ]" v-show="visible"><i class="vue-alert__icon" :class="[ iconClass, isBigIcon ]" v-if="showIcon"></i><div class="vue-alert__content"><span class="vue-alert__title" :class="[ isBoldTitle ]" v-if="title">{{ title }}</span><slot><p class="vue-alert__description" v-if="description">{{ description }}</p></slot><i class="vue-alert__closebtn" :class="{ \'is-customed\': closeText !== \'\', \'vue-icon-close\': closeText === \'\' }" v-show="closable" @click="close()">{{closeText}}</i></div></div></transition>',
+		template: '<div class="vue-alert" :class="[ typeClass ]" v-show="visible"><i class="vue-alert__icon" :class="[ iconClass, \'is-big\' ]" v-if="showIcon"></i><div class="vue-alert__content"><span class="vue-alert__title is-bold" v-if="title">{{ title }}</span><div class="vue-alert__description"><slot></slot></div><i class="vue-alert__closebtn" :class="{ \'is-customed\': closeText !== \'\', \'vue-icon-close\': closeText === \'\' }" v-show="closable" @click="close()">{{closeText}}</i></div></div>',
 		name: 'VueAlert',
 		props: {
 			title: {
@@ -6157,12 +6129,6 @@
 			},
 			iconClass: function() {
 				return TYPE_CLASSES_MAP[this.type] || 'vue-icon-information';
-			},
-			isBigIcon: function() {
-				return this.description ? 'is-big' : '';
-			},
-			isBoldTitle: function() {
-				return this.description ? 'is-bold' : '';
 			}
 		}
 	};
@@ -6171,25 +6137,26 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePopup'], definition);
+		define(['Vue', 'VuePopup', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VuePopup']);
+		context[name] = definition(context['Vue'], context['VuePopup'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueAside', this, function(Vue, VuePopup) {
+})('VueAside', this, function(Vue, VuePopup, VueUtil) {
 	'use strict';
 	var VueAside = {
-		template: '<div :class="[{\'vue-aside__initial\':relative}]"><div v-show="visible" class="vue-aside__wrapper" :class="[{\'vue-aside__absolute\':relative}]" @click.self="handleWrapperClick"></div><transition :name="left ? \'vue-aside-left\' : \'vue-aside-right\'"><div v-show="visible" class="vue-aside" :class="[{\'vue-aside-left\':left, \'vue-aside__absolute\':relative},sizeClass,setClass]" ref="dialog" :style="setStyle"><div v-if="showClose" class="vue-aside__headerbtn"><i class="vue-aside__close vue-icon vue-icon-close" @click=\'handleClose\'></i></div><div class="vue-aside__header"><span class="vue-aside__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot></div><div class="vue-aside__body"><slot></slot></div><div class="vue-aside__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></transition></div>',
+		template: '<div :class="[{\'vue-aside__static\':relative}]"><div v-show="visibleaside" class="vue-aside__wrapper" :class="[{\'vue-aside__absolute\':relative}, {\'is-clear\': clearModal}]" @click.self="handleWrapperClick"></div><transition :name="left ? \'vue-aside-left\' : \'vue-aside-right\'"><div v-show="visibleaside" class="vue-aside" :class="[{\'vue-aside-left\':left, \'vue-aside__absolute\':relative},sizeClass,customClass]" ref="aside"><div v-if="showClose" class="vue-aside__headerbtn"><i class="vue-aside__close vue-icon vue-icon-close" @click=\'handleClose\'></i></div><div class="vue-aside__header"><span class="vue-aside__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot></div><div class="vue-aside__body"><slot></slot></div><div class="vue-aside__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></transition></div>',
 		name: 'VueAside',
-		mixins: [VuePopup().VuePopup],
+		mixins: [VuePopup],
+		data: function(){
+			return {
+				visibleaside: false
+			}
+		},
 		props: {
 			title: {
 				type: String,
 				default: ''
-			},
-			lockScroll: {
-				type: Boolean,
-				default: true
 			},
 			closeOnClickModal: {
 				type: Boolean,
@@ -6215,53 +6182,64 @@
 				type: Boolean,
 				default: false
 			},
-			asideClass: {
+			customClass: {
 				type: String,
 				default: ""
 			},
-			asideStyle: {
-				type: String,
-				default: ""
-			}
+			clearModal: {
+				type: Boolean,
+				default: false
+			},
+			beforeClose: Function
 		},
 		watch: {
-			visible: function(val) {
+			visibleaside: function(val){
 				if (val) {
+					this.opened = true;
 					this.$emit('open');
 					this.$el.addEventListener('scroll', this.updatePopper);
-					this.$el.firstElementChild.addEventListener('touchmove', function(event) {
-						event.preventDefault();
-						event.stopPropagation();
-					});
-					var refsDialog = this.$refs.dialog;
+					var refsAside = this.$refs.aside;
 					this.$nextTick(function() {
-						refsDialog.scrollTop = 0;
+						refsAside.scrollTop = 0;
 					});
 				} else {
+					this.opened = false;
 					this.$el.removeEventListener('scroll', this.updatePopper);
-					this.$el.firstElementChild.removeEventListener('touchmove', function(event) {
-						event.preventDefault();
-						event.stopPropagation();
-					});
 					this.$emit('close');
 				}
+			},
+			visible: function(val) {
+				if (val) {
+					this.visibleaside = val;
+				} else {
+					if (typeof this.beforeClose === 'function') {
+						var self = this;
+						var done = function(resolve) {
+							if (resolve === undefined) resolve = true;
+							if (resolve) {
+								self.$nextTick(function() {
+									self.visibleaside = val;
+								});
+							} else {
+								self.$emit('visible-change', true);
+							}
+						};
+						self.beforeClose(done);
+					} else {
+						this.visibleaside = val
+					}
+				} 
 			}
 		},
 		computed: {
 			showTitle: function() {
-				if (this.title.replace(/^\s+|\s+$/g, "") === "") {
+				if (VueUtil.trim(this.title) === "") {
 					return false;
 				}
 				return true;
 			},
 			sizeClass: function() {
 				return 'vue-aside--' + this.size;
-			},
-			setClass: function() {
-				return this.asideClass;
-			},
-			setStyle: function() {
-				return this.asideStyle;
 			}
 		},
 		methods: {
@@ -6270,9 +6248,6 @@
 				this.handleClose();
 			},
 			handleClose: function() {
-				if (typeof this.beforeClose === 'function') {
-					this.beforeClose();
-				}
 				this.$emit('visible-change', false);
 			}
 		}
@@ -6282,16 +6257,16 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VuePopper', 'VueInput'], definition);
+		define(['Vue', 'VueUtil', 'VuePopper'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper'], context['VueInput']);
+		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper']);
 		delete context[name];
 	}
-})('VueAutocomplete', this, function(Vue, VueUtil, VuePopper, VueInput) {
+})('VueAutocomplete', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
 	var VueAutocompleteSuggestions = {
-		template: '<div><transition name="vue-zoom-in-top" @after-leave="doDestroy"><div v-show="showPopper" class="vue-autocomplete-suggestion" :class="{ \'is-loading\': parent.loading }" :style="{ width: dropdownWidth }"><ul class="vue-autocomplete-suggestion__wrap"><li v-if="parent.loading"><i class="vue-icon-loading"></i></li><template v-for="(item, index) in suggestions" v-else><li v-if="!parent.customItem" :class="{\'highlighted\': parent.highlightedIndex === index}" @click="select(item)">{{item.value}}</li><component v-else :class="{\'highlighted\': parent.highlightedIndex === index}" @click="select(item)" :is="parent.customItem" :item="item" :index="index"></component></template></ul></div></transition></div>',
-		mixins: [VuePopper(), VueUtil.component.emitter],
+		template: '<transition name="vue-zoom-in-top" @after-leave="doDestroy"><div v-show="showPopper" class="vue-autocomplete-suggestion" :class="{ \'is-loading\': parent.loading }" :style="{ width: dropdownWidth }"><ul class="vue-autocomplete-suggestion__wrap"><li v-if="parent.loading"><i class="vue-icon-loading"></i></li><template v-for="(item, index) in suggestions" v-else><li v-if="!parent.customItem" :class="{\'highlighted\': parent.highlightedIndex === index}" @click="select(item)">{{item[props.label]}}</li><component v-else :class="{\'highlighted\': parent.highlightedIndex === index}" @click="select(item)" :is="parent.customItem" :item="item" :index="index"></component></template></ul></div></transition>',
+		mixins: [VuePopper, VueUtil.component.emitter],
 		componentName: 'VueAutocompleteSuggestions',
 		data: function() {
 			return {
@@ -6300,6 +6275,7 @@
 			};
 		},
 		props: {
+			props: Object,
 			suggestions: Array,
 			options: {
 				default: function() {
@@ -6315,6 +6291,12 @@
 				this.dispatch('VueAutocomplete', 'item-click', item);
 			}
 		},
+		updated: function() {
+			var self = this;
+			self.$nextTick(function() {
+				self.updatePopper();
+			});
+		},
 		mounted: function() {
 			this.popperElm = this.$el;
 			this.referenceElm = this.$parent.$refs.input.$refs.input;
@@ -6328,18 +6310,26 @@
 		}
 	};
 	var VueAutocomplete = {
-		template: '<div class="vue-autocomplete" v-clickoutside="handleClickoutside"><vue-input ref="input" :value="value" :disabled="disabled" :placeholder="placeholder" :name="name" :size="size" :icon="icon" :on-icon-click="onIconClick" @compositionstart.native="handleComposition" @compositionupdate.native="handleComposition" @compositionend.native="handleComposition" @change="handleChange" @focus="handleFocus" @blur="handleBlur" @keydown.up.native.prevent="highlight(highlightedIndex - 1)" @keydown.down.native.prevent="highlight(highlightedIndex + 1)" @keydown.enter.stop.native="handleKeyEnter"><template slot="prepend" v-if="$slots.prepend"><slot name="prepend"></slot></template><template slot="append" v-if="$slots.append"><slot name="append"></slot></template></vue-input><vue-autocomplete-suggestions :class="[popperClass ? popperClass : \'\']" ref="suggestions" :suggestions="suggestions"></vue-autocomplete-suggestions></div>',
+		template: '<div class="vue-autocomplete" v-clickoutside="close"><vue-input :autofocus="autofocus" :tabindex="tabindex" ref="input" v-bind="$props" @compositionstart.native="handleComposition" @compositionupdate.native="handleComposition" @compositionend.native="handleComposition" @change="handleChange" @focus="handleFocus" @keydown.up.native.prevent="highlight(highlightedIndex - 1)" @keydown.down.native.prevent="highlight(highlightedIndex + 1)" @keydown.enter.native.prevent="handleKeyEnter" @keydown.native.tab="close"><template slot="prepend" v-if="$slots.prepend"><slot name="prepend"></slot></template><template slot="append" v-if="$slots.append"><slot name="append"></slot></template></vue-input><vue-autocomplete-suggestions :props="props" :class="[popperClass ? popperClass : \'\']" ref="suggestions" :suggestions="suggestions"></vue-autocomplete-suggestions></div>',
 		name: 'VueAutocomplete',
 		mixins: [VueUtil.component.emitter],
 		componentName: 'VueAutocomplete',
 		components: {
-			VueInput: VueInput(),
 			VueAutocompleteSuggestions: VueAutocompleteSuggestions
 		},
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
 		},
 		props: {
+			props: {
+				type: Object,
+				default: function() {
+					return {
+						label: 'value',
+						value: 'value'
+					};
+				}
+			},
 			popperClass: String,
 			placeholder: String,
 			disabled: Boolean,
@@ -6347,6 +6337,7 @@
 			size: String,
 			value: String,
 			autofocus: Boolean,
+			tabindex: Number,
 			fetchSuggestions: Function,
 			triggerOnFocus: {
 				type: Boolean,
@@ -6358,7 +6349,7 @@
 		},
 		data: function() {
 			return {
-				isFocus: false,
+				activated: false,
 				isOnComposition: false,
 				suggestions: [],
 				loading: false,
@@ -6369,7 +6360,7 @@
 			suggestionVisible: function() {
 				var suggestions = this.suggestions;
 				var isValidData = Array.isArray(suggestions) && suggestions.length > 0;
-				return (isValidData || this.loading) && this.isFocus;
+				return (isValidData || this.loading) && this.activated;
 			}
 		},
 		watch: {
@@ -6378,10 +6369,13 @@
 			}
 		},
 		methods: {
+			focus: function() {
+				this.$refs.input.focus();
+			},
 			getData: function(queryString) {
 				var self = this;
 				self.loading = true;
-				self.fetchSuggestions(queryString, function(suggestions) {
+				self.fetchSuggestions && self.fetchSuggestions(queryString, function(suggestions) {
 					self.loading = false;
 					if (Array.isArray(suggestions)) {
 						self.suggestions = suggestions;
@@ -6407,31 +6401,26 @@
 				this.getData(value);
 			},
 			handleFocus: function() {
-				this.isFocus = true;
+				this.activated = true;
 				if (this.triggerOnFocus) {
 					this.getData(this.value);
 				}
 			},
-			handleBlur: function() {
-				var self = this;
-				setTimeout(function() {
-					self.isFocus = false;
-				}, 100);
+			close: function() {
+				this.activated = false;
 			},
 			handleKeyEnter: function() {
-				if (this.suggestionVisible) {
+				if (this.suggestionVisible && this.highlightedIndex >= 0 && this.highlightedIndex < this.suggestions.length) {
 					this.select(this.suggestions[this.highlightedIndex]);
 				}
 			},
-			handleClickoutside: function() {
-				this.isFocus = false;
-			},
 			select: function(item) {
 				var self = this;
-				self.$emit('input', item.value);
+				self.$emit('input', item[self.props.value]);
 				self.$emit('select', item);
 				self.$nextTick(function() {
 					self.suggestions = [];
+					self.focus();
 				});
 			},
 			highlight: function(index) {
@@ -6441,7 +6430,7 @@
 					index = this.suggestions.length - 1;
 				}
 				var suggestion = this.$refs.suggestions.$el.querySelector('.vue-autocomplete-suggestion__wrap');
-				var suggestionList = suggestion.querySelectorAll('.vue-autocomplete-suggestion__list li');
+				var suggestionList = suggestion.querySelectorAll('li');
 				var highlightItem = suggestionList[index];
 				var scrollTop = suggestion.scrollTop;
 				var offsetTop = highlightItem.offsetTop;
@@ -6472,6 +6461,7 @@
 		define(['Vue'], definition);
 	} else {
 		context[name] = definition(context['Vue']);
+		delete context[name];
 	}
 })('VueButtonGroup', this, function(Vue) {
 	'use strict';
@@ -6480,9 +6470,6 @@
 		name: 'VueButtonGroup'
 	};
 	Vue.component(VueButtonGroup.name, VueButtonGroup);
-	return function() {
-		return VueButtonGroup;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -6490,11 +6477,12 @@
 		define(['Vue'], definition);
 	} else {
 		context[name] = definition(context['Vue']);
+		delete context[name];
 	}
 })('VueButton', this, function(Vue) {
 	'use strict';
 	var VueButton = {
-		template: '<button :disabled="disabled" class="vue-button" @click="handleClick" :autofocus="autofocus" :type="nativeType" :class="[type ? \'vue-button--\' + type : \'\', size ? \'vue-button--\' + size : \'\', { \'is-disabled\': disabled, \'is-loading\': loading, \'is-plain\': plain, \'is-circle\': circle } ]"><i class="vue-icon-loading" v-if="loading"></i><i :class="icon" v-if="icon && !loading"></i><span v-if="$slots.default"><slot></slot></span></button>',
+		template: '<button :disabled="disabled || loading" class="vue-button" @click="handleClick" :autofocus="autofocus" :type="nativeType" :class="[type ? \'vue-button--\' + type : \'\', size ? \'vue-button--\' + size : \'\', { \'is-disabled\': disabled, \'is-loading\': loading, \'is-plain\': plain, \'is-circle\': circle } ]"><i class="vue-icon-loading" v-if="loading"></i><i :class="icon" v-if="icon && !loading"></i><span v-if="$slots.default"><slot></slot></span></button>',
 		name: 'VueButton',
 		props: {
 			type: {
@@ -6517,15 +6505,15 @@
 			autofocus: Boolean
 		},
 		methods: {
+			focus: function() {
+				this.$el.focus();
+			},
 			handleClick: function(evt) {
 				this.$emit('click', evt);
 			}
 		}
 	};
 	Vue.component(VueButton.name, VueButton);
-	return function() {
-		return VueButton;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -6533,6 +6521,7 @@
 		define(['Vue', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueCheckboxGroup', this, function(Vue, VueUtil) {
 	'use strict';
@@ -6557,9 +6546,6 @@
 		}
 	};
 	Vue.component(VueCheckboxGroup.name, VueCheckboxGroup);
-	return function() {
-		return VueCheckboxGroup;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -6679,6 +6665,7 @@
 		define(['Vue', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueCheckbox', this, function(Vue, VueUtil) {
 	'use strict';
@@ -6768,32 +6755,30 @@
 		}
 	};
 	Vue.component(VueCheckbox.name, VueCheckbox);
-	return function() {
-		return VueCheckbox;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePopup'], definition);
+		define(['Vue', 'VuePopup', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VuePopup']);
+		context[name] = definition(context['Vue'], context['VuePopup'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueDialog', this, function(Vue, VuePopup) {
+})('VueDialog', this, function(Vue, VuePopup, VueUtil) {
 	'use strict';
 	var VueDialog = {
-		template: '<transition name="dialog-fade"><div class="vue-dialog__wrapper" v-show="visible" @click.self="handleWrapperClick"><div class="vue-dialog" :class="[sizeClass, customClass]" ref="dialog" :style="style"><div class="vue-dialog__header"><span class="vue-dialog__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot><div class="vue-dialog__headerbtn" v-if="showClose" ><i class="vue-dialog__close vue-icon vue-icon-close" @click=\'handleClose\'></i></div></div><div class="vue-dialog__body"><slot></slot></div><div class="vue-dialog__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></div></transition>',
+		template: '<transition name="dialog-fade"><div class="vue-dialog__wrapper" :class="{\'is-clear\': clearModal}" v-show="visibledialog" @click.self="handleWrapperClick"><div v-draggable :draggable-cancel-selector="draggableCancelSelector" class="vue-dialog" :class="[sizeClass, customClass]" ref="dialog" :style="style"><div class="vue-dialog__header"><span class="vue-dialog__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot><div class="vue-dialog__headerbtn" v-if="showClose" ><i class="vue-dialog__close vue-icon vue-icon-close" @click=\'handleClose\'></i></div></div><div class="vue-dialog__body"><slot></slot></div><div class="vue-dialog__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></div></transition>',
 		name: 'VueDialog',
-		mixins: [VuePopup().VuePopup],
+		mixins: [VuePopup],
+		data: function(){
+			return {
+				visibledialog: false
+			}
+		},
 		props: {
 			title: {
 				type: String,
 				default: ''
-			},
-			lockScroll: {
-				type: Boolean,
-				default: true
 			},
 			closeOnClickModal: {
 				type: Boolean,
@@ -6819,34 +6804,54 @@
 				type: String,
 				default: '15%'
 			},
+			clearModal: {
+				type: Boolean,
+				default: false
+			},
 			beforeClose: Function
 		},
 		watch: {
-			visible: function(val) {
+			visibledialog: function(val){
 				if (val) {
+					this.opened = true;
 					this.$emit('open');
 					this.$el.addEventListener('scroll', this.updatePopper);
-					this.$el.firstElementChild.addEventListener('touchmove', function(event) {
-						event.preventDefault();
-						event.stopPropagation();
-					});
 					var refsDialog = this.$refs.dialog;
 					this.$nextTick(function() {
 						refsDialog.scrollTop = 0;
 					});
 				} else {
+					this.opened = false;
 					this.$el.removeEventListener('scroll', this.updatePopper);
-					this.$el.firstElementChild.removeEventListener('touchmove', function(event) {
-						event.preventDefault();
-						event.stopPropagation();
-					});
 					this.$emit('close');
 				}
+			},
+			visible: function(val) {
+				if (val) {
+					this.visibledialog = val;
+				} else {
+					if (typeof this.beforeClose === 'function') {
+						var self = this;
+						var done = function(resolve) {
+							if (resolve === undefined) resolve = true;
+							if (resolve) {
+								self.$nextTick(function() {
+									self.visibledialog = val;
+								});
+							} else {
+								self.$emit('visible-change', true);
+							}
+						};
+						self.beforeClose(done);
+					} else {
+						this.visibledialog = val
+					}
+				} 
 			}
 		},
 		computed: {
 			showTitle: function() {
-				if (this.title.replace(/^\s+|\s+$/g, "") === "") {
+				if (VueUtil.trim(this.title) === "") {
 					return false;
 				}
 				return true;
@@ -6856,6 +6861,9 @@
 			},
 			style: function() {
 				return this.size === 'full' ? {} : { 'top': this.top };
+			},
+			draggableCancelSelector: function() {
+				return this.size === 'full' ? '.vue-dialog__header, .vue-dialog__body, .vue-dialog__footer' : '.vue-dialog__headerbtn, .vue-dialog__body, .vue-dialog__footer';
 			}
 		},
 		methods: {
@@ -6864,9 +6872,6 @@
 				this.handleClose();
 			},
 			handleClose: function() {
-				if (typeof this.beforeClose === 'function') {
-					this.beforeClose();
-				}
 				this.$emit('visible-change', false);
 			}
 		}
@@ -6916,6 +6921,12 @@
 				parent.appendChild(el.mask);
 				Vue.nextTick(function() {
 					el.instance.visible = true;
+					Vue.nextTick(function() {
+						if (binding.modifiers.fullscreen) {
+							el.instance.$el.tabIndex = -1;
+							el.instance.$el.focus();
+						}
+					});
 				});
 				el.domInserted = true;
 			}
@@ -6963,13 +6974,28 @@
 				}
 			}
 		};
+		var doKeyDown = function(e) {
+			document.querySelector('.vue-loading-mask.is-fullscreen').focus();
+			e.preventDefault();
+			return false;
+		}
+		var attachEvent = function(binding) {
+			if (binding.modifiers.fullscreen) {
+				if (binding.value) {
+					VueUtil.on(document.body, 'keydown', doKeyDown);
+				} else {
+					VueUtil.off(document.body, 'keydown', doKeyDown);
+				}
+			}
+		};
 		Vue.directive('loading', {
 			bind: function(el, binding) {
 				var mask = new VueLoading({
 					el: document.createElement('div'),
 					data: {
 						text: el.getAttribute('vue-loading-text'),
-						fullscreen: !!binding.modifiers.fullscreen
+						fullscreen: !!binding.modifiers.fullscreen,
+						customClass: el.getAttribute('vue-loading-class'),
 					}
 				});
 				el.instance = mask;
@@ -6980,6 +7006,7 @@
 			update: function(el, binding) {
 				if (binding.oldValue !== binding.value) {
 					toggleLoading(el, binding);
+					attachEvent(binding);
 				}
 			},
 			unbind: function(el, binding) {
@@ -6987,111 +7014,23 @@
 					if (binding.modifiers.fullscreen || binding.modifiers.body) {
 						document.body.removeChild(el.mask);
 					} else {
-						el.mask && el.mask.parentNode && el.mask.parentNode.removeChild(el.mask);
+						VueUtil.removeNode(el.mask);
 					}
 				}
 			}
 		});
 	};
-	var defaults = {
-		text: null,
-		fullscreen: true,
-		body: false,
-		lock: false,
-		customClass: ''
-	};
-	var fullscreenLoading;
-	VueLoading.prototype.originalPosition = '';
-	VueLoading.prototype.originalOverflow = '';
-	VueLoading.prototype.close = function() {
-		if (this.fullscreen && this.originalOverflow !== 'hidden') {
-			document.body.style.overflow = this.originalOverflow;
-		}
-		if (this.fullscreen || this.body) {
-			document.body.style.position = this.originalPosition;
-		} else {
-			this.target.style.position = this.originalPosition;
-		}
-		if (this.fullscreen) {
-			fullscreenLoading = undefined;
-		}
-		this.$on('after-leave', function() {
-			this.$el && this.$el.parentNode && this.$el.parentNode.removeChild(this.$el);
-			this.$destroy();
-		});
-		this.visible = false;
-	}
-	var addStyle = function(options, parent, instance) {
-		var maskStyle = {};
-		if (options.fullscreen) {
-			instance.originalPosition = document.body.style.position;
-			instance.originalOverflow = document.body.style.overflow;
-		} else if (options.body) {
-			instance.originalPosition = document.body.style.position;
-			['top', 'left'].forEach(function(property) {
-				var scroll = property === 'top' ? 'scrollTop' : 'scrollLeft';
-				maskStyle[property] = options.target.getBoundingClientRect()[property] + document.body[scroll] + document.documentElement[scroll] + 'px';
-			});
-			['height', 'width'].forEach(function(property) {
-				maskStyle[property] = options.target.getBoundingClientRect()[property] + 'px';
-			});
-		} else {
-			instance.originalPosition = parent.style.position;
-		}
-		Object.keys(maskStyle).forEach(function(property) {
-			instance.$el.style[property] = maskStyle[property];
-		});
-	};
-	var service = function() {
-		var options = {};
-		if (Vue.prototype.$isServer)
-			return;
-		options = VueUtil.merge({}, defaults, options);
-		if (typeof options.target === 'string') {
-			options.target = document.querySelector(options.target);
-		}
-		options.target = options.target || document.body;
-		if (options.target !== document.body) {
-			options.fullscreen = false;
-		} else {
-			options.body = true;
-		}
-		if (options.fullscreen && fullscreenLoading) {
-			return fullscreenLoading;
-		}
-		var parent = options.body ? document.body : options.target;
-		var instance = new VueLoading({
-			el: document.createElement('div'),
-			data: options
-		});
-		addStyle(options, parent, instance);
-		if (instance.originalPosition !== 'absolute') {
-			parent.style.position = 'relative';
-		}
-		if (options.fullscreen && options.lock) {
-			parent.style.overflow = 'hidden';
-		}
-		parent.appendChild(instance.$el);
-		Vue.nextTick(function() {
-			instance.visible = true;
-		});
-		if (options.fullscreen) {
-			fullscreenLoading = instance;
-		}
-		return instance;
-	};
 	Vue.use(directive);
-	Vue.prototype.$loading = service;
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueMenuItemGroup', this, function(Vue) {
+})('VueMenuItemGroup', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueMenuItemGroup = {
 		template: '<li class="vue-menu-item-group"><div class="vue-menu-item-group__title" :style="{paddingLeft: levelPadding + \'px\'}" v-if="showTitle"><template v-if="!$slots.title">{{title}}</template><slot v-else name="title"></slot></div><ul><slot></slot></ul></li>',
@@ -7110,7 +7049,7 @@
 		},
 		computed: {
 			showTitle: function() {
-				if (this.title.replace(/^\s+|\s+$/g, "") === "" && !this.$slots.title) {
+				if (VueUtil.trim(this.title) === "" && !this.$slots.title) {
 					return false;
 				}
 				return true;
@@ -7419,6 +7358,7 @@
 		define(['Vue', 'VuePopper', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VuePopper'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueTooltip', this, function(Vue, VuePopper, VueUtil) {
 	'use strict';
@@ -7429,18 +7369,14 @@
 	};
 	var VueTooltip = {
 		name: 'VueTooltip',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		props: {
 			openDelay: {
 				type: Number,
 				default: 0
 			},
 			disabled: Boolean,
-			manual: Boolean,
-			effect: {
-				type: String,
-				default: 'dark'
-			},
+			effect: String,
 			popperClass: String,
 			content: String,
 			visibleArrow: {
@@ -7460,7 +7396,7 @@
 			},
 			enterable: {
 				type: Boolean,
-				default: true
+				default: false
 			}
 		},
 		beforeCreate: function() {
@@ -7473,12 +7409,13 @@
 					return this.node;
 				}
 			}).$mount();
-			self.debounceClose = VueUtil.component.debounce(200, function() {
+			self.debounceClose = VueUtil.component.debounce(100, function() {
 				self.handleClosePopper();
 			});
 		},
 		render: function(createElement) {
 			var self = this;
+			var effect = self.effect === 'light' ? 'light' : 'dark';
 			if (self.popperVM) {
 				self.popperVM.node = createElement('transition', {
 					attrs: {
@@ -7502,7 +7439,7 @@
 						name: 'show',
 						value: !self.disabled && self.showPopper
 					}],
-					class: ['vue-tooltip__popper', 'is-' + self.effect, self.popperClass]
+					class: ['vue-tooltip__popper', 'is-' + effect, self.popperClass]
 				}, [self.$slots.content || self.content])]);
 			}
 			if (!self.$slots.default || !self.$slots.default.length)
@@ -7531,17 +7468,15 @@
 			},
 			handleShowPopper: function() {
 				var self = this;
-				if (!self.expectedState || self.manual)
+				if (!self.expectedState)
 					return;
-				clearTimeout(self.timeout);
 				self.timeout = setTimeout(function() {
 					self.showPopper = true;
+					clearTimeout(self.timeout);
 				}, self.openDelay);
 			},
 			handleClosePopper: function() {
-				if (this.enterable && this.expectedState || this.manual)
-					return;
-				clearTimeout(this.timeout);
+				if (this.enterable && this.expectedState) return;
 				this.showPopper = false;
 			},
 			setExpectedState: function(expectedState) {
@@ -7550,9 +7485,6 @@
 		}
 	};
 	Vue.component(VueTooltip.name, VueTooltip);
-	return function() {
-		return VueTooltip;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -7734,7 +7666,7 @@
 })('VueSwitch', this, function(Vue) {
 	'use strict';
 	var VueSwitch = {
-		template: '<label class="vue-switch" :class="{ \'is-disabled\': disabled, \'vue-switch--wide\': hasText }"><div class="vue-switch__mask" v-show="disabled"></div><input class="vue-switch__input" type="checkbox" @change="handleChange" v-model="_value" :name="name" :disabled="disabled"><span class="vue-switch__core" ref="core" :style="{ \'width\': coreWidth + \'px\' }"><span class="vue-switch__button" :style="buttonStyle"></span></span><transition name="labvue-fade"><div class="vue-switch__label vue-switch__labvue--left" v-show="value" :style="{ \'width\': coreWidth + \'px\' }"><i :class="[onIconClass]" v-if="onIconClass"></i><span v-if="!onIconClass && onText">{{ onText }}</span></div></transition><transition name="labvue-fade"><div class="vue-switch__label vue-switch__labvue--right" v-show="!value" :style="{ \'width\': coreWidth + \'px\' }"><i :class="[offIconClass]" v-if="offIconClass"></i><span v-if="!offIconClass && offText">{{ offText }}</span></div></transition></label>',
+		template: '<label class="vue-switch" :class="{ \'is-disabled\': disabled, \'vue-switch--wide\': hasText }"><div class="vue-switch__mask" v-show="disabled"></div><input class="vue-switch__input" type="checkbox" @change="handleChange" v-model="_value" :name="name" :disabled="disabled"><span class="vue-switch__core" ref="core" :style="{ \'width\': coreWidth + \'px\' }"><span class="vue-switch__button" :style="buttonStyle"></span></span><transition name="label-fade"><div class="vue-switch__label vue-switch__label--left" v-show="value" :style="{ \'width\': coreWidth + \'px\' }"><i :class="[onIconClass]" v-if="onIconClass"></i><span v-if="!onIconClass && onText">{{ onText }}</span></div></transition><transition name="label-fade"><div class="vue-switch__label vue-switch__label--right" v-show="!value" :style="{ \'width\': coreWidth + \'px\' }"><i :class="[offIconClass]" v-if="offIconClass"></i><span v-if="!offIconClass && offText">{{ offText }}</span></div></transition></label>',
 		name: 'VueSwitch',
 		props: {
 			value: {
@@ -7835,12 +7767,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueTabPane', this, function(Vue) {
+})('VueTabPane', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueTabPane = {
 		template: '<div class="vue-tab-pane" v-show="active"><slot></slot></div>',
@@ -7870,9 +7802,7 @@
 			this.$parent.addPanes(this);
 		},
 		destroyed: function() {
-			if (this.$el && this.$el.parentNode) {
-				this.$el.parentNode.removeChild(this.$el);
-			}
+			VueUtil.removeNode(this.$el);
 			this.$parent.removePanes(this);
 		},
 		watch: {
@@ -7886,12 +7816,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueTabs', this, function(Vue) {
+})('VueTabs', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueTabBar = {
 		template: '<div class="vue-tabs__active-bar" :style="barStyle"></div>',
@@ -7931,86 +7861,230 @@
 			}
 		}
 	};
-	var VueTabs = {
-		name: 'VueTabs',
+	var VueTabNav = {
 		components: {
 			TabBar: VueTabBar
 		},
 		props: {
-			type: String,
-			activeName: String,
-			closable: {
-				type: Boolean,
-				default: false
+			panes: Array,
+			currentName: String,
+			editable: Boolean,
+			onTabClick: {
+				type: Function,
+				default: function() {}
 			},
-			value: {}
+			onTabRemove: {
+				type: Function,
+				default: function() {}
+			},
+			type: String
 		},
 		data: function() {
 			return {
-				children: null,
-				currentName: this.value || this.activeName,
+				scrollable: false,
+				navStyle: {
+					transform: ''
+				}
+			};
+		},
+		methods: {
+			scrollPrev: function() {
+				var containerWidth = this.$refs.navScroll.offsetWidth;
+				var currentOffset = this.getCurrentScrollOffset();
+				if (!currentOffset)
+					return;
+				var newOffset = currentOffset > containerWidth ? currentOffset - containerWidth : 0;
+				this.setOffset(newOffset);
+			},
+			scrollNext: function() {
+				var navWidth = this.$refs.nav.offsetWidth;
+				var containerWidth = this.$refs.navScroll.offsetWidth;
+				var currentOffset = this.getCurrentScrollOffset();
+				if (navWidth - currentOffset <= containerWidth)
+					return;
+				var newOffset = navWidth - currentOffset > containerWidth * 2 ? currentOffset + containerWidth : (navWidth - containerWidth);
+				this.setOffset(newOffset);
+			},
+			scrollToActiveTab: function() {
+				if (!this.scrollable)
+					return;
+				var nav = this.$refs.nav;
+				var activeTab = this.$el.querySelector('.is-active');
+				var navScroll = this.$refs.navScroll;
+				var activeTabBounding = activeTab.getBoundingClientRect();
+				var navScrollBounding = navScroll.getBoundingClientRect();
+				var navBounding = nav.getBoundingClientRect();
+				var currentOffset = this.getCurrentScrollOffset();
+				var newOffset = currentOffset;
+				if (activeTabBounding.left < navScrollBounding.left) {
+					newOffset = currentOffset - (navScrollBounding.left - activeTabBounding.left);
+				}
+				if (activeTabBounding.right > navScrollBounding.right) {
+					newOffset = currentOffset + activeTabBounding.right - navScrollBounding.right;
+				}
+				if (navBounding.right < navScrollBounding.right) {
+					newOffset = nav.offsetWidth - navScrollBounding.width;
+				}
+				this.setOffset(Math.max(newOffset, 0));
+			},
+			getCurrentScrollOffset: function() {
+				var navStyle = this.navStyle;
+				return navStyle.transform ? Number(navStyle.transform.match(/translateX\(-(\d+(\.\d+)*)px\)/)[1]) : 0;
+			},
+			setOffset: function(value) {
+				this.navStyle.transform = 'translateX(-' + value + 'px)';
+			},
+			update: function() {
+				if (this.$refs.nav && this.$refs.navScroll) {
+					var navWidth = this.$refs.nav.offsetWidth;
+					var containerWidth = this.$refs.navScroll.offsetWidth;
+					var currentOffset = this.getCurrentScrollOffset();
+					if (containerWidth < navWidth) {
+						this.scrollable = this.scrollable || {};
+						this.scrollable.prev = currentOffset;
+						this.scrollable.next = currentOffset + containerWidth < navWidth;
+						if (navWidth - currentOffset < containerWidth) {
+							this.setOffset(navWidth - containerWidth);
+						}
+					} else {
+						this.scrollable = false;
+						if (currentOffset > 0) {
+							this.setOffset(0);
+						}
+					}
+				}
+			}
+		},
+		updated: function() {
+			this.update();
+		},
+		render: function(createElement) {
+			var type = this.type;
+			var panes = this.panes;
+			var editable = this.editable;
+			var onTabClick = this.onTabClick;
+			var onTabRemove = this.onTabRemove;
+			var navStyle = this.navStyle;
+			var scrollable = this.scrollable;
+			var scrollNext = this.scrollNext;
+			var scrollPrev = this.scrollPrev;
+			var scrollBtn = scrollable ? [createElement('span', {
+				'class': ['vue-tabs__nav-prev', scrollable.prev ? '' : 'is-disabled'],
+				on: {
+					'click': scrollPrev
+				}
+			}, [createElement('i', {
+				'class': 'vue-icon-arrow-left'
+			}, [])]), createElement('span', {
+				'class': ['vue-tabs__nav-next', scrollable.next ? '' : 'is-disabled'],
+				on: {
+					'click': scrollNext
+				}
+			}, [createElement('i', {
+				'class': 'vue-icon-arrow-right'
+			}, [])])] : null;
+			var tabs = this._l(panes, function(pane, index) {
+				var tabName = pane.name || pane.index || index;
+				var closable = pane.isClosable || editable;
+				pane.index = '' + index;
+				var btnClose = closable ? createElement('span', {'class': 'vue-icon-close',on: {'click': function click(ev) {onTabRemove(pane, ev);}}}, []) : null;
+				var tabLabelContent = pane.$slots.label || pane.label;
+				return createElement('div', {
+					'class': {
+						'vue-tabs__item': true,
+						'is-active': pane.active,
+						'is-disabled': pane.disabled,
+						'is-closable': closable
+					},
+					ref: 'tabs',
+					refInFor: true,
+					on: {
+						'click': function click(ev) {
+							onTabClick(pane, tabName, ev);
+						}
+					}
+				}, [tabLabelContent, btnClose]);
+			});
+			return createElement('div', {
+					'class': ['vue-tabs__nav-wrap', scrollable ? 'is-scrollable' : '']
+				}, [scrollBtn, createElement('div', {
+					'class': ['vue-tabs__nav-scroll'],
+					ref: 'navScroll'
+				}, [createElement('div', {
+					'class': 'vue-tabs__nav',
+					ref: 'nav',
+					style: navStyle
+				}, [!type ? createElement('tab-bar', {
+					attrs: {
+						tabs: panes
+					}
+				}, []) : null, tabs])])]);
+		},
+		mounted: function() {
+			VueUtil.addResizeListener(this.$el, this.update);
+		},
+		beforeDestroy: function() {
+			if (this.$el && this.update)
+				VueUtil.removeResizeListener(this.$el, this.update);
+		}
+	};
+	var VueTabs = {
+		name: 'VueTabs',
+		components: {
+			TabNav: VueTabNav
+		},
+		props: {
+			type: String,
+			closable: Boolean,
+			addable: Boolean,
+			value: {},
+			editable: Boolean,
+			tabBottom: Boolean
+		},
+		data: function() {
+			return {
+				currentName: this.value,
 				panes: []
 			};
 		},
 		watch: {
-			activeName: function(value) {
-				this.setCurrentName(value);
-			},
 			value: function(value) {
 				this.setCurrentName(value);
-			}
-		},
-		computed: {
-			currentTab: function() {
+			},
+			currentName: function(value) {
 				var self = this;
-				var result;
-				self.panes.forEach(function(tab) {
-					if (self.currentName === (tab.name || tab.index)) {
-						result = tab;
-					}
-				});
-				return result;
+				if (self.$refs.nav) {
+					self.$nextTick(function() {
+						self.$refs.nav.scrollToActiveTab();
+					});
+				}
 			}
 		},
 		methods: {
-			handleTabRemove: function(pane, event) {
-				var self = this;
-				event.stopPropagation();
-				var panes = self.panes;
-				var currentTab = self.currentTab;
-				var index = panes.indexOf(pane);
-				if (index === -1)
-					return;
-				panes.splice(index, 1);
-				pane.$destroy();
-				self.$emit('tab-remove', pane);
-				self.$nextTick(function() {
-					if (pane.active) {
-						var panes = self.panes;
-						var nextChild = panes[index];
-						var prevChild = panes[index - 1];
-						var nextActiveTab = nextChild || prevChild || null;
-						if (nextActiveTab) {
-							self.setCurrentName(nextActiveTab.name || nextActiveTab.index);
-						}
-						return;
-					} else {
-						self.setCurrentName(currentTab.name || currentTab.index);
-					}
-				});
-			},
 			handleTabClick: function(tab, tabName, event) {
 				if (tab.disabled)
 					return;
 				this.setCurrentName(tabName);
 				this.$emit('tab-click', tab, event);
 			},
+			handleTabRemove: function(pane, ev) {
+				if (pane.disabled)
+					return;
+				ev.stopPropagation();
+				this.$emit('edit', pane.name, 'remove');
+				this.$emit('tab-remove', pane.name);
+			},
+			handleTabAdd: function() {
+				this.$emit('edit', null, 'add');
+				this.$emit('tab-add');
+			},
 			setCurrentName: function(value) {
 				this.currentName = value;
 				this.$emit('input', value);
 			},
 			addPanes: function(item) {
-				this.panes.push(item);
+				var index = this.$slots.default.indexOf(item.$vnode);
+				this.panes.splice(index, 0, item);
 			},
 			removePanes: function(item) {
 				var panes = this.panes;
@@ -8021,58 +8095,53 @@
 			}
 		},
 		render: function(createElement) {
-			var self = this;
-			var type = self.type
-			 , handleTabRemove = self.handleTabRemove
-			 , handleTabClick = self.handleTabClick
-			 , currentName = self.currentName
-			 , panes = self.panes;
-			var tabs = self._l(panes, function(pane, index) {
-				var tabName = pane.name || pane.index || index;
-				if (currentName === undefined && index === 0) {
-					self.setCurrentName(tabName);
+			var type = this.type;
+			var handleTabClick = this.handleTabClick;
+			var handleTabRemove = this.handleTabRemove;
+			var handleTabAdd = this.handleTabAdd;
+			var currentName = this.currentName;
+			var panes = this.panes;
+			var editable = this.editable;
+			var addable = this.addable;
+			var tabBottom = this.tabBottom;
+			var newButton = editable || addable ? createElement('span', {
+				'class': 'vue-tabs__new-tab',
+				on: {
+					'click': handleTabAdd
 				}
-				pane.index = index;
-				var btnClose = pane.isClosable ? createElement('span', {
-					class: 'vue-icon-close',
-					on: {
-						click: function(ev) {
-							handleTabRemove(pane, ev);
-						}
-					}
-				}, []) : null;
-				var tabLabelContent = pane.$slots.label || pane.label;
-				return createElement('div', {
-					class: {
-						'vue-tabs__item': true,
-						'is-active': pane.active,
-						'is-disabled': pane.disabled,
-						'is-closable': pane.isClosable
-					},
-					ref: 'tabs',
-					refInFor: true,
-					on: {
-						click: function(ev) {
-							handleTabClick(pane, tabName, ev);
-						}
-					}
-				}, [tabLabelContent, btnClose]);
-			});
+			}, [createElement('i', {
+				'class': 'vue-icon-plus'
+			}, [])]) : null;
+			var navData = {
+				props: {
+					currentName: currentName,
+					onTabClick: handleTabClick,
+					onTabRemove: handleTabRemove,
+					editable: editable,
+					type: type,
+					panes: panes
+				},
+				ref: 'nav'
+			};
+			var header = createElement('div', {
+				'class': 'vue-tabs__header'
+			}, [newButton, createElement('tab-nav', navData, [])]);
+			var panels = createElement('div', {
+				'class': 'vue-tabs__content'
+			}, [this.$slots.default])
 			return createElement('div', {
-				class: {
+				'class': {
 					'vue-tabs': true,
 					'vue-tabs--card': type === 'card',
-					'vue-tabs--border-card': type === 'border-card'
+					'vue-tabs--border-card': type === 'border-card',
+					'header-bottom': tabBottom
 				}
-			}, [createElement('div', {
-				class: 'vue-tabs__header'
-			}, [type ? null : createElement('tab-bar', {
-				attrs: {
-					tabs: panes
-				}
-			}, []), tabs]), createElement('div', {
-				class: 'vue-tabs__content'
-			}, [this.$slots.default])]);
+			}, [tabBottom ? [panels, header] : [header, panels]]);
+		},
+		created: function() {
+			if (!this.currentName) {
+				this.setCurrentName('0');
+			}
 		}
 	};
 	Vue.component(VueTabs.name, VueTabs);
@@ -8083,43 +8152,44 @@
 		define(['Vue'], definition);
 	} else {
 		context[name] = definition(context['Vue']);
+		delete context[name];
 	}
 })('VueTag', this, function(Vue) {
 	'use strict';
 	var VueTag = {
-		template: '<transition name="vue-zoom-in-center" v-if="transition"><span class="vue-tag" :class="[type ? \'vue-tag--\' + type : \'\', {\'is-hit\': hit}]" :style="{backgroundColor: color}"><slot></slot><i class="vue-tag__close vue-icon-close" v-if="closable" @click="handleClose"></i></span></transition><span v-else class="vue-tag" :class="[type ? \'vue-tag--\' + type : \'\', {\'is-hit\': hit}]" :style="{backgroundColor: color}"><slot></slot><i class="vue-tag__close vue-icon-close" v-if="closable" @click="handleClose"></i></span>',
+		template: '<div class="vue-tag" :class="[type ? \'vue-tag--\' + type : \'\', {\'is-hit\': hit}]" :style="{width: closable ? width+32+\'px\' : width+13+\'px\'}"><span :style="{width: width+\'px\', float: \'left\'}"><slot></slot></span><i class="vue-tag__close vue-icon-close" v-if="closable" @click="handleClose"></i></div>',
 		name: 'VueTag',
 		props: {
 			text: String,
 			closable: Boolean,
 			type: String,
 			hit: Boolean,
-			transition: {
-				type: Boolean,
-				default: false
-			},
-			color: String
+			width: Number
 		},
 		methods: {
 			handleClose: function(event) {
 				this.$emit('close', event);
 			}
+		},
+		mounted: function() {
+			var el = this.$el
+			var spanNode = el.querySelector('span')
+			if (this.width < spanNode.scrollWidth) {
+				el.setAttribute('title', el.innerText);
+			}
 		}
 	};
 	Vue.component(VueTag.name, VueTag);
-	return function() {
-		return VueTag;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueCheckbox', 'VueTag'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueCheckbox'], context['VueTag']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueTableColumn', this, function(Vue, VueUtil, VueCheckbox, VueTag) {
+})('VueTableColumn', this, function(Vue, VueUtil) {
 	'use strict';
 	var columnIdSeed = 1;
 	var defaults = {
@@ -8148,6 +8218,7 @@
 	};
 	var forced = {
 		selection: {
+			property: 'selection column',
 			renderHeader: function(createElement) {
 				return createElement('vue-checkbox', {
 					nativeOn: {
@@ -8179,9 +8250,9 @@
 			resizable: false
 		},
 		index: {
+			property: 'index column',
 			renderHeader: function(createElement, data) {
-				var column = data.column;
-				return column.label || '#';
+				return '#';
 			},
 			renderCell: function(createElement, data) {
 				var n = data.$index;
@@ -8190,6 +8261,7 @@
 			sortable: false
 		},
 		expand: {
+			property: 'expand column',
 			renderHeader: function(createElement, data) {
 				return '';
 			},
@@ -8248,13 +8320,11 @@
 		var row = data.row;
 		var column = data.column;
 		var property = column.property;
+		var value = property && property.indexOf('.') === -1 ? row[property] : getValueByPath(row, property);
 		if (column && column.formatter) {
-			return column.formatter(row, column);
+			return column.formatter(row, column, value);
 		}
-		if (property && property.indexOf('.') === -1) {
-			return row[property];
-		}
-		return getValueByPath(row, property);
+		return value;
 	};
 	var VueTableColumn = {
 		name: 'VueTableColumn',
@@ -8290,6 +8360,10 @@
 			formatter: Function,
 			selectable: Function,
 			reserveSelection: Boolean,
+			visible: {
+				type: Boolean,
+				default: true
+			},
 			filterMethod: Function,
 			filteredValue: Array,
 			filters: Array,
@@ -8310,10 +8384,6 @@
 			this.column = {};
 			this.$index = 0;
 		},
-		components: {
-			VueCheckbox: VueCheckbox(),
-			VueTag: VueTag()
-		},
 		computed: {
 			owner: function() {
 				var parent = this.$parent;
@@ -8324,9 +8394,10 @@
 			}
 		},
 		created: function() {
+			var slots = this.$slots.default;
 			this.customRender = this.$options.render;
 			this.$options.render = function(createElement) {
-				return createElement('div', this.$slots.default)
+				return createElement('div', slots)
 			}
 			var columnId = this.columnId = this.columnKey || ((this.$parent.tableId || (this.$parent.columnId + '_')) + 'column_' + columnIdSeed++);
 			var parent = this.$parent;
@@ -8359,6 +8430,7 @@
 				renderHeader: this.renderHeader,
 				minWidth: minWidth,
 				width: width,
+				visible: this.visible,
 				isColumnGroup: isColumnGroup,
 				context: this.context,
 				align: this.align ? 'is-' + this.align : null,
@@ -8371,13 +8443,14 @@
 				selectable: this.selectable,
 				reserveSelection: this.reserveSelection,
 				fixed: this.fixed === '' ? true : this.fixed,
+				fixedIndex: -1,
 				filterMethod: this.filterMethod,
 				filters: this.filters,
 				filterable: this.filters || this.filterMethod,
 				filterMultiple: this.filterMultiple,
 				filterOpened: false,
 				filteredValue: this.filteredValue || [],
-				filterPlacement: this.filterPlacement || '',
+				filterPlacement: this.filterPlacement || 'bottom',
 				getCellClass: function(rowIndex, cellIndex, rowData) {
 					var classes = [];
 					var className = this.className;
@@ -8392,10 +8465,10 @@
 			VueUtil.merge(column, forced[type] || {});
 			this.columnConfig = column;
 			var renderCell = column.renderCell;
-			var _self = this;
+			var self = this;
 			if (type === 'expand') {
 				owner.renderExpanded = function(createElement, data) {
-					return _self.$scopedSlots.default ? _self.$scopedSlots.default(data) : _self.$slots.default;
+					return self.$scopedSlots.default ? self.$scopedSlots.default(data) : self.$slots.default;
 				}
 				column.renderCell = function(createElement, data) {
 					return createElement('div', {
@@ -8405,29 +8478,29 @@
 				return;
 			}
 			column.renderCell = function(createElement, data) {
-				if (_self.$vnode.data.inlineTemplate) {
+				if (self.$vnode.data.inlineTemplate) {
 					renderCell = function() {
-						data._self = _self.context || data._self;
-						if (Object.prototype.toString.call(data._self) === '[object Object]') {
-							for (var prop in data._self) {
+						data.self = self.context || data.self;
+						if (Object.prototype.toString.call(data.self) === '[object Object]') {
+							for (var prop in data.self) {
 								if (!data.hasOwnProperty(prop)) {
-									data[prop] = data._self[prop];
+									data[prop] = data.self[prop];
 								}
 							}
 						}
-						data._staticTrees = _self._staticTrees;
-						data.$options.staticRenderFns = _self.$options.staticRenderFns;
-						return _self.customRender.call(data);
+						data._staticTrees = self._staticTrees;
+						data.$options.staticRenderFns = self.$options.staticRenderFns;
+						return self.customRender.call(data);
 					}
-				} else if (_self.$scopedSlots.default) {
+				} else if (self.$scopedSlots.default) {
 					renderCell = function() {
-						return _self.$scopedSlots.default(data);
+						return self.$scopedSlots.default(data);
 					}
 				}
 				if (!renderCell) {
 					renderCell = DEFAULT_RENDER_CELL;
 				}
-				return _self.showOverflowTooltip || _self.showTooltipWhenOverflow ? createElement('div',
+				return self.showOverflowTooltip || self.showTooltipWhenOverflow ? createElement('div',
 				{ 'class': 'cell vue-tooltip', style: 'width:' + (data.column.realWidth || data.column.width) + 'px' },
 				[renderCell(createElement, data)]) : createElement('div', {
 					class: 'cell'
@@ -8500,6 +8573,12 @@
 				if (this.columnConfig) {
 					this.columnConfig.sortable = newVal;
 				}
+			},
+			visible: function(newVal) {
+				if (this.columnConfig) {
+					this.columnConfig.visible = newVal;
+					this.owner.store.scheduleLayout();
+				}
 			}
 		},
 		mounted: function() {
@@ -8519,38 +8598,38 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VuePopper', 'VuePopup', 'VueCheckbox', 'VueCheckboxGroup', 'VueTag', 'VueTooltip'], definition);
+		define(['Vue', 'VueUtil', 'VuePopper'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper'], context['VuePopup'], context['VueCheckbox'], context['VueCheckboxGroup'], context['VueTag'], context['VueTooltip']);
+		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper']);
 		delete context[name];
 	}
-})('VueTable', this, function(Vue, VueUtil, VuePopper, VuePopup, VueCheckbox, VueCheckboxGroup, VueTag, VueTooltip) {
+})('VueTable', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
+	var mouseEvents = VueUtil.component.mouseEvents;
 	var isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-	var SIZE, REMAIN;
-	var bodyScrollLeft = 0;
-	var bodyScrollTop = 0;
-	var dropdowns = [];
 	var Dropdown = {
+		dropdowns: [],
 		open: function(instance) {
 			if (instance) {
-				dropdowns.push(instance);
+				this.dropdowns.push(instance);
 			}
 		},
 		close: function(instance) {
-			var index = dropdowns.indexOf(instance);
+			var index = this.dropdowns.indexOf(instance);
 			if (index !== -1) {
-				dropdowns.splice(instance, 1);
+				this.dropdowns.splice(instance, 1);
 			}
 		}
 	};
 	var scrollFilter = function(slots, delta) {
-		if (delta.keeps === 0) {
+		if (delta.keeps === 0 || slots.length <= delta.keeps) {
+			delta.paddingTop = 0;
+			delta.allPadding = 0;
 			return slots;
 		}
 		delta.total = slots.length;
-		delta.paddingTop = SIZE * delta.start;
-		delta.allPadding = SIZE * (slots.length - delta.keeps);
+		delta.paddingTop = delta.size * delta.start;
+		delta.allPadding = delta.size * (slots.length - delta.keeps);
 		delta.paddingTop < 0 ? delta.paddingTop = 0 : undefined;
 		delta.allPadding < 0 ? delta.allPadding = 0 : undefined;
 		delta.allPadding < delta.paddingTop ? delta.allPadding = delta.paddingTop : undefined;
@@ -8560,7 +8639,9 @@
 	};
 	var mousewheel = function(element, callback) {
 		if (element && element.addEventListener) {
-			element.addEventListener(isFirefox ? 'DOMMouseScroll' : 'mousewheel', callback);
+			element.addEventListener(isFirefox ? 'DOMMouseScroll' : 'mousewheel', callback, {
+				passive: true
+			});
 		}
 	};
 	var getValueByPath = function(object, prop) {
@@ -8658,8 +8739,7 @@
 		var order = (reverse && reverse < 0) ? -1 : 1;
 		return array.slice().sort(sortMethod ? function(a, b) {
 			return sortMethod(a, b) ? order : -order;
-		}
-		: function(a, b) {
+		} : function(a, b) {
 			if (sortKey !== '$key') {
 				if (isObject(a) && '$value'in a)
 					a = a.$value;
@@ -8669,8 +8749,7 @@
 			a = isObject(a) ? getValueByPath(a, sortKey) : a;
 			b = isObject(b) ? getValueByPath(b, sortKey) : b;
 			return a === b ? 0 : a > b ? order : -order;
-		}
-		);
+		});
 	};
 	var getColumnById = function(table, columnId) {
 		var column = null;
@@ -8810,14 +8889,24 @@
 					console.warn('WARN: rowKey is required when reserve-selection is enabled.');
 				}
 			}
-			var defaultExpandAll = states.defaultExpandAll;
-			var self = this;
-			if (defaultExpandAll) {
-				self.states.expandRows = (states.data || []).slice(0);
+			if (states.defaultExpandAll) {
+				this.states.expandRows = (states.data || []).slice(0);
+			}
+			var table = this.table;
+			if (table.$refs.tableBody && table.$refs.tableBody.delta.keeps !== 0) {
+				var delta = table.$refs.tableBody.delta;
+				delta.start = 0;
+				if (data.length <= delta.remain) {
+					delta.end = data.length;
+					delta.keeps = data.length;
+				} else {
+					delta.end = delta.remain;
+					delta.keeps = delta.remain;
+				}
 			}
 			Vue.nextTick(function() {
-				self.table.updateScrollY();
-				self.table.resizeZone();
+				table.updateScrollY();
+				table.resizeZone();
 			});
 		},
 		changeSortCondition: function(states) {
@@ -8834,9 +8923,9 @@
 		},
 		filterChange: function(states, options) {
 			var self = this;
-			var values = options.values,
-				column = options.column,
-				silent = options.silent;
+			var values = options.values;
+			var column = options.column;
+			var silent = options.silent;
 			if (values && !Array.isArray(values)) {
 				values = [values];
 			}
@@ -8857,14 +8946,14 @@
 					if (column.filterMethod) {
 						data = data.filter(function(row) {
 							return values.some(function(value) {
-								column.filterMethod.call(null, value, row)
+								return column.filterMethod.call(null, value, row)
 							});
 						});
 					} else {
 						var columnKey = column.property
 						data = data.filter(function(row) {
 							return values.some(function(value) {
-								return row[columnKey] === value;;
+								return row[columnKey] === value;
 							});
 						});
 					}
@@ -8875,9 +8964,21 @@
 			if (!silent) {
 				self.table.$emit('filter-change', filters);
 			}
+			var table = this.table;
+			if (table.$refs.tableBody && table.$refs.tableBody.delta.keeps !== 0) {
+				var delta = table.$refs.tableBody.delta;
+				delta.start = 0;
+				if (data.length <= delta.remain) {
+					delta.end = data.length;
+					delta.keeps = data.length;
+				} else {
+					delta.end = delta.remain;
+					delta.keeps = delta.remain;
+				}
+			}
 			Vue.nextTick(function() {
-				self.table.updateScrollY();
-				self.table.resizeZone();
+				table.updateScrollY();
+				table.resizeZone();
 			});
 		},
 		insertColumn: function(states, column, index, parent) {
@@ -8986,11 +9087,20 @@
 	TableStore.prototype.updateColumns = function() {
 		var states = this.states;
 		var _columns = states._columns || [];
+		_columns = _columns.filter(function(column) {
+			return column.visible
+		});
 		states.fixedColumns = _columns.filter(function(column) {
 			return column.fixed === true || column.fixed === 'left'
 		});
+		states.fixedColumns.sort(function(a, b) {
+			return a.fixedIndex > b.fixedIndex;
+		});
 		states.rightFixedColumns = _columns.filter(function(column) {
 			return column.fixed === 'right'
+		});
+		states.rightFixedColumns.sort(function(a, b) {
+			return a.fixedIndex < b.fixedIndex;
 		});
 		if (states.fixedColumns.length > 0 && _columns[0] && _columns[0].type === 'selection' && !_columns[0].fixed) {
 			_columns[0].fixed = true;
@@ -9205,7 +9315,7 @@
 			}
 		}
 		this.updateHeight();
-	};
+	}
 	TableLayout.prototype.updateHeight = function() {
 		var height = this.tableHeight = this.table.$el.clientHeight;
 		var noData = !this.table.data || this.table.data.length === 0;
@@ -9228,7 +9338,7 @@
 			this.fixedBodyHeight = this.scrollX ? bodyHeight - this.gutterWidth : bodyHeight;
 		}
 		this.viewportHeight = height;
-	};
+	}
 	TableLayout.prototype.update = function() {
 		var fit = this.fit;
 		var columns = this.table.columns;
@@ -9272,17 +9382,13 @@
 			} else {
 				this.scrollX = true;
 				flexColumns.forEach(function(column) {
-					column.realWidth = column.minWidth;
+					column.realWidth = column.minWidth || 80;
 				});
 			}
 			this.bodyWidth = Math.max(bodyMinWidth, bodyWidth);
 		} else {
 			flattenColumns.forEach(function(column) {
-				if (!column.width && !column.minWidth) {
-					column.realWidth = 80;
-				} else {
-					column.realWidth = column.width || column.minWidth;
-				}
+				column.realWidth = column.width || column.minWidth || 80;
 				bodyMinWidth += column.realWidth;
 			});
 			this.scrollX = bodyMinWidth > bodyWidth;
@@ -9292,7 +9398,7 @@
 		if (fixedColumns.length > 0) {
 			var fixedWidth = 0;
 			fixedColumns.forEach(function(column) {
-				fixedWidth += column.realWidth;
+				fixedWidth += column.realWidth || 80;
 			});
 			this.fixedWidth = fixedWidth;
 		}
@@ -9300,21 +9406,17 @@
 		if (rightFixedColumns.length > 0) {
 			var rightFixedWidth = 0;
 			rightFixedColumns.forEach(function(column) {
-				rightFixedWidth += column.realWidth;
+				rightFixedWidth += column.realWidth || 80;
 			});
 			this.rightFixedWidth = rightFixedWidth;
 		}
-	};
+	}
 	var VueTableFilterPanel = {
 		template: '<transition name="vue-zoom-in-top" @after-leave="doDestroy"><div class="vue-table-filter" v-if="multiple" v-show="showPopper" v-clickoutside="handleOutsideClick"><div class="vue-table-filter__content"><vue-checkbox-group class="vue-table-filter__checkbox-group" v-model="filteredValue"><vue-checkbox v-for="filter in filters" :key="filter.value" :label="filter.value">{{ filter.text }}</vue-checkbox></vue-checkbox-group></div><div class="vue-table-filter__bottom"><button @click="handleConfirm" :class="{ \'is-disabled\': filteredValue.length === 0 }" :disabled="filteredValue.length === 0">{{ $t(\'vue.table.confirmFilter\') }}</button><button @click="handleReset">{{ $t(\'vue.table.resetFilter\') }}</button></div></div><div class="vue-table-filter" v-else v-show="showPopper"><ul class="vue-table-filter__list"><li class="vue-table-filter__list-item" :class="{ \'is-active\': !filterValue }" @click="handleSelect(null)">{{ $t(\'vue.table.clearFilter\') }}</li><li class="vue-table-filter__list-item" v-for="filter in filters" :key="filter.value" :label="filter.value" :class="{ \'is-active\': isActive(filter) }" @click="handleSelect(filter.value)" >{{ filter.text }}</li></ul></div></transition>',
 		name: 'VueTableFilterPanel',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
-		},
-		components: {
-			VueCheckbox: VueCheckbox(),
-			VueCheckboxGroup: VueCheckboxGroup()
 		},
 		props: {
 			placement: {
@@ -9434,17 +9536,13 @@
 		},
 		watch: {
 			showPopper: function(val) {
-				if (val === true && parseInt(this.popperJS._popper.style.zIndex, 10) < VuePopup().PopupManager.zIndex) {
-					this.popperJS._popper.style.zIndex = VuePopup().PopupManager.nextZIndex();
+				if (val === true && parseInt(this.popperJS._popper.style.zIndex, 10) < VueUtil.component.popupManager.zIndex) {
+					this.popperJS._popper.style.zIndex = VueUtil.component.popupManager.nextZIndex();
 				}
 			}
 		}
 	};
 	var TableBody = {
-		components: {
-			VueCheckbox: VueCheckbox(),
-			VueTooltip: VueTooltip()
-		},
 		props: {
 			store: {
 				required: true
@@ -9460,14 +9558,14 @@
 			expandClassName: [String, Function]
 		},
 		render: function(createElement) {
-			var delta = this.$options.delta;
+			var delta = this.delta;
 			var self = this;
 			var columnsHidden = self.columns.map(function(column, index) {
 				return self.isColumnHidden(index);
 			});
-			var selfData = scrollFilter(self.data ,delta);
-			var paddingTop = delta.paddingTop
-			 , allPadding = delta.allPadding;
+			var selfData = scrollFilter(self.data, delta);
+			var paddingTop = delta.paddingTop;
+			var allPadding = delta.allPadding;
 			return createElement('table', {
 				class: 'vue-table__body',
 				attrs: {
@@ -9475,15 +9573,23 @@
 					cellpadding: '0',
 					border: '0'
 				},
-				style: {'padding-top': paddingTop + 'px', 'padding-bottom': allPadding - paddingTop + 'px'}
+				style: {
+					'padding-top': paddingTop + 'px',
+					'padding-bottom': allPadding - paddingTop + 'px'
+				}
 			}, [createElement('colgroup', null, [self._l(self.columns, function(column) {
 				return createElement('col', {
 					attrs: {
 						name: column.id,
-						width: column.realWidth || column.width
+						width: column.realWidth || column.width || 80
 					}
 				}, [])
-			})]), createElement('tbody', null, [self._l(selfData, function(row, $index) {
+			}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('col', {
+				attrs: {
+					name: 'gutter',
+					width: 0
+				}
+			}, []) : '']), createElement('tbody', null, [self._l(selfData, function(row, $index) {
 				$index = self.data.indexOf(row);
 				return [createElement('tr', {
 					style: self.rowStyle ? self.getRowStyle(row, $index) : null,
@@ -9533,22 +9639,42 @@
 					row: row,
 					$index: $index,
 					store: self.store
-				}) : ''])]) : '']}).concat(self._self.$parent.$slots.append).concat(createElement('vue-tooltip', {attrs: {effect: self.table.tooltipEffect, placement: "top", content: self.tooltipContent}, ref: "tooltip"}, []))
-			])]);
+				}) : ''])]) : '']
+			}).concat(self._self.$parent.$slots.append).concat(createElement('vue-tooltip', {
+				attrs: {
+					effect: self.table.tooltipEffect,
+					placement: "top",
+					content: self.tooltipContent
+				},
+				ref: "tooltip"
+			}, []))])]);
 		},
 		watch: {
 			'store.states.hoverRow': function(newVal, oldVal) {
-				if (!this.store.states.isComplex)
+				var self = this;
+				if (!self.store.states.isComplex)
 					return;
-				var el = this.$el;
+				var el = self.$el;
 				if (!el)
 					return;
+				var data;
+				var storeData = self.store.states.data;
+				if (self.delta.keeps !== 0) {
+					data = storeData.filter(function(data, index) {
+						return index >= self.delta.start && index <= self.delta.end;
+					});
+				} else {
+					data = storeData;
+				}
 				var rows = el.querySelectorAll('tbody > tr');
-				var oldRow = rows[oldVal];
-				var newRow = rows[newVal];
+				var oldRow = rows[data.indexOf(storeData[oldVal])];
+				var newRow = rows[data.indexOf(storeData[newVal])];
 				if (oldRow) {
 					oldRow.classList.remove('hover-row');
 				}
+				[].forEach.call(rows, function(row) {
+					row.classList.remove('hover-row')
+				});
 				if (newRow) {
 					newRow.classList.add('hover-row');
 				}
@@ -9560,22 +9686,24 @@
 				var el = self.$el;
 				if (!el)
 					return;
-				var data = self.store.states.data;
-				if (self.$options.delta.keeps !== 0) {
-					data = self.store.states.data.filter(function(data, index) {
-						return index >= self.$options.delta.start && index <= self.$options.delta.end;
+				var data;
+				var storeData = self.store.states.data;
+				if (self.delta.keeps !== 0) {
+					data = storeData.filter(function(data, index) {
+						return index >= self.delta.start && index <= self.delta.end;
 					});
+				} else {
+					data = storeData;
 				}
 				var rows = el.querySelectorAll('tbody > tr');
 				var oldRow = rows[data.indexOf(oldVal)];
 				var newRow = rows[data.indexOf(newVal)];
 				if (oldRow) {
 					oldRow.classList.remove('current-row');
-				} else if (rows) {
-					[].forEach.call(rows, function(row) {
-						row.classList.remove('current-row')
-					});
 				}
+				[].forEach.call(rows, function(row) {
+					row.classList.remove('current-row')
+				});
 				if (newRow) {
 					newRow.classList.add('current-row');
 				}
@@ -9603,22 +9731,35 @@
 		},
 		data: function() {
 			return {
+				delta: {
+					start: 0,
+					end: 0,
+					total: 0,
+					keeps: 0,
+					allPadding: 0,
+					paddingTop: 0,
+					size: 0,
+					remain: 0
+				},
 				tooltipContent: ''
 			};
 		},
 		created: function() {
-			this.activateTooltip = VueUtil.component.debounce(50, function(tooltip) {return tooltip.handleShowPopper();});
+			this.activateTooltip = VueUtil.component.debounce(50, function(tooltip) {
+				return tooltip.handleShowPopper();
+			});
 		},
 		methods: {
 			updateZone: function(offset) {
-				var delta = this.$options.delta;
-				var overs = Math.floor(offset / SIZE);
+				var delta = this.delta;
+				if (delta.total <= delta.keeps) return;
+				var overs = Math.floor(offset / delta.size);
 				if (!offset) {
 					this.$emit('toTop');
 				}
 				var start = overs ? overs : 0;
 				var end = overs ? (overs + delta.keeps) : delta.keeps;
-				if (overs + REMAIN >= delta.total) {
+				if (overs + delta.keeps >= delta.total) {
 					end = delta.total;
 					start = delta.total - delta.keeps;
 					this.$emit('toBottom');
@@ -9627,21 +9768,21 @@
 				delta.start = start;
 				this.$forceUpdate();
 			},
-			updateCurrentRowClass: function() {
+			updateHoverCurrentClass: function() {
 				var self = this;
-				if (!self.highlight)
-					return;
 				var el = self.$el;
-				if (!el)
-					return;
+				if (!el) return;
 				var data = self.data.filter(function(data, index) {
-					return index >= self.$options.delta.start && index <= self.$options.delta.end;
+					return index >= self.delta.start && index <= self.delta.end;
 				});
 				var rows = el.querySelectorAll('tbody > tr');
-				var newRow = rows[data.indexOf(self.store.states.currentRow)];
+				var currentRow;
+				if (self.highlight)
+					currentRow = rows[data.indexOf(self.store.states.currentRow)];
 				[].forEach.call(rows, function(row) {
 					row.classList.remove('current-row');
-					if (newRow && row === newRow) {
+					row.classList.remove('hover-row')
+					if (currentRow && row === currentRow) {
 						row.classList.add('current-row');
 					}
 				});
@@ -9755,23 +9896,15 @@
 				this.store.commit('toggleRowExpanded', row);
 			}
 		},
-		delta: {
-			start: 0,
-			end: 0,
-			total: 0,
-			keeps: 0,
-			allPadding: 0,
-			paddingTop: 0
-		},
 		mounted: function() {
 			var tableHeight = this.table.height;
 			if (tableHeight) {
-				var delta = this.$options.delta;
+				var delta = this.delta;
 				var tdObj = this.$el.querySelector('td');
-				SIZE = (tdObj && tdObj.offsetHeight) || 40;
-				REMAIN = Math.round(tableHeight*1 / SIZE);
-				delta.end = REMAIN;
-				delta.keeps = REMAIN;
+				delta.size = (tdObj && tdObj.offsetHeight) || 40;
+				delta.remain = Math.round(tableHeight * 1 / delta.size);
+				delta.end = delta.remain;
+				delta.keeps = delta.remain;
 			}
 		}
 	};
@@ -9792,13 +9925,13 @@
 				return createElement('col', {
 					attrs: {
 						name: column.id,
-						width: column.realWidth || column.width
+						width: column.realWidth || column.width || 80
 					}
 				}, [])
-			}), !self.fixed && self.layout.gutterWidth ? createElement('col', {
+			}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('col', {
 				attrs: {
 					name: 'gutter',
-					width: self.layout.scrollY ? self.layout.gutterWidth : ''
+					width: self.layout.gutterWidth
 				}
 			}, []) : '']), createElement('thead', null, [self._l(columnRows, function(columns, rowIndex) {
 				return createElement('tr', null, [self._l(columns, function(column, cellIndex) {
@@ -9813,6 +9946,9 @@
 							},
 							mouseout: self.handleMouseOut,
 							mousedown: function(e) {
+								return self.handleMouseDown(e, column)
+							},
+							touchstart: function(e) {
 								return self.handleMouseDown(e, column)
 							},
 							click: function(e) {
@@ -9858,10 +9994,10 @@
 					}, [createElement('i', {
 						class: ['vue-icon-arrow-down', column.filterOpened ? 'vue-icon-arrow-up' : '']
 					}, [])]) : ''])])
-				}), !self.fixed && self.layout.gutterWidth ? createElement('th', {
+				}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('th', {
 					class: 'gutter',
 					style: {
-						width: self.layout.scrollX ? self.layout.gutterWidth + 'px' : 0
+						width: self.layout.gutterWidth + 'px'
 					}
 				}, []) : ''])
 			})])]);
@@ -9884,10 +10020,6 @@
 					};
 				}
 			}
-		},
-		components: {
-			VueCheckbox: VueCheckbox(),
-			VueTag: VueTag()
 		},
 		computed: {
 			isAllSelected: function() {
@@ -9987,11 +10119,15 @@
 				var self = this;
 				if (self.$isServer)
 					return;
+				if (event.touches) {
+					self.handleMouseMove(event, column);
+				}
 				if (column.children && column.children.length > 0)
 					return;
 				if (self.draggingColumn && self.border) {
 					self.dragging = true;
 					self.$parent.resizeProxyVisible = true;
+					var table = self.$parent;
 					var tableEl = self.$parent.$el;
 					var tableLeft = tableEl.getBoundingClientRect().left;
 					var columnEl = self.$el.querySelector('th.' + column.id);
@@ -9999,7 +10135,7 @@
 					var minLeft = columnRect.left - tableLeft + 30;
 					columnEl.classList.add('noclick');
 					self.dragState = {
-						startMouseLeft: event.clientX,
+						startMouseLeft: event.clientX || event.touches[0].clientX,
 						startLeft: columnRect.right - tableLeft,
 						startColumnLeft: columnRect.left - tableLeft,
 						tableLeft: tableLeft
@@ -10013,32 +10149,34 @@
 						return false;
 					}
 					var handleMouseMove = function(event) {
-						var deltaLeft = event.clientX - self.dragState.startMouseLeft;
+						var deltaLeft = (event.clientX || event.touches[0].clientX) - self.dragState.startMouseLeft;
 						var proxyLeft = self.dragState.startLeft + deltaLeft;
 						resizeProxy.style.left = Math.max(minLeft, proxyLeft) + 'px';
 					};
 					var handleMouseUp = function() {
 						if (self.dragging) {
 							var finalLeft = parseInt(resizeProxy.style.left, 10);
-							var columnWidth = finalLeft - self.dragState.startColumnLeft;
+							var startLeft = self.dragState.startLeft;
+							var startColumnLeft = self.dragState.startColumnLeft;
+							var columnWidth = finalLeft - startColumnLeft;
 							column.width = column.realWidth = columnWidth;
-							self.store.scheduleLayout();
+							table.$emit('header-dragend', column.width, startLeft - startColumnLeft, column, event);
 							document.body.style.cursor = '';
 							self.dragging = false;
 							self.draggingColumn = null;
 							self.dragState = {};
 							self.$parent.resizeProxyVisible = false;
 						}
-						document.removeEventListener('mousemove', handleMouseMove);
-						document.removeEventListener('mouseup', handleMouseUp);
+						document.removeEventListener(mouseEvents.move, handleMouseMove);
+						document.removeEventListener(mouseEvents.up, handleMouseUp);
 						document.onselectstart = null;
 						document.ondragstart = null;
 						setTimeout(function() {
 							columnEl.classList.remove('noclick');
 						}, 0);
 					};
-					document.addEventListener('mousemove', handleMouseMove);
-					document.addEventListener('mouseup', handleMouseUp);
+					document.addEventListener(mouseEvents.move, handleMouseMove);
+					document.addEventListener(mouseEvents.up, handleMouseUp);
 				}
 			},
 			handleMouseMove: function(event, column) {
@@ -10053,7 +10191,7 @@
 				if (!this.dragging && this.border) {
 					var rect = target.getBoundingClientRect();
 					var bodyStyle = document.body.style;
-					if (rect.width > 12 && rect.right - event.pageX < 8) {
+					if (rect.width > 12 && rect.right - (event.pageX || event.touches[0].pageX) < 8) {
 						bodyStyle.cursor = 'col-resize';
 						this.draggingColumn = column;
 					} else if (!this.dragging) {
@@ -10126,7 +10264,9 @@
 					sums[index] = self.sumText;
 					return;
 				}
-				var values = self.store.states.data.map(function(item) {return Number(item[column.property])});
+				var values = self.store.states.data.map(function(item) {
+					return Number(item[column.property])
+				});
 				var precisions = [];
 				var notNumber = true;
 				values.forEach(function(value) {
@@ -10150,46 +10290,44 @@
 					sums[index] = '';
 				}
 			});
-			return createElement('table',
-			{
+			return createElement('table', {
 				class: 'vue-table__footer',
-				attrs: { cellspacing: '0', cellpadding: '0', border: '0' }
-			}, [
-				createElement('colgroup',
-					null,
-					[
-						self._l(self.columns, function(column) {
-							return createElement('col', {attrs: {name: column.id, width: column.realWidth || column.width}}, []);
-						}),
-						!self.fixed && self.layout.gutterWidth ? createElement('col', {attrs: {name: 'gutter', width: self.layout.scrollY ? self.layout.gutterWidth : '' }}, []) : ''
-					]
-				),
-				createElement('tbody',
-					null,
-					[
-						createElement('tr',
-							null,
-							[
-								self._l(self.columns, function(column, cellIndex) {
-									return createElement('td',
-										{
-											attrs: {colspan: column.colSpan, rowspan: column.rowSpan},
-											class: [column.id, column.align, column.className || '', self.isCellHidden(cellIndex, self.columns) ? 'is-hidden' : '', !column.children ? 'is-leaf' : '', column.labelClassName]
-										},
-										[
-											createElement('div',
-												{class: ['cell', column.labelClassName]},
-												[self.summaryMethod ? self.summaryMethod({columns: self.columns, data: self.store.states.data})[cellIndex] : sums[cellIndex]]
-											)
-										]
-									)
-								}),
-								!self.fixed && self.layout.gutterWidth ? createElement('td',	{class: 'gutter', style: { width: self.layout.scrollY ? self.layout.gutterWidth + 'px' : '0' }}, []) : ''
-							]
-						)
-					]
-				)
-			]);
+				attrs: {
+					cellspacing: '0',
+					cellpadding: '0',
+					border: '0'
+				}
+			}, [createElement('colgroup', null, [self._l(self.columns, function(column) {
+				return createElement('col', {
+					attrs: {
+						name: column.id,
+						width: column.realWidth || column.width || 80
+					}
+				}, []);
+			}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('col', {
+				attrs: {
+					name: 'gutter',
+					width: self.layout.gutterWidth
+				}
+			}, []) : '']), createElement('tbody', null, [createElement('tr', null, [self._l(self.columns, function(column, cellIndex) {
+				return createElement('th', {
+					attrs: {
+						colspan: column.colSpan,
+						rowspan: column.rowSpan
+					},
+					class: [column.id, column.align, column.className || '', self.isCellHidden(cellIndex, self.columns) ? 'is-hidden' : '', !column.children ? 'is-leaf' : '', column.labelClassName]
+				}, [createElement('div', {
+					class: ['cell', column.labelClassName]
+				}, [self.summaryMethod ? self.summaryMethod({
+					columns: self.columns,
+					data: self.store.states.data
+				})[cellIndex] : sums[cellIndex]])])
+			}), !self.fixed && self.layout.scrollY && self.layout.gutterWidth ? createElement('th', {
+				class: 'gutter',
+				style: {
+					width: self.layout.gutterWidth + 'px'
+				}
+			}, []) : ''])])]);
 		},
 		props: {
 			fixed: String,
@@ -10245,8 +10383,167 @@
 			}
 		}
 	};
+	var TableContextMenu = {
+		template: '<vue-dialog v-model="dialogVisible" custom-class="vue-table-context-menu" :title="$t(\'vue.table.contextMenu\')" show-close @close="closeHandle" clear-modal><vue-tabs><vue-tab-pane :label="$t(\'vue.table.pin\')"><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.leftPin\')"><vue-select v-model="pinForm.leftPin" multiple @change="leftPin" @remove-tag="noPin"><vue-option v-for="(column, index) in tableColumns" :key="index" :label="column.property" :value="column" :disabled="!!column.fixed"></vue-option></vue-select></vue-form-item><vue-form-item :label="$t(\'vue.table.rightPin\')"><vue-select v-model="pinForm.rightPin" multiple @change="rightPin" @remove-tag="noPin"><vue-option v-for="(column, index) in tableColumns" :key="index" :label="column.property" :value="column" :disabled="!!column.fixed"></vue-option></vue-select></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.sort\')"><vue-list :height="150"><vue-list-item v-for="(column, index) in tableColumns" :key="index"><vue-button type="text" style="padding-left:15px" @click="removeSortColumn(column)">{{column.property}}</vue-button><div style="float:right;"><vue-button style="padding:10px 0 0 0;" :style="{ color: column.sortOrder === \'ascending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" icon="vue-icon-caret-top" type="text" @click="sortColumn(column)"></vue-button><vue-button style="padding:10px 15px 0 0;" :style="{ color: column.sortOrder === \'descending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" icon="vue-icon-caret-bottom" type="text" @click="sortColumn(column, true)"></vue-button></div><vue-divider v-if="index!==tableColumns.length-1"></vue-divider></vue-list-item></vue-list><vue-form label-width="70px"><vue-form-item :label="$t(\'vue.table.sortBy\')"><vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in sortList" :key="index" closable type="info" @close="removeSortColumn(column)">{{column.property}}<i style="padding:5px 0 0 5px;" :class="[{\'vue-icon-caret-top\': column.sortOrder === \'ascending\'}, {\'vue-icon-caret-bottom\': column.sortOrder === \'descending\'}]"></i></vue-tag></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.filter\')"><vue-form label-width="100px" :model="filterForm"><vue-form-item :label="$t(\'vue.table.column\')"><vue-select v-model="filterForm.filterColumn"><vue-option v-for="(column, index) in tableColumns" :key="index" :label="column.property" :value="column"></vue-option></vue-select></vue-form-item><vue-form-item :label="$t(\'vue.table.conditions\')"><vue-input icon="vue-icon-search" v-model="filterForm.conditions" :on-icon-click="filterColumn" @keydown.enter.native="filterColumn" ref="filterInput"><vue-select slot="prepend" v-model="filterForm.operations" style="width:80px;font-size:21px;" @change="operationsChange"><vue-option v-for="(item, index) in operations" :key="index" :label="item" :value="item"></vue-option></vue-select></vue-input></vue-form-item></vue-form><vue-divider></vue-divider><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.filterBy\')"><vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in filterList" :key="index" closable type="info" @close="removeFilterColumn(column)">{{column.property}} {{column.operations}} {{column.conditions}}</vue-tag></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.display\')"><vue-list :height="150"><vue-list-item v-for="(column, index) in tableColumns" :key="index" @select="displayColumn(column)" style="cursor:pointer;"><vue-button type="text" style="padding-left:15px">{{column.property}}</vue-button><div style="float:right;"><vue-button style="padding:10px 15px 0 0;" :style="{color: column.visible ? \'#13ce66\' : \'#a94442\'}" :icon="column.visible ? \'vue-icon-circle-check\' : \'vue-icon-circle-cross\'" type="text"></vue-button></div><vue-divider v-if="index!==tableColumns.length-1"></vue-divider></vue-list-item></vue-list></vue-tab-pane></vue-tabs></vue-dialog>',
+		data: function() {
+			return {
+				tableColumns: [],
+				pinForm: {
+					leftPin: null,
+					rightPin: null
+				},
+				filterForm:{
+					filterColumn: null,
+					conditions: null,
+					operations: '='
+				},
+				operations: ['=', '<', '>', '<=', '>=', '<>', '%'],
+				sortList: [],
+				filterList: [],
+				dialogVisible: false
+			}
+		},
+		props: {
+			visible: {
+				type: Boolean,
+				default: false
+			},
+			store: {
+				required: true
+			}
+		},
+		model: {
+			prop: 'visible'
+		},
+		watch: {
+			visible: function(val) {
+				this.dialogVisible = val;
+			}
+		},
+		methods: {
+			closeHandle: function() {
+				this.$parent.showContextMenu = false;
+			},
+			operationsChange: function() {
+				this.$nextTick(this.$refs.filterInput.focus);
+			},
+			noPin: function(column) {
+				column.value.fixed = false;
+				this.store.scheduleLayout();
+			},
+			leftPin: function(columns) {
+				columns.forEach(function(column, index){
+					column.fixed = 'left';
+					column.fixedIndex = index;
+				});
+				this.store.scheduleLayout();
+			},
+			rightPin: function(columns) {
+				columns.forEach(function(column, index){
+					column.fixed = 'right';
+					column.fixedIndex = index;
+				});
+				this.store.scheduleLayout();
+			},
+			sortColumn: function(column, descFlg) {
+				if (descFlg) {
+					column.sortOrder = "descending"
+				} else {
+					column.sortOrder = "ascending"
+				}
+				var existflg = false;
+				this.sortList.forEach(function(sortObj){
+					if (column.property === sortObj.property) {
+						sortObj.sortOrder = column.sortOrder;
+						existflg = true;
+					}
+				});
+				if (!existflg) {
+					this.sortList.push(column);
+				}
+				this.doSort();
+			},
+			removeSortColumn: function(column) {
+				var sortIndex = this.sortList.indexOf(column);
+				if (sortIndex === -1) return;
+				column.sortOrder = "";
+				this.sortList.splice(sortIndex, 1);
+				this.doSort();
+			},
+			doSort: function() {
+				this.store.table.multipleColumnSort(this.sortList);
+				this.$forceUpdate();
+			},
+			filterColumn: function() {
+				var filterColumn = this.filterForm.filterColumn;
+				filterColumn.conditions = this.filterForm.conditions;
+				filterColumn.operations = this.filterForm.operations;
+				if (typeof filterColumn.filterMethod === 'function' && !filterColumn.orgFilterMethod) {
+					filterColumn.orgFilterMethod = filterColumn.filterMethod;
+				}
+				filterColumn.filterMethod = function(value, row) {
+					switch (filterColumn.operations) {
+						case '=':
+							return row[filterColumn.property] === filterColumn.conditions;
+						case '>':
+							return row[filterColumn.property] > filterColumn.conditions;
+						case '<':
+							return row[filterColumn.property] < filterColumn.conditions;
+						case '<=':
+							return row[filterColumn.property] <= filterColumn.conditions;
+						case '>=':
+							return row[filterColumn.property] >= filterColumn.conditions;
+						case '<>':
+							return row[filterColumn.property] !== filterColumn.conditions;
+						case '%':
+							return row[filterColumn.property].indexOf(filterColumn.conditions) !== -1;
+					}
+				}
+				var existflg = false;
+				this.filterList.forEach(function(filterObj){
+					if (filterColumn.property === filterObj.property) {
+						existflg = true;
+					}
+				});
+				if (filterColumn && !existflg) {
+					this.filterList.push(filterColumn);
+				}
+				this.doFilter();
+			},
+			removeFilterColumn: function(column) {
+				var store = this.store;
+				store.commit('filterChange', {
+					column: column,
+					values: []
+				});
+				if (column.orgFilterMethod) {
+					column.filterMethod = column.orgFilterMethod;
+					column.orgFilterMethod = null;
+				}
+				this.filterList.splice(this.filterList.indexOf(column), 1);
+			},
+			doFilter: function() {
+				var store = this.store;
+				var filterList = this.filterList;
+				filterList.forEach(function(filterColumn) {
+					store.commit('filterChange', {
+						column: filterColumn,
+						values: 'filter'
+					});
+				})
+				this.$forceUpdate();
+			},
+			displayColumn: function(column) {
+				column.visible = !column.visible;
+				this.store.scheduleLayout();
+			}
+		},
+		mounted: function() {
+			if (this.store) this.tableColumns = this.store.states.columns;
+		}
+	};
 	var VueTable = {
-		template: '<div class="vue-table":class="{ \'vue-table--fit\': fit, \'vue-table--striped\': stripe, \'vue-table--border\': border, \'vue-table--enable-row-hover\': !store.states.isComplex, \'vue-table--enable-row-transition\': true || (store.states.data || []).length !== 0 && (store.states.data || []).length < 100}" @mouseleave="handleMouseLeave($event)" :style="[tableWidth]"><div class="hidden-columns" ref="hiddenColumns"><slot></slot></div><div class="vue-table__header-wrapper" ref="headerWrapper" v-if="showHeader"><table-header :store="store" :layout="layout" :border="border" :default-sort="defaultSort" :style="{ width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__body-wrapper" ref="bodyWrapper" :style="[wrapperWidth, bodyHeight]"> <table-body :context="context" :store="store" :layout="layout" :expand-class-name="expandClassName" :row-class-name="rowClassName" :row-style="rowStyle" :highlight="highlightCurrentRow" :style="{ width: bodyWidth }"></table-body><div :style="{ width: bodyWidth }" class="vue-table__empty-block" v-if="!data || data.length === 0"><span class="vue-table__empty-text"><slot name="empty">{{ emptyText || $t(\'vue.table.emptyText\') }}</slot></span></div></div><div class="vue-table__footer-wrapper" ref="footerWrapper" v-if="showSummary && data && data.length > 0"><table-footer :store="store" :layout="layout" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :default-sort="defaultSort" :style="{ width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\' }"></table-footer></div><div class="vue-table__fixed" ref="fixedWrapper" v-if="fixedColumns.length > 0" :style="[ { width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }, fixedHeight ]"><div class="vue-table__fixed-header-wrapper" ref="fixedHeaderWrapper" v-if="showHeader"><table-header fixed="left" :border="border" :store="store" :layout="layout" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="fixedBodyWrapper" :style="[ { top: layout.headerHeight + \'px\' }, fixedBodyHeight ]"><table-body fixed="left" :store="store" :layout="layout" :highlight="highlightCurrentRow" :row-class-name="rowClassName" :row-style="rowStyle" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="fixedFooterWrapper" v-if="showSummary && data && data.length > 0"><table-footer fixed="left" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :store="store" :layout="layout" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-footer></div></div><div class="vue-table__fixed-right" ref="rightFixedWrapper" v-if="rightFixedColumns.length > 0" :style="[ { width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }, { right: layout.scrollY ? (border ? layout.gutterWidth : (layout.gutterWidth || 1)) + \'px\' : \'\' }, fixedHeight ]"><div class="vue-table__fixed-header-wrapper" ref="rightFixedHeaderWrapper" v-if="showHeader"><table-header fixed="right" :border="border" :store="store" :layout="layout" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="rightFixedBodyWrapper" :style="[ { top: layout.headerHeight + \'px\' }, fixedBodyHeight]"><table-body fixed="right" :store="store" :layout="layout" :row-class-name="rowClassName" :row-style="rowStyle" :highlight="highlightCurrentRow" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="rightFixedFooterWrapper" v-if="showSummary && data && data.length > 0"><table-footer fixed="right" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :store="store" :layout="layout" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-footer></div></div><div class="vue-table__fixed-right-patch" v-if="rightFixedColumns.length > 0" :style="{ width: layout.scrollY ? layout.gutterWidth + \'px\' : \'0\', height: layout.headerHeight + \'px\' }"></div><div class="vue-table__column-resize-proxy" ref="resizeProxy" v-show="resizeProxyVisible"></div></div>',
+		template: '<div class="vue-table":class="{ \'vue-table--fit\': fit, \'vue-table--striped\': stripe, \'vue-table--border\': border, \'vue-table--enable-row-hover\': !store.states.isComplex, \'vue-table--enable-row-transition\': true || (store.states.data || []).length !== 0 && (store.states.data || []).length < 100}" @mouseleave="handleMouseLeave($event)" :style="{ width: layout.bodyWidth <= 0 ? \'0px\' : \'\' }"><div class="hidden-columns" ref="hiddenColumns"><slot></slot></div><div class="vue-table__header-wrapper" ref="headerWrapper" v-if="showHeader"><table-header :store="store" :layout="layout" :border="border" :default-sort="defaultSort" :style="{ width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__body-wrapper" ref="bodyWrapper" :style="[bodyHeight]"><table-body ref="tableBody" :context="context" :store="store" :layout="layout" :expand-class-name="expandClassName" :row-class-name="rowClassName" :row-style="rowStyle" :highlight="highlightCurrentRow" :style="{ width: bodyWidth }"></table-body><div :style="{ width: bodyWidth }" class="vue-table__empty-block" v-if="!data || data.length === 0"><span class="vue-table__empty-text"><slot name="empty">{{ emptyText || $t(\'vue.table.emptyText\') }}</slot></span></div></div><div class="vue-table__footer-wrapper" ref="footerWrapper" v-if="showSummary && data && data.length > 0"><table-footer :store="store" :layout="layout" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :default-sort="defaultSort" :style="{ width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\' }"></table-footer></div><div class="vue-table__fixed" ref="fixedWrapper" v-if="fixedColumns.length > 0" :style="[ { width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }, fixedHeight ]"><div class="vue-table__fixed-header-wrapper" ref="fixedHeaderWrapper" v-if="showHeader"><table-header fixed="left" :border="border" :store="store" :layout="layout" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="fixedBodyWrapper" :style="[ { top: layout.headerHeight + \'px\' }, fixedBodyHeight ]"><table-body ref="fixedBody" fixed="left" :store="store" :layout="layout" :highlight="highlightCurrentRow" :row-class-name="rowClassName" :expand-class-name="expandClassName" :row-style="rowStyle" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="fixedFooterWrapper" v-if="showSummary && data && data.length > 0"><table-footer fixed="left" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :store="store" :layout="layout" :style="{ width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\' }"></table-footer></div></div><div class="vue-table__fixed-right" ref="rightFixedWrapper" v-if="rightFixedColumns.length > 0" :style="[ { width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }, { right: layout.scrollY ? (border ? layout.gutterWidth : (layout.gutterWidth || 1)) + \'px\' : \'\' }, fixedHeight ]"><div class="vue-table__fixed-header-wrapper" ref="rightFixedHeaderWrapper" v-if="showHeader"><table-header fixed="right" :border="border" :store="store" :layout="layout" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="rightFixedBodyWrapper" :style="[ { top: layout.headerHeight + \'px\' }, fixedBodyHeight]"><table-body ref="rightFixedBody" fixed="right" :store="store" :layout="layout" :row-class-name="rowClassName" :row-style="rowStyle" :highlight="highlightCurrentRow" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="rightFixedFooterWrapper" v-if="showSummary && data && data.length > 0"><table-footer fixed="right" :border="border" :sum-text="sumText || $t(\'vue.table.sumText\')" :summary-method="summaryMethod" :store="store" :layout="layout" :style="{ width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\' }"></table-footer></div></div><div class="vue-table__fixed-right-patch" v-if="rightFixedColumns.length > 0" :style="{ width: layout.scrollY ? layout.gutterWidth + \'px\' : \'0\', height: layout.headerHeight + \'px\' }"></div><div class="vue-table__column-resize-proxy" ref="resizeProxy" v-show="resizeProxyVisible"></div><table-context-menu v-if="contextMenu" v-model="showContextMenu" :store="store"></table-context-menu></div>',
 		name: 'VueTable',
 		props: {
 			data: {
@@ -10272,6 +10569,10 @@
 				type: Boolean,
 				default: false
 			},
+			contextMenu: {
+				type: Boolean,
+				default: false
+			},
 			sumText: String,
 			summaryMethod: Function,
 			rowClassName: [String, Function],
@@ -10282,15 +10583,46 @@
 			expandRowKeys: Array,
 			defaultExpandAll: Boolean,
 			defaultSort: Object,
+			tooltipEffect: String,
 			expandClassName: [String, Function]
 		},
 		components: {
 			TableHeader: TableHeader,
 			TableBody: TableBody,
 			TableFooter: TableFooter,
-			VueCheckbox: VueCheckbox()
+			TableContextMenu: TableContextMenu
 		},
 		methods: {
+			columnFilter: function(column, value) {
+				this.store.commit('filterChange', {
+					column: column,
+					values: value
+				});
+			},
+			multipleColumnSort: function(sortList) {
+				var states = this.store.states;
+				var _data = (states.filteredData || states._data || []);
+				if (sortList.length > 0) {
+					states.data = _data.slice().sort(function(data1, data2) {
+						for (var i = 0, l = sortList.length; i < l; i++) {
+							var column = sortList[i];
+							var value1 = data1[column.property];
+							var value2 = data2[column.property];
+							var sortOrder = 1;
+							if (column.sortOrder === "descending") {
+								sortOrder = -1
+							}
+							if (value1 < value2) return -1 * sortOrder;
+							if (value1 > value2) return 1 * sortOrder;
+						}
+					});
+				} else {
+					states.data = _data;
+				}
+			},
+			toggleContextMenu: function() {
+				this.showContextMenu = !this.showContextMenu;
+			},
 			setCurrentRow: function(row) {
 				this.store.commit('setCurrentRow', row);
 			},
@@ -10308,34 +10640,47 @@
 			},
 			updateScrollY: function() {
 				this.layout.updateScrollY();
+				var refs = this.$refs;
+				if (refs.fixedBodyWrapper)
+					refs.fixedBodyWrapper.scrollTop = this.bodyScroll.top;
+				if (refs.rightFixedBodyWrapper)
+					refs.rightFixedBodyWrapper.scrollTop = this.bodyScroll.top;
 			},
 			bindEvents: function() {
 				var self = this;
 				var refs = self.$refs;
-				var headerWrapper = refs.headerWrapper,
-					footerWrapper = refs.footerWrapper;
 				self.bodyWrapper.addEventListener('scroll', function() {
 					var scrollLeft = this.scrollLeft;
 					var scrollTop = this.scrollTop;
-					if (bodyScrollLeft !== scrollLeft) {
-						if (headerWrapper) headerWrapper.scrollLeft = scrollLeft;
-						if (footerWrapper) footerWrapper.scrollLeft = scrollLeft;
-						bodyScrollLeft = scrollLeft;
+					if (self.bodyScroll.left !== scrollLeft) {
+						if (refs.headerWrapper)
+							refs.headerWrapper.scrollLeft = scrollLeft;
+						if (refs.footerWrapper)
+							refs.footerWrapper.scrollLeft = scrollLeft;
+						self.bodyScroll.left = scrollLeft;
 					}
-					if (bodyScrollTop !== scrollTop) {
-						self.$children.forEach(function(child){
-							if (child.updateZone && child.$options.delta.keeps !== 0) {
-								child.updateZone(scrollTop);
-								child.updateCurrentRowClass();
+					if (self.bodyScroll.top !== scrollTop) {
+						if (refs.tableBody && refs.tableBody.delta.keeps !== 0) {
+							refs.tableBody.updateZone(scrollTop);
+							refs.tableBody.updateHoverCurrentClass();
+							if (refs.fixedBody) {
+								refs.fixedBody.updateZone(scrollTop);
+								refs.fixedBody.updateHoverCurrentClass();
 							}
-						});
-						if (refs.fixedBodyWrapper) refs.fixedBodyWrapper.scrollTop = scrollTop;
-						if (refs.rightFixedBodyWrapper) refs.rightFixedBodyWrapper.scrollTop = scrollTop;
-						bodyScrollTop = scrollTop;
+							if (refs.rightFixedBody) {
+								refs.rightFixedBody.updateZone(scrollTop);
+								refs.rightFixedBody.updateHoverCurrentClass();
+							}
+						}
+						if (refs.fixedBodyWrapper)
+							refs.fixedBodyWrapper.scrollTop = scrollTop;
+						if (refs.rightFixedBodyWrapper)
+							refs.rightFixedBodyWrapper.scrollTop = scrollTop;
+						self.bodyScroll.top = scrollTop;
 					}
 				});
-				if (headerWrapper) {
-					mousewheel(headerWrapper, VueUtil.component.throttle(16, function(event) {
+				if (refs.headerWrapper) {
+					mousewheel(refs.headerWrapper, VueUtil.component.throttle(16, function(event) {
 						var deltaX = event.deltaX;
 						if (deltaX > 0) {
 							self.bodyWrapper.scrollLeft += 10;
@@ -10353,34 +10698,42 @@
 				}
 			},
 			resizeZone: function() {
-				var scrollTop = this.bodyWrapper.scrollTop;
-				this.$children.forEach(function(child){
-					if (child.updateZone && child.$options.delta.keeps !== 0) {
-						child.updateZone(scrollTop);
-						child.updateCurrentRowClass();
+				var refs = this.$refs;
+				if (refs.tableBody && refs.tableBody.delta.keeps !== 0) {
+					var scrollTop = this.bodyScroll.top;
+					refs.tableBody.updateZone(scrollTop);
+					refs.tableBody.updateHoverCurrentClass();
+					if (refs.fixedBody) {
+						refs.fixedBody.updateZone(scrollTop);
+						refs.fixedBody.updateHoverCurrentClass();
 					}
-				});
+					if (refs.rightFixedBody) {
+						refs.rightFixedBody.updateZone(scrollTop);
+						refs.rightFixedBody.updateHoverCurrentClass();
+					}
+				}
 			},
 			doLayout: function() {
 				var self = this;
 				self.store.updateColumns();
 				self.layout.update();
-				self.updateScrollY();
 				self.$nextTick(function() {
 					if (self.height) {
 						self.layout.setHeight(self.height);
 					} else if (self.shouldUpdateHeight) {
 						self.layout.updateHeight();
 					}
+					self.updateScrollY();
+					self.resizeZone();
 				});
 			}
 		},
 		created: function() {
 			var self = this;
 			self.tableId = 'vue-table_1_';
-			self.debouncedLayout = VueUtil.component.debounce(50, function() {
-				self.doLayout()
-			});
+			self.debouncedLayout = function() {
+				self.$nextTick(self.doLayout);
+			}
 		},
 		computed: {
 			bodyWrapper: function() {
@@ -10416,21 +10769,6 @@
 			bodyWidth: function() {
 				var layout = this.layout;
 				return layout.bodyWidth ? layout.bodyWidth - (layout.scrollY ? layout.gutterWidth : 0) + 'px' : '';
-			},
-			tableWidth: function() {
-				var layout = this.layout;
-				return {width: layout.bodyWidth ? layout.bodyWidth + (layout.scrollY ? layout.gutterWidth : 0) + 2 + 'px' : ''};
-			},
-			wrapperWidth: function() {
-				var layout = this.layout;
-				if (this.$el && parseInt(this.$el.style.width) < layout.bodyWidth + layout.gutterWidth) return '';
-				var colLen = this.columns.length;
-				if (colLen> 0 && this.columns[colLen-1].fixed === 'right') return '';
-				if (colLen > 0 && this.columns[colLen-1].width) {
-					return {width: layout.bodyWidth ? layout.bodyWidth + (layout.scrollY ? layout.gutterWidth : 0) + 'px' : ''};
-				} else {
-					return {width: layout.bodyWidth ? layout.bodyWidth + 'px' : ''};
-				}
 			},
 			fixedBodyHeight: function() {
 				var style = {};
@@ -10474,7 +10812,6 @@
 		},
 		mounted: function() {
 			var self = this;
-			self.bindEvents();
 			self.doLayout();
 			self.store.states.columns.forEach(function(column) {
 				if (column.filteredValue && column.filteredValue.length) {
@@ -10486,7 +10823,9 @@
 				}
 			});
 			self.$ready = true;
-			self.doLayout();
+			self.$nextTick(function(){
+				self.bindEvents();
+			});
 		},
 		data: function() {
 			var self = this;
@@ -10504,7 +10843,9 @@
 				store: store,
 				layout: layout,
 				renderExpanded: null,
-				resizeProxyVisible: false
+				resizeProxyVisible: false,
+				showContextMenu: false,
+				bodyScroll: {left:0, top:0}
 			};
 		}
 	};
@@ -10516,11 +10857,12 @@
 		define(['Vue', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueOption', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueOption = {
-		template: '<li @mouseenter="hoverItem" @click.stop="selectOptionClick" class="vue-select-dropdown__item" v-show="visible" :class="{\'selected\': itemSelected, \'is-disabled\': disabled || groupDisabled || limitReached}"><slot><span>{{ currentLabel }}</span></slot></li>',
+		template: '<li @mouseenter="hoverItem" @click.stop="selectOptionClick" class="vue-select-dropdown__item" v-show="visible" :class="{\'selected\': itemSelected, \'is-disabled\': disabled || groupDisabled || limitReached, \'hover\': itemHover}"><slot><span>{{ currentLabel }}</span></slot></li>',
 		name: 'VueOption',
 		componentName: 'VueOption',
 		mixins: [VueUtil.component.emitter],
@@ -10567,6 +10909,9 @@
 				} else {
 					return this.parent.value.indexOf(this.value) > -1;
 				}
+			},
+			itemHover: function(){
+				return this.parent.hoverIndex === this.parent.options.indexOf(this);
 			},
 			limitReached: function() {
 				if (this.parent.multiple) {
@@ -10629,9 +10974,6 @@
 		}
 	};
 	Vue.component(VueOption.name, VueOption);
-	return function() {
-		return VueOption;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -10689,6 +11031,7 @@
 		define(['Vue', 'VuePopper'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VuePopper']);
+		delete context[name];
 	}
 })('VueSelectDropdown', this, function(Vue, VuePopper) {
 	'use strict';
@@ -10696,7 +11039,7 @@
 		template: '<div class="vue-select-dropdown" :class="[{ \'is-multiple\': $parent.multiple }, popperClass]" :style="{ minWidth: minWidth }"><slot></slot></div>',
 		name: 'VueSelectDropdown',
 		componentName: 'VueSelectDropdown',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		props: {
 			placement: {
 				default: 'bottom-start'
@@ -10736,18 +11079,16 @@
 		}
 	};
 	Vue.component(VueSelectDropdown.name, VueSelectDropdown);
-	return function() {
-		return VueSelectDropdown;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueInput', 'VueSelectDropdown', 'VueOption', 'VueTag'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueInput'], context['VueSelectDropdown'], context['VueOption'], context['VueTag']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
-})('VueSelect', this, function(Vue, VueUtil, VueInput, VueSelectDropdown, VueOption, VueTag) {
+})('VueSelect', this, function(Vue, VueUtil) {
 	'use strict';
 	var sizeMap = {
 		'large': 42,
@@ -10755,14 +11096,24 @@
 		'mini': 22
 	};
 	var VueSelect = {
-		template: '<div class="vue-select" v-clickoutside="handleClose"><div class="vue-select__tags" v-if="multiple" @click.stop="toggleMenu" ref="tags" :style="{ \'max-width\': inputWidth - 32 + \'px\' }"><transition-group @after-leave="resetInputHeight"><vue-tag v-for="item in selected" :key="item.value" closable :hit="item.hitState" type="primary" @close="deleteTag($event, item)" close-transition><span class="vue-select__tags-text">{{ item.currentLabel }}</span></vue-tag></transition-group><input type="text" class="vue-select__input" :class="\'is-\'+size" @focus="visible = true" :disabled="disabled" @keyup="managePlaceholder" @keydown="resetInputState" @keydown.down.prevent="navigateOptions(\'next\')" @keydown.up.prevent="navigateOptions(\'prev\')" @keydown.enter.prevent="selectOption" @keydown.esc.prevent="visible = false" @keydown.delete="deletePrevTag" v-model="query" :debounce="remote ? 300 : 0" v-if="filterable" :style="{ width: inputLength + \'px\', \'max-width\': inputWidth - 42 + \'px\' }" ref="input"></div><vue-input ref="reference" v-model="selectedLabel" type="text" :placeholder="placeholderLang" :name="name" :size="size" :disabled="disabled" :readonly="!filterable || multiple" :validate-event="false" @focus="handleFocus" @click="handleIconClick" @mousedown.native="handleMouseDown" @keyup.native="debouncedOnInputChange" @keydown.native.down.prevent="navigateOptions(\'next\')" @keydown.native.up.prevent="navigateOptions(\'prev\')" @keydown.native.enter.prevent="selectOption" @keydown.native.esc.prevent="visible = false" @keydown.native.tab="visible = false" @paste.native="debouncedOnInputChange" @mouseenter.native="inputHovering = true" @mouseleave.native="inputHovering = false" :icon="iconClass"></vue-input><transition name="vue-zoom-in-top" @after-leave="doDestroy" @after-enter="handleMenuEnter"><vue-select-menu ref="popper" v-show="visible && emptyText !== false"><ul class="vue-select-dropdown__list" :class="{ \'is-empty\': !allowCreate && filteredOptionsCount === 0 }" v-show="options.length > 0 && !loading"><vue-option :value="query" created v-if="showNewOption"></vue-option><slot></slot></ul><p class="vue-select-dropdown__empty" v-if="emptyText && !allowCreate">{{ emptyText }}</p></vue-select-menu></transition></div>',
+		template: '<div class="vue-select" v-clickoutside="handleClose"><div class="vue-select__tags" :class="{\'no-reset-height\': !autoHeight}" v-if="multiple" @click.stop="toggleMenu" ref="tags" :style="{ \'max-width\': inputWidth - 32 + \'px\' }"><transition-group @after-leave="resetInputHeight"><vue-tag v-for="(item, index) in selected" :key="index" :closable="!disabled" hit :type="disabled ? \'\' : \'info\'" @close="deleteTag($event, item)"><span class="vue-select__tags-text">{{ item.currentLabel }}</span></vue-tag></transition-group><input type="text" class="vue-select__input" :class="\'is-\'+size" @focus="visible = true" :disabled="disabled" @keyup="managePlaceholder" @keydown="resetInputState" @keydown.down.prevent="navigateOptions(\'next\')" @keydown.up.prevent="navigateOptions(\'prev\')" @keydown.enter.prevent="selectOption" @keydown.esc.prevent="visible = false" @keydown.delete="deletePrevTag" v-model="query" :debounce="remote ? 300 : 0" v-if="filterable" :style="{ width: inputLength + \'px\', \'max-width\': inputWidth - 42 + \'px\' }" ref="input"></div><vue-input ref="reference" v-model="selectedLabel" type="text" :placeholder="placeholderLang" :autofocus="autofocus" :tabindex="tabindex" :name="name" :size="size" :disabled="disabled" :readonly="!filterable || multiple" :validate-event="false" @click="handleIconClick" @mousedown.native="handleMouseDown" @keyup.native="debouncedOnInputChange" @keydown.native.down.prevent="navigateOptions(\'next\')" @keydown.native.up.prevent="navigateOptions(\'prev\')" @keydown.native.enter.prevent="selectOption" @keydown.native.esc.prevent="visible = false" @keydown.native.tab="visible = false" @paste.native="debouncedOnInputChange" @mouseenter.native="inputHovering = true" @mouseleave.native="inputHovering = false" :icon="iconClass"></vue-input><transition name="vue-zoom-in-top" @after-leave="doDestroy" @after-enter="handleMenuEnter"><vue-select-dropdown ref="popper" v-show="visible && emptyText !== false"><ul class="vue-select-dropdown__list" :class="{ \'is-empty\': !allowCreate && filteredOptionsCount === 0 }" v-show="options.length > 0 && !loading"><vue-option :value="query" created v-if="showNewOption"></vue-option><slot></slot></ul><p class="vue-select-dropdown__empty" v-if="emptyText && !allowCreate">{{ emptyText }}</p></vue-select-dropdown></transition></div>',
 		mixins: [VueUtil.component.emitter],
 		name: 'VueSelect',
 		componentName: 'VueSelect',
 		computed: {
 			iconClass: function() {
-				var criteria = this.clearable && !this.disabled && this.inputHovering && !this.multiple && this.value !== undefined && this.value !== '';
-				return criteria ? 'vue-icon-circle-close is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-caret-top');
+				if (this.multiple) {
+					if (this.visible) {
+						var criteria = this.clearable && !this.disabled && this.inputHovering;
+						return criteria ? 'vue-icon-circle-check is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-caret-top');
+					} else {
+						var criteria = this.clearable && !this.disabled && this.inputHovering && this.value !== undefined && this.value.length>0;
+						return criteria ? 'vue-icon-circle-close is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-caret-top');
+					}
+				} else {
+					var criteria = this.clearable && !this.disabled && this.inputHovering && this.value !== undefined && this.value !== '';
+					return criteria ? 'vue-icon-circle-close is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-caret-top');
+				}
 			},
 			debounce: function() {
 				return this.remote ? 300 : 0;
@@ -10792,18 +11143,20 @@
 				return self.filterable && self.allowCreate && self.query !== '' && !hasExistingOption;
 			},
 			placeholderLang: function() {
-				if (this.multiple)
-					return this.currentPlaceholder;
+				if (this.multiple) {
+					if (Array.isArray(this.value) && this.value.length > 0) {
+						return '';
+					} else {
+						if (!this.currentPlaceholder) {
+							return this.$t('vue.select.placeholder');
+						}
+						return this.currentPlaceholder;
+					}
+				}
 				if (!this.placeholder)
 					return this.$t('vue.select.placeholder');
 				return this.placeholder;
 			}
-		},
-		components: {
-			VueInput: VueInput(),
-			VueSelectMenu: VueSelectDropdown(),
-			VueOption: VueOption(),
-			VueTag: VueTag()
 		},
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
@@ -10822,6 +11175,8 @@
 			loadingText: String,
 			noMatchText: String,
 			noDataText: String,
+			autofocus: Boolean,
+			tabindex: Number,
 			remoteMethod: Function,
 			filterMethod: Function,
 			multiple: Boolean,
@@ -10829,7 +11184,11 @@
 				type: Number,
 				default: 0
 			},
-			placeholder: String
+			placeholder: String,
+			autoHeight: {
+				type: Boolean,
+				default: true
+			}
 		},
 		data: function() {
 			return {
@@ -10857,13 +11216,6 @@
 			};
 		},
 		watch: {
-			placeholder: function(val) {
-				if (val.replace(/^\s+|\s+$/g, "") === "") {
-					this.currentPlaceholder = this.$t('vue.select.placeholder');
-				} else {
-					this.currentPlaceholder = val;
-				}
-			},
 			value: function(val) {
 				if (this.multiple) {
 					this.resetInputHeight();
@@ -10967,6 +11319,9 @@
 			}
 		},
 		methods: {
+			focus: function() {
+				this.$refs.reference && this.$nextTick(this.$refs.reference.focus);
+			},
 			handleIconHide: function() {
 				var icon = this.$el.querySelector('.vue-input__icon');
 				if (icon) {
@@ -11014,9 +11369,6 @@
 					value: value,
 					currentLabel: label
 				};
-				if (this.multiple) {
-					newOption.hitState = false;
-				}
 				return newOption;
 			},
 			setSelected: function() {
@@ -11046,12 +11398,15 @@
 					self.resetInputHeight();
 				});
 			},
-			handleFocus: function() {
-				this.visible = true;
-			},
 			handleIconClick: function(event) {
 				if (this.iconClass.indexOf('circle-close') > -1) {
 					this.deleteSelected(event);
+				} else if (this.iconClass.indexOf('circle-check') > -1) {
+					var value = [];
+					this.options.forEach(function(option){
+						value.push(option.value);
+					});
+					this.$emit('input', value);
 				} else {
 					this.toggleMenu();
 				}
@@ -11061,7 +11416,10 @@
 					return;
 				if (this.visible) {
 					this.handleClose();
+					this.focus();
 					event.preventDefault();
+				} else {
+					this.toggleMenu();
 				}
 			},
 			doDestroy: function() {
@@ -11070,21 +11428,8 @@
 			handleClose: function() {
 				this.visible = false;
 			},
-			toggleLastOptionHitState: function(hit) {
-				if (!Array.isArray(this.selected))
-					return;
-				var option = this.selected[this.selected.length - 1];
-				if (!option)
-					return;
-				if (hit === true || hit === false) {
-					option.hitState = hit;
-					return hit;
-				}
-				option.hitState = !option.hitState;
-				return option.hitState;
-			},
 			deletePrevTag: function(e) {
-				if (e.target.value.length <= 0 && !this.toggleLastOptionHitState()) {
+				if (e.target.value.length <= 0) {
 					var value = this.value.slice();
 					value.pop();
 					this.$emit('input', value);
@@ -11096,13 +11441,14 @@
 				}
 			},
 			resetInputState: function(e) {
-				if (e.keyCode !== 8)
-					this.toggleLastOptionHitState(false);
-				this.inputLength = this.$refs.input.value.length * 15 + 20;
-				this.resetInputHeight();
+				if (e.keyCode !== 8) {
+					this.inputLength = this.$refs.input.value.length * 15 + 20;
+					this.resetInputHeight();
+				}
 			},
 			resetInputHeight: function() {
 				var self = this;
+				if (!this.autoHeight) return;
 				self.$nextTick(function() {
 					var inputChildNodes = self.$refs.reference.$el.childNodes;
 					var input = [].filter.call(inputChildNodes, function(item) {
@@ -11144,10 +11490,15 @@
 						this.query = '';
 						this.inputLength = 20;
 					}
-					if (this.filterable) this.$refs.input.focus();
+					if (this.filterable) {
+						this.$refs.input.focus();
+					} else {
+						this.focus();
+					}
 				} else {
 					this.$emit('input', option.value);
 					this.visible = false;
+					this.focus();
 				}
 			},
 			toggleMenu: function() {
@@ -11206,7 +11557,11 @@
 			},
 			deleteSelected: function(event) {
 				event.stopPropagation();
-				this.$emit('input', '');
+				if (this.multiple) {
+					this.$emit('input', []);
+				} else {
+					this.$emit('input', '');
+				}
 				this.visible = false;
 			},
 			deleteTag: function(event, tag) {
@@ -11260,9 +11615,6 @@
 		},
 		mounted: function() {
 			var self = this;
-			if (self.multiple && Array.isArray(self.value) && self.value.length > 0) {
-				self.currentPlaceholder = '';
-			}
 			VueUtil.addResizeListener(self.$el, self.handleResize);
 			if (self.remote && self.multiple) {
 				self.resetInputHeight();
@@ -11279,19 +11631,16 @@
 		}
 	};
 	Vue.component(VueSelect.name, VueSelect);
-	return function() {
-		return VueSelect;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueCheckbox'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueCheckbox']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueTree', this, function(Vue, VueUtil, VueCheckbox) {
+})('VueTree', this, function(Vue, VueUtil) {
 	'use strict';
 	var NODE_KEY = '$treeNodeId';
 	var markNodeData = function(node, data) {
@@ -11309,26 +11658,63 @@
 			return data[NODE_KEY];
 		return data[key];
 	};
-	var reInitChecked = function(node) {
-		var siblings = node.childNodes;
+	var getChildState = function(node) {
 		var all = true;
 		var none = true;
-		for (var i = 0, j = siblings.length; i < j; i++) {
-			var sibling = siblings[i];
-			if (sibling.checked !== true || sibling.indeterminate) {
+		var allWithoutDisable = true;
+		for (var i = 0, j = node.length; i < j; i++) {
+			var n = node[i];
+			if (n.checked !== true || n.indeterminate) {
 				all = false;
+				if (!n.disabled) {
+					allWithoutDisable = false;
+				}
 			}
-			if (sibling.checked !== false || sibling.indeterminate) {
+			if (n.checked !== false || n.indeterminate) {
 				none = false;
 			}
 		}
+		return {
+			all: all,
+			none: none,
+			allWithoutDisable: allWithoutDisable,
+			half: !all && !none
+		};
+	};
+	var reInitChecked = function(node) {
+		var childState = getChildState(node.childNodes);
+		var all = childState.all;
+		var none = childState.none;
+		var half = childState.half;
 		if (all) {
-			node.setChecked(true);
-		} else if (!all && !none) {
-			node.setChecked('half');
+			node.checked = true;
+			node.indeterminate = false;
+		} else if (half) {
+			node.checked = false;
+			node.indeterminate = true;
 		} else if (none) {
-			node.setChecked(false);
+			node.checked = false;
+			node.indeterminate = false;
 		}
+		var parent = node.parent;
+		if (!parent || parent.level === 0) return;
+		if (!node.store.checkStrictly) {
+			reInitChecked(parent);
+		}
+	};
+	var initLazyLoadChild = function(node) {
+		var childNodes = node.childNodes;
+		if (node.checked) {
+			for (var i = 0, j = childNodes.length; i < j; i++) {
+				var child = childNodes[i];
+				if (!child.disabled) {
+					child.checked = true;
+				}
+			}
+		}
+		var parent = node.parent;
+		if (!parent || parent.level === 0) return;
+		reInitChecked(parent);
 	};
 	var getPropertyFromData = function(node, prop) {
 		var props = node.store.props;
@@ -11361,6 +11747,10 @@
 		this.loaded = false;
 		this.childNodes = [];
 		this.loading = false;
+		this.label = this.getLabel();
+		this.icon = this.getIcon();
+		this.key = this.getKey();
+		this.disabled = this.getDisabled();
 		if (this.parent) {
 			this.level = this.parent.level + 1;
 		}
@@ -11398,9 +11788,6 @@
 			store._initDefaultCheckedNode(this);
 		}
 		this.updateLeafState();
-		this.label = this.getLabel();
-		this.icon = this.getIcon();
-		this.key = this.getKey();
 	};
 	Node.prototype.setData = function(data) {
 		var self = this;
@@ -11427,10 +11814,13 @@
 	Node.prototype.getIcon = function(node) {
 		return getPropertyFromData(this, 'icon');
 	};
+	Node.prototype.getDisabled = function() {
+		return getPropertyFromData(this, 'disabled');
+	};
 	Node.prototype.getKey = function() {
 		var self = this;
 		var nodeKey = self.store.key;
-		if (this.data)
+		if (self.data)
 			return self.data[nodeKey];
 		return null;
 	};
@@ -11490,14 +11880,14 @@
 			}
 		});
 		if (targetNode) {
-			this.removeChild(targetNode);
+			self.removeChild(targetNode);
 		}
 	};
 	Node.prototype.expand = function(callback, expandParent) {
 		var self = this;
 		var done = function() {
 			if (expandParent) {
-				var parent = this.parent;
+				var parent = self.parent;
 				while (parent.level > 0) {
 					parent.expanded = true;
 					parent = parent.parent;
@@ -11507,9 +11897,10 @@
 			if (callback)
 				callback();
 		};
-		if (this.shouldLoadData()) {
-			this.loadData(function(data) {
+		if (self.shouldLoadData()) {
+			self.loadData(function(data) {
 				if (data instanceof Array) {
+					initLazyLoadChild(self);
 					done();
 				}
 			});
@@ -11545,22 +11936,38 @@
 		}
 		self.isLeaf = false;
 	};
-	Node.prototype.setChecked = function(value, deep) {
+	Node.prototype.setChecked = function(value, deep, recursion, passValue) {
 		var self = this;
 		self.indeterminate = value === 'half';
 		self.checked = value === true;
-		var handleDescendants = function() {
-			if (deep) {
+		var selfChildState = getChildState(self);
+		var all = selfChildState.all;
+		var allWithoutDisable = selfChildState.allWithoutDisable;
+		if (self.childNodes.length && !all && allWithoutDisable) {
+			self.checked = false;
+			value = false;
+		}
+		var handleDescendants = function(lazy) {
+			if (deep && !lazy) {
 				var childNodes = self.childNodes;
 				for (var i = 0, j = childNodes.length; i < j; i++) {
 					var child = childNodes[i];
-					child.setChecked(value !== false, deep);
+					passValue = passValue || value !== false;
+					var isCheck = child.disabled ? child.checked : passValue;
+					child.setChecked(isCheck, deep, true, passValue);
+				}
+				var childState = getChildState(childNodes);
+				var half = childState.half;
+				var all = childState.all;
+				if (!all) {
+					self.checked = all;
+					self.indeterminate = half;
 				}
 			}
 		};
 		if (!self.store.checkStrictly && self.shouldLoadData()) {
 			self.loadData(function() {
-				handleDescendants();
+				handleDescendants(true);
 			}, {
 				checked: value !== false
 			});
@@ -11568,9 +11975,8 @@
 			handleDescendants();
 		}
 		var parent = self.parent;
-		if (!parent || parent.level === 0)
-			return;
-		if (!self.store.checkStrictly) {
+		if (!parent || parent.level === 0) return;
+		if (!self.store.checkStrictly && !recursion) {
 			reInitChecked(parent);
 		}
 	};
@@ -11625,7 +12031,7 @@
 	Node.prototype.loadData = function(callback, defaultProps) {
 		var self = this;
 		defaultProps = defaultProps || {}
-		if (self.store.lazy === true && self.store.load && !self.loaded && !self.loading) {
+		if (self.store.lazy === true && self.store.load && !self.loaded && (!self.loading || Object.keys(defaultProps).length)) {
 			self.loading = true;
 			var resolve = function(children) {
 				self.loaded = true;
@@ -11724,7 +12130,7 @@
 	TreeStore.prototype.remove = function(data) {
 		var self = this;
 		var node = self.getNode(data);
-		if (node) {
+		if (node && node.parent) {
 			node.parent.removeChild(node);
 		}
 	};
@@ -11826,55 +12232,44 @@
 		var self = this;
 		var leafOnly = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 		var checkedKeys = arguments[2];
-		var allNodes = self._getAllNodes();
-		allNodes.sort(function(a, b) {
-			return a.level < b.level;
-		});
+		var allNodes = self._getAllNodes().sort(function(a, b){return b.level - a.level});
+		var cache = Object.create(null);
 		var keys = Object.keys(checkedKeys);
-		allNodes.forEach(function(node) {
-			var checked = keys.indexOf(node.data[key] + '') > -1;
-			if (!node.isLeaf) {
-				if (!self.checkStrictly) {
-					var childNodes = node.childNodes;
-					var all = true;
-					var none = true;
-					for (var i = 0, j = childNodes.length; i < j; i++) {
-						var child = childNodes[i];
-						if (child.checked !== true || child.indeterminate) {
-							all = false;
-						}
-						if (child.checked !== false || child.indeterminate) {
-							none = false;
-						}
-					}
-					if (all) {
-						node.setChecked(true, !self.checkStrictly);
-					} else if (!all && !none) {
-						checked = checked ? true : 'half';
-						node.setChecked(checked, !self.checkStrictly && checked === true);
-					} else if (none) {
-						node.setChecked(checked, !self.checkStrictly);
-					}
-				} else {
-					node.setChecked(checked, false);
-				}
-				if (leafOnly) {
+		allNodes.forEach(function(node){return node.setChecked(false, false)});
+		for (var i = 0, j = allNodes.length; i < j; i++) {
+			var node = allNodes[i];
+			var nodeKey = node.data[key].toString();
+			var checked = keys.indexOf(nodeKey) > -1;
+			if (!checked) {
+				if (node.checked && !cache[nodeKey]) {
 					node.setChecked(false, false);
-					var traverse = function(node) {
-						var childNodes = node.childNodes;
-						childNodes.forEach(function(child) {
-							if (!child.isLeaf) {
-								child.setChecked(false, false);
-							}
-							traverse(child);
-						});
-					};
-					traverse(node);
 				}
-			} else {
-				node.setChecked(checked, false);
+				continue;
 			}
-		});
+			var parent = node.parent;
+			while (parent && parent.level > 0) {
+				cache[parent.data[key]] = true;
+				parent = parent.parent;
+			}
+			if (node.isLeaf || self.checkStrictly) {
+				node.setChecked(true, false);
+				continue;
+			}
+			node.setChecked(true, true);
+			if (leafOnly) {
+				node.setChecked(false, false);
+				var traverse = function(node) {
+					var childNodes = node.childNodes;
+					childNodes.forEach(function(child) {
+						if (!child.isLeaf) {
+							child.setChecked(false, false);
+						}
+						traverse(child);
+					});
+				};
+				traverse(node);
+			}
+		}
 	};
 	TreeStore.prototype.setCheckedNodes = function(array) {
 		var self = this;
@@ -11922,13 +12317,17 @@
 	};
 	TreeStore.prototype.setCurrentNodeKey = function(key) {
 		var self = this;
-		var node = self.getNode(key);
-		if (node) {
-			self.currentNode = node;
+		if (!key) {
+			self.currentNode = null;
+		} else {
+			var node = self.getNode(key);
+			if (node) {
+				self.currentNode = node;
+			}
 		}
 	};
 	var VueTreeNode = {
-		template: '<div class="vue-tree-node" @click.stop="handleClick" v-show="node.visible" :class="{\'is-expanded\': childNodeRendered && expanded,\'is-current\': tree.store.currentNode === node,\'is-hidden\': !node.visible}"><div class="vue-tree-node__content" :style="{ \'padding-left\': (node.level - 1) * tree.indent + \'px\' }"><span class="vue-tree-node__expand-icon" @click.stop="handleExpandIconClick" :class="{ \'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded }"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" @change="handleCheckChange" @click.native.stop="handleUserClick"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
+		template: '<div class="vue-tree-node" @click.stop="handleClick" v-show="node.visible" :class="{\'is-expanded\': childNodeRendered && expanded,\'is-current\': tree.store.currentNode === node,\'is-hidden\': !node.visible}"><div class="vue-tree-node__content" :style="{ \'padding-left\': (node.level - 1) * tree.indent + \'px\' }"><span class="vue-tree-node__expand-icon" @click.stop="handleExpandIconClick" :class="{ \'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded }"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
 		name: 'VueTreeNode',
 		componentName: 'VueTreeNode',
 		mixins: [VueUtil.component.emitter],
@@ -11942,7 +12341,6 @@
 			renderContent: Function
 		},
 		components: {
-			VueCheckbox: VueCheckbox(),
 			CollapseTransition: VueUtil.component.collapseTransition,
 			NodeContent: {
 				props: {
@@ -12026,15 +12424,8 @@
 					this.$emit('node-expand', this.node.data, this.node, this);
 				}
 			},
-			handleUserClick: function() {
-				if (this.node.indeterminate) {
-					this.node.setChecked(this.node.checked, !this.tree.checkStrictly);
-				}
-			},
 			handleCheckChange: function(ev) {
-				if (!this.node.indeterminate) {
-					this.node.setChecked(ev.target.checked, !this.tree.checkStrictly);
-				}
+				this.node.setChecked(ev.target.checked, !this.tree.checkStrictly);
 			},
 			handleChildNodeExpand: function(nodeData, node, instance) {
 				this.broadcast('VueTreeNode', 'tree-node-expand', node);
@@ -12073,7 +12464,7 @@
 		}
 	};
 	var VueTree = {
-		template: '<div class="vue-tree" :class="{ \'vue-tree--highlight-current\': highlightCurrent }"><vue-tree-node v-for="child in root.childNodes" :node="child" :props="props" :key="getNodeKey(child)" :render-content="renderContent" @node-expand="handleNodeExpand"></vue-tree-node><div class="vue-tree__empty-block" v-if="!root.childNodes || root.childNodes.length === 0"><span class="vue-tree__empty-text">{{ emptyText || $t(\'vue.tree.emptyText\') }}</span></div></div>',
+		template: '<div class="vue-tree" :class="{ \'vue-tree--highlight-current\': highlightCurrent }"><vue-tree-node v-for="child in root.childNodes" :node="child" :props="props" :key="getNodeKey(child)" :render-content="renderContent" @node-expand="handleNodeExpand"></vue-tree-node><div class="vue-tree__empty-block" v-if="!root.childNodes || root.childNodes.length === 0"><span class="vue-tree__empty-text">{{ $t(\'vue.tree.emptyText\') }}</span></div></div>',
 		name: 'VueTree',
 		mixins: [VueUtil.component.emitter],
 		components: {
@@ -12089,12 +12480,6 @@
 		props: {
 			data: {
 				type: Array
-			},
-			emptyText: {
-				type: String,
-				default: function() {
-					return 'no data';
-				}
 			},
 			nodeKey: String,
 			checkStrictly: Boolean,
@@ -12119,7 +12504,8 @@
 					return {
 						children: 'children',
 						label: 'label',
-						icon: 'icon'
+						icon: 'icon',
+						disabled: 'disabled'
 					};
 				}
 			},
@@ -12176,6 +12562,27 @@
 					return node.data[nodeKey];
 				}
 				return index;
+			},
+			getCurrentNode: function() {
+				var currentNode = this.store.getCurrentNode();
+				return currentNode ? currentNode.data : null;
+			},
+			getCurrentKey: function() {
+				if (!this.nodeKey) return null;
+				var currentNode = this.store.getCurrentNode();
+				return currentNode ? currentNode.data[this.nodeKey] : null;
+			},
+			setCurrentNode: function(node) {
+				if (!this.nodeKey)
+					throw new Error('[Tree] nodeKey is required in setCheckedNodes');
+				if (!node) return this.store.setCurrentNodeKey(null);
+				var key = node[this.nodeKey];
+				return this.store.setCurrentNodeKey(key);
+			},
+			setCurrentKey: function(key) {
+				if (!this.nodeKey)
+					throw new Error('[Tree] nodeKey is required in setCheckedNodes');
+				return this.store.setCurrentNodeKey(key);
 			},
 			getCheckedNodes: function(leafOnly) {
 				return this.store.getCheckedNodes(leafOnly);
@@ -12234,7 +12641,7 @@
 })('VueCarousel', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueCarousel = {
-		template: '<div class="vue-carousel" :class="{ \'vue-carousvue--card\': type === \'card\' }" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave"><div class="vue-carousel__container" :style="{ height: height }"><transition name="carousvue-arrow-left"><button v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousvue-arrow-right"><button v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul class="vue-carousel__indicators" v-if="indicatorPosition !== \'none\'" :class="{ \'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\' }"><li v-for="(item, index) in items" class="vue-carousel__indicator" :class="{ \'is-active\': index === activeIndex }" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button class="vue-carousel__button"></button></li></ul></div>',
+		template: '<div class="vue-carousel" :class="{ \'vue-carousvue--card\': type === \'card\' }" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave"><div class="vue-carousel__container" :style="{ height: height }"><transition name="carousel-arrow-left"><button v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousel-arrow-right"><button v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul class="vue-carousel__indicators" v-if="indicatorPosition !== \'none\'" :class="{ \'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\' }"><li v-for="(item, index) in items" class="vue-carousel__indicator" :class="{ \'is-active\': index === activeIndex }" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button class="vue-carousel__button"></button></li></ul></div>',
 		name: 'VueCarousel',
 		props: {
 			initialIndex: {
@@ -12263,6 +12670,10 @@
 				type: String,
 				default: 'hover'
 			},
+			hoverStop: {
+				type: Boolean,
+				default: true
+			},
 			type: String
 		},
 		data: function() {
@@ -12287,11 +12698,11 @@
 		methods: {
 			handleMouseEnter: function() {
 				this.hover = true;
-				this.pauseTimer();
+				if (this.hoverStop) this.pauseTimer();
 			},
 			handleMouseLeave: function() {
 				this.hover = false;
-				this.startTimer();
+				if (this.hoverStop) this.startTimer();
 			},
 			itemInStage: function(item, index) {
 				var length = this.items.length;
@@ -12316,9 +12727,6 @@
 					item.hover = self;
 				});
 			},
-			handleItemChange: VueUtil.component.debounce(100, function() {
-				this.updateItems();
-			}),
 			updateItems: function() {
 				this.items = this.$children.filter(function(child) {
 					return child.$options.name === 'VueCarouselItem';
@@ -12485,10 +12893,10 @@
 			}
 		},
 		created: function() {
-			this.$parent && this.$parent.handleItemChange();
+			this.$parent && this.$parent.updateItems();
 		},
 		destroyed: function() {
-			this.$parent && this.$parent.handleItemChange();
+			this.$parent && this.$parent.updateItems();
 		}
 	};
 	Vue.component(VueCarouselItem.name, VueCarouselItem);
@@ -12521,10 +12929,14 @@
 })('VuePopover', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
 	var VuePopover = {
-		template: '<span><transition :name="transition" @after-leave="doDestroy"><div class="vue-popover" :class="[popperClass]" ref="popper" v-show="!disabled && showPopper" :style="{ width: width + \'px\' }"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{ content }}</slot></div></transition><slot name="reference"></slot></span>',
+		template: '<span><transition :name="transition" @after-leave="doDestroy"><div class="vue-popover" :class="[popperClass, {\'no-arrow\': !visibleArrow}]" ref="popper" v-show="!disabled && showPopper" :style="{ width: popoverWidth + \'px\' }"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{ content }}</slot></div></transition><slot name="reference"></slot></span>',
 		name: 'VuePopover',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		props: {
+			openDelay: {
+				type: Number,
+				default: 0
+			},
 			trigger: {
 				type: String,
 				default: 'click',
@@ -12537,7 +12949,7 @@
 			content: String,
 			reference: {},
 			popperClass: String,
-			width: {},
+			width: [String, Number],
 			visibleArrow: {
 				default: true
 			},
@@ -12546,9 +12958,23 @@
 				default: 'fade-in-linear'
 			}
 		},
+		data: function() {
+			return {
+				popoverWidth: null
+			}
+		},
 		watch: {
 			showPopper: function(newVal, oldVal) {
-				newVal ? this.$emit('show') : this.$emit('hide');
+				if (newVal) {
+					this.popoverWidth = this.width;
+					if (!this.popoverWidth) {
+						var reference = this.reference || this.$refs.reference;
+						this.popoverWidth = parseInt(VueUtil.getStyle(reference, 'width'));
+					}
+					this.$emit('show');
+				} else {
+					this.$emit('hide');
+				}
 			}
 		},
 		mounted: function() {
@@ -12602,14 +13028,14 @@
 				this.showPopper = false;
 			},
 			handleMouseEnter: function() {
-				this.showPopper = true;
-				clearTimeout(this._timer);
-			},
-			handleMouseLeave: function() {
 				var self = this;
 				self._timer = setTimeout(function() {
-					self.showPopper = false;
-				}, 200);
+					self.showPopper = true;
+					clearTimeout(self._timer);
+				}, self.openDelay);
+			},
+			handleMouseLeave: function() {
+				this.showPopper = false;
 			},
 			handleDocumentClick: function(e) {
 				var reference = this.reference || this.$refs.reference;
@@ -12638,18 +13064,18 @@
 		vnode.context.$refs[binding.arg].$refs.reference = el;
 	};
 	Vue.directive('popover', directive);
-	Vue.component(VuePopover.name, VuePopover);
 	VuePopover.directive = directive;
+	Vue.component(VuePopover.name, VuePopover);
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePopper', 'VueUtil', 'VueInput'], definition);
+		define(['Vue', 'VuePopper', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VuePopper'], context['VueUtil'], context['VueInput']);
+		context[name] = definition(context['Vue'], context['VuePopper'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueCascader', this, function(Vue, VuePopper, VueUtil, VueInput) {
+})('VueCascader', this, function(Vue, VuePopper, VueUtil) {
 	'use strict';
 	var VueCascaderMenu = {
 		name: 'VueCascaderMenu',
@@ -12797,7 +13223,7 @@
 					style: menuStyle
 				}, [items]);
 			});
-			return createElement('div', {}, [createElement('transition', {
+			return createElement('transition', {
 				attrs: {
 					name: 'vue-zoom-in-top'
 				},
@@ -12810,7 +13236,7 @@
 					value: visible
 				}],
 				class: ['vue-cascader-menus', popperClass]
-			}, [menus])])]);
+			}, [menus])]);
 		}
 	};
 	var popperMixin = {
@@ -12819,25 +13245,22 @@
 				type: String,
 				default: 'bottom-start'
 			},
-			appendToBody: VuePopper().props.appendToBody,
-			offset: VuePopper().props.offset,
-			boundariesPadding: VuePopper().props.boundariesPadding,
-			popperOptions: VuePopper().props.popperOptions
+			appendToBody: VuePopper.props.appendToBody,
+			offset: VuePopper.props.offset,
+			boundariesPadding: VuePopper.props.boundariesPadding,
+			popperOptions: VuePopper.props.popperOptions
 		},
-		methods: VuePopper().methods,
-		data: VuePopper().data,
-		beforeDestroy: VuePopper().beforeDestroy
+		methods: VuePopper.methods,
+		data: VuePopper.data,
+		beforeDestroy: VuePopper.beforeDestroy
 	};
 	var VueCascader = {
-		template: '<span class="vue-cascader" :class="[{ \'is-opened\': menuVisible, \'is-disabled\': disabled},size ? \'vue-cascader--\' + size : \'\']" @click="handleClick" @mouseenter="inputHover = true" @mouseleave="inputHover = false" ref="reference" v-clickoutside="handleClickoutside"><vue-input ref="input" :readonly="!filterable" :placeholder="currentLabels.length ? undefined : placeholderLang" v-model="inputValue" @change="debouncedInputChange" :validate-event="false" :size="size" :disabled="disabled"><template slot="icon"><i key="1" v-if="clearable && inputHover && currentLabels.length" class="vue-input__icon vue-icon-circle-close vue-cascader__clearIcon" @click="clearValue"></i><i key="2" v-else class="vue-input__icon vue-icon-caret-bottom" :class="{ \'is-reverse\': menuVisible }"></i></template></vue-input><span class="vue-cascader__label" v-show="inputValue === \'\'"><template v-if="showAllLevels"><template v-for="(label, index) in currentLabels">{{ label }}<span v-if="index < currentLabels.length - 1"> / </span></template></template><template v-else>{{ currentLabels[currentLabels.length - 1] }}</template></span></span>',
+		template: '<span class="vue-cascader" :class="[{ \'is-opened\': menuVisible, \'is-disabled\': disabled},size ? \'vue-cascader--\' + size : \'\']" @click="handleClick" @mouseenter="inputHover = true" @mouseleave="inputHover = false" ref="reference" v-clickoutside="handleClickoutside"><vue-input ref="input" :autofocus="autofocus" :tabindex="tabindex" :readonly="!filterable" :placeholder="currentLabels.length ? undefined : placeholderLang" v-model="inputValue" @change="debouncedInputChange" :validate-event="false" :size="size" :disabled="disabled"><template slot="icon"><i key="1" v-if="clearable && inputHover && currentLabels.length" class="vue-input__icon vue-icon-circle-close vue-cascader__clearIcon" @click="clearValue"></i><i key="2" v-else class="vue-input__icon vue-icon-caret-bottom" :class="{ \'is-reverse\': menuVisible }"></i></template></vue-input><span class="vue-cascader__label" v-show="inputValue === \'\'"><template v-if="showAllLevels"><template v-for="(label, index) in currentLabels">{{ label }}<span v-if="index < currentLabels.length - 1"> / </span></template></template><template v-else>{{ currentLabels[currentLabels.length - 1] }}</template></span></span>',
 		name: 'VueCascader',
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
 		},
 		mixins: [popperMixin, VueUtil.component.emitter],
-		components: {
-			VueInput: VueInput()
-		},
 		props: {
 			options: {
 				type: Array,
@@ -12874,6 +13297,8 @@
 			},
 			filterable: Boolean,
 			size: String,
+			autofocus: Boolean,
+			tabindex: Number,
 			showAllLevels: {
 				type: Boolean,
 				default: true
@@ -12947,6 +13372,9 @@
 			}
 		},
 		methods: {
+			focus: function() {
+				this.$refs.input.focus();
+			},
 			initMenu: function() {
 				this.menu = new Vue(VueCascaderMenu).$mount();
 				this.menu.options = this.options;
@@ -12992,6 +13420,7 @@
 				if (close) {
 					this.menuVisible = false;
 				}
+				this.$nextTick(this.focus);
 			},
 			handleInputChange: function(value) {
 				var self = this;
@@ -13020,7 +13449,7 @@
 				} else {
 					filteredFlatOptions = [{
 						__IS__FLAT__OPTIONS: true,
-						label: self.$t('vue.cascader.emptyText'),
+						label: self.$t('vue.cascader.noMatch'),
 						value: '',
 						disabled: true
 					}];
@@ -13105,41 +13534,65 @@
 })('VueStep', this, function(Vue) {
 	'use strict';
 	var VueStep = {
-		template: '<div class="vue-step" :style="[style, isLast ? \'\' : { marginRight: - $parent.stepOffset + \'px\' }]" :class="[\'is-\' + $parent.direction]"><div class="vue-step__head" :class="[\'is-\' + currentStatus, { \'is-text\': !icon }]"><div class="vue-step__line" :style="isLast ? \'\' : { marginRight: $parent.stepOffset + \'px\' }" :class="[\'is-\' + $parent.direction, { \'is-icon\': icon }]"><i class="vue-step__line-inner" :style="lineStyle"></i></div><span class="vue-step__icon"><slot v-if="currentStatus !== \'success\' && currentStatus !== \'error\'" name="icon"><i v-if="icon" :class="[icon]"></i><div v-else>{{ index + 1 }}</div></slot><i v-else :class="[\'vue-icon-\' + (currentStatus === \'success\' ? \'check\' : \'close\')]"></i></span></div><div class="vue-step__main" :style="{ marginLeft: mainOffset }"><div class="vue-step__title" ref="title" :class="[\'is-\' + currentStatus]"><slot name="title">{{ title }}</slot></div><div class="vue-step__description" :class="[\'is-\' + currentStatus]"><slot name="description"></slot></div></div></div>',
+		template: '<div class="vue-step" :style="[style, isLast ? \'\' : { marginRight: - $parent.stepOffset + \'px\' }]" :class="[\'is-\' + $parent.direction]"><div class="vue-step__head" :class="[\'is-\' + currentStatus, { \'is-text\': !icon }]"><div class="vue-step__line" :style="isLast ? \'\' : { marginRight: $parent.stepOffset + \'px\' }" :class="[\'is-\' + $parent.direction, { \'is-icon\': icon }]"><i class="vue-step__line-inner" :style="lineStyle"></i></div><span class="vue-step__icon"><slot v-if="currentStatus !== \'success\' && currentStatus !== \'error\'" name="icon"><i v-if="icon" :class="icon"></i><div v-else>{{ index + 1 }}</div></slot><i v-else :class="[\'vue-icon-\' + (currentStatus === \'success\' ? \'check\' : \'close\')]"></i></span></div><div class="vue-step__main" :style="{ marginLeft: mainOffset }"><div class="vue-step__title" ref="title" :class="[\'is-\' + currentStatus]"><slot name="title">{{ title }}</slot></div><div class="vue-step__description" :class="[\'is-\' + currentStatus]"><slot></slot></div></div></div>',
 		name: 'VueStep',
 		props: {
 			title: String,
 			icon: String,
-			status: {
-				type: String,
-				default: 'wait'
-			}
+			status: String
 		},
 		data: function() {
 			return {
 				index: -1,
-				style: {},
 				lineStyle: {},
 				mainOffset: 0,
-				isLast: false,
-				currentStatus: this.status
+				internalStatus: ''
 			};
 		},
 		beforeCreate: function() {
 			this.$parent.steps.push(this);
 		},
+		computed: {
+			currentStatus: function() {
+				return this.status || this.internalStatus;
+			},
+			isLast: function() {
+				var parent = this.$parent;
+				return parent.steps[parent.steps.length - 1] === this;
+			},
+			style: function() {
+				var parent = this.$parent;
+				var isCenter = parent.center;
+				var len = parent.steps.length;
+				if (isCenter && this.isLast) {
+					return {};
+				}
+				var space = (typeof parent.space === 'number' ? parent.space + 'px' : parent.space ? parent.space : 100 / (isCenter ? len - 1 : len) + '%');
+				if (parent.direction === 'horizontal') {
+					return {
+						width: space
+					};
+				} else {
+					if (!this.isLast) {
+						return {
+							height: space
+						};
+					}
+				}
+			}
+		},
 		methods: {
 			updateStatus: function(val) {
 				var prevChild = this.$parent.$children[this.index - 1];
 				if (val > this.index) {
-					this.currentStatus = this.$parent.finishStatus;
+					this.internalStatus = this.$parent.finishStatus;
 				} else if (val === this.index) {
-					this.currentStatus = this.$parent.processStatus;
+					this.internalStatus = this.$parent.processStatus;
 				} else {
-					this.currentStatus = 'wait';
+					this.internalStatus = 'wait';
 				}
 				if (prevChild)
-					prevChild.calcProgress(this.currentStatus);
+					prevChild.calcProgress(this.internalStatus);
 			},
 			calcProgress: function(status) {
 				var step = 100;
@@ -13151,34 +13604,17 @@
 					step = 0;
 					style.transitionDelay = (-150 * this.index) + 'ms';
 				}
+				style.borderWidth = step ? '1px' : 0;
 				this.$parent.direction === 'vertical' ? style.height = step + '%' : style.width = step + '%';
 				this.lineStyle = style;
-			},
-			adjustPosition: function() {
-				this.style = {};
-				this.$parent.stepOffset = this.$el.getBoundingClientRect().width / (this.$parent.steps.length - 1);
 			}
 		},
 		mounted: function() {
 			var self = this;
 			var parent = self.$parent;
-			var isCenter = parent.center;
-			var len = parent.steps.length;
-			var isLast = self.isLast = parent.steps[parent.steps.length - 1] === self;
-			var space = typeof parent.space === 'number' ? parent.space + 'px' : parent.space ? parent.space : 100 / (isCenter ? len - 1 : len) + '%';
 			if (parent.direction === 'horizontal') {
-				self.style = {
-					width: space
-				};
 				if (parent.alignCenter) {
 					self.mainOffset = -self.$refs.title.getBoundingClientRect().width / 2 + 16 + 'px';
-				}
-				isCenter && isLast && self.adjustPosition();
-			} else {
-				if (!isLast) {
-					self.style = {
-						height: space
-					};
 				}
 			}
 			var unwatch = self.$watch('index', function(val) {
@@ -13233,9 +13669,16 @@
 				this.$emit('change', newVal, oldVal);
 			},
 			steps: function(steps) {
+				var self = this;
 				steps.forEach(function(child, index) {
 					child.index = index;
 				});
+				if (self.center) {
+					var len = steps.length;
+					self.$nextTick(function() {
+						self.stepOffset = steps[len - 1].$el.getBoundingClientRect().width / (len - 1);
+					});
+				}
 			}
 		}
 	};
@@ -13244,12 +13687,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueButton', 'VueButtonGroup'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueButton'], context['VueButtonGroup']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueDropdown', this, function(Vue, VueUtil, VueButton, VueButtonGroup) {
+})('VueDropdown', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueDropdown = {
 		template: '',
@@ -13258,10 +13701,6 @@
 		mixins: [VueUtil.component.emitter],
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
-		},
-		components: {
-			VueButton: VueButton(),
-			VueButtonGroup: VueButtonGroup()
 		},
 		props: {
 			trigger: {
@@ -13416,7 +13855,7 @@
 		template: '<transition name="vue-zoom-in-top" @after-leave="doDestroy"><div class="vue-dropdown-menu" v-show="showPopper"><ul class="vue-dropdown-menu__view"><slot></slot></ul></div></transition>',
 		name: 'VueDropdownMenu',
 		componentName: 'VueDropdownMenu',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		created: function() {
 			var self = this;
 			self.$on('updatePopper', self.updatePopper);
@@ -13660,21 +14099,21 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VuePopper', 'VueInput'], definition);
+		define(['Vue', 'VueUtil', 'VuePopper'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper'], context['VueInput']);
+		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper']);
 	}
-})('VuePicker', this, function(Vue, VueUtil, VuePopper, VueInput) {
+})('VuePicker', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
 	var NewPopper = {
 		props: {
-			appendToBody: VuePopper().props.appendToBody,
-			offset: VuePopper().props.offset,
-			boundariesPadding: VuePopper().props.boundariesPadding
+			appendToBody: VuePopper.props.appendToBody,
+			offset: VuePopper.props.offset,
+			boundariesPadding: VuePopper.props.boundariesPadding
 		},
-		methods: VuePopper().methods,
-		data: VuePopper().data,
-		beforeDestroy: VuePopper().beforeDestroy
+		methods: VuePopper.methods,
+		data: VuePopper.data,
+		beforeDestroy: VuePopper.beforeDestroy
 	};
 	var DEFAULT_FORMATS = {
 		date: 'yyyy-MM-dd',
@@ -13799,7 +14238,7 @@
 		right: 'bottom-end'
 	};
 	var VuePicker = {
-		template: '<vue-input class="vue-date-editor" :class="\'vue-date-editor--\' + type" :readonly="readonly" :disabled="disabled" :size="size" v-clickoutside="handleClose" :placeholder="placeholder" @focus="handleFocus" @blur="handleBlur" @keydown.native="handleKeydown" :value="displayValue" @change.native="displayValue = $event.target.value" :validateEvent="false" ref="reference" ><i slot="icon" class="vue-input__icon" @click="handleClickIcon" :class="[showClose ? \'vue-icon-close\' : triggerClass]" @mouseenter="handleMouseEnterIcon" @mouseleave="showClose = false" v-if="haveTrigger"></i></vue-input>',
+		template: '<vue-input class="vue-date-editor" :class="\'vue-date-editor--\' + type" :readonly="readonly" :autofocus="autofocus" :tabindex="tabindex" :disabled="disabled" :size="size" v-clickoutside="handleClose" :placeholder="placeholder" @mousedown.native="handleMouseDown" @blur="handleBlur" @keydown.native="handleKeydown" :value="displayValue" @change.native="displayValue = $event.target.value" :validateEvent="false" ref="reference" ><i slot="icon" class="vue-input__icon" @click="handleClickIcon" :class="[showClose ? \'vue-icon-close\' : triggerClass]" @mouseenter="handleMouseEnterIcon" @mouseleave="showClose = false" v-if="haveTrigger"></i></vue-input>',
 		mixins: [VueUtil.component.emitter, NewPopper],
 		props: {
 			size: String,
@@ -13810,6 +14249,8 @@
 			},
 			placeholder: String,
 			disabled: Boolean,
+			autofocus: Boolean,
+			tabindex: Number,
 			clearable: {
 				type: Boolean,
 				default: true
@@ -13825,9 +14266,6 @@
 				default: ' - '
 			},
 			pickerOptions: {}
-		},
-		components: {
-			VueInput: VueInput()
 		},
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
@@ -13874,7 +14312,7 @@
 			},
 			refInput: function() {
 				if (this.reference)
-					return this.reference.querySelector('input');
+					return this.$refs.reference.$refs.input;
 				return {};
 			},
 			valueIsEmpty: function() {
@@ -13944,11 +14382,24 @@
 			this.placement = PLACEMENT_MAP[this.align] || PLACEMENT_MAP.left;
 		},
 		methods: {
+			focus: function() {
+				this.refInput.focus();
+			},
 			handleMouseEnterIcon: function() {
 				if (this.disabled)
 					return;
 				if (!this.valueIsEmpty && this.clearable) {
 					this.showClose = true;
+				}
+			},
+			handleMouseDown: function(event) {
+				if (event.target.tagName !== 'INPUT')
+					return;
+				if (this.pickerVisible) {
+					this.handleClose();
+					event.preventDefault();
+				} else {
+					this.pickerVisible = true;
 				}
 			},
 			handleClickIcon: function() {
@@ -14058,10 +14509,11 @@
 					self.$emit('input', date);
 					self.pickerVisible = self.picker.visible = visible;
 					self.picker.resetView && self.picker.resetView();
+					self.focus();
 				});
 				self.picker.$on('select-range', function(start, end) {
 					self.refInput.setSelectionRange(start, end);
-					self.refInput.focus();
+					self.focus();
 				});
 			},
 			unmountPicker: function() {
@@ -14071,14 +14523,12 @@
 					if (typeof this.unwatchPickerOptions === 'function') {
 						this.unwatchPickerOptions();
 					}
-					this.picker.$el.parentNode.removeChild(this.picker.$el);
+					VueUtil.removeNode(this.picker.$el);
 				}
 			}
 		}
 	};
-	return function() {
-		return VuePicker;
-	}
+	return VuePicker;
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -14185,7 +14635,7 @@
 		}
 	};
 	var VueTimeSelect = {
-		mixins: [VuePicker()],
+		mixins: [VuePicker],
 		name: 'VueTimeSelect',
 		beforeCreate: function() {
 			this.type = 'time-select';
@@ -14197,9 +14647,9 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePicker', 'VueUtil', 'VueScrollbar'], definition);
+		define(['Vue', 'VuePicker', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VuePicker'], context['VueUtil'], context['VueScrollbar']);
+		context[name] = definition(context['Vue'], context['VuePicker'], context['VueUtil']);
 	}
 })('VueTimePicker', this, function(Vue, VuePicker, VueUtil, VueScrollbar) {
 	'use strict';
@@ -14220,10 +14670,7 @@
 		return { minTime: minTime, maxTime: maxTime };
 	};
 	var TimeSpinner = {
-		template: '<div class="vue-time-spinner" :class="{ \'has-seconds\': showSeconds }"><vue-scrollbar noresize @mouseenter.native="emitSelectRange(\'hours\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="hour"><li @click="handleClick(\'hours\', { value: hour, disabled: disabled }, true)" v-for="(disabled, hour) in hoursList" track-by="hour" class="vue-time-spinner__item" :class="{ \'active\': hour === hours, \'disabled\': disabled }" v-text="hour"></li></vue-scrollbar><vue-scrollbar @mouseenter.native="emitSelectRange(\'minutes\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="minute"><li @click="handleClick(\'minutes\', key, true)" v-for="(minute, key) in 60" class="vue-time-spinner__item" :class="{ \'active\': key === minutes }" v-text="key"></li></vue-scrollbar><vue-scrollbar v-show="showSeconds" @mouseenter.native="emitSelectRange(\'seconds\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="second"><li @click="handleClick(\'seconds\', key, true)" v-for="(second, key) in 60" class="vue-time-spinner__item" :class="{ \'active\': key === seconds }" v-text="key"></li></vue-scrollbar></div>',
-		components: {
-			VueScrollbar: VueScrollbar()
-		},
+		template: '<div class="vue-time-spinner" :class="{ \'has-seconds\': showSeconds }"><vue-scrollbar @mouseenter.native="emitSelectRange(\'hours\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="hour"><li @click="handleClick(\'hours\', { value: hour, disabled: disabled }, true)" v-for="(disabled, hour) in hoursList" track-by="hour" class="vue-time-spinner__item" :class="{ \'active\': hour === hours, \'disabled\': disabled }" v-text="hour"></li></vue-scrollbar><vue-scrollbar @mouseenter.native="emitSelectRange(\'minutes\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="minute"><li @click="handleClick(\'minutes\', key, true)" v-for="(minute, key) in 60" class="vue-time-spinner__item" :class="{ \'active\': key === minutes }" v-text="key"></li></vue-scrollbar><vue-scrollbar v-show="showSeconds" @mouseenter.native="emitSelectRange(\'seconds\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="second"><li @click="handleClick(\'seconds\', key, true)" v-for="(second, key) in 60" class="vue-time-spinner__item" :class="{ \'active\': key === seconds }" v-text="key"></li></vue-scrollbar></div>',
 		props: {
 			hours: {
 				type: Number,
@@ -14582,7 +15029,7 @@
 		}
 	};
 	var VueTimePicker = {
-		mixins: [VuePicker()],
+		mixins: [VuePicker],
 		name: 'VueTimePicker',
 		props: {
 			isRange: Boolean
@@ -14611,21 +15058,16 @@
 		}
 	};
 	Vue.component(VueTimePicker.name, VueTimePicker);
-	return function() {
-		return {
-			VueTimePicker: VueTimePicker,
-			TimePicker: TimePanel
-		}
-	}
+	return TimePanel;
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePicker', 'VueUtil', 'VueTimePicker', 'VueInput'], definition);
+		define(['Vue', 'VuePicker', 'VueUtil', 'VueTimePicker'], definition);
 	} else {
-		context['VueDatePicker'] = definition(context['Vue'], context['VuePicker'], context['VueUtil'], context['VueTimePicker'], context['VueInput']);
+		context['VueDatePicker'] = definition(context['Vue'], context['VuePicker'], context['VueUtil'], context['VueTimePicker']);
 	}
-})('VueDatePicker', this, function(Vue, VuePicker, VueUtil, VueTimePicker, VueInput) {
+})('VueDatePicker', this, function(Vue, VuePicker, VueUtil, VueTimePicker) {
 	'use strict';
 	var DAY_DURATION = 86400000;
 	var WEEKS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -15257,11 +15699,10 @@
 			}
 		},
 		components: {
-			TimePicker: VueTimePicker().TimePicker,
+			TimePicker: VueTimePicker,
 			YearTable: YearTable,
 			MonthTable: MonthTable,
-			DateTable: DateTable,
-			VueInput: VueInput()
+			DateTable: DateTable
 		},
 		mounted: function() {
 			if (this.date && !this.year) {
@@ -15363,9 +15804,8 @@
 	var DateRangePanel = {
 		template: '<transition name="vue-zoom-in-top" @after-leave="$emit(\'dodestroy\')"><div v-show="visible" :style="{ width: width + \'px\' }" class="vue-picker-panel vue-date-range-picker" :class="[{\'has-sidebar\': $slots.sidebar || shortcuts,\'has-time\': showTime}, popperClass]"><div class="vue-picker-panel__body-wrapper"><slot name="sidebar" class="vue-picker-panel__sidebar"></slot><div class="vue-picker-panel__sidebar" v-if="shortcuts"><button type="button" class="vue-picker-panel__shortcut" v-for="shortcut in shortcuts" @click="handleShortcutClick(shortcut)">{{ shortcut.text }}</button></div><div class="vue-picker-panel__body"><div class="vue-date-range-picker__time-header" v-if="showTime"><span class="vue-date-range-picker__editors-wrap"><span class="vue-date-range-picker__time-picker-wrap"><vue-input size="small" :placeholder="$t(\'vue.datepicker.startDate\')" ref="minInput" class="vue-date-range-picker__editor" :value="minVisibleDate" @input.native="handleDateInput($event, \'min\')" @change.native="handleDateChange($event, \'min\')" /></span><span class="vue-date-range-picker__time-picker-wrap"><vue-input size="small" :placeholder="$t(\'vue.datepicker.startTime\')" class="vue-date-range-picker__editor" :value="minVisibleTime" @focus="minTimePickerVisible = !minTimePickerVisible" @change.native="handleTimeChange($event, \'min\')" /><time-picker :picker-width="minPickerWidth" ref="minTimePicker" :date="minDate" @pick="handleMinTimePick" :visible="minTimePickerVisible"></time-picker></span></span><span class="vue-icon-arrow-right"></span><span class="vue-date-range-picker__editors-wrap is-right"><span class="vue-date-range-picker__time-picker-wrap"><vue-input size="small" :placeholder="$t(\'vue.datepicker.endDate\')" class="vue-date-range-picker__editor" :value="maxVisibleDate" :readonly="!minDate" @input.native="handleDateInput($event, \'max\')" @change.native="handleDateChange($event, \'max\')" /></span><span class="vue-date-range-picker__time-picker-wrap"><vue-input size="small" :placeholder="$t(\'vue.datepicker.endTime\')" ref="maxInput" class="vue-date-range-picker__editor" :value="maxVisibleTime" @focus="minDate && (maxTimePickerVisible = !maxTimePickerVisible)" :readonly="!minDate" @change.native="handleTimeChange($event, \'max\')" /><time-picker :picker-width="maxPickerWidth" ref="maxTimePicker" :date="maxDate" @pick="handleMaxTimePick" :visible="maxTimePickerVisible"></time-picker></span></span></div><div class="vue-picker-panel__content vue-date-range-picker__content is-left"><div class="vue-date-range-picker__header"><button type="button" @click="prevYear" class="vue-picker-panel__icon-btn vue-icon-d-arrow-left"></button><button type="button" @click="prevMonth" class="vue-picker-panel__icon-btn vue-icon-arrow-left"></button><div>{{ leftLabel }}</div></div><date-table selection-mode="range" :date="date" :year="leftYear" :month="leftMonth" :min-date="minDate" :max-date="maxDate" :range-state="rangeState" :disabled-date="disabledDate" @changerange="handleChangeRange" :first-day-of-week="firstDayOfWeek" @pick="handleRangePick"></date-table></div><div class="vue-picker-panel__content vue-date-range-picker__content is-right"><div class="vue-date-range-picker__header"><button type="button" @click="nextYear" class="vue-picker-panel__icon-btn vue-icon-d-arrow-right"></button><button type="button" @click="nextMonth" class="vue-picker-panel__icon-btn vue-icon-arrow-right"></button><div>{{ rightLabel }}</div></div><date-table selection-mode="range" :date="rightDate" :year="rightYear" :month="rightMonth" :min-date="minDate" :max-date="maxDate" :range-state="rangeState" :disabled-date="disabledDate" @changerange="handleChangeRange" :first-day-of-week="firstDayOfWeek" @pick="handleRangePick"></date-table></div></div></div><div class="vue-picker-panel__footer" v-if="showTime"><a class="vue-picker-panel__link-btn" @click="handleClear">{{ clearLabel }}</a><button type="button" class="vue-picker-panel__btn" @click="handleConfirm()" :disabled="btnDisabled">{{ confirmLabel }}</button></div></div></transition>',
 		components: {
-			TimePicker: VueTimePicker().TimePicker,
-			DateTable: DateTable,
-			VueInput: VueInput()
+			TimePicker: VueTimePicker,
+			DateTable: DateTable
 		},
 		computed: {
 			btnDisabled: function() {
@@ -15625,10 +16065,10 @@
 				}
 			},
 			prevMonth: function() {
-				this.date = VueUtil.component.prevMonth(this.date);
+				this.date = VueUtil.prevMonth(this.date);
 			},
 			nextMonth: function() {
-				this.date = VueUtil.component.nextMonth(this.date);
+				this.date = VueUtil.nextMonth(this.date);
 			},
 			nextYear: function() {
 				var date = this.date;
@@ -15656,7 +16096,7 @@
 		return DatePanel;
 	};
 	var VueDatePicker = {
-		mixins: [VuePicker()],
+		mixins: [VuePicker],
 		name: 'VueDatePicker',
 		props: {
 			type: {
@@ -15689,16 +16129,13 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VuePopup', 'VueInput', 'VueButton'], definition);
+		define(['Vue', 'VueUtil', 'VuePopup'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopup'], context['VueInput'], context['VueButton']);
+		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopup']);
 		delete context[name];
 	}
-})('VueMessageBox', this, function(Vue, VueUtil, VuePopup, VueInput, VueButton) {
+})('VueMessageBox', this, function(Vue, VueUtil, VuePopup) {
 	'use strict';
-	var isVNode = function(node) {
-		return typeof node === 'object' && Object.prototype.hasOwnProperty.call(node, 'componentOptions');
-	};
 	var typeMap = {
 		success: 'circle-check',
 		info: 'information',
@@ -15706,30 +16143,8 @@
 		error: 'circle-cross'
 	};
 	var VueMessageBox = {
-		template: '<transition name="msgbox-fade"><div class="vue-message-box__wrapper" v-show="visible" @click.self="handleWrapperClick"><div class="vue-message-box" :class="customClass"><div class="vue-message-box__header" v-if="title !== undefined"><div class="vue-message-box__title">{{ title || $t(\'vue.messagebox.title\') }}</div><i class="vue-message-box__close vue-icon-close" @click="handleAction(\'cancel\')" v-if="showClose"></i></div><div class="vue-message-box__content" v-if="message !== \'\'"><div class="vue-message-box__status" :class="[ typeClass ]"></div><div class="vue-message-box__message" :style="{ \'margin-left\': typeClass ? \'50px\' : \'0\' }"><slot><p>{{ message }}</p></slot></div><div class="vue-message-box__input" v-show="showInput"><vue-input v-model="inputValue" @keyup.enter.native="handleAction(\'confirm\')" :placeholder="inputPlaceholder" ref="input"></vue-input><div class="vue-message-box__errormsg" :style="{ visibility: !!editorErrorMessage ? \'visible\' : \'hidden\' }">{{ editorErrorMessage }}</div></div></div><div class="vue-message-box__btns"><vue-button :loading="cancelButtonLoading" :class="[ cancelButtonClasses ]" v-show="showCancelButton" @click.native="handleAction(\'cancel\')"> {{ cancelButtonText || $t(\'vue.messagebox.cancel\') }}</vue-button><vue-button :loading="confirmButtonLoading" ref="confirm" :class="[ confirmButtonClasses ]" v-show="showConfirmButton" @click.native="handleAction(\'confirm\')"> {{ confirmButtonText || $t(\'vue.messagebox.confirm\') }}</vue-button></div></div></div></transition>',
-		mixins: [VuePopup().VuePopup],
-		props: {
-			lockScroll: {
-				type: Boolean,
-				default: true
-			},
-			showClose: {
-				type: Boolean,
-				default: false
-			},
-			closeOnClickModal: {
-				type: Boolean,
-				default: false
-			},
-			closeOnPressEscape: {
-				type: Boolean,
-				default: true
-			}
-		},
-		components: {
-			VueInput: VueInput(),
-			VueButton: VueButton()
-		},
+		template: '<transition name="msgbox-fade" @after-leave="$emit(\'doDestroy\')"><div class="vue-message-box__wrapper" v-if="visible"><div class="vue-message-box" :class="customClass"><div class="vue-message-box__header" v-if="title !== undefined"><div class="vue-message-box__title">{{ title || $t(\'vue.messagebox.title\') }}</div></div><div class="vue-message-box__content" v-if="message !== \'\'"><div class="vue-message-box__status" :class="[ typeClass ]"></div><div class="vue-message-box__message" :style="{ \'margin-left\': typeClass ? \'50px\' : \'0\' }"><slot><p>{{ message }}</p></slot></div></div><div class="vue-message-box__btns"><vue-button :loading="cancelButtonLoading" :class="[ cancelButtonClasses ]" v-if="showCancelButton" @click.native="handleAction(\'cancel\')">{{ cancelButtonText || $t(\'vue.messagebox.cancel\') }}</vue-button><vue-button :loading="confirmButtonLoading" ref="confirm" :class="[ confirmButtonClasses ]" @click.native="handleAction(\'confirm\')">{{ confirmButtonText || $t(\'vue.messagebox.confirm\') }}</vue-button></div></div></div></transition>',
+		mixins: [VuePopup],
 		computed: {
 			typeClass: function() {
 				return this.type && typeMap[this.type] ? 'vue-icon-' + typeMap[this.type] : '';
@@ -15740,6 +16155,13 @@
 			cancelButtonClasses: function() {
 				return this.cancelButtonClass;
 			}
+		},
+		mounted: function(){
+			var self = this;
+			self.$on('doDestroy', function() {
+				VueUtil.removeNode(self.$el);
+				self.$destroy();
+			});
 		},
 		methods: {
 			getSafeClose: function() {
@@ -15755,34 +16177,10 @@
 				var self = this;
 				if (!self.visible) return;
 				self.visible = false;
-				self._closing = true;
-				self.onClose && self.onClose();
-				if (self.lockScroll) {
-					setTimeout(function() {
-						if (self.modal && self.bodyOverflow !== 'hidden') {
-							document.body.style.overflow = self.bodyOverflow;
-							document.body.style.paddingRight = self.bodyPaddingRight;
-						}
-						self.bodyOverflow = null;
-						self.bodyPaddingRight = null;
-					}, 200);
-				}
 				self.opened = false;
-				if (!self.transition) {
-					self.doAfterClose();
-				}
 				if (self.action) self.callback(self.action, self);
 			},
-			handleWrapperClick: function() {
-				if (this.closeOnClickModal) {
-					this.action = '';
-					this.doClose();
-				}
-			},
 			handleAction: function(action) {
-				if (this.$type === 'prompt' && action === 'confirm' && !this.validate()) {
-					return;
-				}
 				this.action = action;
 				if (typeof this.beforeClose === 'function') {
 					this.close = this.getSafeClose();
@@ -15791,74 +16189,15 @@
 					this.doClose();
 				}
 			},
-			validate: function() {
-				if (this.$type === 'prompt') {
-					var inputPattern = this.inputPattern;
-					if (inputPattern && !inputPattern.test(this.inputValue || '')) {
-						this.editorErrorMessage = this.inputErrorMessage || this.$t('vue.messagebox.error');
-						VueUtil.addClass(this.$refs.input.$el.querySelector('input'), 'invalid');
-						return false;
-					}
-					var inputValidator = this.inputValidator;
-					if (typeof inputValidator === 'function') {
-						var validateResult = inputValidator(this.inputValue);
-						if (validateResult === false) {
-							this.editorErrorMessage = this.inputErrorMessage || this.$t('vue.messagebox.error');
-							VueUtil.addClass(this.$refs.input.$el.querySelector('input'), 'invalid');
-							return false;
-						}
-						if (typeof validateResult === 'string') {
-							this.editorErrorMessage = validateResult;
-							return false;
-						}
-					}
-				}
-				this.editorErrorMessage = '';
-				VueUtil.removeClass(this.$refs.input.$el.querySelector('input'), 'invalid');
-				return true;
-			}
 		},
 		watch: {
-			inputValue: {
-				immediate: true,
-				handler: function(val) {
-					var self = this;
-					self.$nextTick(function() {
-						if (self.$type === 'prompt' && val !== null) {
-							self.validate();
-						}
-					});
-				}
-			},
 			visible: function(val) {
 				var self = this;
 				if (val) {
 					self.uid++;
-					self.$el.addEventListener('touchmove', function(event) {
-						event.preventDefault();
-						event.stopPropagation();
-					});
-				} else {
-					self.$el.removeEventListener('touchmove', function(event) {
-						event.preventDefault();
-						event.stopPropagation();
-					});
-				}
-				if (self.$type === 'alert' || self.$type === 'confirm') {
 					self.$nextTick(function() {
 						self.$refs.confirm.$el.focus();
 					});
-				}
-				if (self.$type !== 'prompt') return;
-				if (val) {
-					setTimeout(function() {
-						if (self.$refs.input && self.$refs.input.$el) {
-							self.$refs.input.$el.querySelector('input').focus();
-						}
-					}, 500);
-				} else {
-					self.editorErrorMessage = '';
-					VueUtil.removeClass(self.$refs.input.$el.querySelector('input'), 'invalid');
 				}
 			}
 		},
@@ -15869,13 +16208,6 @@
 				message: '',
 				type: '',
 				customClass: '',
-				showInput: false,
-				inputValue: null,
-				inputPlaceholder: '',
-				inputPattern: null,
-				inputValidator: null,
-				inputErrorMessage: '',
-				showConfirmButton: true,
 				showCancelButton: false,
 				action: '',
 				confirmButtonText: '',
@@ -15883,67 +16215,22 @@
 				confirmButtonLoading: false,
 				cancelButtonLoading: false,
 				confirmButtonClass: '',
-				confirmButtonDisabled: false,
 				cancelButtonClass: '',
-				editorErrorMessage: null,
-				callback: null
+				callback: null,
+				beforeClose: null
 			};
 		}
-	};
-	var defaults = {
-		title: undefined,
-		message: '',
-		type: '',
-		showInput: false,
-		showClose: false,
-		lockScroll: true,
-		closeOnClickModal: false,
-		closeOnPressEscape: true,
-		inputValue: null,
-		inputPlaceholder: '',
-		inputPattern: null,
-		inputValidator: null,
-		inputErrorMessage: '',
-		showConfirmButton: true,
-		showCancelButton: false,
-		confirmButtonPosition: 'right',
-		confirmButtonHighlight: false,
-		cancelButtonHighlight: false,
-		confirmButtonText: '',
-		cancelButtonText: '',
-		confirmButtonClass: '',
-		cancelButtonClass: '',
-		customClass: '',
-		beforeClose: null
 	};
 	var MessageBoxConstructor = Vue.extend(VueMessageBox);
 	var currentMsg, instance;
 	var msgQueue = [];
 	var defaultCallback = function(action) {
 		if (currentMsg) {
-			var callback = currentMsg.callback;
-			if (typeof callback === 'function') {
-				if (instance.showInput) {
-					callback(instance.inputValue, action);
-				} else {
-					callback(action);
-				}
+			if (action === 'confirm') {
+				currentMsg.resolve(action);
 			}
-			if (currentMsg.resolve) {
-				var $type = currentMsg.options.$type;
-				if ($type === 'confirm' || $type === 'prompt') {
-					if (action === 'confirm') {
-						if (instance.showInput) {
-							currentMsg.resolve({ value: instance.inputValue, action: action });
-						} else {
-							currentMsg.resolve(action);
-						}
-					} else if (action === 'cancel' && currentMsg.reject) {
-						currentMsg.reject(action);
-					}
-				} else {
-					currentMsg.resolve(action);
-				}
+			if (action === 'cancel') {
+				currentMsg.reject(action);
 			}
 		}
 	};
@@ -15954,11 +16241,9 @@
 		instance.callback = defaultCallback;
 	};
 	var showNextMsg = function() {
-		if (!instance) {
-			initInstance();
-		}
+		initInstance();
 		instance.action = '';
-		if (!instance.visible || instance.closeTimer) {
+		if (!instance.visible) {
 			if (msgQueue.length > 0) {
 				currentMsg = msgQueue.shift();
 				var options = currentMsg.options;
@@ -15975,114 +16260,57 @@
 					oldCb(action, instance);
 					showNextMsg();
 				};
-				if (isVNode(instance.message)) {
+				if (VueUtil.component.isVNode(instance.message)) {
 					instance.$slots.default = [instance.message];
 					instance.message = null;
 				}
-				['modal', 'showClose', 'closeOnClickModal', 'closeOnPressEscape'].forEach(function(prop) {
-					if (instance[prop] === undefined) {
-						instance[prop] = true;
-					}
-				});
-				document.body.appendChild(instance.$el);
+				try {
+					top.document.body.appendChild(instance.$el);
+				} catch (e) {
+					document.body.appendChild(instance.$el);
+				}
 				Vue.nextTick(function() {
 					instance.visible = true;
 				});
 			}
 		}
 	};
-	var MessageBox = function(options, callback) {
+	var MessageBox = function(options) {
 		if (Vue.prototype.$isServer) return;
-		if (typeof options === 'string') {
-			options = {
-				message: options
-			};
-			if (arguments[1]) {
-				options.title = arguments[1];
-			}
-			if (arguments[2]) {
-				options.type = arguments[2];
-			}
-		} else if (options.callback && !callback) {
+		var callback;
+		if (options.callback) {
 			callback = options.callback;
 		}
-		if (typeof Promise !== 'undefined') {
-			return new Promise(function(resolve, reject) {
-				msgQueue.push({
-					options: VueUtil.merge({}, defaults, MessageBox.defaults, options),
-					callback: callback,
-					resolve: resolve,
-					reject: reject
-				});
-				showNextMsg();
-			});
-		} else {
+		return new Promise(function(resolve, reject) {
 			msgQueue.push({
-				options: VueUtil.merge({}, defaults, MessageBox.defaults, options),
-				callback: callback
+				options: VueUtil.merge({}, options, {closeOnPressEscape: false}),
+				callback: callback,
+				resolve: resolve,
+				reject: reject
 			});
 			showNextMsg();
-		}
+		});
 	};
-	MessageBox.setDefaults = function(defaults) {
-		MessageBox.defaults = defaults;
+	var messageBoxAlert = function(options) {
+		return new MessageBox(VueUtil.merge({}, options, {showCancelButton: false}));
 	};
-	MessageBox.alert = function(message, title, options) {
-		if (typeof title === 'object') {
-			options = title;
-			title = '';
-		}
-		return MessageBox(VueUtil.merge({
-			title: title,
-			message: message,
-			$type: 'alert'
-		}, options));
+	var messageBoxConfirm = function(options) {
+		return new MessageBox(VueUtil.merge({}, options, {showCancelButton: true}));
 	};
-	MessageBox.confirm = function(message, title, options) {
-		if (typeof title === 'object') {
-			options = title;
-			title = '';
-		}
-		return MessageBox(VueUtil.merge({
-			title: title,
-			message: message,
-			$type: 'confirm',
-			closeOnPressEscape: false,
-			showCancelButton: true
-		}, options));
-	};
-	MessageBox.prompt = function(message, title, options) {
-		if (typeof title === 'object') {
-			options = title;
-			title = '';
-		}
-		return MessageBox(VueUtil.merge({
-			title: title,
-			message: message,
-			showCancelButton: true,
-			showInput: true,
-			$type: 'prompt'
-		}, options));
-	};
-	MessageBox.close = function() {
-		instance.visible = false;
-		msgQueue = [];
-		currentMsg = null;
-	};
-	Vue.prototype.$msgbox = MessageBox;
-	Vue.prototype.$alert = MessageBox.alert;
-	Vue.prototype.$confirm = MessageBox.confirm;
-	Vue.prototype.$prompt = MessageBox.prompt;
+	Vue.prototype.$alert = messageBoxAlert;
+	Vue.prototype.$confirm = messageBoxConfirm;
+	Vue.alert = messageBoxAlert;
+	Vue.confirm = messageBoxConfirm;
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VuePopup'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopup']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueNotification', this, function(Vue, VueUtil, VuePopup) {
+})('VueNotification', this, function(Vue, VueUtil) {
 	'use strict';
 	var typeMap = {
 		success: 'circle-check',
@@ -16091,7 +16319,7 @@
 		error: 'circle-cross'
 	};
 	var VueNotification = {
-		template: '<transition :name="isLeft ? \'vue-notification-fade-left\' : isTop ? \'vue-notification-fade-top\' : isBottom ? \'vue-notification-fade-bottom\' : isCenter? \'vue-notification-fade-center\' : \'vue-notification-fade\'"><div class="vue-notification" :class="[{\'vue-notification-translateX\':centerX, \'vue-notification-translateY\':centerY},customClass]" v-show="visible" :style="{ top: top ? top + \'px\' : \'auto\', bottom: bottom ? bottom + \'px\' : \'auto\', left: left ? left + \'px\' : \'auto\', right: right ? right + \'px\' : \'auto\' }" @mouseenter="clearTimer()" @mouseleave="startTimer()"><i class="vue-notification__icon" :class="[ typeClass, iconClass ]" v-if="type || iconClass"></i><div class="vue-notification__group" :class="{ \'is-with-icon\': typeClass || iconClass }"><h2 class="vue-notification__title" v-text="title"></h2><div class="vue-notification__content"><slot>{{ message }}</slot></div><div class="vue-notification__closeBtn vue-icon-close" @click="close"></div></div></div></transition>',
+		template: '<transition :name="isLeft ? \'vue-notification-fade-left\' : isTop ? \'vue-notification-fade-top\' : isBottom ? \'vue-notification-fade-bottom\' : isCenter? \'vue-notification-fade-center\' : \'vue-notification-fade\'"><div class="vue-notification" :class="[{\'vue-notification-translateX\':centerX, \'vue-notification-translateY\':centerY},customClass]" v-show="visible" :style="{ top: top ? top + \'px\' : \'auto\', bottom: bottom ? bottom + \'px\' : \'auto\', left: left ? left + \'px\' : \'auto\', right: right ? right + \'px\' : \'auto\' }"><i class="vue-notification__icon" :class="[ typeClass, iconClass ]" v-if="type || iconClass"></i><div class="vue-notification__group"><h2 class="vue-notification__title" v-text="title" v-if="showTitle"></h2><div class="vue-notification__content" v-if="showMessage" :style="{\'margin-top\':showTitle?\'10px\':\'\'}"><slot>{{ message }}</slot></div><div class="vue-notification__closeBtn vue-icon-close" @click="close" v-if="duration===0"></div></div></div></transition>',
 		data: function() {
 			return {
 				visible: false,
@@ -16109,7 +16337,7 @@
 				right: null,
 				centerX: false,
 				centerY: false,
-				position: 'right-top',
+				position: 'top-right',
 				timer: null,
 				isLeft: false,
 				isTop: false,
@@ -16118,41 +16346,27 @@
 			};
 		},
 		computed: {
-			typeClass: function() {
-				return this.type && typeMap[this.type] ? 'vue-icon-' + typeMap[this.type] : '';
-			}
-		},
-		watch: {
-			closed: function(newVal) {
-				if (newVal) {
-					this.visible = false;
-					this.$el.addEventListener('transitionend', this.destroyElement);
+			showTitle: function() {
+				if (VueUtil.trim(this.title) === "") {
+					return false;
 				}
+				return true;
+			},
+			showMessage: function() {
+				if (VueUtil.trim(this.message) === "" && !this.$slots.default) {
+					return false;
+				}
+				return true;
+			},
+			typeClass: function() {
+				return this.type && typeMap[this.type.toLowerCase()] ? 'vue-icon-' + typeMap[this.type.toLowerCase()] : '';
 			}
 		},
 		methods: {
-			destroyElement: function() {
-				this.$el.removeEventListener('transitionend', this.destroyElement);
-				this.$destroy(true);
-				this.$el.parentNode.removeChild(this.$el);
-			},
 			close: function() {
 				this.closed = true;
 				if (typeof this.onClose === 'function') {
 					this.onClose();
-				}
-			},
-			clearTimer: function() {
-				clearTimeout(this.timer);
-			},
-			startTimer: function() {
-				var self = this;
-				if (self.duration > 0) {
-					self.timer = setTimeout(function() {
-						if (!self.closed) {
-							self.close();
-						}
-					}, self.duration);
 				}
 			}
 		},
@@ -16167,11 +16381,7 @@
 			}
 		}
 	};
-	var isVNode = function(node) {
-		return typeof node === 'object' && Object.prototype.hasOwnProperty.call(node, 'componentOptions');
-	};
 	var NotificationConstructor = Vue.extend(VueNotification);
-	var instance;
 	var instances = [];
 	var leftTopInstances = [];
 	var leftBottomInstances = [];
@@ -16189,31 +16399,32 @@
 		options.onClose = function() {
 			Notification.close(id, userOnClose);
 		};
-		instance = new NotificationConstructor({
+		var instance = new NotificationConstructor({
 			data: options
 		});
-		if (isVNode(options.message)) {
+		if (VueUtil.component.isVNode(options.message)) {
 			instance.$slots.default = [options.message];
 			options.message = '';
 		}
 		instance.id = id;
 		instance.vm = instance.$mount();
-		document.body.appendChild(instance.vm.$el);
 		instance.vm.visible = true;
 		instance.dom = instance.vm.$el;
-		instance.dom.style.zIndex = VuePopup().PopupManager.nextZIndex();
-		var positionX = instance.position.split("-")[0];
-		var positionY = instance.position.split("-")[1];
-		if (!positionX || !positionY) {
-			positionX = 'right';
-			positionY = 'top'
-		}
+		instance.dom.style.zIndex = VueUtil.component.popupManager.nextZIndex();
+		var instancePosition = instance.position.split("-");
+		var positionX = instancePosition[1];
+		var positionY = instancePosition[0];
 		var isLeft = positionX.indexOf('left')!==-1;
 		var isCenterX = positionX.indexOf('center')!==-1;
 		var isRight = positionX.indexOf('right')!==-1;
 		var isTop = positionY.indexOf('top')!==-1;
 		var isCenterY = positionY.indexOf('center')!==-1;
 		var isBottom = positionY.indexOf('bottom')!==-1;
+		if ((!isLeft && !isCenterX && !isRight) || (!isTop && !isCenterY && !isBottom)) {
+			VueUtil.removeNode(instance.dom);
+			instance.$destroy();
+			return;
+		}
 		instance.isLeft = false;
 		instance.isBottom = false;
 		instance.top = false;
@@ -16222,7 +16433,7 @@
 			instance.centerY = true;
 		}
 		if (isLeft) {
-			instance.left = 0;
+			instance.left = 8;
 			instance.isLeft = true;
 		}
 		if (isCenterX) {
@@ -16230,7 +16441,7 @@
 			instance.isCenter = true;
 		}
 		if (isRight) {
-			instance.right = 16;
+			instance.right = 8;
 		}
 		if (isBottom) {
 			if (isLeft) {
@@ -16288,28 +16499,29 @@
 		}
 		instance.dom.style.display = "";
 		instances.push(instance);
-		return instance.vm;
+		try {
+			top.document.body.appendChild(instance.vm.$el);
+		} catch (e) {
+			document.body.appendChild(instance.vm.$el);
+		}
 	};
 	['success', 'warning', 'info', 'error'].forEach(function(type) {
 		Notification[type] = function(options) {
-			if (typeof options === 'string' || isVNode(options)) {
-				options = {
-					message: options
-				};
-			}
 			options.type = type;
-			return Notification(options);
+			Notification(options);
 		};
 	});
 	Notification.close = function(id, userOnClose) {
 		for (var i = 0, len = instances.length; i < len; i++) {
-			if (id === instances[i].id) {
+			var instance = instances[i];
+			if (id === instance.id) {
 				if (typeof userOnClose === 'function') {
-					userOnClose(instances[i]);
+					userOnClose(instance);
 				}
-				var removedHeight = instances[i].dom.offsetHeight + offHeight;
-				var positionX = instances[i].position.split("-")[0]||"right";
-				var positionY = instances[i].position.split("-")[1]||"top";
+				var removedHeight = instance.dom.offsetHeight + offHeight;
+				var instancesPosition = instance.position.split("-");
+				var positionX = instancesPosition[1];
+				var positionY = instancesPosition[0];
 				var isLeft = positionX.indexOf('left')!==-1;
 				var isCenterX = positionX.indexOf('center')!==-1;
 				var isRight = positionX.indexOf('right')!==-1;
@@ -16317,62 +16529,70 @@
 				var isBottom = positionY.indexOf('bottom')!==-1;
 				if (isBottom) {
 					if (isLeft) {
-						leftBottomInstances.splice(i, 1);
-						for (var lbi = i, lbj = leftBottomInstances.length; lbi < lbj ; lbi++) {
+						var lbi = leftBottomInstances.indexOf(instance);
+						leftBottomInstances.splice(lbi, 1);
+						for (var lbj = leftBottomInstances.length; lbi < lbj ; lbi++) {
 							leftBottomInstances[lbi].dom.style.bottom = parseInt(leftBottomInstances[lbi].dom.style.bottom, 10) - removedHeight + 'px';
 						}
 					}
 					if (isCenterX) {
-						centerBottomInstances.splice(i, 1);
-						for (var cbi = i, cbj = centerBottomInstances.length; cbi < cbj ; cbi++) {
+						var cbi = centerBottomInstances.indexOf(instance);
+						centerBottomInstances.splice(cbi, 1);
+						for (var cbj = centerBottomInstances.length; cbi < cbj ; cbi++) {
 							centerBottomInstances[cbi].dom.style.bottom = parseInt(centerBottomInstances[cbi].dom.style.bottom, 10) - removedHeight + 'px';
 						}
 					}
 					if (isRight) {
-						rightBottomInstances.splice(i, 1);
-						for (var rbi = i, rbj = rightBottomInstances.length; rbi < rbj ; rbi++) {
+						var rbi = rightBottomInstances.indexOf(instance);
+						rightBottomInstances.splice(rbi, 1);
+						for (var rbj = rightBottomInstances.length; rbi < rbj ; rbi++) {
 							rightBottomInstances[rbi].dom.style.bottom = parseInt(rightBottomInstances[rbi].dom.style.bottom, 10) - removedHeight + 'px';
 						}
 					}
 				}
 				if (isTop) {
 					if (isLeft) {
-						leftTopInstances.splice(i, 1);
-						for (var lti = i, ltj = leftTopInstances.length; lti < ltj ; lti++) {
+						var lti = leftTopInstances.indexOf(instance);
+						leftTopInstances.splice(lti, 1);
+						for (var ltj = leftTopInstances.length; lti < ltj ; lti++) {
 							leftTopInstances[lti].dom.style.top = parseInt(leftTopInstances[lti].dom.style.top, 10) - removedHeight + 'px';
 						}
 					}
 					if (isCenterX) {
-						centerTopInstances.splice(i, 1);
-						for (var cti = i, ctj = centerTopInstances.length; cti < ctj ; cti++) {
+						var cti = centerTopInstances.indexOf(instance);
+						centerTopInstances.splice(cti, 1);
+						for (var ctj = centerTopInstances.length; cti < ctj ; cti++) {
 							centerTopInstances[cti].dom.style.top = parseInt(centerTopInstances[cti].dom.style.top, 10) - removedHeight + 'px';
 						}
 					
 					}
 					if (isRight) {
-						rightTopInstances.splice(i, 1);
-						for (var rti = i, rtj = rightTopInstances.length; rti < rtj ; rti++) {
+						var rti = rightTopInstances.indexOf(instance);
+						rightTopInstances.splice(rti, 1);
+						for (var rtj = rightTopInstances.length; rti < rtj ; rti++) {
 							rightTopInstances[rti].dom.style.top = parseInt(rightTopInstances[rti].dom.style.top, 10) - removedHeight + 'px';
 						}
 					}
 				}
-				instances[i].dom.parentElement.removeChild(instances[i].dom);
+				VueUtil.removeNode(instance.dom);
+				instance.$destroy();
 				instances.splice(i, 1);
 				break;
 			}
 		}
 	};
 	Vue.prototype.$notify = Notification;
+	Vue.notify = Notification;
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueSelect', 'VueOption'], definition);
+		define(['Vue'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueSelect'], context['VueOption']);
+		context[name] = definition(context['Vue']);
 		delete context[name];
 	}
-})('VuePagination', this, function(Vue, VueSelect, VueOption) {
+})('VuePagination', this, function(Vue) {
 	'use strict';
 	var VuePager = {
 		template: '<ul @click="onPagerClick" class="vue-pager"><li :class="{ active: currentPage === 1 }" v-if="pageCount > 0" class="number">1</li><li class="vue-icon more btn-quickprev" :class="[quickprevIconClass]" v-if="showPrevMore" @mouseenter="quickprevIconClass = \'vue-icon-d-arrow-left\'" @mouseleave="quickprevIconClass = \'vue-icon-more\'"></li><li v-for="pager in pagers" :class="{ active: currentPage === pager }" class="number">{{ pager }}</li><li class="vue-icon more btn-quicknext" :class="[quicknextIconClass]" v-if="showNextMore" @mouseenter="quicknextIconClass = \'vue-icon-d-arrow-right\'" @mouseleave="quicknextIconClass = \'vue-icon-more\'"></li><li :class="{ active: currentPage === pageCount }" class="number" v-if="pageCount > 1">{{ pageCount }}</li></ul>',
@@ -16568,10 +16788,6 @@
 					var self = this;
 					return createElement('span', {class: 'vue-pagination__sizes'}, [createElement('vue-select', {attrs: {value: this.$parent.internalPageSize}, on: {input: this.handleChange}}, [this.pageSizes.map(function (item) {return createElement('vue-option', {attrs: {value: item, label: item + ' ' + self.$t('vue.pagination.pagesize')}}, [])})])]);
 				},
-				components: {
-					VueSelect: VueSelect(),
-					VueOption: VueOption()
-				},
 				methods: {
 					handleChange: function(val) {
 						if (val !== this.$parent.internalPageSize) {
@@ -16591,13 +16807,13 @@
 					handleFocus: function(event) {
 						this.oldValue = event.target.value;
 					},
-					handleChange: function(target) {
-						this.$parent.internalCurrentPage = this.$parent.getValidCurrentPage(target.value);
+					handleChange: function(event) {
+						this.$parent.internalCurrentPage = this.$parent.getValidCurrentPage(event.target.value);
 						this.oldValue = null;
 					}
 				},
 				render: function(createElement) {
-					return createElement('span', {class: 'vue-pagination__jump'}, [this.$t('vue.pagination.goto'), createElement('input', {class: 'vue-pagination__editor', attrs: {type: 'number', min: 1, max: this.internalPageCount, number: !0}, domProps: {value: this.$parent.internalCurrentPage}, on: {change: this.handleChange, focus: this.handleFocus}, style: {width: '30px'}}, []), this.$t('vue.pagination.pageClassifier')]);
+					return createElement('span', {class: 'vue-pagination__jump'}, [this.$t('vue.pagination.goto'), createElement('input', {class: 'vue-pagination__editor', attrs: {type: 'number', min: 1, max: this.$parent.internalPageCount, number: !0}, domProps: {value: this.$parent.internalCurrentPage}, on: {change: this.handleChange, focus: this.handleFocus}, style: {width: '30px'}}, []), this.$t('vue.pagination.pageClassifier')]);
 				}
 			},
 			Total: {
@@ -16700,6 +16916,7 @@
 		define(['Vue'], definition);
 	} else {
 		context[name] = definition(context['Vue']);
+		delete context[name];
 	}
 })('VueProgress', this, function(Vue) {
 	'use strict';
@@ -16715,7 +16932,6 @@
 			percentage: {
 				type: Number,
 				default: 0,
-				required: true,
 				validator: function(val) {return val >= 0 && val <= 100;}
 			},
 			status: {
@@ -16790,30 +17006,29 @@
 		}
 	};
 	Vue.component(VueProgress.name, VueProgress);
-	return function() {
-		return VueProgress;
-	}
 });
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueTooltip'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueTooltip']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
 })('VueSlider', this, function(Vue, VueUtil, VueTooltip) {
 	'use strict';
+	var mouseEvents = VueUtil.component.mouseEvents;
 	var VueSliderButton = {
-		template: '<div class="vue-slider__button-wrapper" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @mousedown="onButtonDown" :class="{ \'hover\': hovering, \'dragging\': dragging }" :style="{ left: currentPosition }" ref="button"><vue-tooltip placement="top" ref="tooltip" :disabled="!showTooltip"><span slot="content">{{ formatValue }}</span><div class="vue-slider__button" :class="{ \'hover\': hovering, \'dragging\': dragging }"></div></vue-tooltip></div>',
+		template: '<div class="vue-slider__button-wrapper" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @mousedown="onButtonDown" @touchstart="onButtonDown" :class="{ \'hover\': hovering, \'dragging\': dragging }" :style="wrapperStyle" ref="button"><vue-tooltip placement="top" ref="tooltip" :disabled="!showTooltip"><span slot="content">{{ formatValue }}</span><div class="vue-slider__button" :class="{ \'hover\': hovering, \'dragging\': dragging }"></div></vue-tooltip></div>',
 		name: 'VueSliderButton',
-		components: {
-			VueTooltip: VueTooltip()
-		},
 		props: {
 			value: {
 				type: Number,
 				default: 0
+			},
+			vertical: {
+				type: Boolean,
+				default: false
 			}
 		},
 		data: function() {
@@ -16822,6 +17037,8 @@
 				dragging: false,
 				startX: 0,
 				currentX: 0,
+				startY: 0,
+				currentY: 0,
 				startPosition: 0,
 				newPosition: null,
 				oldValue: this.value
@@ -16854,6 +17071,9 @@
 			},
 			formatValue: function() {
 				return this.enableFormat && this.$parent.formatTooltip(this.value) || this.value;
+			},
+			wrapperStyle: function() {
+				return this.vertical ? { bottom: this.currentPosition } : { left: this.currentPosition };
 			}
 		},
 		watch: {
@@ -16879,21 +17099,37 @@
 			onButtonDown: function(event) {
 				if (this.disabled) return;
 				event.preventDefault();
+				this.displayTooltip();
 				this.onDragStart(event);
-				window.addEventListener('mousemove', this.onDragging);
-				window.addEventListener('mouseup', this.onDragEnd);
+				window.addEventListener(mouseEvents.move, this.onDragging);
+				window.addEventListener(mouseEvents.up, this.onDragEnd);
 				window.addEventListener('contextmenu', this.onDragEnd);
 			},
 			onDragStart: function(event) {
 				this.dragging = true;
-				this.startX = event.clientX;
+				if (this.vertical) {
+					this.startY = event.clientY || event.touches[0].clientY;
+				} else {
+					this.startX = event.clientX || event.touches[0].clientX;
+				}
 				this.startPosition = parseFloat(this.currentPosition);
 			},
 			onDragging: function(event) {
 				if (this.dragging) {
 					this.displayTooltip();
-					this.currentX = event.clientX;
-					var diff = (this.currentX - this.startX) / this.$parent.$sliderWidth * 100;
+					var diff = 0;
+					var sliderSize = 1;
+					var parentObj = this.$parent;
+					if (parentObj.$refs.slider) {
+						sliderSize = parentObj.$refs.slider['client' + (parentObj.vertical ? 'Height' : 'Width')];
+					}
+					if (this.vertical) {
+						this.currentY = event.clientY || event.touches[0].clientY;
+						diff = (this.startY - this.currentY) / sliderSize * 100;
+					} else {
+						this.currentX = event.clientX || event.touches[0].clientX;
+						diff = (this.currentX - this.startX) / sliderSize * 100;
+					}
 					this.newPosition = this.startPosition + diff;
 					this.setPosition(this.newPosition);
 				}
@@ -16906,12 +17142,13 @@
 						self.hideTooltip();
 						self.setPosition(self.newPosition);
 					}, 0);
-					window.removeEventListener('mousemove', self.onDragging);
-					window.removeEventListener('mouseup', self.onDragEnd);
+					window.removeEventListener(mouseEvents.move, self.onDragging);
+					window.removeEventListener(mouseEvents.up, self.onDragEnd);
 					window.removeEventListener('contextmenu', self.onDragEnd);
 				}
 			},
 			setPosition: function(newPosition) {
+				if (newPosition === null) return;
 				if (newPosition < 0) {
 					newPosition = 0;
 				} else if (newPosition > 100) {
@@ -16930,7 +17167,7 @@
 		}
 	};
 	var VueSlider = {
-		template: '<div class="vue-slider"><div class="vue-slider__runway" :class="{ \'disabled\': disabled }" @click="onSliderClick" ref="slider"><div class="vue-slider__bar" :style="{ width: barWidth, left: barLeft}"></div><slider-button v-model="firstValue" ref="button1"></slider-button><slider-button v-model="secondValue" ref="button2" v-if="range"></slider-button><div class="vue-slider__stop" v-for="item in stops" :style="{ \'left\': item + \'%\' }" v-if="showStops"></div></div></div>',
+		template: '<div class="vue-slider" :class="{ \'is-vertical\': vertical}"><div class="vue-slider__runway" :class="{ \'disabled\': disabled }" :style="runwayStyle" @click="onSliderClick" ref="slider"><div class="vue-slider__bar" :style="barStyle"></div><slider-button :vertical="vertical" v-model="firstValue" ref="button1"></slider-button><slider-button :vertical="vertical" v-model="secondValue" ref="button2" v-if="range"></slider-button><div class="vue-slider__stop" v-for="item in stops" :style="vertical ? { \'bottom\': item + \'%\' } : { \'left\': item + \'%\' }" v-if="showStops"></div></div></div>',
 		name: 'VueSlider',
 		mixins: [VueUtil.component.emitter],
 		props: {
@@ -16966,6 +17203,14 @@
 			range: {
 				type: Boolean,
 				default: false
+			},
+			vertical: {
+				type: Boolean,
+				default: false
+			},
+			height: {
+				type: Number,
+				default: 200
 			}
 		},
 		components: {
@@ -17039,7 +17284,7 @@
 						this.secondValue = val[1];
 						if (this.valueChanged()) {
 							this.$emit('change', [this.minValue, this.maxValue]);
-							this.dispatch('ElFormItem', 'el.form.change', [this.minValue, this.maxValue]);
+							this.dispatch('VueFormItem', 'vue.form.change', [this.minValue, this.maxValue]);
 							this.oldValue = val.slice();
 						}
 					}
@@ -17052,7 +17297,7 @@
 						this.firstValue = val;
 						if (this.valueChanged()) {
 							this.$emit('change', val);
-							this.dispatch('ElFormItem', 'el.form.change', val);
+							this.dispatch('VueFormItem', 'vue.form.change', val);
 							this.oldValue = val;
 						}
 					}
@@ -17074,14 +17319,20 @@
 			},
 			onSliderClick: function(event) {
 				if (this.disabled || this.dragging) return;
-				var sliderOffsetLeft = this.$refs.slider.getBoundingClientRect().left;
-				this.setPosition((event.clientX - sliderOffsetLeft) / this.$sliderWidth * 100);
+				var sliderSize = 1;
+				if (this.$refs.slider) {
+					sliderSize = this.$refs.slider['client' + (this.vertical ? 'Height' : 'Width')];
+				}
+				if (this.vertical) {
+					var sliderOffsetBottom = this.$refs.slider.getBoundingClientRect().bottom;
+					this.setPosition((sliderOffsetBottom - (event.clientY || event.touches[0].clientY)) / sliderSize * 100);
+				} else {
+					var sliderOffsetLeft = this.$refs.slider.getBoundingClientRect().left;
+					this.setPosition(((event.clientX || event.touches[0].clientX) - sliderOffsetLeft) / sliderSize * 100);
+				}
 			}
 		},
 		computed: {
-			$sliderWidth: function() {
-				return parseInt(VueUtil.getStyle(this.$refs.slider, 'width'), 10);
-			},
 			stops: function() {
 				var self = this;
 				var stopCount = (self.max - self.min) / self.step;
@@ -17105,10 +17356,10 @@
 			maxValue: function() {
 				return Math.max(this.firstValue, this.secondValue);
 			},
-			barWidth: function() {
+			barSize: function() {
 				return this.range ? 100 * (this.maxValue - this.minValue) / (this.max - this.min) + '%' : 100 * (this.firstValue - this.min) / (this.max - this.min) + '%'
 			},
-			barLeft: function() {
+			barStart: function() {
 				return this.range ? 100 * (this.minValue - this.min) / (this.max - this.min) + '%' : '0%'
 			},
 			precision: function() {
@@ -17117,6 +17368,12 @@
 					return decimal ? decimal.length : 0;
 				});
 				return Math.max.apply(null, precisions);
+			},
+			runwayStyle: function() {
+				return this.vertical ? { height: this.height + 'px' } : {};
+			},
+			barStyle: function() {
+				return this.vertical ? {height: this.barSize, bottom: this.barStart} : {width: this.barSize, left: this.barStart};
 			}
 		},
 		mounted: function() {
@@ -17227,7 +17484,7 @@
 				texts: {
 					type: Array,
 					default: function() {
-						return ['极差', '失望', '一般', '满意', '惊喜'];
+						return [];
 					}
 				},
 				textTemplate: {
@@ -17293,6 +17550,28 @@
 				value: function(val) {
 					this.$emit('change', val);
 					this.currentValue = val;
+				},
+				colors: function(val) {
+					this.colorMap.lowColor = val[0];
+					this.colorMap.mediumColor = val[1];
+					this.colorMap.highColor = val[2];
+				},
+				voidColor: function(val) {
+					this.colorMap.voidColor = val;
+				},
+				disabledVoidColor: function(val) {
+					this.colorMap.disabledVoidColor = val;
+				},
+				iconClasses: function(val) {
+					this.classMap.lowClass = val[0];
+					this.classMap.mediumClass = val[1];
+					this.classMap.highClass = val[2];
+				},
+				voidClass: function(val) {
+					this.classMap.voidClass = val;
+				},
+				disabledVoidClass: function(val) {
+					this.classMap.disabledVoidClass = val;
 				}
 			},
 			methods: {
@@ -17383,12 +17662,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueProgress', 'VueResource'], definition);
+		define(['Vue', 'VueUtil', 'VueResource'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueProgress']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueUpload', this, function(Vue, VueProgress) {
+})('VueUpload', this, function(Vue, VueUtil) {
 	'use strict';
 	var ajax = function(option) {
 		if (typeof this.$http === 'undefined') {
@@ -17407,7 +17686,7 @@
 		}
 		var formData = new FormData();
 		if (option.data) {
-			Object.keys(option.data).map(function(key) {
+			Object.keys(option.data).forEach(function(key) {
 				formData.append(key, option.data[key]);
 			});
 		}
@@ -17419,23 +17698,32 @@
 		});
 	}
 	var UploadDragger = {
-		template: '<div class="vue-upload-dragger" :class="{ \'is-dragover\': dragover }" @drop.prevent="onDrop" @dragover.prevent="dragover = true" @dragleave.prevent="dragover = false"><slot></slot></div>', 
+		template: '<div class="vue-upload-dragger" :class="{ \'is-dragover\': dragover }" @drop.prevent="onDrop" @dragover.prevent="onDragover" @dragleave.prevent="dragover = false"><slot></slot></div>', 
 		name: 'VueUploadDrag',
+		props: {
+			disabled: Boolean
+		},
 		data: function() {
 			return {
 				dragover: false
 			};
 		},
 		methods: {
+			onDragover: function() {
+				if (!this.disabled) {
+					this.dragover = true;
+				}
+			},
 			onDrop: function(e) {
-				this.dragover = false;
-				this.$emit('file', e.dataTransfer.files);
+				if (!this.disabled) {
+					this.dragover = false;
+					this.$emit('file', e.dataTransfer.files);
+				}
 			}
 		}
 	};
 	var UploadList = {
-		template: '<transition-group tag="ul" :class="[\'vue-upload-list\', \'vue-upload-list--\' + listType]" name="list"><li v-for="file in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file"><img class="vue-upload-list__item-thumbnail" v-if="[\'picture-card\', \'picture\'].indexOf(listType) > -1 && file.status === \'success\'" :src="file.url" alt=""><a class="vue-upload-list__item-name" @click="handleClick(file)"><i class="vue-icon-document"></i>{{file.name}}</a><label v-show="file.status === \'success\'" class="vue-upload-list__item-status-label"><i :class="{ \'vue-icon-circle-check\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) > -1}"></i><i class="vue-icon-close" @click="$emit(\'remove\', file)"></i></label><span class="vue-upload-list__item-actions" v-if=" listType === \'picture-card\' && file.status === \'success\' "><span v-if=" handlePreview && listType === \'picture-card\' " @click="handlePreview(file)" class="vue-upload-list__item-preview"><i class="vue-icon-view"></i></span><span class="vue-upload-list__item-delete" @click="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span></span><vue-progress v-if="file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" :stroke-width="listType === \'picture-card\' ? 6 : 2" :percentage="parsePercentage(file.percentage)"></vue-progress></li></transition-group>',
-		components: { VueProgress: VueProgress() },
+		template: '<transition-group tag="ul" :class="[\'vue-upload-list\', \'vue-upload-list--\' + listType, { \'is-disabled\': disabled }]" name="vue-list"><li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="index"><img class="vue-upload-list__item-thumbnail" v-if="file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) > -1" :src="file.url" alt=""><a class="vue-upload-list__item-name" @click="handleClick(file)"><i class="vue-icon-document"></i>{{file.name}}</a><label class="vue-upload-list__item-status-label"><i :class="{\'vue-icon-upload-success\': true, \'vue-icon-circle-check\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) > -1}"></i></label><i class="vue-icon-close" v-if="!disabled" @click="$emit(\'remove\', file)"></i><vue-progress v-if="file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" :stroke-width="listType === \'picture-card\' ? 6 : 2" :percentage="parsePercentage(file.percentage)"></vue-progress><span class="vue-upload-list__item-actions" v-if="listType === \'picture-card\'"><span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click="handlePreview(file)"><i class="vue-icon-view"></i></span><span v-if="!disabled" class="vue-upload-list__item-delete" @click="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span></span></li></transition-group>',
 		props: {
 			files: {
 				type: Array,
@@ -17443,6 +17731,7 @@
 					return [];
 				}
 			},
+			disabled: Boolean,
 			handlePreview: Function,
 			listType: String
 		},
@@ -17456,6 +17745,7 @@
 		}
 	};
 	var Upload = {
+		inject: ['uploader'],
 		components: {
 			UploadDragger: UploadDragger
 		},
@@ -17494,11 +17784,13 @@
 			httpRequest: {
 				type: Function,
 				default: ajax
-			}
+			},
+			disabled: Boolean
 		},
 		data: function() {
 			return {
-				mouseover: false
+				mouseover: false,
+				reqs: {}
 			};
 		},
 		methods: {
@@ -17509,13 +17801,14 @@
 				var files = ev.target.files;
 				if (!files) return;
 				this.uploadFiles(files);
-				this.$refs.input.value = null;
 			},
 			uploadFiles: function(files) {
 				var self = this;
 				var postFiles = Array.prototype.slice.call(files);
-				if (!self.multiple) { postFiles = postFiles.slice(0, 1); }
-				if (postFiles.length === 0) { return; }
+				if (!self.multiple) {
+					postFiles = postFiles.slice(0, 1);
+				}
+				if (postFiles.length === 0) return;
 				postFiles.forEach(function(rawFile) {
 					self.onStart(rawFile);
 					if (self.autoUpload) self.upload(rawFile);
@@ -17523,6 +17816,7 @@
 			},
 			upload: function(rawFile) {
 				var self = this;
+				self.$refs.input.value = null;
 				if (!self.beforeUpload) {
 					return self.post(rawFile);
 				}
@@ -17543,8 +17837,24 @@
 					self.onRemove(rawFile, true);
 				}
 			},
+			abort: function(rawFile) {
+				var reqs = this.reqs;
+				if (rawFile) {
+					var uid = rawFile;
+					if (rawFile.uid) uid = rawFile.uid;
+					if (reqs[uid]) {
+						reqs[uid].abort();
+					}
+				} else {
+					Object.keys(reqs).forEach(function (uid) {
+						if (reqs[uid]) reqs[uid].abort();
+						delete reqs[uid];
+					});
+				}
+			},
 			post: function(rawFile) {
 				var self = this;
+				var uid = rawFile.uid;
 				var options = {
 					headers: self.headers,
 					withCredentials: self.withCredentials,
@@ -17552,43 +17862,51 @@
 					data: self.data,
 					filename: self.name,
 					action: self.action,
-					onProgress: function(e) {
+					onProgress: function onProgress(e) {
 						self.onProgress(e, rawFile);
 					},
-					onSuccess: function(res) {
+					onSuccess: function onSuccess(res) {
 						self.onSuccess(res, rawFile);
+						delete self.reqs[uid];
 					},
-					onError: function(err) {
+					onError: function onError(err) {
 						self.onError(err, rawFile);
+						delete self.reqs[uid];
 					}
 				};
-				var requestPromise = self.httpRequest(options);
-				if (requestPromise && requestPromise.then) {
-					requestPromise.then(options.onSuccess, options.onError);
+				var req = self.httpRequest(options);
+				self.reqs[uid] = req;
+				if (req && req.then) {
+					req.then(options.onSuccess, options.onError);
 				}
 			},
 			handleClick: function() {
-				this.$refs.input.click();
+				if (!this.disabled) {
+					this.$refs.input.value = null;
+					this.$refs.input.click();
+				}
 			}
 		},
 		render: function(createElement) {
-			var handleClick = this.handleClick,
-				drag = this.drag,
-				handleChange = this.handleChange,
-				multiple = this.multiple,
-				accept = this.accept,
-				listType = this.listType,
-				uploadFiles = this.uploadFiles;
+			var handleClick = this.handleClick;
+			var drag = this.drag;
+			var handleChange = this.handleChange;
+			var multiple = this.multiple;
+			var accept = this.accept;
+			var listType = this.listType;
+			var uploadFiles = this.uploadFiles;
+			var disabled = this.disabled;
 			var data = {
 				class: {
-					'vue-upload': true
+					'vue-upload': true,
+					'is-disabled': disabled
 				},
 				on: {
 					click: handleClick
 				}
 			};
 			data.class['vue-upload--' + listType] = true;
-			return createElement('div', data, [drag ? createElement('upload-dragger', {on: {file: uploadFiles}}, [this.$slots.default]) : this.$slots.default, createElement('input', {class: 'vue-upload__input',attrs: {type: 'file', multiple: multiple, accept: accept}, ref: 'input', on: {change: handleChange}}, [])]);
+			return createElement('div', data, [drag ? createElement('upload-dragger', {attrs: { disabled: disabled }, on: {'file': uploadFiles}}, [this.$slots.default]) : this.$slots.default, createElement('input', {class: 'vue-upload__input',attrs: {type: 'file', name: name, multiple: multiple, accept: accept}, ref: 'input', on: {'change': handleChange}}, [])]);
 		}
 	};
 	var IframeUpload = {
@@ -17622,14 +17940,15 @@
 				default: function() {}
 			},
 			drag: Boolean,
-			listType: String
+			listType: String,
+			disabled: Boolean
 		},
 		data: function() {
 			return {
 				mouseover: false,
 				domain: '',
 				file: null,
-				disabled: false
+				submitting: false
 			};
 		},
 		methods: {
@@ -17637,7 +17956,9 @@
 				return str.indexOf('image') !== -1;
 			},
 			handleClick: function() {
-				this.$refs.input.click();
+				if (!this.disabled) {
+					this.$refs.input.click();
+				}
 			},
 			handleChange: function(ev) {
 				var file = ev.target.value;
@@ -17646,8 +17967,8 @@
 				}
 			},
 			uploadFiles: function(file) {
-				if (this.disabled) return;
-				this.disabled = true;
+				if (this.submitting) return;
+				this.submitting = true;
 				this.file = file;
 				this.onStart(file);
 				var formNode = this.getFormNode();
@@ -17688,23 +18009,24 @@
 				} else if (response.result === 'failed') {
 					self.onError(response, self.file);
 				}
-				self.disabled = false;
+				self.submitting = false;
 				self.file = null;
 			}, false);
 		},
 		render: function(createElement) {
-			var drag = this.drag,
-				uploadFiles = this.uploadFiles,
-				listType = this.listType,
-				frameName = this.frameName;
-			var oClass = { 'vue-upload': true };
+			var drag = this.drag;
+			var uploadFiles = this.uploadFiles;
+			var listType = this.listType;
+			var frameName = this.frameName;
+			var disabled = this.disabled;
+			var oClass = {'vue-upload': true};
 			oClass['vue-upload--' + listType] = true;
-			return createElement('div', {class: oClass, on: {click: this.handleClick}, nativeOn: {drop: this.onDrop, dragover: this.handleDragover, dragleave: this.handleDragleave}}, [createElement('iframe', {on: {load: this.onload}, ref: 'iframe', attrs: {name: frameName}}, []), createElement('form', {ref: 'form', attrs: {action: this.action, target: frameName, enctype: 'multipart/form-data', method: 'POST'}}, [createElement('input', {class: 'vue-upload__input',attrs: {type: 'file', name: 'file', accept: this.accept}, ref: 'input', on: {change: this.handleChange}}, []), createElement('input', {attrs: {type: 'hidden', name: 'documentDomain', value: this.$isServer ? '' : document.domain}}, []), createElement('span', {ref: 'data'}, [])]), drag ? createElement('upload-dragger', {on: {file: uploadFiles}}, [this.$slots.default]) : this.$slots.default])
+			return createElement('div', {'class': oClass, on: {'click': this.handleClick}, nativeOn: {'drop': this.onDrop, 'dragover': this.handleDragover, 'dragleave': this.handleDragleave}}, [createElement('iframe', {on: {'load': this.onload}, ref: 'iframe', attrs: {name: frameName}}, []), createElement('form', {ref: 'form', attrs: {action: this.action, target: frameName, enctype: 'multipart/form-data', method: 'POST'}}, [createElement('input', {'class': 'vue-upload__input',attrs: {type: 'file', name: 'file', accept: this.accept}, ref: 'input', on: {'change': this.handleChange}}, []), createElement('input', {attrs: {type: 'hidden', name: 'documentDomain', value: this.$isServer ? '' : document.domain}}, []), createElement('span', {ref: 'data'}, [])]), drag ? createElement('upload-dragger', {on: {'file': uploadFiles},attrs: {disabled: disabled}}, [this.$slots.default]) : this.$slots.default])
 		}
 	};
 	var migrating = {
 		mounted: function() {
-			return
+			if (!this.$vnode) return;
 		},
 		methods: {
 			getMigratingConfig: function() {
@@ -17719,10 +18041,12 @@
 		name: 'VueUpload',
 		mixins: [migrating],
 		components: {
-			VueProgress: VueProgress(),
 			UploadList: UploadList,
 			Upload: Upload,
 			IframeUpload: IframeUpload
+		},
+		provide: {
+			uploader: undefined
 		},
 		props: {
 			action: {
@@ -17790,7 +18114,9 @@
 			listType: {
 				type: String,
 				default: 'text'
-			}
+			},
+			httpRequest: Function,
+			disabled: Boolean
 		},
 		data: function() {
 			return {
@@ -17831,6 +18157,7 @@
 					return;
 				}
 				this.uploadFiles.push(file);
+				this.onChange(file, this.uploadFiles);
 			},
 			handleProgress: function(ev, rawFile) {
 				var file = this.getFile(rawFile);
@@ -17855,7 +18182,11 @@
 				this.onError(err, file, this.uploadFiles);
 				this.onChange(file, this.uploadFiles);
 			},
-			handleRemove: function(file) {
+			handleRemove: function(file, raw) {
+				if (raw) {
+					file = this.getFile(raw);
+				}
+				this.abort(file);
 				var fileList = this.uploadFiles;
 				fileList.splice(fileList.indexOf(file), 1);
 				this.onRemove(file, fileList);
@@ -17869,22 +18200,28 @@
 				});
 				return target;
 			},
+			abort: function(file) {
+				this.$refs['upload-inner'].abort(file);
+			},
 			clearFiles: function() {
 				this.uploadFiles = [];
 			},
 			submit: function() {
 				var self = this;
 				self.uploadFiles
-					.filter(function(file) {return file.status === 'ready';})
+					.filter(function(file) {
+						return file.status === 'ready';
+					})
 					.forEach(function(file) {
-						self.$refs['upload-inner'].upload(file.raw, file);
+						self.$refs['upload-inner'].upload(file.raw);
 					});
 			},
 			getMigratingConfig: function() {
 				return {
 					props: {
 						'default-file-list': 'default-file-list is renamed to file-list.',
-						'show-upload-list': 'show-file-list is renamed to show-file-list.'
+						'show-upload-list': 'show-file-list is renamed to show-file-list.',
+						'thumbnail-mode': 'thumbnail-mode has been deprecated.'
 					}
 				};
 			}
@@ -17892,7 +18229,7 @@
 		render: function(createElement) {
 			var uploadList;
 			if (this.showFileList) {
-				uploadList = createElement('UploadList', {attrs: {listType: this.listType, files: this.uploadFiles, handlePreview: this.onPreview}, on: {remove: this.handleRemove}}, []);
+				uploadList = createElement('UploadList', {attrs: {disabled: this.disabled, listType: this.listType, files: this.uploadFiles, handlePreview: this.onPreview}, on: {'remove': this.handleRemove}}, []);
 			}
 			var uploadData = {
 				props: {
@@ -17909,12 +18246,14 @@
 					fileList: this.uploadFiles,
 					autoUpload: this.autoUpload,
 					listType: this.listType,
+					disabled: this.disabled,
 					'on-start': this.handleStart,
 					'on-progress': this.handleProgress,
 					'on-success': this.handleSuccess,
 					'on-error': this.handleError,
 					'on-preview': this.onPreview,
-					'on-remove': this.handleRemove
+					'on-remove': this.handleRemove,
+					'http-request': this.httpRequest
 				},
 				ref: 'upload-inner'
 			};
@@ -17923,6 +18262,13 @@
 					? createElement('upload', uploadData, [trigger])
 					: createElement('iframeUpload', uploadData, [trigger]);
 			return createElement('div', null, ['picture-card' === this.listType ? uploadList : '', this.$slots.trigger ? [uploadComponent, this.$slots.default]: uploadComponent, this.$slots.tip, 'picture-card' !== this.listType ? uploadList : '']);
+		},
+		mounted: function() {
+			if (this.disabled) {
+				this.$el.querySelectorAll('button').forEach(function(buttonNote) {
+					VueUtil.addClass(buttonNote, 'is-disabled');
+				});
+			}
 		}
 	};
 	Vue.component(VueUpload.name, VueUpload);
@@ -18048,7 +18394,7 @@
 			setTimeout(function() {
 				update({percent: 0});
 			}, 200);
-		}, 800);
+		}, 500);
 	}
 	var clearTimer = function() {
 		if (timer) {
@@ -18104,8 +18450,7 @@
 			instance.destroy();
 		}
 	}
-	Vue.Loading = VueLoadingBar;
-	Vue.prototype.$Loading = VueLoadingBar;
+	Vue.loadingBar = VueLoadingBar;
 });
 !(function(name, context, definition) {
 	'use strict';
@@ -18129,7 +18474,7 @@
 				type: String,
 				default: 'info'
 			},
-			box:  {
+			plain:  {
 				type: Boolean,
 				default: false
 			}
@@ -18139,8 +18484,8 @@
 				return 'vue-note--' + this.type;
 			},
 			typeBox: function() {
-				if (this.box) {
-					return 'vue-note--box';
+				if (this.plain) {
+					return 'vue-note--plain';
 				}
 			}
 		}
@@ -18164,45 +18509,35 @@
 			return {
 				activedIndex: null,
 				remain: 0,
-				size: 0
+				size: 20,
+				delta: {
+					start: 0,
+					end: 0,
+					total: 0,
+					keeps: 0,
+					allPadding: 0,
+					paddingTop: 0,
+					setFlg: false
+				}
 			}
 		},
 		props: {
 			height: {
-				type: [Number, String],
-				required: true
+				type: Number,
+				default: 200
 			},
-			onScroll: Function
-		},
-		delta: {
-			start: 0,
-			end: 0,
-			total: 0,
-			keeps: 0,
-			viewHeight: 0,
-			allPadding: 0,
-			paddingTop: 0
+			onScroll: Function,
+			defaultActivedIndex: {
+				type: Number,
+				default: 0
+			}
 		},
 		methods: {
-			handleItemClick: function(itemObj) {
-				var self = this;
-				self.$slots.default.forEach(function(slot, index){
-					if (slot.componentInstance === itemObj) {
-						self.activedIndex = index;
-					}
-				});
-				this.setItemActive();
+			setItemIndex: function(item) {
+				item.index = this.$slots.default.indexOf(item.$vnode);
 			},
-			setItemActive: function() {
-				var self = this;
-				self.$children.forEach(function(children) {
-					children.isActive = false;
-				});
-				self.$slots.default.forEach(function(slot, index){
-					if (slot.componentInstance && index === self.activedIndex) {
-						slot.componentInstance.isActive = true;
-					}
-				});
+			handleItemClick: function(itemObj) {
+				this.activedIndex = itemObj.index;
 			},
 			handleScroll: function(e) {
 				var scrollTop = this.$refs.container.scrollTop;
@@ -18212,14 +18547,15 @@
 				}
 			},
 			updateZone: function(offset) {
-				var delta = this.$options.delta;
+				var delta = this.delta;
+				if (delta.total <= delta.keeps) return;
 				var overs = Math.floor(offset / this.size);
 				if (!offset) {
 					this.$emit('toTop');
 				}
 				var start = overs ? overs : 0;
 				var end = overs ? (overs + delta.keeps) : delta.keeps;
-				if (overs + this.remain >= delta.total) {
+				if (overs + delta.keeps >= delta.total) {
 					end = delta.total;
 					start = delta.total - delta.keeps;
 					this.$emit('toBottom');
@@ -18227,10 +18563,14 @@
 				delta.end = end;
 				delta.start = start;
 				this.$forceUpdate();
-				this.setItemActive();
 			},
 			filter: function(slots) {
-				var delta = this.$options.delta;
+				var delta = this.delta;
+				if (delta.keeps === 0 || slots.length <= delta.keeps) {
+					delta.paddingTop = 0;
+					delta.allPadding = 0;
+					return slots;
+				}
 				delta.total = slots.length;
 				delta.paddingTop = this.size * delta.start;
 				delta.allPadding = this.size * (slots.length - delta.keeps);
@@ -18240,19 +18580,35 @@
 				return slots.filter(function(slot, index) {
 					return index >= delta.start && index <= delta.end;
 				});
+			},
+			init: function() {
+				var slots = this.$slots.default;
+				var delta = this.delta;
+				this.remain = Math.round(this.height*1 / this.size);
+				delta.end = this.remain;
+				delta.keeps = this.remain;
+				if (slots && slots.length <= this.remain) {
+					delta.end = slots.length;
+					delta.keeps = slots.length;
+				}
+				delta.setFlg = true;
+				this.updateZone(0);
 			}
 		},
 		render: function(createElement) {
-			var delta = this.$options.delta;
-			var showList = this.filter(this.$slots.default);
-			var viewHeight = delta.viewHeight;
+			var slots = this.$slots.default;
+			var delta = this.delta;
+			if (slots && !delta.setFlg) {
+				this.init();
+			}
+			var showList = this.filter(slots);
 			var paddingTop = delta.paddingTop;
 			var allPadding = delta.allPadding;
 			return createElement('div', {
 				'ref': 'container',
 				'class': ['vue-list'],
 				'style': {
-					'height': viewHeight + 'px'
+					'height': this.height*1 + 'px'
 				},
 				'on': {
 					'scroll': this.handleScroll
@@ -18267,13 +18623,13 @@
 			]);
 		},
 		mounted: function() {
-			this.size=20;
-			this.remain = Math.round(this.height*1 / this.size);
-			var delta = this.$options.delta;
-			delta.end = this.remain;
-			delta.keeps = this.remain;
-			delta.viewHeight = this.height*1;
 			this.$on('item-click', this.handleItemClick);
+			this.activedIndex = this.defaultActivedIndex;
+			this.$slots.default &&
+			this.$slots.default[this.activedIndex] && 
+			this.$slots.default[this.activedIndex].componentInstance &&
+			this.$slots.default[this.activedIndex].componentInstance.handleClick &&
+			this.$slots.default[this.activedIndex].componentInstance.handleClick();
 		}
 	};
 	Vue.component(VueList.name, VueList);
@@ -18294,14 +18650,22 @@
 		mixins: [VueUtil.component.emitter],
 		data: function(){
 			return {
-				isActive: false
+				index: null
 			}
 		},
 		methods: {
 			handleClick: function() {
 				this.dispatch('VueList', 'item-click', this);
-				this.$emit('select');
+				this.$emit('select', this);
 			}
+		},
+		computed: {
+			isActive: function() {
+				return this.$parent.activedIndex === this.index;
+			}
+		},
+		mounted: function() {
+			this.$parent.setItemIndex(this);
 		}
 	};
 	Vue.component(VueListItem.name, VueListItem);
@@ -18333,6 +18697,7 @@
 })('VueColorPicker', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
 	var isDragging = false;
+	var mouseEvents = VueUtil.component.mouseEvents;
 	var hsv2hsl = function(hue, sat, val) {
 		return [hue, (sat * val / ((hue = (2 - sat) * val) < 1 ? hue : 2 - hue)) || 0, hue / 2];
 	};
@@ -18596,26 +18961,27 @@
 			}
 		};
 		var upFn = function(event) {
-			document.removeEventListener('mousemove', moveFn);
-			document.removeEventListener('mouseup', upFn);
-			document.onselectstart = null;
-			document.ondragstart = null;
-			isDragging = false;
 			if (options.end) {
 				options.end(event);
 			}
+			document.removeEventListener(mouseEvents.move, moveFn);
+			document.removeEventListener(mouseEvents.up, upFn);
+			document.onselectstart = null;
+			document.ondragstart = null;
+			isDragging = false;
 		};
-		element.addEventListener('mousedown', function(event) {
+		var downFn = function(event) {
 			if (isDragging) return;
-			document.onselectstart = function() { return false; };
-			document.ondragstart = function() { return false; };
-			document.addEventListener('mousemove', moveFn);
-			document.addEventListener('mouseup', upFn);
-			isDragging = true;
 			if (options.start) {
 				options.start(event);
 			}
-		});
+			document.addEventListener(mouseEvents.move, moveFn);
+			document.addEventListener(mouseEvents.up, upFn);
+			document.onselectstart = function() { return false; };
+			document.ondragstart = function() { return false; };
+			isDragging = true;
+		};
+		element.addEventListener(mouseEvents.down, downFn);
 	};
 	var SvPanel = {
 		template: '<div class="vue-color-svpanel" :style="{backgroundColor: background}"><div class="vue-color-svpanel__white"></div><div class="vue-color-svpanel__black"></div><div class="vue-color-svpanel__cursor" :style="{top: cursorTop + \'px\', left: cursorLeft + \'px\'}"><div></div></div></div>',
@@ -18650,10 +19016,11 @@
 				this.background = 'hsl(' + this.color.get('hue') + ', 100%, 50%)';
 			},
 			handleDrag: function(event) {
+				if (typeof event.clientX === 'undefined' && event.touches.length === 0) return;
 				var el = this.$el;
 				var rect = el.getBoundingClientRect();
-				var left = event.clientX - rect.left;
-				var top = event.clientY - rect.top;
+				var left = (event.clientX || event.touches[0].clientX) - rect.left;
+				var top = (event.clientY || event.touches[0].clientY) - rect.top;
 				left = Math.max(0, left);
 				left = Math.min(left, rect.width);
 				top = Math.max(0, top);
@@ -18669,6 +19036,9 @@
 		mounted: function() {
 			var self = this;
 			draggable(self.$el, {
+				start: function(event) {
+					self.handleDrag(event);
+				},
 				drag: function(event) {
 					self.handleDrag(event);
 				},
@@ -18720,16 +19090,17 @@
 				}
 			},
 			handleDrag: function(event) {
+				if (typeof event.clientX === 'undefined' && event.touches.length === 0) return;
 				var rect = this.$el.getBoundingClientRect();
 				var thumb = this.$refs.thumb;
 				var hue;
 				if (!this.vertical) {
-					var left = event.clientX - rect.left;
+					var left = (event.clientX || event.touches[0].clientX) - rect.left;
 					left = Math.min(left, rect.width - thumb.offsetWidth / 2);
 					left = Math.max(thumb.offsetWidth / 2, left);
 					hue = Math.round((left - thumb.offsetWidth / 2) / (rect.width - thumb.offsetWidth) * 360);
 				} else {
-					var top = event.clientY - rect.top;
+					var top = (event.clientY || event.touches[0].clientY) - rect.top;
 					top = Math.min(top, rect.height - thumb.offsetHeight / 2);
 					top = Math.max(thumb.offsetHeight / 2, top);
 					hue = Math.round((top - thumb.offsetHeight / 2) / (rect.height - thumb.offsetHeight) * 360);
@@ -18763,6 +19134,9 @@
 			var bar = _$refs.bar;
 			var thumb = _$refs.thumb;
 			var dragConfig = {
+				start: function(event) {
+					self.handleDrag(event);
+				},
 				drag: function(event) {
 					self.handleDrag(event);
 				},
@@ -18800,15 +19174,16 @@
 				}
 			},
 			handleDrag: function(event) {
+				if (typeof event.clientX === 'undefined' && event.touches.length === 0) return;
 				var rect = this.$el.getBoundingClientRect();
 				var thumb = this.$refs.thumb;
 				if (!this.vertical) {
-					var left = event.clientX - rect.left;
+					var left = (event.clientX || event.touches[0].clientX) - rect.left;
 					left = Math.max(thumb.offsetWidth / 2, left);
 					left = Math.min(left, rect.width - thumb.offsetWidth / 2);
 					this.color.set('alpha', Math.round((left - thumb.offsetWidth / 2) / (rect.width - thumb.offsetWidth) * 100));
 				} else {
-					var top = event.clientY - rect.top;
+					var top = (event.clientY || event.touches[0].clientY) - rect.top;
 					top = Math.max(thumb.offsetHeight / 2, top);
 					top = Math.min(top, rect.height - thumb.offsetHeight / 2);
 					this.color.set('alpha', Math.round((top - thumb.offsetHeight / 2) / (rect.height - thumb.offsetHeight) * 100));
@@ -18859,13 +19234,16 @@
 			var bar = _$refs.bar;
 			var thumb = _$refs.thumb;
 			var dragConfig = {
-				drag: function(event) {
-					self.handleDrag(event);
-				},
-				end: function(event) {
-					self.handleDrag(event);
-				}
-			};
+					start: function(event) {
+						self.handleDrag(event);
+					},
+					drag: function(event) {
+						self.handleDrag(event);
+					},
+					end: function(event) {
+						self.handleDrag(event);
+					}
+				};
 			draggable(bar, dragConfig);
 			draggable(thumb, dragConfig);
 			self.update();
@@ -18873,7 +19251,7 @@
 	};
 	var PickerDropdown = {
 		template: '<transition name="vue-zoom-in-top" @after-leave="doDestroy"><div class="vue-color-dropdown" v-show="showPopper"><div class="vue-color-dropdown__main-wrapper"><hue-slider ref="hue" :color="color" vertical style="float: right;"></hue-slider><sv-panel ref="sl" :color="color"></sv-panel></div><alpha-slider v-if="showAlpha" ref="alpha" :color="color"></alpha-slider><div class="vue-color-dropdown__btns"><span class="vue-color-dropdown__value">{{ currentColor }}</span><a href="JavaScript:" class="vue-color-dropdown__link-btn" @click="$emit(\'clear\')">{{ $t(\'vue.colorpicker.clear\') }}</a><button class="vue-color-dropdown__btn" @click="confirmValue">{{ $t(\'vue.colorpicker.confirm\') }}</button></div></div></transition>',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		components: {
 			SvPanel: SvPanel,
 			HueSlider: HueSlider,
@@ -19182,14 +19560,16 @@
 							bottom: self.offsetBottom + 'px',
 							left: elOffset.left + 'px',
 							width: self.$el.offsetWidth + 'px',
-							position: 'fixed'
+							position: 'fixed',
+							zIndex: VueUtil.component.popupManager.nextZIndex()
 						};
 					} else {
 						self.styles = {
 							top: self.offsetTop + 'px',
 							left: elOffset.left + 'px',
 							width: self.$el.offsetWidth + 'px',
-							position: 'fixed'
+							position: 'fixed',
+							zIndex: VueUtil.component.popupManager.nextZIndex()
 						};
 					}
 				} else {
@@ -19218,7 +19598,8 @@
 						top: this.offsetTop + 'px',
 						left: elOffset.left + 'px',
 						width: this.$el.offsetWidth + 'px',
-						position: 'fixed'
+						position: 'fixed',
+						zIndex: VueUtil.component.popupManager.nextZIndex()
 					};
 					this.$emit('change', true);
 				} else if ((elOffset.top - this.offsetTop) > scrollTop && this.offsetType == 'top' && pin) {
@@ -19232,7 +19613,8 @@
 						bottom: this.offsetBottom + 'px',
 						left: elOffset.left + 'px',
 						width: this.$el.offsetWidth + 'px',
-						position: 'fixed'
+						position: 'fixed',
+						zIndex: VueUtil.component.popupManager.nextZIndex()
 					};
 					this.$emit('change', true);
 				} else if ((elOffset.top + this.offsetBottom + elHeight) < (scrollTop + windowHeight) && this.offsetType == 'bottom' && pin) {
@@ -19245,6 +19627,165 @@
 	}
 	Vue.component(VuePin.name, VuePin);
 });
+!(function(name, context, definition) {
+	'use strict';
+	if (typeof define === 'function' && define.amd) {
+		define(['Vue', 'VueUtil'], definition);
+	} else {
+		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
+	}
+})('VueDraggable', this, function(Vue, VueUtil) {
+	'use strict';
+	var mouseEvents = VueUtil.component.mouseEvents;
+	var Bind = function(object, fun, args) {
+		return function() {
+			return fun.apply(object, args || []);
+		}
+	};
+	var BindAsEventListener = function(object, fun) {
+		var args = Array.prototype.slice.call(arguments).slice(2);
+		return function(event) {
+			return fun.apply(object, [event || window.event].concat(args));
+		}
+	};
+	var Class = function(properties) {
+		var _class = function() {
+			return (arguments[0] !== null && this.initialize && typeof (this.initialize) == 'function') ? this.initialize.apply(this, arguments) : this;
+		};
+		_class.prototype = properties;
+		return _class;
+	};
+	var dragEl = new Class({
+		initialize: function(el, cancelObj, resizeObj, offsetLeft, offsetTop) {
+			this._dragobj = el;
+			this._body = cancelObj;
+			this._resize = resizeObj;
+			this._x = 0;
+			this._y = 0;
+			this._fM = BindAsEventListener(this, this.Move);
+			this._fS = Bind(this, this.Stop);
+			this._isdrag = null;
+			this._Css = null;
+			this.offsetLeft = offsetLeft;
+			this.offsetTop = offsetTop;
+			this.Minwidth = parseInt(VueUtil.getStyle(el, 'minWidth'));
+			this.Minheight = parseInt(VueUtil.getStyle(el, 'minHeight'));
+			VueUtil.on(this._dragobj, mouseEvents.down, BindAsEventListener(this, this.Start, true));
+			for (var i = 0, j = this._body.length; i < j; i++) {
+				VueUtil.on(this._body[i], mouseEvents.down, BindAsEventListener(this, this.Cancelbubble));
+			}
+			VueUtil.on(this._resize, mouseEvents.down, BindAsEventListener(this, this.Start, false));
+		},
+		Cancelbubble: function(e) {
+			document.all ? (e.cancelBubble = true) : (e.stopPropagation())
+		},
+		Changebg: function(o, x1, x2) {
+			o.style.backgroundPosition = (o.style.backgroundPosition == x1) ? x2 : x1;
+		},
+		Start: function(e, isdrag) {
+			var clientX = e.clientX;
+			var clientY = e.clientY;
+			if (e.touches && e.touches[0]) {
+				clientX = e.touches[0].clientX;
+				clientY = e.touches[0].clientY;
+			}
+			if (typeof clientX === 'undefined' || typeof clientY === 'undefined') return;
+			if (!isdrag) {
+				this.Cancelbubble(e);
+			}
+			this._Css = isdrag ? {
+				x: "left",
+				y: "top"
+			} : {
+				x: "width",
+				y: "height"
+			}
+			this._isdrag = isdrag;
+			this._x = isdrag ? (clientX - this._dragobj.offsetLeft + this.offsetLeft) : (this._dragobj.offsetLeft || 0);
+			this._y = isdrag ? (clientY - this._dragobj.offsetTop + this.offsetTop) : (this._dragobj.offsetTop || 0);
+			if (document.all) {
+				VueUtil.on(this._dragobj, "losecapture", this._fS);
+				this._dragobj.setCapture();
+			} else {
+				e.preventDefault();
+				VueUtil.on(window, "blur", this._fS);
+			}
+			VueUtil.on(document, mouseEvents.move, this._fM);
+			VueUtil.on(document, mouseEvents.up, this._fS);
+		},
+		Move: function(e) {
+			var clientX = e.clientX;
+			var clientY = e.clientY;
+			if (e.touches && e.touches[0]) {
+				clientX = e.touches[0].clientX;
+				clientY = e.touches[0].clientY;
+			}
+			if (typeof clientX === 'undefined' || typeof clientY === 'undefined') return;
+			window.getSelection ? window.getSelection().removeAllRanges() : document.selection.empty();
+			var i_x = clientX - this._x;
+			var i_y = clientY - this._y;
+			this._dragobj.style[this._Css.x] = (this._isdrag ? i_x : Math.max(i_x, this.Minwidth)) + 'px';
+			this._dragobj.style[this._Css.y] = (this._isdrag ? i_y : Math.max(i_y, this.Minheight)) + 'px'
+			if (!this._isdrag) {
+				VueUtil.setStyle(this._dragobj, 'height', Math.max(i_y, this.Minheight) - 2 * parseInt(VueUtil.getStyle(this._dragobj, 'paddingLeft')) + 'px');
+			}
+		},
+		Stop: function() {
+			VueUtil.off(document, mouseEvents.move, this._fM);
+			VueUtil.off(document, mouseEvents.up, this._fS);
+			if (document.all) {
+				VueUtil.off(this._dragobj, "losecapture", this._fS);
+				this._dragobj.releaseCapture();
+			} else {
+				VueUtil.off(window, "blur", this._fS);
+			}
+		}
+	});
+	var directive = function(Vue) {
+		if (Vue.prototype.$isServer) return;
+		Vue.directive('draggable', {
+			inserted: function(el, binding) {
+				var cancelObj = [];
+				var resizeObj = null;
+				var cancelSelectors = el.getAttribute('draggable-cancel-selector');
+				if (cancelSelectors) {
+					var cancelSelectorAry = cancelSelectors.split(',');
+					for (var i = 0, j = cancelSelectorAry.length; i < j; i++) {
+						var cancelSelector = cancelSelectorAry[i];
+						cancelObj.push(el.querySelector(cancelSelector));
+					}
+				}
+				var resizeFlg = el.getAttribute('draggable-resize');
+				if (resizeFlg) {
+					resizeObj = document.createElement('DIV');
+					var resizeStyle = {
+						bottom: '1px',
+						right: '1px',
+						cursor: 'nw-resize',
+						position: 'absolute',
+						width: '10px',
+						height: '10px',
+						fontSize: 0
+					}
+					VueUtil.merge(resizeObj.style, resizeStyle);
+					el.appendChild(resizeObj)
+				}
+				Vue.nextTick(function() {
+					var displayStyle = VueUtil.getStyle(el, 'display')
+					VueUtil.setStyle(el, 'display', 'block');
+					var offsetLeft = el.offsetLeft;
+					var offsetTop = el.offsetTop;
+					VueUtil.setStyle(el, 'display', displayStyle);
+					VueUtil.setStyle(el, 'position', 'relative');
+					VueUtil.setStyle(el, 'zIndex', VueUtil.component.popupManager.nextZIndex());
+					new dragEl(el,cancelObj,resizeObj,offsetLeft,offsetTop);
+				});
+			}
+		});
+	};
+	Vue.use(directive);
+});
 !(function(context) {
 	'use strict';
 	delete context.Cleave;
@@ -19252,23 +19793,10 @@
 	delete context.Popper;
 	delete context.Screenfull;
 	delete context.Sortable;
-	delete context.VueButton;
-	delete context.VueButtonGroup;
-	delete context.VueCheckbox;
-	delete context.VueCheckboxGroup;
-	delete context.VueCol;
-	delete context.VueInput;
-	delete context.VueOption;
 	delete context.VuePicker;
 	delete context.VuePopper;
 	delete context.VuePopup;
-	delete context.VueProgress;
-	delete context.VueScrollbar;
-	delete context.VueSelect;
-	delete context.VueSelectDropdown;
-	delete context.VueTag;
 	delete context.VueTimePicker;
-	delete context.VueTooltip;
 	delete context.VueValidator;
 	delete context.VueResource;
 	delete context.VueI18n;

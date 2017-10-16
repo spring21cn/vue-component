@@ -1,9 +1,9 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePicker', 'VueUtil', 'VueScrollbar'], definition);
+		define(['Vue', 'VuePicker', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VuePicker'], context['VueUtil'], context['VueScrollbar']);
+		context[name] = definition(context['Vue'], context['VuePicker'], context['VueUtil']);
 	}
 })('VueTimePicker', this, function(Vue, VuePicker, VueUtil, VueScrollbar) {
 	'use strict';
@@ -24,10 +24,7 @@
 		return { minTime: minTime, maxTime: maxTime };
 	};
 	var TimeSpinner = {
-		template: '<div class="vue-time-spinner" :class="{ \'has-seconds\': showSeconds }"><vue-scrollbar noresize @mouseenter.native="emitSelectRange(\'hours\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="hour"><li @click="handleClick(\'hours\', { value: hour, disabled: disabled }, true)" v-for="(disabled, hour) in hoursList" track-by="hour" class="vue-time-spinner__item" :class="{ \'active\': hour === hours, \'disabled\': disabled }" v-text="hour"></li></vue-scrollbar><vue-scrollbar @mouseenter.native="emitSelectRange(\'minutes\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="minute"><li @click="handleClick(\'minutes\', key, true)" v-for="(minute, key) in 60" class="vue-time-spinner__item" :class="{ \'active\': key === minutes }" v-text="key"></li></vue-scrollbar><vue-scrollbar v-show="showSeconds" @mouseenter.native="emitSelectRange(\'seconds\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="second"><li @click="handleClick(\'seconds\', key, true)" v-for="(second, key) in 60" class="vue-time-spinner__item" :class="{ \'active\': key === seconds }" v-text="key"></li></vue-scrollbar></div>',
-		components: {
-			VueScrollbar: VueScrollbar()
-		},
+		template: '<div class="vue-time-spinner" :class="{ \'has-seconds\': showSeconds }"><vue-scrollbar @mouseenter.native="emitSelectRange(\'hours\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="hour"><li @click="handleClick(\'hours\', { value: hour, disabled: disabled }, true)" v-for="(disabled, hour) in hoursList" track-by="hour" class="vue-time-spinner__item" :class="{ \'active\': hour === hours, \'disabled\': disabled }" v-text="hour"></li></vue-scrollbar><vue-scrollbar @mouseenter.native="emitSelectRange(\'minutes\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="minute"><li @click="handleClick(\'minutes\', key, true)" v-for="(minute, key) in 60" class="vue-time-spinner__item" :class="{ \'active\': key === minutes }" v-text="key"></li></vue-scrollbar><vue-scrollbar v-show="showSeconds" @mouseenter.native="emitSelectRange(\'seconds\')" class="vue-time-spinner__wrapper" wrap-style="max-height: inherit;" view-class="vue-time-spinner__list" noresize tag="ul" ref="second"><li @click="handleClick(\'seconds\', key, true)" v-for="(second, key) in 60" class="vue-time-spinner__item" :class="{ \'active\': key === seconds }" v-text="key"></li></vue-scrollbar></div>',
 		props: {
 			hours: {
 				type: Number,
@@ -386,7 +383,7 @@
 		}
 	};
 	var VueTimePicker = {
-		mixins: [VuePicker()],
+		mixins: [VuePicker],
 		name: 'VueTimePicker',
 		props: {
 			isRange: Boolean
@@ -415,10 +412,5 @@
 		}
 	};
 	Vue.component(VueTimePicker.name, VueTimePicker);
-	return function() {
-		return {
-			VueTimePicker: VueTimePicker,
-			TimePicker: TimePanel
-		}
-	}
+	return TimePanel;
 });

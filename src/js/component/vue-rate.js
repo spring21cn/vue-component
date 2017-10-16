@@ -84,7 +84,7 @@
 				texts: {
 					type: Array,
 					default: function() {
-						return ['极差', '失望', '一般', '满意', '惊喜'];
+						return [];
 					}
 				},
 				textTemplate: {
@@ -150,6 +150,28 @@
 				value: function(val) {
 					this.$emit('change', val);
 					this.currentValue = val;
+				},
+				colors: function(val) {
+					this.colorMap.lowColor = val[0];
+					this.colorMap.mediumColor = val[1];
+					this.colorMap.highColor = val[2];
+				},
+				voidColor: function(val) {
+					this.colorMap.voidColor = val;
+				},
+				disabledVoidColor: function(val) {
+					this.colorMap.disabledVoidColor = val;
+				},
+				iconClasses: function(val) {
+					this.classMap.lowClass = val[0];
+					this.classMap.mediumClass = val[1];
+					this.classMap.highClass = val[2];
+				},
+				voidClass: function(val) {
+					this.classMap.voidClass = val;
+				},
+				disabledVoidClass: function(val) {
+					this.classMap.disabledVoidClass = val;
 				}
 			},
 			methods: {

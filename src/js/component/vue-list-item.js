@@ -14,14 +14,22 @@
 		mixins: [VueUtil.component.emitter],
 		data: function(){
 			return {
-				isActive: false
+				index: null
 			}
 		},
 		methods: {
 			handleClick: function() {
 				this.dispatch('VueList', 'item-click', this);
-				this.$emit('select');
+				this.$emit('select', this);
 			}
+		},
+		computed: {
+			isActive: function() {
+				return this.$parent.activedIndex === this.index;
+			}
+		},
+		mounted: function() {
+			this.$parent.setItemIndex(this);
 		}
 	};
 	Vue.component(VueListItem.name, VueListItem);

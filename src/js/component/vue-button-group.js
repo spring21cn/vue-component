@@ -4,6 +4,7 @@
 		define(['Vue'], definition);
 	} else {
 		context[name] = definition(context['Vue']);
+		delete context[name];
 	}
 })('VueButtonGroup', this, function(Vue) {
 	'use strict';
@@ -12,7 +13,4 @@
 		name: 'VueButtonGroup'
 	};
 	Vue.component(VueButtonGroup.name, VueButtonGroup);
-	return function() {
-		return VueButtonGroup;
-	}
 });

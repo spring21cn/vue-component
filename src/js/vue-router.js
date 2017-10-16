@@ -7,7 +7,7 @@
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(['Vue'], factory) :
 	(global.VueRouter = factory(global.Vue));
-}(this, (function (Vue) { 'use strict';
+}(this, (function (globalVue) { 'use strict';
 
 /*  */
 
@@ -2505,7 +2505,7 @@ VueRouter.install = install;
 VueRouter.version = '2.7.0';
 
 if (inBrowser) {
-  Vue.use(VueRouter);
+  globalVue.use(VueRouter);
 }
 
 return VueRouter;

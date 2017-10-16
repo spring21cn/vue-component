@@ -4,6 +4,7 @@
 		define(['Vue', 'VueUtil', 'Cleave'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil'], context['Cleave']);
+		delete context[name];
 	}
 })('VueInput', this, function(Vue, VueUtil, Cleave) {
 	'use strict';
@@ -56,7 +57,7 @@
 		return VueUtil.merge({height: height + 'px'}, options);
 	};
 	var VueInput = {
-		template: '<div :class="[ type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', size ? \'vue-input--\' + size : \'\', { \'is-disabled\': disabled, \'vue-input-group\': $slots.prepend || $slots.append, \'vue-input-group--append\': $slots.append, \'vue-input-group--prepend\': $slots.prepend, \'is-readonly\': readonly } ]"><template v-if="type !== \'textarea\'"><div class="vue-input-group__prepend" v-if="$slots.prepend"><slot name="prepend"></slot></div><slot name="icon"><i class="vue-input__icon" :class="[ icon, onIconClick ? \'is-clickable\' : \'\' ]" v-if="icon" @click="handleIconClick"></i></slot><input v-if="type !== \'textarea\'" class="vue-input__inner" :type="type" :name="name" :placeholder="placeholder" :disabled="disabled" :readonly="readonly" :maxlength="maxlength" :minlength="minlength" :autocomplete="autoComplete" :autofocus="autofocus" :min="min" :max="max" :form="form" :value="currentValue" ref="input" @input="handleInput" @focus="handleFocus" @blur="handleBlur" ><i class="vue-input__icon vue-icon-loading" v-if="validating"></i><div class="vue-input-group__append" v-if="$slots.append"><slot name="append"></slot></div></template><textarea v-else class="vue-textarea__inner" :value="currentValue" @input="handleInput" ref="textarea" :name="name" :placeholder="placeholder" :disabled="disabled" :style="textareaStyle" :readonly="readonly" :rows="rows" :form="form" :autofocus="autofocus" :maxlength="maxlength" :minlength="minlength" @focus="handleFocus" @blur="handleBlur"></textarea></div>',
+		template: '<div :class="[ type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', size ? \'vue-input--\' + size : \'\', { \'is-disabled\': disabled, \'vue-input-group\': $slots.prepend || $slots.append, \'vue-input-group--append\': $slots.append, \'vue-input-group--prepend\': $slots.prepend, \'is-readonly\': readonly } ]"><template v-if="type !== \'textarea\'"><div class="vue-input-group__prepend" v-if="$slots.prepend"><slot name="prepend"></slot></div><slot name="icon"><i class="vue-input__icon" :class="[ icon, onIconClick ? \'is-clickable\' : \'\' ]" v-if="icon" @click="handleIconClick"></i></slot><input v-if="type !== \'textarea\'" class="vue-input__inner" :type="type" :name="name" :placeholder="placeholder" :disabled="disabled" :readonly="readonly" :maxlength="maxlength" :minlength="minlength" :autocomplete="autoComplete" :autofocus="autofocus" :tabindex="tabindex" :min="min" :max="max" :form="form" :value="currentValue" ref="input" @input="handleInput" @focus="handleFocus" @blur="handleBlur" ><i class="vue-input__icon vue-icon-loading" v-if="validating"></i><div class="vue-input-group__append" v-if="$slots.append"><slot name="append"></slot></div></template><textarea v-else class="vue-textarea__inner" :value="currentValue" @input="handleInput" ref="textarea" :name="name" :placeholder="placeholder" :disabled="disabled" :style="textareaStyle" :readonly="readonly" :rows="rows" :form="form" :autofocus="autofocus" :tabindex="tabindex" :maxlength="maxlength" :minlength="minlength" @focus="handleFocus" @blur="handleBlur"></textarea></div>',
 		name: 'VueInput',
 		componentName: 'VueInput',
 		mixins: [VueUtil.component.emitter],
@@ -74,6 +75,7 @@
 			readonly: Boolean,
 			autofocus: Boolean,
 			icon: String,
+			tabindex: Number,
 			disabled: Boolean,
 			type: {
 				type: String,
@@ -118,6 +120,13 @@
 			}
 		},
 		methods: {
+			focus: function() {
+				if (this.type !== 'textarea') {
+					this.$refs.input.focus();
+				} else {
+					this.$refs.textarea.focus();
+				}
+			},
 			handleBlur: function(event) {
 				this.$emit('blur', event);
 				if (this.validateEvent) {
@@ -160,8 +169,8 @@
 					self.resizeTextarea();
 				});
 				if (self.type !== 'textarea' && self.cleave !== null) {
-					self.$el.querySelector('input').value = value;
-					var cleaveObj = new Cleave(self.$el.querySelector('input'), self.cleave);
+					self.$refs.input.value = value;
+					var cleaveObj = new Cleave(self.$refs.input, self.cleave);
 					self.currentValue = cleaveObj.getFormattedValue();
 					if (cleaveObj.getFormattedValue().length >= value.length && !watchFlg) {
 						self.currentValue = value;
@@ -187,7 +196,4 @@
 		}
 	};
 	Vue.component(VueInput.name, VueInput);
-	return function() {
-		return VueInput;
-	}
 });

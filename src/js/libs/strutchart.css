@@ -1,13 +1,11 @@
 /*
- * Organization Chart Class
- * https://github.com/dabeng/OrgChart.js
- *
+ * Strut  Chart Class  
  *
  * Licensed under the MIT license:
  * http://www.opensource.org/licenses/MIT
  */
 
-.orgchart {
+.strutchart {
   display: inline-block;
   min-height: 202px;
   min-width: 202px;
@@ -17,32 +15,32 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  background-image: linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%), linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%);
+  background-image: linear-gradient(90deg, rgba(208, 208, 208, 0.15) 10%, rgba(0, 0, 0, 0) 10%), linear-gradient(rgba(208, 208, 208, 0.15) 10%, rgba(0, 0, 0, 0) 10%);
   background-size: 10px 10px;
   border: 1px dashed transparent;
   padding: 20px;
 }
 
-.orgchart .hidden, .orgchart~.hidden {
+.strutchart .hidden, .strutchart~.hidden {
   display: none;
 }
 
-.orgchart div,
-.orgchart div::before,
-.orgchart div::after {
+.strutchart div,
+.strutchart div::before,
+.strutchart div::after {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 
-.orgchart.b2t {
+.strutchart.b2t {
   -ms-transform: rotate(180deg);
   -moz-transform: rotate(180deg);
   -webkit-transform: rotate(180deg);
   transform: rotate(180deg);
 }
 
-.orgchart.l2r {
+.strutchart.l2r {
   position: absolute;
   -ms-transform: rotate(-90deg) rotateY(180deg);
   -moz-transform: rotate(-90deg) rotateY(180deg);
@@ -54,35 +52,35 @@
   transform-origin: left top;
 }
 
-.orgchart .verticalNodes ul {
+.strutchart .verticalNodes ul {
   list-style: none;
   margin: 0;
   padding-left: 18px;
   text-align: left;
 }
 
-.orgchart .verticalNodes ul:first-child {
+.strutchart .verticalNodes ul:first-child {
   margin-top: 3px;
 }
 
-.orgchart .verticalNodes>td::before {
+.strutchart .verticalNodes>td::before {
   content: '';
   border: 1px solid rgba(217, 83, 79, 0.8);
 }
 
-.orgchart .verticalNodes>td>ul>li:first-child::before {
+.strutchart .verticalNodes>td>ul>li:first-child::before {
   top: -4px;
   height: 30px;
   width: calc(50% - 2px);
   border-width: 2px 0 0 2px;
 }
 
-.orgchart .verticalNodes ul>li {
+.strutchart .verticalNodes ul>li {
   position: relative;
 }
 
-.orgchart .verticalNodes ul>li::before,
-.orgchart .verticalNodes ul>li::after {
+.strutchart .verticalNodes ul>li::before,
+.strutchart .verticalNodes ul>li::after {
   content: '';
   position: absolute;
   left: -6px;
@@ -94,28 +92,28 @@
   box-sizing: border-box;
 }
 
-.orgchart .verticalNodes ul>li::before {
+.strutchart .verticalNodes ul>li::before {
   top: -4px;
   height: 30px;
   width: 11px;
 }
 
-.orgchart .verticalNodes ul>li::after {
+.strutchart .verticalNodes ul>li::after {
   top: 1px;
   height: 100%;
 }
 
-.orgchart .verticalNodes ul>li:first-child::after {
+.strutchart .verticalNodes ul>li:first-child::after {
   top: 24px;
   width: 11px;
   border-width: 2px 0 0 2px;
 }
 
-.orgchart .verticalNodes ul>li:last-child::after {
+.strutchart .verticalNodes ul>li:last-child::after {
   border-width: 2px 0 0;
 }
 
-.orgchart.r2l {
+.strutchart.r2l {
   position: absolute;
   -ms-transform: rotate(90deg);
   -moz-transform: rotate(90deg);
@@ -127,44 +125,44 @@
   transform-origin: left top;
 }
 
-.orgchart>.spinner {
+.strutchart>.spinner {
   font-size: 100px;
   margin-top: 30px;
   color: rgba(68, 157, 68, 0.8);
 }
 
-.orgchart table {
+.strutchart table {
   border-spacing: 0;
   border-collapse: separate;
 }
 
-.orgchart>table:first-child{
+.strutchart>table:first-child{
   margin: 20px auto;
 }
 
-.orgchart td {
+.strutchart td {
   text-align: center;
   vertical-align: top;
   padding: 0;
 }
 
-.orgchart tr.lines .topLine {
+.strutchart tr.lines .topLine {
   border-top: 2px solid rgba(217, 83, 79, 0.8);
 }
 
-.orgchart tr.lines .rightLine {
+.strutchart tr.lines .rightLine {
   border-right: 1px solid rgba(217, 83, 79, 0.8);
   float: none;
   border-radius: 0;
 }
 
-.orgchart tr.lines .leftLine {
+.strutchart tr.lines .leftLine {
   border-left: 1px solid rgba(217, 83, 79, 0.8);
   float: none;
   border-radius: 0;
 }
 
-.orgchart tr.lines .downLine {
+.strutchart tr.lines .downLine {
   border: 1px solid rgba(217, 83, 79, 0.8);
   margin: 0 auto;
   height: 20px;
@@ -173,7 +171,7 @@
 }
 
 /* node styling */
-.orgchart .node {
+.strutchart .node {
   display: inline-block;
   position: relative;
   margin: 0;
@@ -183,16 +181,16 @@
   width: 130px;
 }
 
-.orgchart.l2r .node, .orgchart.r2l .node {
+.strutchart.l2r .node, .strutchart.r2l .node {
   width: 50px;
   height: 130px;
 }
 
-.orgchart .node>.hazy {
+.strutchart .node>.hazy {
   opacity: 0.2;
 }
 
-.orgchart .node>.spinner {
+.strutchart .node>.spinner {
   position: absolute;
   top: calc(50% - 15px);
   left: calc(50% - 15px);
@@ -201,33 +199,33 @@
   color: rgba(68, 157, 68, 0.8);
 }
 
-.orgchart .node:hover {
+.strutchart .node:hover {
   background-color: rgba(238, 217, 54, 0.5);
   transition: .5s;
   cursor: default;
   z-index: 20;
 }
 
-.orgchart .node.focused {
+.strutchart .node.focused {
   background-color: rgba(238, 217, 54, 0.5);
 }
 
-.orgchart .ghost-node {
+.strutchart .ghost-node {
   position: fixed;
   left: -10000px;
   top: -10000px;
 }
 
-.orgchart .ghost-node rect {
+.strutchart .ghost-node rect {
   fill: #ffffff;
   stroke: #bf0000;
 }
 
-.orgchart .node.allowedDrop {
+.strutchart .node.allowedDrop {
   border-color: rgba(68, 157, 68, 0.9);
 }
 
-.orgchart .node .title {
+.strutchart .node .title {
   text-align: center;
   font-size: 12px;
   font-weight: bold;
@@ -242,7 +240,7 @@
   border: 1px solid rgba(217, 83, 79, 0.8);
 }
 
-.orgchart.b2t .node .title {
+.strutchart.b2t .node .title {
   -ms-transform: rotate(-180deg);
   -moz-transform: rotate(-180deg);
   -webkit-transform: rotate(-180deg);
@@ -253,7 +251,7 @@
   transform-origin: center bottom;
 }
 
-.orgchart.l2r .node .title {
+.strutchart.l2r .node .title {
   -ms-transform: rotate(-90deg) translate(-40px, -40px) rotateY(180deg);
   -moz-transform: rotate(-90deg) translate(-40px, -40px) rotateY(180deg);
   -webkit-transform: rotate(-90deg) translate(-40px, -40px) rotateY(180deg);
@@ -265,7 +263,7 @@
   width: 120px;
 }
 
-.orgchart.r2l .node .title {
+.strutchart.r2l .node .title {
   -ms-transform: rotate(-90deg) translate(-40px, -40px);
   -moz-transform: rotate(-90deg) translate(-40px, -40px);
   -webkit-transform: rotate(-90deg) translate(-40px, -40px);
@@ -277,13 +275,13 @@
   width: 120px;
 }
 
-.orgchart .node .title .symbol {
+.strutchart .node .title .symbol {
   float: left;
   margin-top: 4px;
   margin-left: 2px;
 }
 
-.orgchart .node .content {
+.strutchart .node .content {
   width: 100%;
   height: 20px;
   font-size: 11px;
@@ -298,7 +296,7 @@
   white-space: nowrap;
 }
 
-.orgchart.b2t .node .content {
+.strutchart.b2t .node .content {
   -ms-transform: rotate(180deg);
   -moz-transform: rotate(180deg);
   -webkit-transform: rotate(180deg);
@@ -309,7 +307,7 @@
   transform-origin: center top;
 }
 
-.orgchart.l2r .node .content {
+.strutchart.l2r .node .content {
   -ms-transform: rotate(-90deg) translate(-40px, -40px) rotateY(180deg);
   -moz-transform: rotate(-90deg) translate(-40px, -40px) rotateY(180deg);
   -webkit-transform: rotate(-90deg) translate(-40px, -40px) rotateY(180deg);
@@ -321,7 +319,7 @@
   width: 120px;
 }
 
-.orgchart.r2l .node .content {
+.strutchart.r2l .node .content {
   -ms-transform: rotate(-90deg) translate(-40px, -40px);
   -moz-transform: rotate(-90deg) translate(-40px, -40px);
   -webkit-transform: rotate(-90deg) translate(-40px, -40px);
@@ -333,7 +331,7 @@
   width: 120px;
 }
 
-.orgchart .node .edge {
+.strutchart .node .edge {
   font-size: 15px;
   position: absolute;
   color: rgba(68, 157, 68, 0.5);
@@ -342,31 +340,31 @@
   -webkit-transition: .2s;
 }
 
-.orgchart.noncollapsable .node .edge {
+.strutchart.noncollapsable .node .edge {
   display: none;
 }
 
-.orgchart .edge:hover {
+.strutchart .edge:hover {
   color: #449d44;
   cursor: pointer;
 }
 
-.orgchart .node .verticalEdge {
+.strutchart .node .verticalEdge {
   width: calc(100% - 10px);
   width: -webkit-calc(100% - 10px);
   width: -moz-calc(100% - 10px);
   left: 5px;
 }
 
-.orgchart .node .topEdge {
+.strutchart .node .topEdge {
   top: -4px;
 }
 
-.orgchart .node .bottomEdge {
+.strutchart .node .bottomEdge {
   bottom: -4px;
 }
 
-.orgchart .node .horizontalEdge {
+.strutchart .node .horizontalEdge {
   width: 15px;
   height: calc(100% - 10px);
   height: -webkit-calc(100% - 10px);
@@ -374,37 +372,37 @@
   top: 5px;
 }
 
-.orgchart .node .rightEdge {
+.strutchart .node .rightEdge {
   right: -4px;
 }
 
-.orgchart .node .leftEdge {
+.strutchart .node .leftEdge {
   left: -4px;
 }
 
-.orgchart .node .horizontalEdge::before {
+.strutchart .node .horizontalEdge::before {
   position: absolute;
   top: calc(50% - 7px);
   top: -webkit-calc(50% - 7px);
   top: -moz-calc(50% - 7px);
 }
 
-.orgchart .node .rightEdge::before {
+.strutchart .node .rightEdge::before {
   right: 3px;
 }
 
-.orgchart .node .leftEdge::before {
+.strutchart .node .leftEdge::before {
   left: 3px;
 }
 
-.orgchart .node .toggleBtn {
+.strutchart .node .toggleBtn {
   position: absolute;
   left: 5px;
   bottom: -2px;
   color: rgba(68, 157, 68, 0.6);
 }
 
-.orgchart .node .toggleBtn:hover {
+.strutchart .node .toggleBtn:hover {
   color: rgba(68, 157, 68, 0.8);
 }
 
@@ -440,7 +438,7 @@
   border-color: #347a34;
 }
 
-.orgchart~.mask {
+.strutchart~.mask {
   position: absolute;
   top: 0;
   right: 0;
@@ -451,7 +449,7 @@
   background-color: rgba(0,0,0,0.3);
 }
 
-.orgchart~.mask .spinner {
+.strutchart~.mask .spinner {
   position: absolute;
   top: calc(50% - 54px);
   left: calc(50% - 54px);
@@ -459,45 +457,45 @@
   font-size: 108px;
 }
 
-.orgchart .node {
+.strutchart .node {
   -webkit-transition: all 0.3s;
   transition: all 0.3s;
   top: 0;
   left: 0;
 }
 
-.orgchart .slide-down {
+.strutchart .slide-down {
   opacity: 0;
   top: 40px;
 }
 
-.orgchart.l2r .node.slide-down, .orgchart.r2l .node.slide-down {
+.strutchart.l2r .node.slide-down, .strutchart.r2l .node.slide-down {
   top: 130px;
 }
 
-.orgchart .slide-up {
+.strutchart .slide-up {
   opacity: 0;
   top: -40px;
 }
 
-.orgchart.l2r .node.slide-up, .orgchart.r2l .node.slide-up {
+.strutchart.l2r .node.slide-up, .strutchart.r2l .node.slide-up {
   top: -130px;
 }
 
-.orgchart .slide-right {
+.strutchart .slide-right {
   opacity: 0;
   left: 130px;
 }
 
-.orgchart.l2r .node.slide-right, .orgchart.r2l .node.slide-right {
+.strutchart.l2r .node.slide-right, .strutchart.r2l .node.slide-right {
   left: 40px;
 }
 
-.orgchart .slide-left {
+.strutchart .slide-left {
   opacity: 0;
   left: -130px;
 }
 
-.orgchart.l2r .node.slide-left, .orgchart.r2l .node.slide-left {
+.strutchart.l2r .node.slide-left, .strutchart.r2l .node.slide-left {
   left: -40px;
 }

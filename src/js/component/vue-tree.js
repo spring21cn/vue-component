@@ -1,12 +1,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueCheckbox'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueCheckbox']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueTree', this, function(Vue, VueUtil, VueCheckbox) {
+})('VueTree', this, function(Vue, VueUtil) {
 	'use strict';
 	var NODE_KEY = '$treeNodeId';
 	var markNodeData = function(node, data) {
@@ -24,26 +24,63 @@
 			return data[NODE_KEY];
 		return data[key];
 	};
-	var reInitChecked = function(node) {
-		var siblings = node.childNodes;
+	var getChildState = function(node) {
 		var all = true;
 		var none = true;
-		for (var i = 0, j = siblings.length; i < j; i++) {
-			var sibling = siblings[i];
-			if (sibling.checked !== true || sibling.indeterminate) {
+		var allWithoutDisable = true;
+		for (var i = 0, j = node.length; i < j; i++) {
+			var n = node[i];
+			if (n.checked !== true || n.indeterminate) {
 				all = false;
+				if (!n.disabled) {
+					allWithoutDisable = false;
+				}
 			}
-			if (sibling.checked !== false || sibling.indeterminate) {
+			if (n.checked !== false || n.indeterminate) {
 				none = false;
 			}
 		}
+		return {
+			all: all,
+			none: none,
+			allWithoutDisable: allWithoutDisable,
+			half: !all && !none
+		};
+	};
+	var reInitChecked = function(node) {
+		var childState = getChildState(node.childNodes);
+		var all = childState.all;
+		var none = childState.none;
+		var half = childState.half;
 		if (all) {
-			node.setChecked(true);
-		} else if (!all && !none) {
-			node.setChecked('half');
+			node.checked = true;
+			node.indeterminate = false;
+		} else if (half) {
+			node.checked = false;
+			node.indeterminate = true;
 		} else if (none) {
-			node.setChecked(false);
+			node.checked = false;
+			node.indeterminate = false;
 		}
+		var parent = node.parent;
+		if (!parent || parent.level === 0) return;
+		if (!node.store.checkStrictly) {
+			reInitChecked(parent);
+		}
+	};
+	var initLazyLoadChild = function(node) {
+		var childNodes = node.childNodes;
+		if (node.checked) {
+			for (var i = 0, j = childNodes.length; i < j; i++) {
+				var child = childNodes[i];
+				if (!child.disabled) {
+					child.checked = true;
+				}
+			}
+		}
+		var parent = node.parent;
+		if (!parent || parent.level === 0) return;
+		reInitChecked(parent);
 	};
 	var getPropertyFromData = function(node, prop) {
 		var props = node.store.props;
@@ -76,6 +113,10 @@
 		this.loaded = false;
 		this.childNodes = [];
 		this.loading = false;
+		this.label = this.getLabel();
+		this.icon = this.getIcon();
+		this.key = this.getKey();
+		this.disabled = this.getDisabled();
 		if (this.parent) {
 			this.level = this.parent.level + 1;
 		}
@@ -113,9 +154,6 @@
 			store._initDefaultCheckedNode(this);
 		}
 		this.updateLeafState();
-		this.label = this.getLabel();
-		this.icon = this.getIcon();
-		this.key = this.getKey();
 	};
 	Node.prototype.setData = function(data) {
 		var self = this;
@@ -142,10 +180,13 @@
 	Node.prototype.getIcon = function(node) {
 		return getPropertyFromData(this, 'icon');
 	};
+	Node.prototype.getDisabled = function() {
+		return getPropertyFromData(this, 'disabled');
+	};
 	Node.prototype.getKey = function() {
 		var self = this;
 		var nodeKey = self.store.key;
-		if (this.data)
+		if (self.data)
 			return self.data[nodeKey];
 		return null;
 	};
@@ -205,14 +246,14 @@
 			}
 		});
 		if (targetNode) {
-			this.removeChild(targetNode);
+			self.removeChild(targetNode);
 		}
 	};
 	Node.prototype.expand = function(callback, expandParent) {
 		var self = this;
 		var done = function() {
 			if (expandParent) {
-				var parent = this.parent;
+				var parent = self.parent;
 				while (parent.level > 0) {
 					parent.expanded = true;
 					parent = parent.parent;
@@ -222,9 +263,10 @@
 			if (callback)
 				callback();
 		};
-		if (this.shouldLoadData()) {
-			this.loadData(function(data) {
+		if (self.shouldLoadData()) {
+			self.loadData(function(data) {
 				if (data instanceof Array) {
+					initLazyLoadChild(self);
 					done();
 				}
 			});
@@ -260,22 +302,38 @@
 		}
 		self.isLeaf = false;
 	};
-	Node.prototype.setChecked = function(value, deep) {
+	Node.prototype.setChecked = function(value, deep, recursion, passValue) {
 		var self = this;
 		self.indeterminate = value === 'half';
 		self.checked = value === true;
-		var handleDescendants = function() {
-			if (deep) {
+		var selfChildState = getChildState(self);
+		var all = selfChildState.all;
+		var allWithoutDisable = selfChildState.allWithoutDisable;
+		if (self.childNodes.length && !all && allWithoutDisable) {
+			self.checked = false;
+			value = false;
+		}
+		var handleDescendants = function(lazy) {
+			if (deep && !lazy) {
 				var childNodes = self.childNodes;
 				for (var i = 0, j = childNodes.length; i < j; i++) {
 					var child = childNodes[i];
-					child.setChecked(value !== false, deep);
+					passValue = passValue || value !== false;
+					var isCheck = child.disabled ? child.checked : passValue;
+					child.setChecked(isCheck, deep, true, passValue);
+				}
+				var childState = getChildState(childNodes);
+				var half = childState.half;
+				var all = childState.all;
+				if (!all) {
+					self.checked = all;
+					self.indeterminate = half;
 				}
 			}
 		};
 		if (!self.store.checkStrictly && self.shouldLoadData()) {
 			self.loadData(function() {
-				handleDescendants();
+				handleDescendants(true);
 			}, {
 				checked: value !== false
 			});
@@ -283,9 +341,8 @@
 			handleDescendants();
 		}
 		var parent = self.parent;
-		if (!parent || parent.level === 0)
-			return;
-		if (!self.store.checkStrictly) {
+		if (!parent || parent.level === 0) return;
+		if (!self.store.checkStrictly && !recursion) {
 			reInitChecked(parent);
 		}
 	};
@@ -340,7 +397,7 @@
 	Node.prototype.loadData = function(callback, defaultProps) {
 		var self = this;
 		defaultProps = defaultProps || {}
-		if (self.store.lazy === true && self.store.load && !self.loaded && !self.loading) {
+		if (self.store.lazy === true && self.store.load && !self.loaded && (!self.loading || Object.keys(defaultProps).length)) {
 			self.loading = true;
 			var resolve = function(children) {
 				self.loaded = true;
@@ -439,7 +496,7 @@
 	TreeStore.prototype.remove = function(data) {
 		var self = this;
 		var node = self.getNode(data);
-		if (node) {
+		if (node && node.parent) {
 			node.parent.removeChild(node);
 		}
 	};
@@ -541,55 +598,44 @@
 		var self = this;
 		var leafOnly = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 		var checkedKeys = arguments[2];
-		var allNodes = self._getAllNodes();
-		allNodes.sort(function(a, b) {
-			return a.level < b.level;
-		});
+		var allNodes = self._getAllNodes().sort(function(a, b){return b.level - a.level});
+		var cache = Object.create(null);
 		var keys = Object.keys(checkedKeys);
-		allNodes.forEach(function(node) {
-			var checked = keys.indexOf(node.data[key] + '') > -1;
-			if (!node.isLeaf) {
-				if (!self.checkStrictly) {
-					var childNodes = node.childNodes;
-					var all = true;
-					var none = true;
-					for (var i = 0, j = childNodes.length; i < j; i++) {
-						var child = childNodes[i];
-						if (child.checked !== true || child.indeterminate) {
-							all = false;
-						}
-						if (child.checked !== false || child.indeterminate) {
-							none = false;
-						}
-					}
-					if (all) {
-						node.setChecked(true, !self.checkStrictly);
-					} else if (!all && !none) {
-						checked = checked ? true : 'half';
-						node.setChecked(checked, !self.checkStrictly && checked === true);
-					} else if (none) {
-						node.setChecked(checked, !self.checkStrictly);
-					}
-				} else {
-					node.setChecked(checked, false);
-				}
-				if (leafOnly) {
+		allNodes.forEach(function(node){return node.setChecked(false, false)});
+		for (var i = 0, j = allNodes.length; i < j; i++) {
+			var node = allNodes[i];
+			var nodeKey = node.data[key].toString();
+			var checked = keys.indexOf(nodeKey) > -1;
+			if (!checked) {
+				if (node.checked && !cache[nodeKey]) {
 					node.setChecked(false, false);
-					var traverse = function(node) {
-						var childNodes = node.childNodes;
-						childNodes.forEach(function(child) {
-							if (!child.isLeaf) {
-								child.setChecked(false, false);
-							}
-							traverse(child);
-						});
-					};
-					traverse(node);
 				}
-			} else {
-				node.setChecked(checked, false);
+				continue;
 			}
-		});
+			var parent = node.parent;
+			while (parent && parent.level > 0) {
+				cache[parent.data[key]] = true;
+				parent = parent.parent;
+			}
+			if (node.isLeaf || self.checkStrictly) {
+				node.setChecked(true, false);
+				continue;
+			}
+			node.setChecked(true, true);
+			if (leafOnly) {
+				node.setChecked(false, false);
+				var traverse = function(node) {
+					var childNodes = node.childNodes;
+					childNodes.forEach(function(child) {
+						if (!child.isLeaf) {
+							child.setChecked(false, false);
+						}
+						traverse(child);
+					});
+				};
+				traverse(node);
+			}
+		}
 	};
 	TreeStore.prototype.setCheckedNodes = function(array) {
 		var self = this;
@@ -637,13 +683,17 @@
 	};
 	TreeStore.prototype.setCurrentNodeKey = function(key) {
 		var self = this;
-		var node = self.getNode(key);
-		if (node) {
-			self.currentNode = node;
+		if (!key) {
+			self.currentNode = null;
+		} else {
+			var node = self.getNode(key);
+			if (node) {
+				self.currentNode = node;
+			}
 		}
 	};
 	var VueTreeNode = {
-		template: '<div class="vue-tree-node" @click.stop="handleClick" v-show="node.visible" :class="{\'is-expanded\': childNodeRendered && expanded,\'is-current\': tree.store.currentNode === node,\'is-hidden\': !node.visible}"><div class="vue-tree-node__content" :style="{ \'padding-left\': (node.level - 1) * tree.indent + \'px\' }"><span class="vue-tree-node__expand-icon" @click.stop="handleExpandIconClick" :class="{ \'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded }"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" @change="handleCheckChange" @click.native.stop="handleUserClick"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
+		template: '<div class="vue-tree-node" @click.stop="handleClick" v-show="node.visible" :class="{\'is-expanded\': childNodeRendered && expanded,\'is-current\': tree.store.currentNode === node,\'is-hidden\': !node.visible}"><div class="vue-tree-node__content" :style="{ \'padding-left\': (node.level - 1) * tree.indent + \'px\' }"><span class="vue-tree-node__expand-icon" @click.stop="handleExpandIconClick" :class="{ \'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded }"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
 		name: 'VueTreeNode',
 		componentName: 'VueTreeNode',
 		mixins: [VueUtil.component.emitter],
@@ -657,7 +707,6 @@
 			renderContent: Function
 		},
 		components: {
-			VueCheckbox: VueCheckbox(),
 			CollapseTransition: VueUtil.component.collapseTransition,
 			NodeContent: {
 				props: {
@@ -741,15 +790,8 @@
 					this.$emit('node-expand', this.node.data, this.node, this);
 				}
 			},
-			handleUserClick: function() {
-				if (this.node.indeterminate) {
-					this.node.setChecked(this.node.checked, !this.tree.checkStrictly);
-				}
-			},
 			handleCheckChange: function(ev) {
-				if (!this.node.indeterminate) {
-					this.node.setChecked(ev.target.checked, !this.tree.checkStrictly);
-				}
+				this.node.setChecked(ev.target.checked, !this.tree.checkStrictly);
 			},
 			handleChildNodeExpand: function(nodeData, node, instance) {
 				this.broadcast('VueTreeNode', 'tree-node-expand', node);
@@ -788,7 +830,7 @@
 		}
 	};
 	var VueTree = {
-		template: '<div class="vue-tree" :class="{ \'vue-tree--highlight-current\': highlightCurrent }"><vue-tree-node v-for="child in root.childNodes" :node="child" :props="props" :key="getNodeKey(child)" :render-content="renderContent" @node-expand="handleNodeExpand"></vue-tree-node><div class="vue-tree__empty-block" v-if="!root.childNodes || root.childNodes.length === 0"><span class="vue-tree__empty-text">{{ emptyText || $t(\'vue.tree.emptyText\') }}</span></div></div>',
+		template: '<div class="vue-tree" :class="{ \'vue-tree--highlight-current\': highlightCurrent }"><vue-tree-node v-for="child in root.childNodes" :node="child" :props="props" :key="getNodeKey(child)" :render-content="renderContent" @node-expand="handleNodeExpand"></vue-tree-node><div class="vue-tree__empty-block" v-if="!root.childNodes || root.childNodes.length === 0"><span class="vue-tree__empty-text">{{ $t(\'vue.tree.emptyText\') }}</span></div></div>',
 		name: 'VueTree',
 		mixins: [VueUtil.component.emitter],
 		components: {
@@ -804,12 +846,6 @@
 		props: {
 			data: {
 				type: Array
-			},
-			emptyText: {
-				type: String,
-				default: function() {
-					return 'no data';
-				}
 			},
 			nodeKey: String,
 			checkStrictly: Boolean,
@@ -834,7 +870,8 @@
 					return {
 						children: 'children',
 						label: 'label',
-						icon: 'icon'
+						icon: 'icon',
+						disabled: 'disabled'
 					};
 				}
 			},
@@ -891,6 +928,27 @@
 					return node.data[nodeKey];
 				}
 				return index;
+			},
+			getCurrentNode: function() {
+				var currentNode = this.store.getCurrentNode();
+				return currentNode ? currentNode.data : null;
+			},
+			getCurrentKey: function() {
+				if (!this.nodeKey) return null;
+				var currentNode = this.store.getCurrentNode();
+				return currentNode ? currentNode.data[this.nodeKey] : null;
+			},
+			setCurrentNode: function(node) {
+				if (!this.nodeKey)
+					throw new Error('[Tree] nodeKey is required in setCheckedNodes');
+				if (!node) return this.store.setCurrentNodeKey(null);
+				var key = node[this.nodeKey];
+				return this.store.setCurrentNodeKey(key);
+			},
+			setCurrentKey: function(key) {
+				if (!this.nodeKey)
+					throw new Error('[Tree] nodeKey is required in setCheckedNodes');
+				return this.store.setCurrentNodeKey(key);
 			},
 			getCheckedNodes: function(leafOnly) {
 				return this.store.getCheckedNodes(leafOnly);

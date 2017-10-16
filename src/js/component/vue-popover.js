@@ -9,10 +9,14 @@
 })('VuePopover', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
 	var VuePopover = {
-		template: '<span><transition :name="transition" @after-leave="doDestroy"><div class="vue-popover" :class="[popperClass]" ref="popper" v-show="!disabled && showPopper" :style="{ width: width + \'px\' }"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{ content }}</slot></div></transition><slot name="reference"></slot></span>',
+		template: '<span><transition :name="transition" @after-leave="doDestroy"><div class="vue-popover" :class="[popperClass, {\'no-arrow\': !visibleArrow}]" ref="popper" v-show="!disabled && showPopper" :style="{ width: popoverWidth + \'px\' }"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{ content }}</slot></div></transition><slot name="reference"></slot></span>',
 		name: 'VuePopover',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		props: {
+			openDelay: {
+				type: Number,
+				default: 0
+			},
 			trigger: {
 				type: String,
 				default: 'click',
@@ -25,7 +29,7 @@
 			content: String,
 			reference: {},
 			popperClass: String,
-			width: {},
+			width: [String, Number],
 			visibleArrow: {
 				default: true
 			},
@@ -34,9 +38,23 @@
 				default: 'fade-in-linear'
 			}
 		},
+		data: function() {
+			return {
+				popoverWidth: null
+			}
+		},
 		watch: {
 			showPopper: function(newVal, oldVal) {
-				newVal ? this.$emit('show') : this.$emit('hide');
+				if (newVal) {
+					this.popoverWidth = this.width;
+					if (!this.popoverWidth) {
+						var reference = this.reference || this.$refs.reference;
+						this.popoverWidth = parseInt(VueUtil.getStyle(reference, 'width'));
+					}
+					this.$emit('show');
+				} else {
+					this.$emit('hide');
+				}
 			}
 		},
 		mounted: function() {
@@ -90,14 +108,14 @@
 				this.showPopper = false;
 			},
 			handleMouseEnter: function() {
-				this.showPopper = true;
-				clearTimeout(this._timer);
-			},
-			handleMouseLeave: function() {
 				var self = this;
 				self._timer = setTimeout(function() {
-					self.showPopper = false;
-				}, 200);
+					self.showPopper = true;
+					clearTimeout(self._timer);
+				}, self.openDelay);
+			},
+			handleMouseLeave: function() {
+				this.showPopper = false;
 			},
 			handleDocumentClick: function(e) {
 				var reference = this.reference || this.$refs.reference;
@@ -126,6 +144,6 @@
 		vnode.context.$refs[binding.arg].$refs.reference = el;
 	};
 	Vue.directive('popover', directive);
-	Vue.component(VuePopover.name, VuePopover);
 	VuePopover.directive = directive;
+	Vue.component(VuePopover.name, VuePopover);
 });

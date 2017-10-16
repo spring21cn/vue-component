@@ -1,12 +1,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueButton', 'VueButtonGroup'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueButton'], context['VueButtonGroup']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueDropdown', this, function(Vue, VueUtil, VueButton, VueButtonGroup) {
+})('VueDropdown', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueDropdown = {
 		template: '',
@@ -15,10 +15,6 @@
 		mixins: [VueUtil.component.emitter],
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
-		},
-		components: {
-			VueButton: VueButton(),
-			VueButtonGroup: VueButtonGroup()
 		},
 		props: {
 			trigger: {

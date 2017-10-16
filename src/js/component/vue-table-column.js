@@ -1,12 +1,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueCheckbox', 'VueTag'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueCheckbox'], context['VueTag']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueTableColumn', this, function(Vue, VueUtil, VueCheckbox, VueTag) {
+})('VueTableColumn', this, function(Vue, VueUtil) {
 	'use strict';
 	var columnIdSeed = 1;
 	var defaults = {
@@ -35,6 +35,7 @@
 	};
 	var forced = {
 		selection: {
+			property: 'selection column',
 			renderHeader: function(createElement) {
 				return createElement('vue-checkbox', {
 					nativeOn: {
@@ -66,9 +67,9 @@
 			resizable: false
 		},
 		index: {
+			property: 'index column',
 			renderHeader: function(createElement, data) {
-				var column = data.column;
-				return column.label || '#';
+				return '#';
 			},
 			renderCell: function(createElement, data) {
 				var n = data.$index;
@@ -77,6 +78,7 @@
 			sortable: false
 		},
 		expand: {
+			property: 'expand column',
 			renderHeader: function(createElement, data) {
 				return '';
 			},
@@ -135,13 +137,11 @@
 		var row = data.row;
 		var column = data.column;
 		var property = column.property;
+		var value = property && property.indexOf('.') === -1 ? row[property] : getValueByPath(row, property);
 		if (column && column.formatter) {
-			return column.formatter(row, column);
+			return column.formatter(row, column, value);
 		}
-		if (property && property.indexOf('.') === -1) {
-			return row[property];
-		}
-		return getValueByPath(row, property);
+		return value;
 	};
 	var VueTableColumn = {
 		name: 'VueTableColumn',
@@ -177,6 +177,10 @@
 			formatter: Function,
 			selectable: Function,
 			reserveSelection: Boolean,
+			visible: {
+				type: Boolean,
+				default: true
+			},
 			filterMethod: Function,
 			filteredValue: Array,
 			filters: Array,
@@ -197,10 +201,6 @@
 			this.column = {};
 			this.$index = 0;
 		},
-		components: {
-			VueCheckbox: VueCheckbox(),
-			VueTag: VueTag()
-		},
 		computed: {
 			owner: function() {
 				var parent = this.$parent;
@@ -211,9 +211,10 @@
 			}
 		},
 		created: function() {
+			var slots = this.$slots.default;
 			this.customRender = this.$options.render;
 			this.$options.render = function(createElement) {
-				return createElement('div', this.$slots.default)
+				return createElement('div', slots)
 			}
 			var columnId = this.columnId = this.columnKey || ((this.$parent.tableId || (this.$parent.columnId + '_')) + 'column_' + columnIdSeed++);
 			var parent = this.$parent;
@@ -246,6 +247,7 @@
 				renderHeader: this.renderHeader,
 				minWidth: minWidth,
 				width: width,
+				visible: this.visible,
 				isColumnGroup: isColumnGroup,
 				context: this.context,
 				align: this.align ? 'is-' + this.align : null,
@@ -258,13 +260,14 @@
 				selectable: this.selectable,
 				reserveSelection: this.reserveSelection,
 				fixed: this.fixed === '' ? true : this.fixed,
+				fixedIndex: -1,
 				filterMethod: this.filterMethod,
 				filters: this.filters,
 				filterable: this.filters || this.filterMethod,
 				filterMultiple: this.filterMultiple,
 				filterOpened: false,
 				filteredValue: this.filteredValue || [],
-				filterPlacement: this.filterPlacement || '',
+				filterPlacement: this.filterPlacement || 'bottom',
 				getCellClass: function(rowIndex, cellIndex, rowData) {
 					var classes = [];
 					var className = this.className;
@@ -279,10 +282,10 @@
 			VueUtil.merge(column, forced[type] || {});
 			this.columnConfig = column;
 			var renderCell = column.renderCell;
-			var _self = this;
+			var self = this;
 			if (type === 'expand') {
 				owner.renderExpanded = function(createElement, data) {
-					return _self.$scopedSlots.default ? _self.$scopedSlots.default(data) : _self.$slots.default;
+					return self.$scopedSlots.default ? self.$scopedSlots.default(data) : self.$slots.default;
 				}
 				column.renderCell = function(createElement, data) {
 					return createElement('div', {
@@ -292,29 +295,29 @@
 				return;
 			}
 			column.renderCell = function(createElement, data) {
-				if (_self.$vnode.data.inlineTemplate) {
+				if (self.$vnode.data.inlineTemplate) {
 					renderCell = function() {
-						data._self = _self.context || data._self;
-						if (Object.prototype.toString.call(data._self) === '[object Object]') {
-							for (var prop in data._self) {
+						data.self = self.context || data.self;
+						if (Object.prototype.toString.call(data.self) === '[object Object]') {
+							for (var prop in data.self) {
 								if (!data.hasOwnProperty(prop)) {
-									data[prop] = data._self[prop];
+									data[prop] = data.self[prop];
 								}
 							}
 						}
-						data._staticTrees = _self._staticTrees;
-						data.$options.staticRenderFns = _self.$options.staticRenderFns;
-						return _self.customRender.call(data);
+						data._staticTrees = self._staticTrees;
+						data.$options.staticRenderFns = self.$options.staticRenderFns;
+						return self.customRender.call(data);
 					}
-				} else if (_self.$scopedSlots.default) {
+				} else if (self.$scopedSlots.default) {
 					renderCell = function() {
-						return _self.$scopedSlots.default(data);
+						return self.$scopedSlots.default(data);
 					}
 				}
 				if (!renderCell) {
 					renderCell = DEFAULT_RENDER_CELL;
 				}
-				return _self.showOverflowTooltip || _self.showTooltipWhenOverflow ? createElement('div',
+				return self.showOverflowTooltip || self.showTooltipWhenOverflow ? createElement('div',
 				{ 'class': 'cell vue-tooltip', style: 'width:' + (data.column.realWidth || data.column.width) + 'px' },
 				[renderCell(createElement, data)]) : createElement('div', {
 					class: 'cell'
@@ -386,6 +389,12 @@
 			sortable: function(newVal) {
 				if (this.columnConfig) {
 					this.columnConfig.sortable = newVal;
+				}
+			},
+			visible: function(newVal) {
+				if (this.columnConfig) {
+					this.columnConfig.visible = newVal;
+					this.owner.store.scheduleLayout();
 				}
 			}
 		},

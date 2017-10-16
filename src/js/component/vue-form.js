@@ -1,15 +1,15 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueForm', this, function(Vue) {
+})('VueForm', this, function(Vue, VueUtil) {
 	'use strict';
 	var VueForm = {
-		template: '<form class="vue-form" :class="[ labelPosition ? \'vue-form--label-\' + labelPosition : \'\', { \'vue-form--inline\': inline } ]"><slot></slot></form>',
+		template: '<form class="vue-form" :class="[ labelPosition ? \'vue-form--label-\' + labelPosition : \'\', { \'vue-form--inline\': inline } ]"><slot></slot><input style="display:none" /></form>',
 		name: 'VueForm',
 		componentName: 'VueForm',
 		props: {
@@ -23,6 +23,10 @@
 			},
 			inline: Boolean,
 			showMessage: {
+				type: Boolean,
+				default: true
+			},
+			labelResponsive: {
 				type: Boolean,
 				default: true
 			}
@@ -72,7 +76,7 @@
 			},
 			validateField: function(prop, cb) {
 				var field = this.fields.filter(function(field) {
-					return ( field.prop === prop)
+					return (field.prop === prop)
 				})[0];
 				if (!field) {
 					throw new Error('must call validateField with valid prop string!');

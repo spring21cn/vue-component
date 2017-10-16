@@ -20,7 +20,7 @@
 				type: String,
 				default: 'info'
 			},
-			box:  {
+			plain:  {
 				type: Boolean,
 				default: false
 			}
@@ -30,8 +30,8 @@
 				return 'vue-note--' + this.type;
 			},
 			typeBox: function() {
-				if (this.box) {
-					return 'vue-note--box';
+				if (this.plain) {
+					return 'vue-note--plain';
 				}
 			}
 		}

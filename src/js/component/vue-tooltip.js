@@ -4,6 +4,7 @@
 		define(['Vue', 'VuePopper', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VuePopper'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueTooltip', this, function(Vue, VuePopper, VueUtil) {
 	'use strict';
@@ -14,18 +15,14 @@
 	};
 	var VueTooltip = {
 		name: 'VueTooltip',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		props: {
 			openDelay: {
 				type: Number,
 				default: 0
 			},
 			disabled: Boolean,
-			manual: Boolean,
-			effect: {
-				type: String,
-				default: 'dark'
-			},
+			effect: String,
 			popperClass: String,
 			content: String,
 			visibleArrow: {
@@ -45,7 +42,7 @@
 			},
 			enterable: {
 				type: Boolean,
-				default: true
+				default: false
 			}
 		},
 		beforeCreate: function() {
@@ -58,12 +55,13 @@
 					return this.node;
 				}
 			}).$mount();
-			self.debounceClose = VueUtil.component.debounce(200, function() {
+			self.debounceClose = VueUtil.component.debounce(100, function() {
 				self.handleClosePopper();
 			});
 		},
 		render: function(createElement) {
 			var self = this;
+			var effect = self.effect === 'light' ? 'light' : 'dark';
 			if (self.popperVM) {
 				self.popperVM.node = createElement('transition', {
 					attrs: {
@@ -87,7 +85,7 @@
 						name: 'show',
 						value: !self.disabled && self.showPopper
 					}],
-					class: ['vue-tooltip__popper', 'is-' + self.effect, self.popperClass]
+					class: ['vue-tooltip__popper', 'is-' + effect, self.popperClass]
 				}, [self.$slots.content || self.content])]);
 			}
 			if (!self.$slots.default || !self.$slots.default.length)
@@ -116,17 +114,15 @@
 			},
 			handleShowPopper: function() {
 				var self = this;
-				if (!self.expectedState || self.manual)
+				if (!self.expectedState)
 					return;
-				clearTimeout(self.timeout);
 				self.timeout = setTimeout(function() {
 					self.showPopper = true;
+					clearTimeout(self.timeout);
 				}, self.openDelay);
 			},
 			handleClosePopper: function() {
-				if (this.enterable && this.expectedState || this.manual)
-					return;
-				clearTimeout(this.timeout);
+				if (this.enterable && this.expectedState) return;
 				this.showPopper = false;
 			},
 			setExpectedState: function(expectedState) {
@@ -135,7 +131,4 @@
 		}
 	};
 	Vue.component(VueTooltip.name, VueTooltip);
-	return function() {
-		return VueTooltip;
-	}
 });

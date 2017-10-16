@@ -12,9 +12,10 @@
 		if (vnodes) {
 			return vnodes.map(function(elt) {
 				return elt.elm;
-			}).indexOf(element);
+			}).indexOf(element)
+		} else {
+			return -1;
 		}
-		return -1;
 	}
 	var computeIndexes = function(slots, children) {
 		if (!slots) {
@@ -23,8 +24,11 @@
 		var elmFromNodes = slots.map(function(elt) {
 			return elt.elm;
 		});
-		return [].concat(VueUtil.component.toConsumableArray(children)).map(function(elt) {
-			return elmFromNodes.indexOf(elt);
+		var rawIndexes = [].concat(VueUtil.component.toConsumableArray(children)).map(function(elt) {
+				return elmFromNodes.indexOf(elt);
+		});
+		return rawIndexes.filter(function(index){
+			return index !== -1;
 		});
 	}
 	var emit = function(evtName, evtData) {
@@ -52,19 +56,9 @@
 		name: 'VueSortable',
 		props: {
 			options: Object,
-			list: {
-				type: Array,
-				required: false,
-				default: null
-			},
 			value: {
 				type: Array,
-				required: false,
 				default: null
-			},
-			noTransitionOnDrag: {
-				type: Boolean,
-				default: false
 			},
 			clone: {
 				type: Function,
@@ -83,25 +77,15 @@
 		},
 		data: function() {
 			return {
-				transitionMode: false,
 				componentMode: false
 			};
 		},
 		render: function(createElement) {
-			if (this.$slots.default && this.$slots.default.length === 1) {
-				var child = this.$slots.default[0];
-				if (child.componentOptions && child.componentOptions.tag === "transition-group") {
-					this.transitionMode = true;
-				}
-			}
 			return createElement(this.element, null, this.$slots.default);
 		},
 		mounted: function() {
 			var self = this;
 			self.componentMode = self.element.toLowerCase() !== self.$el.nodeName.toLowerCase();
-			if (self.componentMode && self.transitionMode) {
-				throw new Error('Transition-group inside component is not suppported. Please alter element value or remove transition-group. Current element value: ' + self.element);
-			}
 			var optionsAdded = {};
 			eventsListened.forEach(function(elt) {
 				optionsAdded['on' + elt] = delegateAndEmit.call(self, elt);
@@ -110,10 +94,11 @@
 				optionsAdded['on' + elt] = emit.bind(self, elt);
 			});
 			var options = VueUtil.merge({}, self.options, optionsAdded, {
-				onMove: function(evt) {
-					return self.onDragMove(evt);
+				onMove: function(evt, originalEvent) {
+					return self.onDragMove(evt, originalEvent);
 				}
 			});
+			!('draggable'in options) && (options.draggable = '>*');
 			self._sortable = new Sortable(self.rootContainer,options);
 			self.computeIndexes();
 		},
@@ -122,22 +107,25 @@
 		},
 		computed: {
 			rootContainer: function() {
-				return this.transitionMode ? this.$el.children[0] : this.$el;
+				return this.$el;
 			},
 			isCloning: function() {
 				return !!this.options && !!this.options.group && this.options.group.pull === 'clone';
 			},
 			realList: function() {
-				return !!this.list ? this.list : this.value;
+				return this.value;
 			}
 		},
 		watch: {
-			options: function(newOptionValue) {
-				for (var property in newOptionValue) {
-					if (readonlyProperties.indexOf(property) == -1) {
-						this._sortable.option(property, newOptionValue[property]);
+			options: {
+				handler: function(newOptionValue) {
+					for (var property in newOptionValue) {
+						if (readonlyProperties.indexOf(property) === -1) {
+							this._sortable.option(property, newOptionValue[property]);
+						}
 					}
-				}
+				},
+				deep: true
 			},
 			realList: function() {
 				this.computeIndexes();
@@ -148,8 +136,7 @@
 				if (this.componentMode) {
 					return this.$children[0].$slots.default;
 				}
-				var rawNodes = this.$slots.default;
-				return this.transitionMode ? rawNodes[0].child.$slots.default : rawNodes;
+				return this.$slots.default;
 			},
 			computeIndexes: function() {
 				var self = this;
@@ -159,18 +146,16 @@
 			},
 			getUnderlyingVm: function(htmlElt) {
 				var index = computeVmIndex(this.getChildrenNodes(), htmlElt);
+				if (index === -1)
+					return null;
 				var element = this.realList[index];
 				return {
 					index: index,
 					element: element
 				};
 			},
-			getUnderlyingPotencialDraggableComponent: function(_ref) {
-				var __vue__ = _ref.__vue__;
-				if (!__vue__ || !__vue__.$options || __vue__.$options._componentTag !== "transition-group") {
-					return __vue__;
-				}
-				return __vue__.$parent;
+			getUnderlyingPotencialDraggableComponent: function(ref) {
+				return ref.__vue__;
 			},
 			emitChanges: function(evt) {
 				var self = this;
@@ -179,30 +164,26 @@
 				});
 			},
 			alterList: function(onList) {
-				if (!!this.list) {
-					onList(this.list);
-				} else {
-					var newList = [].concat(VueUtil.component.toConsumableArray(this.value));
-					onList(newList);
-					this.$emit('input', newList);
-				}
+				var newList = [].concat(VueUtil.component.toConsumableArray(this.value));
+				onList(newList);
+				this.$emit('input', newList);
 			},
 			spliceList: function() {
 				var _arguments = arguments;
-				var spliceList = function spliceList(list) {
+				var spliceList = function(list) {
 					return list.splice.apply(list, _arguments);
 				};
 				this.alterList(spliceList);
 			},
 			updatePosition: function(oldIndex, newIndex) {
-				var updatePosition = function updatePosition(list) {
+				var updatePosition = function(list) {
 					return list.splice(newIndex, 0, list.splice(oldIndex, 1)[0]);
 				};
 				this.alterList(updatePosition);
 			},
-			getRelatedContextFromMoveEvent: function(_ref2) {
-				var to = _ref2.to
-				 , related = _ref2.related;
+			getRelatedContextFromMoveEvent: function(ref) {
+				var to = ref.to
+				var related = ref.related;
 				var component = this.getUnderlyingPotencialDraggableComponent(to);
 				if (!component) {
 					return {
@@ -216,34 +197,19 @@
 				};
 				if (to !== related && list && component.getUnderlyingVm) {
 					var destination = component.getUnderlyingVm(related);
-					return VueUtil.merge(destination, context);
+					if (destination) {
+						return VueUtil.merge(destination, context);
+					}
 				}
 				return context;
 			},
 			getVmIndex: function(domIndex) {
 				var indexes = this.visibleIndexes;
 				var numberIndexes = indexes.length;
-				var vmIndex;
-				if (domIndex > numberIndexes - 1) {
-					vmIndex = numberIndexes||0;
-				} else {
-					vmIndex = indexes[domIndex]||0;
-				}
-				vmIndex < 0 ? vmIndex = 0 : undefined;
-				return vmIndex;
+				return (domIndex > numberIndexes - 1) ? numberIndexes : indexes[domIndex]
 			},
 			getComponent: function() {
 				return this.$slots.default[0].componentInstance;
-			},
-			resetTransitionData: function(index) {
-				if (!this.noTransitionOnDrag || !this.transitionMode) {
-					return;
-				}
-				var nodes = this.getChildrenNodes();
-				nodes[index].data = null;
-				var transitionContainer = this.getComponent();
-				transitionContainer.children = [];
-				transitionContainer.kept = undefined;
 			},
 			onDragStart: function(evt) {
 				this.context = this.getUnderlyingVm(evt.item);
@@ -256,7 +222,7 @@
 					return;
 				}
 				VueUtil.removeNode(evt.item);
-				var newIndex = evt.newIndex;
+				var newIndex = this.getVmIndex(evt.newIndex);
 				this.spliceList(newIndex, 0, element);
 				this.computeIndexes();
 				var added = {
@@ -279,16 +245,15 @@
 					element: this.context.element,
 					oldIndex: oldIndex
 				};
-				this.resetTransitionData(oldIndex);
 				this.emitChanges({
 					removed: removed
 				});
 			},
 			onDragUpdate: function(evt) {
-				var oldIndex = evt.oldIndex;
-				var newIndex = evt.newIndex;
+				var oldIndex = this.context.index;
+				var newIndex = this.getVmIndex(evt.newIndex);
 				VueUtil.removeNode(evt.item);
-				VueUtil.insertNodeAt(evt.from, evt.item, oldIndex);
+				VueUtil.insertNodeAt(evt.from, evt.item, evt.oldIndex);
 				this.updatePosition(oldIndex, newIndex);
 				var moved = {
 					element: this.context.element,
@@ -303,11 +268,13 @@
 				if (!relatedContext.element) {
 					return 0;
 				}
-				var domChildren = [].concat(VueUtil.component.toConsumableArray(evt.to.children));
+				var domChildren = [].concat(VueUtil.component.toConsumableArray(evt.to.children)).filter(function(el) {
+					return el.style['display'] !== 'none';
+				});
 				var currentDOMIndex = domChildren.indexOf(evt.related);
 				var currentIndex = relatedContext.component.getVmIndex(currentDOMIndex);
 				var draggedInList = domChildren.indexOf(draggingElement) != -1;
-				return draggedInList ? currentIndex : currentIndex + 1;
+				return (draggedInList || !evt.willInsertAfter) ? currentIndex : currentIndex + 1
 			},
 			onDragMove: function(evt) {
 				var onMove = this.move;

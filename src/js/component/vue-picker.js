@@ -1,21 +1,21 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VuePopper', 'VueInput'], definition);
+		define(['Vue', 'VueUtil', 'VuePopper'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper'], context['VueInput']);
+		context[name] = definition(context['Vue'], context['VueUtil'], context['VuePopper']);
 	}
-})('VuePicker', this, function(Vue, VueUtil, VuePopper, VueInput) {
+})('VuePicker', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
 	var NewPopper = {
 		props: {
-			appendToBody: VuePopper().props.appendToBody,
-			offset: VuePopper().props.offset,
-			boundariesPadding: VuePopper().props.boundariesPadding
+			appendToBody: VuePopper.props.appendToBody,
+			offset: VuePopper.props.offset,
+			boundariesPadding: VuePopper.props.boundariesPadding
 		},
-		methods: VuePopper().methods,
-		data: VuePopper().data,
-		beforeDestroy: VuePopper().beforeDestroy
+		methods: VuePopper.methods,
+		data: VuePopper.data,
+		beforeDestroy: VuePopper.beforeDestroy
 	};
 	var DEFAULT_FORMATS = {
 		date: 'yyyy-MM-dd',
@@ -140,7 +140,7 @@
 		right: 'bottom-end'
 	};
 	var VuePicker = {
-		template: '<vue-input class="vue-date-editor" :class="\'vue-date-editor--\' + type" :readonly="readonly" :disabled="disabled" :size="size" v-clickoutside="handleClose" :placeholder="placeholder" @focus="handleFocus" @blur="handleBlur" @keydown.native="handleKeydown" :value="displayValue" @change.native="displayValue = $event.target.value" :validateEvent="false" ref="reference" ><i slot="icon" class="vue-input__icon" @click="handleClickIcon" :class="[showClose ? \'vue-icon-close\' : triggerClass]" @mouseenter="handleMouseEnterIcon" @mouseleave="showClose = false" v-if="haveTrigger"></i></vue-input>',
+		template: '<vue-input class="vue-date-editor" :class="\'vue-date-editor--\' + type" :readonly="readonly" :autofocus="autofocus" :tabindex="tabindex" :disabled="disabled" :size="size" v-clickoutside="handleClose" :placeholder="placeholder" @mousedown.native="handleMouseDown" @blur="handleBlur" @keydown.native="handleKeydown" :value="displayValue" @change.native="displayValue = $event.target.value" :validateEvent="false" ref="reference" ><i slot="icon" class="vue-input__icon" @click="handleClickIcon" :class="[showClose ? \'vue-icon-close\' : triggerClass]" @mouseenter="handleMouseEnterIcon" @mouseleave="showClose = false" v-if="haveTrigger"></i></vue-input>',
 		mixins: [VueUtil.component.emitter, NewPopper],
 		props: {
 			size: String,
@@ -151,6 +151,8 @@
 			},
 			placeholder: String,
 			disabled: Boolean,
+			autofocus: Boolean,
+			tabindex: Number,
 			clearable: {
 				type: Boolean,
 				default: true
@@ -166,9 +168,6 @@
 				default: ' - '
 			},
 			pickerOptions: {}
-		},
-		components: {
-			VueInput: VueInput()
 		},
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
@@ -215,7 +214,7 @@
 			},
 			refInput: function() {
 				if (this.reference)
-					return this.reference.querySelector('input');
+					return this.$refs.reference.$refs.input;
 				return {};
 			},
 			valueIsEmpty: function() {
@@ -285,11 +284,24 @@
 			this.placement = PLACEMENT_MAP[this.align] || PLACEMENT_MAP.left;
 		},
 		methods: {
+			focus: function() {
+				this.refInput.focus();
+			},
 			handleMouseEnterIcon: function() {
 				if (this.disabled)
 					return;
 				if (!this.valueIsEmpty && this.clearable) {
 					this.showClose = true;
+				}
+			},
+			handleMouseDown: function(event) {
+				if (event.target.tagName !== 'INPUT')
+					return;
+				if (this.pickerVisible) {
+					this.handleClose();
+					event.preventDefault();
+				} else {
+					this.pickerVisible = true;
 				}
 			},
 			handleClickIcon: function() {
@@ -399,10 +411,11 @@
 					self.$emit('input', date);
 					self.pickerVisible = self.picker.visible = visible;
 					self.picker.resetView && self.picker.resetView();
+					self.focus();
 				});
 				self.picker.$on('select-range', function(start, end) {
 					self.refInput.setSelectionRange(start, end);
-					self.refInput.focus();
+					self.focus();
 				});
 			},
 			unmountPicker: function() {
@@ -412,12 +425,10 @@
 					if (typeof this.unwatchPickerOptions === 'function') {
 						this.unwatchPickerOptions();
 					}
-					this.picker.$el.parentNode.removeChild(this.picker.$el);
+					VueUtil.removeNode(this.picker.$el);
 				}
 			}
 		}
 	};
-	return function() {
-		return VuePicker;
-	}
+	return VuePicker;
 });

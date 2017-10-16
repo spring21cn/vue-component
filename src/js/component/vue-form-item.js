@@ -30,7 +30,7 @@
 		};
 	}
 	var VueFormItem = {
-		template: '<div class="vue-form-item" :class="{\'is-error\': validateState === \'error\',\'is-validating\': validateState === \'validating\',\'is-required\': isRequired || required}"><label :for="prop" class="vue-form-item__label" v-bind:style="labelStyle" v-if="label">{{label + form.labelSuffix}}</label><div class="vue-form-item__content" v-bind:style="contentStyle"><slot></slot><transition name="vue-zoom-in-top"><div class="vue-form-item__error" v-if="validateState === \'error\' && showMessage && form.showMessage">{{validateMessage}}</div></transition></div></div>',
+		template: '<div class="vue-form-item" :class="{\'is-error\': validateState === \'error\',\'is-validating\': validateState === \'validating\',\'is-required\': isRequired || required}"><label :for="prop" class="vue-form-item__label" v-bind:style="labelStyle" v-if="label" ref="label">{{label + form.labelSuffix}}</label><div class="vue-form-item__content" v-bind:style="contentStyle" ref="content"><slot></slot><transition name="vue-zoom-in-top"><div class="vue-form-item__error" v-if="validateState === \'error\' && showMessage && form.showMessage">{{validateMessage}}</div></transition></div></div>',
 		name: 'VueFormItem',
 		componentName: 'VueFormItem',
 		mixins: [VueUtil.component.emitter],
@@ -59,21 +59,17 @@
 		computed: {
 			labelStyle: function() {
 				var ret = {};
-				if (this.form.labelPosition === 'top')
-					return ret;
-				var labelWidth = this.labelWidth || this.form.labelWidth;
-				if (labelWidth) {
-					ret.width = labelWidth;
+				var labelStyleWidth = this.labelStyleWidth();
+				if (labelStyleWidth) {
+					ret.width = labelStyleWidth;
 				}
 				return ret;
 			},
 			contentStyle: function() {
 				var ret = {};
-				if (this.form.labelPosition === 'top')
-					return ret;
-				var labelWidth = this.labelWidth || this.form.labelWidth;
-				if (labelWidth) {
-					ret.marginLeft = labelWidth;
+				var labelStyleWidth = this.labelStyleWidth();
+				if (labelStyleWidth) {
+					ret.marginLeft = labelStyleWidth;
 				}
 				return ret;
 			},
@@ -109,6 +105,24 @@
 			};
 		},
 		methods: {
+			labelStyleWidth: function() {
+				if (this.form.labelPosition === 'top' || (this.form.labelResponsive && VueUtil.getStyle(this.$refs.label, 'display') === 'inline-block'))
+					return null;
+				var labelWidth = this.labelWidth || this.form.labelWidth;
+				return labelWidth;
+			},
+			resetLabelWidth: function() {
+				if (this.form.labelResponsive  && VueUtil.getStyle(this.$refs.label, 'display') === 'inline-block') {
+					this.$refs.label.style="";
+					this.$refs.content.style="";
+				} else {
+					var labelStyleWidth = this.labelStyleWidth();
+					if (labelStyleWidth) {
+						this.$refs.label.style.width = labelStyleWidth;
+						this.$refs.content.style.marginLeft = labelStyleWidth;
+					}
+				}
+			},
 			validate: function(trigger, callback) {
 				var self = this;
 				callback = callback || noop;
@@ -191,9 +205,15 @@
 					self.$on('vue.form.change', self.onFieldChange);
 				}
 			}
+			if (self.$refs.label) {
+				VueUtil.addResizeListener(document.body, self.resetLabelWidth);
+			}
 		},
 		beforeDestroy: function() {
 			this.dispatch('VueForm', 'vue.form.removeField', [this]);
+			if (this.$refs.label) {
+				VueUtil.removeResizeListener(document.body, this.resetLabelWidth);
+			}
 		}
 	};
 	Vue.component(VueFormItem.name, VueFormItem);

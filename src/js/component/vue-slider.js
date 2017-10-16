@@ -1,23 +1,25 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueUtil', 'VueTooltip'], definition);
+		define(['Vue', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueUtil'], context['VueTooltip']);
+		context[name] = definition(context['Vue'], context['VueUtil']);
 		delete context[name];
 	}
 })('VueSlider', this, function(Vue, VueUtil, VueTooltip) {
 	'use strict';
+	var mouseEvents = VueUtil.component.mouseEvents;
 	var VueSliderButton = {
-		template: '<div class="vue-slider__button-wrapper" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @mousedown="onButtonDown" :class="{ \'hover\': hovering, \'dragging\': dragging }" :style="{ left: currentPosition }" ref="button"><vue-tooltip placement="top" ref="tooltip" :disabled="!showTooltip"><span slot="content">{{ formatValue }}</span><div class="vue-slider__button" :class="{ \'hover\': hovering, \'dragging\': dragging }"></div></vue-tooltip></div>',
+		template: '<div class="vue-slider__button-wrapper" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @mousedown="onButtonDown" @touchstart="onButtonDown" :class="{ \'hover\': hovering, \'dragging\': dragging }" :style="wrapperStyle" ref="button"><vue-tooltip placement="top" ref="tooltip" :disabled="!showTooltip"><span slot="content">{{ formatValue }}</span><div class="vue-slider__button" :class="{ \'hover\': hovering, \'dragging\': dragging }"></div></vue-tooltip></div>',
 		name: 'VueSliderButton',
-		components: {
-			VueTooltip: VueTooltip()
-		},
 		props: {
 			value: {
 				type: Number,
 				default: 0
+			},
+			vertical: {
+				type: Boolean,
+				default: false
 			}
 		},
 		data: function() {
@@ -26,6 +28,8 @@
 				dragging: false,
 				startX: 0,
 				currentX: 0,
+				startY: 0,
+				currentY: 0,
 				startPosition: 0,
 				newPosition: null,
 				oldValue: this.value
@@ -58,6 +62,9 @@
 			},
 			formatValue: function() {
 				return this.enableFormat && this.$parent.formatTooltip(this.value) || this.value;
+			},
+			wrapperStyle: function() {
+				return this.vertical ? { bottom: this.currentPosition } : { left: this.currentPosition };
 			}
 		},
 		watch: {
@@ -83,21 +90,37 @@
 			onButtonDown: function(event) {
 				if (this.disabled) return;
 				event.preventDefault();
+				this.displayTooltip();
 				this.onDragStart(event);
-				window.addEventListener('mousemove', this.onDragging);
-				window.addEventListener('mouseup', this.onDragEnd);
+				window.addEventListener(mouseEvents.move, this.onDragging);
+				window.addEventListener(mouseEvents.up, this.onDragEnd);
 				window.addEventListener('contextmenu', this.onDragEnd);
 			},
 			onDragStart: function(event) {
 				this.dragging = true;
-				this.startX = event.clientX;
+				if (this.vertical) {
+					this.startY = event.clientY || event.touches[0].clientY;
+				} else {
+					this.startX = event.clientX || event.touches[0].clientX;
+				}
 				this.startPosition = parseFloat(this.currentPosition);
 			},
 			onDragging: function(event) {
 				if (this.dragging) {
 					this.displayTooltip();
-					this.currentX = event.clientX;
-					var diff = (this.currentX - this.startX) / this.$parent.$sliderWidth * 100;
+					var diff = 0;
+					var sliderSize = 1;
+					var parentObj = this.$parent;
+					if (parentObj.$refs.slider) {
+						sliderSize = parentObj.$refs.slider['client' + (parentObj.vertical ? 'Height' : 'Width')];
+					}
+					if (this.vertical) {
+						this.currentY = event.clientY || event.touches[0].clientY;
+						diff = (this.startY - this.currentY) / sliderSize * 100;
+					} else {
+						this.currentX = event.clientX || event.touches[0].clientX;
+						diff = (this.currentX - this.startX) / sliderSize * 100;
+					}
 					this.newPosition = this.startPosition + diff;
 					this.setPosition(this.newPosition);
 				}
@@ -110,12 +133,13 @@
 						self.hideTooltip();
 						self.setPosition(self.newPosition);
 					}, 0);
-					window.removeEventListener('mousemove', self.onDragging);
-					window.removeEventListener('mouseup', self.onDragEnd);
+					window.removeEventListener(mouseEvents.move, self.onDragging);
+					window.removeEventListener(mouseEvents.up, self.onDragEnd);
 					window.removeEventListener('contextmenu', self.onDragEnd);
 				}
 			},
 			setPosition: function(newPosition) {
+				if (newPosition === null) return;
 				if (newPosition < 0) {
 					newPosition = 0;
 				} else if (newPosition > 100) {
@@ -134,7 +158,7 @@
 		}
 	};
 	var VueSlider = {
-		template: '<div class="vue-slider"><div class="vue-slider__runway" :class="{ \'disabled\': disabled }" @click="onSliderClick" ref="slider"><div class="vue-slider__bar" :style="{ width: barWidth, left: barLeft}"></div><slider-button v-model="firstValue" ref="button1"></slider-button><slider-button v-model="secondValue" ref="button2" v-if="range"></slider-button><div class="vue-slider__stop" v-for="item in stops" :style="{ \'left\': item + \'%\' }" v-if="showStops"></div></div></div>',
+		template: '<div class="vue-slider" :class="{ \'is-vertical\': vertical}"><div class="vue-slider__runway" :class="{ \'disabled\': disabled }" :style="runwayStyle" @click="onSliderClick" ref="slider"><div class="vue-slider__bar" :style="barStyle"></div><slider-button :vertical="vertical" v-model="firstValue" ref="button1"></slider-button><slider-button :vertical="vertical" v-model="secondValue" ref="button2" v-if="range"></slider-button><div class="vue-slider__stop" v-for="item in stops" :style="vertical ? { \'bottom\': item + \'%\' } : { \'left\': item + \'%\' }" v-if="showStops"></div></div></div>',
 		name: 'VueSlider',
 		mixins: [VueUtil.component.emitter],
 		props: {
@@ -170,6 +194,14 @@
 			range: {
 				type: Boolean,
 				default: false
+			},
+			vertical: {
+				type: Boolean,
+				default: false
+			},
+			height: {
+				type: Number,
+				default: 200
 			}
 		},
 		components: {
@@ -243,7 +275,7 @@
 						this.secondValue = val[1];
 						if (this.valueChanged()) {
 							this.$emit('change', [this.minValue, this.maxValue]);
-							this.dispatch('ElFormItem', 'el.form.change', [this.minValue, this.maxValue]);
+							this.dispatch('VueFormItem', 'vue.form.change', [this.minValue, this.maxValue]);
 							this.oldValue = val.slice();
 						}
 					}
@@ -256,7 +288,7 @@
 						this.firstValue = val;
 						if (this.valueChanged()) {
 							this.$emit('change', val);
-							this.dispatch('ElFormItem', 'el.form.change', val);
+							this.dispatch('VueFormItem', 'vue.form.change', val);
 							this.oldValue = val;
 						}
 					}
@@ -278,14 +310,20 @@
 			},
 			onSliderClick: function(event) {
 				if (this.disabled || this.dragging) return;
-				var sliderOffsetLeft = this.$refs.slider.getBoundingClientRect().left;
-				this.setPosition((event.clientX - sliderOffsetLeft) / this.$sliderWidth * 100);
+				var sliderSize = 1;
+				if (this.$refs.slider) {
+					sliderSize = this.$refs.slider['client' + (this.vertical ? 'Height' : 'Width')];
+				}
+				if (this.vertical) {
+					var sliderOffsetBottom = this.$refs.slider.getBoundingClientRect().bottom;
+					this.setPosition((sliderOffsetBottom - (event.clientY || event.touches[0].clientY)) / sliderSize * 100);
+				} else {
+					var sliderOffsetLeft = this.$refs.slider.getBoundingClientRect().left;
+					this.setPosition(((event.clientX || event.touches[0].clientX) - sliderOffsetLeft) / sliderSize * 100);
+				}
 			}
 		},
 		computed: {
-			$sliderWidth: function() {
-				return parseInt(VueUtil.getStyle(this.$refs.slider, 'width'), 10);
-			},
 			stops: function() {
 				var self = this;
 				var stopCount = (self.max - self.min) / self.step;
@@ -309,10 +347,10 @@
 			maxValue: function() {
 				return Math.max(this.firstValue, this.secondValue);
 			},
-			barWidth: function() {
+			barSize: function() {
 				return this.range ? 100 * (this.maxValue - this.minValue) / (this.max - this.min) + '%' : 100 * (this.firstValue - this.min) / (this.max - this.min) + '%'
 			},
-			barLeft: function() {
+			barStart: function() {
 				return this.range ? 100 * (this.minValue - this.min) / (this.max - this.min) + '%' : '0%'
 			},
 			precision: function() {
@@ -321,6 +359,12 @@
 					return decimal ? decimal.length : 0;
 				});
 				return Math.max.apply(null, precisions);
+			},
+			runwayStyle: function() {
+				return this.vertical ? { height: this.height + 'px' } : {};
+			},
+			barStyle: function() {
+				return this.vertical ? {height: this.barSize, bottom: this.barStart} : {width: this.barSize, left: this.barStart};
 			}
 		},
 		mounted: function() {

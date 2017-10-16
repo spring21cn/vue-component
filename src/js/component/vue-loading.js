@@ -41,6 +41,12 @@
 				parent.appendChild(el.mask);
 				Vue.nextTick(function() {
 					el.instance.visible = true;
+					Vue.nextTick(function() {
+						if (binding.modifiers.fullscreen) {
+							el.instance.$el.tabIndex = -1;
+							el.instance.$el.focus();
+						}
+					});
 				});
 				el.domInserted = true;
 			}
@@ -88,13 +94,28 @@
 				}
 			}
 		};
+		var doKeyDown = function(e) {
+			document.querySelector('.vue-loading-mask.is-fullscreen').focus();
+			e.preventDefault();
+			return false;
+		}
+		var attachEvent = function(binding) {
+			if (binding.modifiers.fullscreen) {
+				if (binding.value) {
+					VueUtil.on(document.body, 'keydown', doKeyDown);
+				} else {
+					VueUtil.off(document.body, 'keydown', doKeyDown);
+				}
+			}
+		};
 		Vue.directive('loading', {
 			bind: function(el, binding) {
 				var mask = new VueLoading({
 					el: document.createElement('div'),
 					data: {
 						text: el.getAttribute('vue-loading-text'),
-						fullscreen: !!binding.modifiers.fullscreen
+						fullscreen: !!binding.modifiers.fullscreen,
+						customClass: el.getAttribute('vue-loading-class'),
 					}
 				});
 				el.instance = mask;
@@ -105,6 +126,7 @@
 			update: function(el, binding) {
 				if (binding.oldValue !== binding.value) {
 					toggleLoading(el, binding);
+					attachEvent(binding);
 				}
 			},
 			unbind: function(el, binding) {
@@ -112,99 +134,11 @@
 					if (binding.modifiers.fullscreen || binding.modifiers.body) {
 						document.body.removeChild(el.mask);
 					} else {
-						el.mask && el.mask.parentNode && el.mask.parentNode.removeChild(el.mask);
+						VueUtil.removeNode(el.mask);
 					}
 				}
 			}
 		});
 	};
-	var defaults = {
-		text: null,
-		fullscreen: true,
-		body: false,
-		lock: false,
-		customClass: ''
-	};
-	var fullscreenLoading;
-	VueLoading.prototype.originalPosition = '';
-	VueLoading.prototype.originalOverflow = '';
-	VueLoading.prototype.close = function() {
-		if (this.fullscreen && this.originalOverflow !== 'hidden') {
-			document.body.style.overflow = this.originalOverflow;
-		}
-		if (this.fullscreen || this.body) {
-			document.body.style.position = this.originalPosition;
-		} else {
-			this.target.style.position = this.originalPosition;
-		}
-		if (this.fullscreen) {
-			fullscreenLoading = undefined;
-		}
-		this.$on('after-leave', function() {
-			this.$el && this.$el.parentNode && this.$el.parentNode.removeChild(this.$el);
-			this.$destroy();
-		});
-		this.visible = false;
-	}
-	var addStyle = function(options, parent, instance) {
-		var maskStyle = {};
-		if (options.fullscreen) {
-			instance.originalPosition = document.body.style.position;
-			instance.originalOverflow = document.body.style.overflow;
-		} else if (options.body) {
-			instance.originalPosition = document.body.style.position;
-			['top', 'left'].forEach(function(property) {
-				var scroll = property === 'top' ? 'scrollTop' : 'scrollLeft';
-				maskStyle[property] = options.target.getBoundingClientRect()[property] + document.body[scroll] + document.documentElement[scroll] + 'px';
-			});
-			['height', 'width'].forEach(function(property) {
-				maskStyle[property] = options.target.getBoundingClientRect()[property] + 'px';
-			});
-		} else {
-			instance.originalPosition = parent.style.position;
-		}
-		Object.keys(maskStyle).forEach(function(property) {
-			instance.$el.style[property] = maskStyle[property];
-		});
-	};
-	var service = function() {
-		var options = {};
-		if (Vue.prototype.$isServer)
-			return;
-		options = VueUtil.merge({}, defaults, options);
-		if (typeof options.target === 'string') {
-			options.target = document.querySelector(options.target);
-		}
-		options.target = options.target || document.body;
-		if (options.target !== document.body) {
-			options.fullscreen = false;
-		} else {
-			options.body = true;
-		}
-		if (options.fullscreen && fullscreenLoading) {
-			return fullscreenLoading;
-		}
-		var parent = options.body ? document.body : options.target;
-		var instance = new VueLoading({
-			el: document.createElement('div'),
-			data: options
-		});
-		addStyle(options, parent, instance);
-		if (instance.originalPosition !== 'absolute') {
-			parent.style.position = 'relative';
-		}
-		if (options.fullscreen && options.lock) {
-			parent.style.overflow = 'hidden';
-		}
-		parent.appendChild(instance.$el);
-		Vue.nextTick(function() {
-			instance.visible = true;
-		});
-		if (options.fullscreen) {
-			fullscreenLoading = instance;
-		}
-		return instance;
-	};
 	Vue.use(directive);
-	Vue.prototype.$loading = service;
 });

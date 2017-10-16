@@ -103,7 +103,7 @@
 		}
 	};
 	var VueTimeSelect = {
-		mixins: [VuePicker()],
+		mixins: [VuePicker],
 		name: 'VueTimeSelect',
 		beforeCreate: function() {
 			this.type = 'time-select';

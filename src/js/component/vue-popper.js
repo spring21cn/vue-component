@@ -1,11 +1,11 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'Popper', 'VuePopup'], definition);
+		define(['Vue', 'Popper', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['Popper'], context['VuePopup']);
+		context[name] = definition(context['Vue'], context['Popper'], context['VueUtil']);
 	}
-})('VuePopper', this, function(Vue, Popper, VuePopup) {
+})('VuePopper', this, function(Vue, Popper, VueUtil) {
 	'use strict';
 	var PopperJS = Vue.prototype.$isServer ? function() {} : Popper;
 	var stop = function(e) {
@@ -96,7 +96,7 @@
 				if (typeof options.onUpdate === 'function') {
 					self.popperJS.onUpdate(options.onUpdate);
 				}
-				self.popperJS._popper.style.zIndex = VuePopup().PopupManager.nextZIndex();
+				self.popperJS._popper.style.zIndex = VueUtil.component.popupManager.nextZIndex();
 				self.popperElm.addEventListener('click', stop);
 			},
 			updatePopper: function() {
@@ -156,7 +156,5 @@
 			this.$options.beforeDestroy[0].call(this);
 		}
 	};
-	return function() {
-		return VuePopper;
-	}
+	return VuePopper;
 });

@@ -4,6 +4,7 @@
 		define(['Vue', 'VuePopper'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VuePopper']);
+		delete context[name];
 	}
 })('VueSelectDropdown', this, function(Vue, VuePopper) {
 	'use strict';
@@ -11,7 +12,7 @@
 		template: '<div class="vue-select-dropdown" :class="[{ \'is-multiple\': $parent.multiple }, popperClass]" :style="{ minWidth: minWidth }"><slot></slot></div>',
 		name: 'VueSelectDropdown',
 		componentName: 'VueSelectDropdown',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		props: {
 			placement: {
 				default: 'bottom-start'
@@ -51,7 +52,4 @@
 		}
 	};
 	Vue.component(VueSelectDropdown.name, VueSelectDropdown);
-	return function() {
-		return VueSelectDropdown;
-	}
 });

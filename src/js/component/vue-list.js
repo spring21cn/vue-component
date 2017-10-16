@@ -15,45 +15,35 @@
 			return {
 				activedIndex: null,
 				remain: 0,
-				size: 0
+				size: 20,
+				delta: {
+					start: 0,
+					end: 0,
+					total: 0,
+					keeps: 0,
+					allPadding: 0,
+					paddingTop: 0,
+					setFlg: false
+				}
 			}
 		},
 		props: {
 			height: {
-				type: [Number, String],
-				required: true
+				type: Number,
+				default: 200
 			},
-			onScroll: Function
-		},
-		delta: {
-			start: 0,
-			end: 0,
-			total: 0,
-			keeps: 0,
-			viewHeight: 0,
-			allPadding: 0,
-			paddingTop: 0
+			onScroll: Function,
+			defaultActivedIndex: {
+				type: Number,
+				default: 0
+			}
 		},
 		methods: {
-			handleItemClick: function(itemObj) {
-				var self = this;
-				self.$slots.default.forEach(function(slot, index){
-					if (slot.componentInstance === itemObj) {
-						self.activedIndex = index;
-					}
-				});
-				this.setItemActive();
+			setItemIndex: function(item) {
+				item.index = this.$slots.default.indexOf(item.$vnode);
 			},
-			setItemActive: function() {
-				var self = this;
-				self.$children.forEach(function(children) {
-					children.isActive = false;
-				});
-				self.$slots.default.forEach(function(slot, index){
-					if (slot.componentInstance && index === self.activedIndex) {
-						slot.componentInstance.isActive = true;
-					}
-				});
+			handleItemClick: function(itemObj) {
+				this.activedIndex = itemObj.index;
 			},
 			handleScroll: function(e) {
 				var scrollTop = this.$refs.container.scrollTop;
@@ -63,14 +53,15 @@
 				}
 			},
 			updateZone: function(offset) {
-				var delta = this.$options.delta;
+				var delta = this.delta;
+				if (delta.total <= delta.keeps) return;
 				var overs = Math.floor(offset / this.size);
 				if (!offset) {
 					this.$emit('toTop');
 				}
 				var start = overs ? overs : 0;
 				var end = overs ? (overs + delta.keeps) : delta.keeps;
-				if (overs + this.remain >= delta.total) {
+				if (overs + delta.keeps >= delta.total) {
 					end = delta.total;
 					start = delta.total - delta.keeps;
 					this.$emit('toBottom');
@@ -78,10 +69,14 @@
 				delta.end = end;
 				delta.start = start;
 				this.$forceUpdate();
-				this.setItemActive();
 			},
 			filter: function(slots) {
-				var delta = this.$options.delta;
+				var delta = this.delta;
+				if (delta.keeps === 0 || slots.length <= delta.keeps) {
+					delta.paddingTop = 0;
+					delta.allPadding = 0;
+					return slots;
+				}
 				delta.total = slots.length;
 				delta.paddingTop = this.size * delta.start;
 				delta.allPadding = this.size * (slots.length - delta.keeps);
@@ -91,19 +86,35 @@
 				return slots.filter(function(slot, index) {
 					return index >= delta.start && index <= delta.end;
 				});
+			},
+			init: function() {
+				var slots = this.$slots.default;
+				var delta = this.delta;
+				this.remain = Math.round(this.height*1 / this.size);
+				delta.end = this.remain;
+				delta.keeps = this.remain;
+				if (slots && slots.length <= this.remain) {
+					delta.end = slots.length;
+					delta.keeps = slots.length;
+				}
+				delta.setFlg = true;
+				this.updateZone(0);
 			}
 		},
 		render: function(createElement) {
-			var delta = this.$options.delta;
-			var showList = this.filter(this.$slots.default);
-			var viewHeight = delta.viewHeight;
+			var slots = this.$slots.default;
+			var delta = this.delta;
+			if (slots && !delta.setFlg) {
+				this.init();
+			}
+			var showList = this.filter(slots);
 			var paddingTop = delta.paddingTop;
 			var allPadding = delta.allPadding;
 			return createElement('div', {
 				'ref': 'container',
 				'class': ['vue-list'],
 				'style': {
-					'height': viewHeight + 'px'
+					'height': this.height*1 + 'px'
 				},
 				'on': {
 					'scroll': this.handleScroll
@@ -118,13 +129,13 @@
 			]);
 		},
 		mounted: function() {
-			this.size=20;
-			this.remain = Math.round(this.height*1 / this.size);
-			var delta = this.$options.delta;
-			delta.end = this.remain;
-			delta.keeps = this.remain;
-			delta.viewHeight = this.height*1;
 			this.$on('item-click', this.handleItemClick);
+			this.activedIndex = this.defaultActivedIndex;
+			this.$slots.default &&
+			this.$slots.default[this.activedIndex] && 
+			this.$slots.default[this.activedIndex].componentInstance &&
+			this.$slots.default[this.activedIndex].componentInstance.handleClick &&
+			this.$slots.default[this.activedIndex].componentInstance.handleClick();
 		}
 	};
 	Vue.component(VueList.name, VueList);

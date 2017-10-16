@@ -73,10 +73,10 @@
 			}
 		},
 		created: function() {
-			this.$parent && this.$parent.handleItemChange();
+			this.$parent && this.$parent.updateItems();
 		},
 		destroyed: function() {
-			this.$parent && this.$parent.handleItemChange();
+			this.$parent && this.$parent.updateItems();
 		}
 	};
 	Vue.component(VueCarouselItem.name, VueCarouselItem);

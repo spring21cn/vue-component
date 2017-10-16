@@ -1,12 +1,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VuePopper', 'VueUtil', 'VueInput'], definition);
+		define(['Vue', 'VuePopper', 'VueUtil'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VuePopper'], context['VueUtil'], context['VueInput']);
+		context[name] = definition(context['Vue'], context['VuePopper'], context['VueUtil']);
 		delete context[name];
 	}
-})('VueCascader', this, function(Vue, VuePopper, VueUtil, VueInput) {
+})('VueCascader', this, function(Vue, VuePopper, VueUtil) {
 	'use strict';
 	var VueCascaderMenu = {
 		name: 'VueCascaderMenu',
@@ -154,7 +154,7 @@
 					style: menuStyle
 				}, [items]);
 			});
-			return createElement('div', {}, [createElement('transition', {
+			return createElement('transition', {
 				attrs: {
 					name: 'vue-zoom-in-top'
 				},
@@ -167,7 +167,7 @@
 					value: visible
 				}],
 				class: ['vue-cascader-menus', popperClass]
-			}, [menus])])]);
+			}, [menus])]);
 		}
 	};
 	var popperMixin = {
@@ -176,25 +176,22 @@
 				type: String,
 				default: 'bottom-start'
 			},
-			appendToBody: VuePopper().props.appendToBody,
-			offset: VuePopper().props.offset,
-			boundariesPadding: VuePopper().props.boundariesPadding,
-			popperOptions: VuePopper().props.popperOptions
+			appendToBody: VuePopper.props.appendToBody,
+			offset: VuePopper.props.offset,
+			boundariesPadding: VuePopper.props.boundariesPadding,
+			popperOptions: VuePopper.props.popperOptions
 		},
-		methods: VuePopper().methods,
-		data: VuePopper().data,
-		beforeDestroy: VuePopper().beforeDestroy
+		methods: VuePopper.methods,
+		data: VuePopper.data,
+		beforeDestroy: VuePopper.beforeDestroy
 	};
 	var VueCascader = {
-		template: '<span class="vue-cascader" :class="[{ \'is-opened\': menuVisible, \'is-disabled\': disabled},size ? \'vue-cascader--\' + size : \'\']" @click="handleClick" @mouseenter="inputHover = true" @mouseleave="inputHover = false" ref="reference" v-clickoutside="handleClickoutside"><vue-input ref="input" :readonly="!filterable" :placeholder="currentLabels.length ? undefined : placeholderLang" v-model="inputValue" @change="debouncedInputChange" :validate-event="false" :size="size" :disabled="disabled"><template slot="icon"><i key="1" v-if="clearable && inputHover && currentLabels.length" class="vue-input__icon vue-icon-circle-close vue-cascader__clearIcon" @click="clearValue"></i><i key="2" v-else class="vue-input__icon vue-icon-caret-bottom" :class="{ \'is-reverse\': menuVisible }"></i></template></vue-input><span class="vue-cascader__label" v-show="inputValue === \'\'"><template v-if="showAllLevels"><template v-for="(label, index) in currentLabels">{{ label }}<span v-if="index < currentLabels.length - 1"> / </span></template></template><template v-else>{{ currentLabels[currentLabels.length - 1] }}</template></span></span>',
+		template: '<span class="vue-cascader" :class="[{ \'is-opened\': menuVisible, \'is-disabled\': disabled},size ? \'vue-cascader--\' + size : \'\']" @click="handleClick" @mouseenter="inputHover = true" @mouseleave="inputHover = false" ref="reference" v-clickoutside="handleClickoutside"><vue-input ref="input" :autofocus="autofocus" :tabindex="tabindex" :readonly="!filterable" :placeholder="currentLabels.length ? undefined : placeholderLang" v-model="inputValue" @change="debouncedInputChange" :validate-event="false" :size="size" :disabled="disabled"><template slot="icon"><i key="1" v-if="clearable && inputHover && currentLabels.length" class="vue-input__icon vue-icon-circle-close vue-cascader__clearIcon" @click="clearValue"></i><i key="2" v-else class="vue-input__icon vue-icon-caret-bottom" :class="{ \'is-reverse\': menuVisible }"></i></template></vue-input><span class="vue-cascader__label" v-show="inputValue === \'\'"><template v-if="showAllLevels"><template v-for="(label, index) in currentLabels">{{ label }}<span v-if="index < currentLabels.length - 1"> / </span></template></template><template v-else>{{ currentLabels[currentLabels.length - 1] }}</template></span></span>',
 		name: 'VueCascader',
 		directives: {
 			Clickoutside: VueUtil.component.clickoutside()
 		},
 		mixins: [popperMixin, VueUtil.component.emitter],
-		components: {
-			VueInput: VueInput()
-		},
 		props: {
 			options: {
 				type: Array,
@@ -231,6 +228,8 @@
 			},
 			filterable: Boolean,
 			size: String,
+			autofocus: Boolean,
+			tabindex: Number,
 			showAllLevels: {
 				type: Boolean,
 				default: true
@@ -304,6 +303,9 @@
 			}
 		},
 		methods: {
+			focus: function() {
+				this.$refs.input.focus();
+			},
 			initMenu: function() {
 				this.menu = new Vue(VueCascaderMenu).$mount();
 				this.menu.options = this.options;
@@ -349,6 +351,7 @@
 				if (close) {
 					this.menuVisible = false;
 				}
+				this.$nextTick(this.focus);
 			},
 			handleInputChange: function(value) {
 				var self = this;
@@ -377,7 +380,7 @@
 				} else {
 					filteredFlatOptions = [{
 						__IS__FLAT__OPTIONS: true,
-						label: self.$t('vue.cascader.emptyText'),
+						label: self.$t('vue.cascader.noMatch'),
 						value: '',
 						disabled: true
 					}];

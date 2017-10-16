@@ -12,7 +12,7 @@
 		template: '<transition name="vue-zoom-in-top" @after-leave="doDestroy"><div class="vue-dropdown-menu" v-show="showPopper"><ul class="vue-dropdown-menu__view"><slot></slot></ul></div></transition>',
 		name: 'VueDropdownMenu',
 		componentName: 'VueDropdownMenu',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		created: function() {
 			var self = this;
 			self.$on('updatePopper', self.updatePopper);

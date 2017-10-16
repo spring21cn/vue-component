@@ -14,7 +14,7 @@
 		'error': 'vue-icon-circle-cross'
 	};
 	var VueAlert = {
-		template: '<transition name="vue-alert-fade"><div class="vue-alert" :class="[ typeClass ]" v-show="visible"><i class="vue-alert__icon" :class="[ iconClass, isBigIcon ]" v-if="showIcon"></i><div class="vue-alert__content"><span class="vue-alert__title" :class="[ isBoldTitle ]" v-if="title">{{ title }}</span><slot><p class="vue-alert__description" v-if="description">{{ description }}</p></slot><i class="vue-alert__closebtn" :class="{ \'is-customed\': closeText !== \'\', \'vue-icon-close\': closeText === \'\' }" v-show="closable" @click="close()">{{closeText}}</i></div></div></transition>',
+		template: '<div class="vue-alert" :class="[ typeClass ]" v-show="visible"><i class="vue-alert__icon" :class="[ iconClass, \'is-big\' ]" v-if="showIcon"></i><div class="vue-alert__content"><span class="vue-alert__title is-bold" v-if="title">{{ title }}</span><div class="vue-alert__description"><slot></slot></div><i class="vue-alert__closebtn" :class="{ \'is-customed\': closeText !== \'\', \'vue-icon-close\': closeText === \'\' }" v-show="closable" @click="close()">{{closeText}}</i></div></div>',
 		name: 'VueAlert',
 		props: {
 			title: {
@@ -66,12 +66,6 @@
 			},
 			iconClass: function() {
 				return TYPE_CLASSES_MAP[this.type] || 'vue-icon-information';
-			},
-			isBigIcon: function() {
-				return this.description ? 'is-big' : '';
-			},
-			isBoldTitle: function() {
-				return this.description ? 'is-bold' : '';
 			}
 		}
 	};

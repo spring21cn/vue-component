@@ -9,6 +9,7 @@
 })('VueColorPicker', this, function(Vue, VueUtil, VuePopper) {
 	'use strict';
 	var isDragging = false;
+	var mouseEvents = VueUtil.component.mouseEvents;
 	var hsv2hsl = function(hue, sat, val) {
 		return [hue, (sat * val / ((hue = (2 - sat) * val) < 1 ? hue : 2 - hue)) || 0, hue / 2];
 	};
@@ -272,26 +273,27 @@
 			}
 		};
 		var upFn = function(event) {
-			document.removeEventListener('mousemove', moveFn);
-			document.removeEventListener('mouseup', upFn);
-			document.onselectstart = null;
-			document.ondragstart = null;
-			isDragging = false;
 			if (options.end) {
 				options.end(event);
 			}
+			document.removeEventListener(mouseEvents.move, moveFn);
+			document.removeEventListener(mouseEvents.up, upFn);
+			document.onselectstart = null;
+			document.ondragstart = null;
+			isDragging = false;
 		};
-		element.addEventListener('mousedown', function(event) {
+		var downFn = function(event) {
 			if (isDragging) return;
-			document.onselectstart = function() { return false; };
-			document.ondragstart = function() { return false; };
-			document.addEventListener('mousemove', moveFn);
-			document.addEventListener('mouseup', upFn);
-			isDragging = true;
 			if (options.start) {
 				options.start(event);
 			}
-		});
+			document.addEventListener(mouseEvents.move, moveFn);
+			document.addEventListener(mouseEvents.up, upFn);
+			document.onselectstart = function() { return false; };
+			document.ondragstart = function() { return false; };
+			isDragging = true;
+		};
+		element.addEventListener(mouseEvents.down, downFn);
 	};
 	var SvPanel = {
 		template: '<div class="vue-color-svpanel" :style="{backgroundColor: background}"><div class="vue-color-svpanel__white"></div><div class="vue-color-svpanel__black"></div><div class="vue-color-svpanel__cursor" :style="{top: cursorTop + \'px\', left: cursorLeft + \'px\'}"><div></div></div></div>',
@@ -326,10 +328,11 @@
 				this.background = 'hsl(' + this.color.get('hue') + ', 100%, 50%)';
 			},
 			handleDrag: function(event) {
+				if (typeof event.clientX === 'undefined' && event.touches.length === 0) return;
 				var el = this.$el;
 				var rect = el.getBoundingClientRect();
-				var left = event.clientX - rect.left;
-				var top = event.clientY - rect.top;
+				var left = (event.clientX || event.touches[0].clientX) - rect.left;
+				var top = (event.clientY || event.touches[0].clientY) - rect.top;
 				left = Math.max(0, left);
 				left = Math.min(left, rect.width);
 				top = Math.max(0, top);
@@ -345,6 +348,9 @@
 		mounted: function() {
 			var self = this;
 			draggable(self.$el, {
+				start: function(event) {
+					self.handleDrag(event);
+				},
 				drag: function(event) {
 					self.handleDrag(event);
 				},
@@ -396,16 +402,17 @@
 				}
 			},
 			handleDrag: function(event) {
+				if (typeof event.clientX === 'undefined' && event.touches.length === 0) return;
 				var rect = this.$el.getBoundingClientRect();
 				var thumb = this.$refs.thumb;
 				var hue;
 				if (!this.vertical) {
-					var left = event.clientX - rect.left;
+					var left = (event.clientX || event.touches[0].clientX) - rect.left;
 					left = Math.min(left, rect.width - thumb.offsetWidth / 2);
 					left = Math.max(thumb.offsetWidth / 2, left);
 					hue = Math.round((left - thumb.offsetWidth / 2) / (rect.width - thumb.offsetWidth) * 360);
 				} else {
-					var top = event.clientY - rect.top;
+					var top = (event.clientY || event.touches[0].clientY) - rect.top;
 					top = Math.min(top, rect.height - thumb.offsetHeight / 2);
 					top = Math.max(thumb.offsetHeight / 2, top);
 					hue = Math.round((top - thumb.offsetHeight / 2) / (rect.height - thumb.offsetHeight) * 360);
@@ -439,6 +446,9 @@
 			var bar = _$refs.bar;
 			var thumb = _$refs.thumb;
 			var dragConfig = {
+				start: function(event) {
+					self.handleDrag(event);
+				},
 				drag: function(event) {
 					self.handleDrag(event);
 				},
@@ -476,15 +486,16 @@
 				}
 			},
 			handleDrag: function(event) {
+				if (typeof event.clientX === 'undefined' && event.touches.length === 0) return;
 				var rect = this.$el.getBoundingClientRect();
 				var thumb = this.$refs.thumb;
 				if (!this.vertical) {
-					var left = event.clientX - rect.left;
+					var left = (event.clientX || event.touches[0].clientX) - rect.left;
 					left = Math.max(thumb.offsetWidth / 2, left);
 					left = Math.min(left, rect.width - thumb.offsetWidth / 2);
 					this.color.set('alpha', Math.round((left - thumb.offsetWidth / 2) / (rect.width - thumb.offsetWidth) * 100));
 				} else {
-					var top = event.clientY - rect.top;
+					var top = (event.clientY || event.touches[0].clientY) - rect.top;
 					top = Math.max(thumb.offsetHeight / 2, top);
 					top = Math.min(top, rect.height - thumb.offsetHeight / 2);
 					this.color.set('alpha', Math.round((top - thumb.offsetHeight / 2) / (rect.height - thumb.offsetHeight) * 100));
@@ -535,13 +546,16 @@
 			var bar = _$refs.bar;
 			var thumb = _$refs.thumb;
 			var dragConfig = {
-				drag: function(event) {
-					self.handleDrag(event);
-				},
-				end: function(event) {
-					self.handleDrag(event);
-				}
-			};
+					start: function(event) {
+						self.handleDrag(event);
+					},
+					drag: function(event) {
+						self.handleDrag(event);
+					},
+					end: function(event) {
+						self.handleDrag(event);
+					}
+				};
 			draggable(bar, dragConfig);
 			draggable(thumb, dragConfig);
 			self.update();
@@ -549,7 +563,7 @@
 	};
 	var PickerDropdown = {
 		template: '<transition name="vue-zoom-in-top" @after-leave="doDestroy"><div class="vue-color-dropdown" v-show="showPopper"><div class="vue-color-dropdown__main-wrapper"><hue-slider ref="hue" :color="color" vertical style="float: right;"></hue-slider><sv-panel ref="sl" :color="color"></sv-panel></div><alpha-slider v-if="showAlpha" ref="alpha" :color="color"></alpha-slider><div class="vue-color-dropdown__btns"><span class="vue-color-dropdown__value">{{ currentColor }}</span><a href="JavaScript:" class="vue-color-dropdown__link-btn" @click="$emit(\'clear\')">{{ $t(\'vue.colorpicker.clear\') }}</a><button class="vue-color-dropdown__btn" @click="confirmValue">{{ $t(\'vue.colorpicker.confirm\') }}</button></div></div></transition>',
-		mixins: [VuePopper()],
+		mixins: [VuePopper],
 		components: {
 			SvPanel: SvPanel,
 			HueSlider: HueSlider,

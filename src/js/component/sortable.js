@@ -836,7 +836,7 @@
 			selector = selector.split('.');
 			var tag = selector.shift().toUpperCase()
 			  , re = new RegExp('\\s(' + selector.join('|') + ')(?=\\s)','g');
-			return ( (tag === '' || el.nodeName.toUpperCase() == tag) && (!selector.length || ((' ' + el.className + ' ').match(re) || []).length == selector.length)) ;
+			return ((tag === '' || el.nodeName.toUpperCase() == tag) && (!selector.length || ((' ' + el.className + ' ').match(re) || []).length == selector.length));
 		}
 		return false;
 	}

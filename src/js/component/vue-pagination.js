@@ -1,12 +1,12 @@
 !(function(name, context, definition) {
 	'use strict';
 	if (typeof define === 'function' && define.amd) {
-		define(['Vue', 'VueSelect', 'VueOption'], definition);
+		define(['Vue'], definition);
 	} else {
-		context[name] = definition(context['Vue'], context['VueSelect'], context['VueOption']);
+		context[name] = definition(context['Vue']);
 		delete context[name];
 	}
-})('VuePagination', this, function(Vue, VueSelect, VueOption) {
+})('VuePagination', this, function(Vue) {
 	'use strict';
 	var VuePager = {
 		template: '<ul @click="onPagerClick" class="vue-pager"><li :class="{ active: currentPage === 1 }" v-if="pageCount > 0" class="number">1</li><li class="vue-icon more btn-quickprev" :class="[quickprevIconClass]" v-if="showPrevMore" @mouseenter="quickprevIconClass = \'vue-icon-d-arrow-left\'" @mouseleave="quickprevIconClass = \'vue-icon-more\'"></li><li v-for="pager in pagers" :class="{ active: currentPage === pager }" class="number">{{ pager }}</li><li class="vue-icon more btn-quicknext" :class="[quicknextIconClass]" v-if="showNextMore" @mouseenter="quicknextIconClass = \'vue-icon-d-arrow-right\'" @mouseleave="quicknextIconClass = \'vue-icon-more\'"></li><li :class="{ active: currentPage === pageCount }" class="number" v-if="pageCount > 1">{{ pageCount }}</li></ul>',
@@ -202,10 +202,6 @@
 					var self = this;
 					return createElement('span', {class: 'vue-pagination__sizes'}, [createElement('vue-select', {attrs: {value: this.$parent.internalPageSize}, on: {input: this.handleChange}}, [this.pageSizes.map(function (item) {return createElement('vue-option', {attrs: {value: item, label: item + ' ' + self.$t('vue.pagination.pagesize')}}, [])})])]);
 				},
-				components: {
-					VueSelect: VueSelect(),
-					VueOption: VueOption()
-				},
 				methods: {
 					handleChange: function(val) {
 						if (val !== this.$parent.internalPageSize) {
@@ -225,13 +221,13 @@
 					handleFocus: function(event) {
 						this.oldValue = event.target.value;
 					},
-					handleChange: function(target) {
-						this.$parent.internalCurrentPage = this.$parent.getValidCurrentPage(target.value);
+					handleChange: function(event) {
+						this.$parent.internalCurrentPage = this.$parent.getValidCurrentPage(event.target.value);
 						this.oldValue = null;
 					}
 				},
 				render: function(createElement) {
-					return createElement('span', {class: 'vue-pagination__jump'}, [this.$t('vue.pagination.goto'), createElement('input', {class: 'vue-pagination__editor', attrs: {type: 'number', min: 1, max: this.internalPageCount, number: !0}, domProps: {value: this.$parent.internalCurrentPage}, on: {change: this.handleChange, focus: this.handleFocus}, style: {width: '30px'}}, []), this.$t('vue.pagination.pageClassifier')]);
+					return createElement('span', {class: 'vue-pagination__jump'}, [this.$t('vue.pagination.goto'), createElement('input', {class: 'vue-pagination__editor', attrs: {type: 'number', min: 1, max: this.$parent.internalPageCount, number: !0}, domProps: {value: this.$parent.internalCurrentPage}, on: {change: this.handleChange, focus: this.handleFocus}, style: {width: '30px'}}, []), this.$t('vue.pagination.pageClassifier')]);
 				}
 			},
 			Total: {

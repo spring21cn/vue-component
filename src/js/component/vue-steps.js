@@ -40,9 +40,16 @@
 				this.$emit('change', newVal, oldVal);
 			},
 			steps: function(steps) {
+				var self = this;
 				steps.forEach(function(child, index) {
 					child.index = index;
 				});
+				if (self.center) {
+					var len = steps.length;
+					self.$nextTick(function() {
+						self.stepOffset = steps[len - 1].$el.getBoundingClientRect().width / (len - 1);
+					});
+				}
 			}
 		}
 	};

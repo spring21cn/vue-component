@@ -4,6 +4,7 @@
 		define(['Vue', 'VueUtil'], definition);
 	} else {
 		context[name] = definition(context['Vue'], context['VueUtil']);
+		delete context[name];
 	}
 })('VueScrollbar', this, function(Vue, VueUtil) {
 	'use strict';
@@ -82,11 +83,11 @@
 		methods: {
 			clickThumbHandler: function(e) {
 				this.startDrag(e);
-				this[this.bar.axis] = (e.currentTarget[this.bar.offset] - (e[this.bar.client] - e.currentTarget.getBoundingClientRect()[this.bar.direction]));
+				this[this.bar.axis] = e.currentTarget[this.bar.offset] - (e[this.bar.client] - e.currentTarget.getBoundingClientRect()[this.bar.direction]);
 			},
 			clickTrackHandler: function(e) {
 				var offset = Math.abs(e.target.getBoundingClientRect()[this.bar.direction] - e[this.bar.client]);
-				var thumbHalf = (this.$refs.thumb[this.bar.offset] / 2);
+				var thumbHalf = this.$refs.thumb[this.bar.offset] / 2;
 				var thumbPositionPercentage = (offset - thumbHalf) * 100 / this.$el[this.bar.offset];
 				this.wrap[this.bar.scroll] = thumbPositionPercentage * this.wrap[this.bar.scrollSize] / 100;
 			},
@@ -100,14 +101,12 @@
 				}
 			},
 			mouseMoveDocumentHandler: function(e) {
-				if (this.cursorDown === false)
-					return;
+				if (this.cursorDown === false) return;
 				var prevPage = this[this.bar.axis];
-				if (!prevPage)
-					return;
-				var offset = ((this.$el.getBoundingClientRect()[this.bar.direction] - e[this.bar.client]) * -1);
-				var thumbClickPosition = (this.$refs.thumb[this.bar.offset] - prevPage);
-				var thumbPositionPercentage = ((offset - thumbClickPosition) * 100 / this.$el[this.bar.offset]);
+				if (!prevPage) return;
+				var offset = (this.$el.getBoundingClientRect()[this.bar.direction] - e[this.bar.client]) * -1;
+				var thumbClickPosition = this.$refs.thumb[this.bar.offset] - prevPage;
+				var thumbPositionPercentage = (offset - thumbClickPosition) * 100 / this.$el[this.bar.offset];
 				this.wrap[this.bar.scroll] = thumbPositionPercentage * this.wrap[this.bar.scrollSize] / 100;
 			},
 			mouseUpDocumentHandler: function(e) {
@@ -157,14 +156,7 @@
 			var style = self.wrapStyle;
 			if (gutter) {
 				var gutterWith = "-" + gutter + "px";
-				var gutterHeight = "auto";
-				if (self.$parent.$el) {
-					var clientHeight = parseInt(self.$parent.$el.style.height);
-					if (clientHeight > 0) {
-						gutterHeight = clientHeight + gutter + 'px';
-					}
-				}
-				var gutterStyle = 'margin-bottom: ' + gutterWith + '; margin-right: ' + gutterWith + ';height: ' + gutterHeight + ';';
+				var gutterStyle = 'margin-bottom: ' + gutterWith + '; margin-right: ' + gutterWith + ';';
 				if (Array.isArray(self.wrapStyle)) {
 					style = VueUtil.arrayToObject(self.wrapStyle);
 					style.marginRight = style.marginBottom = gutterWith;
@@ -208,7 +200,6 @@
 					style: style
 				}, [[view]])];
 			}
-			this.$nextTick(this.update);
 			return createElement('div', {
 				class: 'vue-scrollbar'
 			}, nodes);
@@ -240,7 +231,4 @@
 		}
 	};
 	Vue.component(VueScrollbar.name, VueScrollbar);
-	return function() {
-		return VueScrollbar;
-	}
 });

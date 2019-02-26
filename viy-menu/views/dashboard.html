@@ -1,0 +1,31 @@
+<template>
+  <div class="dashboard-container">
+    <component :is="currentRole"></component>
+  </div>
+</template>
+
+<script>
+var adminDashboard = { template: '<p>Admin Dashboard</p>' };
+var editorDashboard = { template: '<p>Editor Dashboard</p>' };
+
+module.exports = {
+  name: 'Dashboard',
+  components: { adminDashboard: adminDashboard, editorDashboard: editorDashboard },
+  data: function() {
+    return {
+      currentRole: 'adminDashboard'
+    };
+  },
+
+  computed: {
+    roles: function() {
+      return MenuStore.getters.roles;
+    }
+  },
+  created: function() {
+    if (this.roles.indexOf('admin') === -1) {
+      this.currentRole = 'editorDashboard';
+    }
+  }
+};
+</script>

@@ -11,7 +11,7 @@
   }
 })(this, function(Vue, SystemInfo, DateUtil) {
   'use strict';
-  var version = '1.50.180920';
+  var version = '1.50.190116';
   var _toString = Object.prototype.toString;
   var _map = Array.prototype.map;
   var _filter = Array.prototype.filter;
@@ -126,6 +126,7 @@
     switch (type.toLowerCase()) {
       case 'week':
         var week = 7;
+        result.setTime(src.getTime() + 86400000 * num * (week || 1));
         break;
       case 'day':
         result.setTime(src.getTime() + 86400000 * num * (week || 1));
@@ -499,7 +500,7 @@
         if (/5\.1[.\d]* Safari/.test(navigator.userAgent)) {
           elem[request]();
         } else {
-          elem[request]('ALLOW_KEYBOARD_INPUT' in Element && Element.ALLOW_KEYBOARD_INPUT);
+          elem[request]((typeof Element !== 'undefined' && 'ALLOW_KEYBOARD_INPUT' in Element) ? Element.ALLOW_KEYBOARD_INPUT : {});
         }
       },
       exit: function() {
@@ -668,15 +669,26 @@
         if (this.rootMenu.mode !== 'vertical') return {};
         var padding = 20;
         var parent = this.$parent;
-        while (parent && parent.$options.name !== 'VueMenu') {
-          if (parent.$options.name === 'VueSubmenu') {
-            padding += 20;
+
+        if (this.rootMenu.collapse) {
+          return {
+            paddingLeft: '20px',
+            paddingRight: '20px'
+          };
+        } else {
+          while (parent && parent.$options.name !== 'VueMenu') {
+            if (parent.$options.name === 'VueSubmenu') {
+              padding += 20;
+            }
+            parent = parent.$parent;
           }
-          parent = parent.$parent;
+
+          return {
+            paddingLeft: padding + 'px'
+          };
         }
-        return {
-          paddingLeft: padding + 'px'
-        };
+
+        
       }
     }
   };
@@ -688,6 +700,7 @@
       var data = {
         on: {
           'beforeEnter': function(el) {
+            addClass(el, 'collapse-transition');
             if (!isDef(el.dataset)) el.dataset = {};
             el.dataset.oldPaddingTop = el.style.paddingTop;
             el.dataset.oldPaddingBottom = el.style.paddingBottom;
@@ -715,6 +728,7 @@
             }
           },
           'afterEnter': function(el) {
+            removeClass(el, 'collapse-transition');
             el.style.height = '';
             el.style.overflow = el.dataset.oldOverflow;
             if (isFunction(vueComponent.collapseAfterEnter)) {
@@ -734,6 +748,7 @@
           },
           'leave': function(el) {
             if (el.scrollHeight !== 0) {
+              addClass(el, 'collapse-transition');
               el.style.height = 0;
               el.style.paddingTop = 0;
               el.style.paddingBottom = 0;
@@ -743,6 +758,7 @@
             }
           },
           'afterLeave': function(el) {
+            removeClass(el, 'collapse-transition');
             el.style.height = '';
             el.style.overflow = el.dataset.oldOverflow;
             el.style.paddingTop = el.dataset.oldPaddingTop;
@@ -753,9 +769,6 @@
           }
         }
       };
-      loop(children, function(child) {
-        child.data.class = ['collapse-transition'];
-      });
       return createElement('transition', data, children);
     }
   };

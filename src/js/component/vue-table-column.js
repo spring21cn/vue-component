@@ -141,6 +141,10 @@
         default: true
       },
       filterable: Boolean,
+      filtered: {
+        type: Boolean,
+        default: false
+      },
       filterMethod: Function,
       filteredValue: Array,
       filters: Array,
@@ -219,6 +223,7 @@
         fixedIndex: -1,
         filterMethod: self.filterMethod,
         filterable: self.filterable,
+        filtered: self.filtered,
         filterOpened: false,
         filteredValue: self.filteredValue || [],
         filters: self.filters || [],

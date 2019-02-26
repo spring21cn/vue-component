@@ -1,4 +1,4 @@
-# vue-component
+﻿# vue-component
 
 Build responsive projects on the web with the world's most popular front-end component library.
 The is an open source toolkit for developing with Vue2, HTML, CSS, and JS. Quickly prototype your ideas or build your entire app, responsive grid system, powerful prebuilt components.
@@ -40,6 +40,9 @@ root/
 ### Demo
 
 [demo](https://spring21cn.github.io/vue-component/index.html)
+
+### 最新更新
+1. 参考DEMO中的 版本说明
 
 
 ### Quick start

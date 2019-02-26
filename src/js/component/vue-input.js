@@ -29,6 +29,7 @@
       icon: String,
       tabindex: Number,
       disabled: Boolean,
+      noime: Boolean,
       type: {
         type: String,
         default: 'text'
@@ -155,7 +156,15 @@
         this.$emit('focus', event);
       },
       handleInput: function(event) {
-        this.setCurrentValue(event.target.value);
+        if (this.noime) {
+          if(!event.isComposing) {
+            this.setCurrentValue(event.target.value);
+          } else {
+            this.setCurrentValue(this.currentValue,true);
+          }
+        } else {
+          this.setCurrentValue(event.target.value);
+        }
       },
       handleIconClick: function(event) {
         if (this.onIconClick) {
@@ -172,14 +181,21 @@
           self.resizeTextarea();
         });
         if (self.type !== 'textarea' && self.cleave !== null) {
+          var endPos = self.$refs.input.selectionEnd;
           self.$refs.input.value = value;
           var cleaveObj = new Cleave(self.$refs.input, self.cleave);
           self.currentValue = cleaveObj.getFormattedValue();
-          if (cleaveObj.getFormattedValue().length >= value.length && !watchFlg) {
+          if (cleaveObj.getFormattedValue().length >= value.length && !watchFlg) { 
             self.currentValue = value;
           }
           value = cleaveObj.getRawValue();
           cleaveObj.destroy && cleaveObj.destroy();
+
+          var pos = Cleave.Util.getNextCursorPosition(endPos, self.currentValue, cleaveObj.properties.result, cleaveObj.properties.delimiter, cleaveObj.properties.delimiters);
+          if (document.activeElement == self.$refs.input) {
+            self.$refs.input.setSelectionRange(pos, pos);
+          }
+          
         } else {
           self.currentValue = value;
         }

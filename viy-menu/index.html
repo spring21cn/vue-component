@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="renderer" content="webkit">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <title>VIY Menu Demo</title>
+        <!--import viy files-->
+        <link rel="stylesheet" href="http://10.191.6.26:8080/viy/css/component.min.css">
+        <link rel="stylesheet" href="./dist/viy-menu.css">
+        <script src="http://10.191.6.26:8080/viy/js/vue-all.js"></script>
+        <script src="http://10.191.6.26:8080/viy/js/vue-component-all.js"></script>
+        <!--end import viy files-->
+
+        <script>
+            //正式项目请从后端获取contextPath，此处的获取方式仅作为DEMO使用
+            var contextPath = document.location.pathname; 
+            Vue.config.devtools = false;
+        </script>
+    </head>
+    <body>
+        <div id="app">
+            <router-view></router-view>
+        </div>
+    </body>
+    <script src="./dist/viy-menu.js"></script>
+    <script src="./dist/pj-locale.js"></script>
+    <script src="./dist/pj-config.js"></script>
+    <script>
+      var app = new Vue({
+      data: function(){
+          return { visible: false }
+        },
+        router: router
+      }).$mount("#app");
+    </script>
+</html>

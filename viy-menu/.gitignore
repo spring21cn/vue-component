@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+npm-debug.log
+npm-debug.log.*
+lib
+.idea
+.vscode
+examples/*
+.npmrc
+.envrc
+.history

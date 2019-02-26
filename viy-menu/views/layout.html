@@ -1,0 +1,97 @@
+<template>
+  <div :class="classObj" class="app-wrapper">
+    <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside"></div>
+    <sidebar class="sidebar-container"></sidebar>
+    <div class="main-container">
+      <div class="navbar">
+        <hamburger></hamburger>
+        <breadcrumb></breadcrumb>
+        <div class="right-menu">
+            <screenfull class="right-menu-item"></screenfull>
+            <lang-select :languages="languages" class="right-menu-item"></lang-select>
+            <avatar></avatar>
+        </div>
+      </div>
+      <tags-view></tags-view>
+      <app-main></app-main>
+    </div>
+  </div>
+</template>
+
+<script>
+var body = document.body;
+var WIDTH = 1024;
+var RATIO = 3;
+
+module.exports = {
+  name: 'Layout',
+  data: function() {
+    return {
+      languages: [{
+        code: 'zh',
+        name: '中文'
+      }, {
+        code: 'ja',
+        name: '日语'
+      }, {
+        code: 'en',
+        name: 'English'
+      }]
+    };
+  },
+  computed: {
+    sidebar: function() {
+      return MenuStore.state.app.sidebar;
+    },
+    device: function() {
+      return MenuStore.state.app.device;
+    },
+    classObj: function() {
+      return {
+        hideSidebar: !this.sidebar.opened,
+        openSidebar: this.sidebar.opened,
+        withoutAnimation: this.sidebar.withoutAnimation,
+        mobile: this.device === 'mobile'
+      };
+    }
+  },
+  watch: {
+    $route: function(route) {
+      if (this.device === 'mobile' && this.sidebar.opened) {
+        MenuStore.dispatch('closeSideBar', { withoutAnimation: false });
+      }
+    }
+  },
+  beforeMount: function() {
+    window.addEventListener('resize', this.resizeHandler);
+  },
+  mounted: function() {
+    var isMobile = this.isMobile();
+    if (isMobile) {
+      MenuStore.dispatch('toggleDevice', 'mobile');
+      MenuStore.dispatch('closeSideBar', { withoutAnimation: true });
+    }
+  },
+
+  methods: {
+    handleClickOutside: function() {
+      MenuStore.dispatch('closeSideBar', { withoutAnimation: false });
+    },
+    isMobile: function() {
+      var rect = body.getBoundingClientRect();
+      return rect.width - RATIO < WIDTH;
+    },
+    resizeHandler: function() {
+      if (!document.hidden) {
+        var isMobile = this.isMobile();
+        MenuStore.dispatch('toggleDevice', isMobile ? 'mobile' : 'desktop');
+        MenuStore.dispatch('setHeight', window.innerHeight);
+
+        if (isMobile) {
+          MenuStore.dispatch('closeSideBar', { withoutAnimation: true });
+        }
+      }
+    }
+  }
+};
+</script>

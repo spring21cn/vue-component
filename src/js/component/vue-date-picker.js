@@ -170,12 +170,19 @@
             if (isToday) {
               cell.type = 'today';
             }
-            if (nowDate.getMonth() < date.getMonth()) {
+            if (nowDate.getFullYear() < date.getFullYear()) {
               cell.type = 'prev-month';
-            }
-            if (nowDate.getMonth() > date.getMonth()) {
+            } else if(nowDate.getFullYear() > date.getFullYear()) {
               cell.type = 'next-month';
+            } else {
+              if (nowDate.getMonth() < date.getMonth()) {
+                cell.type = 'prev-month';
+              }
+              if (nowDate.getMonth() > date.getMonth()) {
+                cell.type = 'next-month';
+              }
             }
+            
             cell.text = nowDate.getDate();
             cell.disabled = VueUtil.isFunction(disabledDate) && disabledDate(new Date(time));
             cell.event = false;

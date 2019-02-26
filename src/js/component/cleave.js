@@ -269,6 +269,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            value = Util.headStr(value, value.length - pps.delimiterLength);
 	        }
 
+          //修改Cleave.js源码，添加非官方customFormatter参数，如果更新cleavejs需要对应修改此处以及上面的customFormatter参数声明。
+          if (pps.formatter) {
+            value = pps.formatter(value);
+          }
+
 	        // phone formatter
 	        if (pps.phone) {
 	            if (pps.prefix && (!pps.noImmediatePrefix || value.length)) {
@@ -1387,6 +1392,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        target.uppercase = !!opts.uppercase;
 	        target.lowercase = !!opts.lowercase;
+
+          target.formatter = typeof opts.customFormatter === 'function' ? opts.customFormatter : null;
 
 	        target.prefix = (target.creditCard || target.date) ? '' : (opts.prefix || '');
 	        target.noImmediatePrefix = !!opts.noImmediatePrefix;

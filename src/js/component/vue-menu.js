@@ -9,10 +9,11 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueMenu = {
-    template: '<ul :class="[\'vue-menu\', {\'vue-menu--horizontal\': mode === \'horizontal\', \'vue-menu--dark\': theme === \'dark\'}]"><slot></slot></ul>',
+    template: '<ul :class="[\'vue-menu\', {\'vue-menu--horizontal\': mode === \'horizontal\', \'vue-menu--dark\': theme === \'dark\', \'vue-menu--collapse\': collapse}]"><slot></slot></ul>',
     name: 'VueMenu',
     mixins: [VueUtil.component.emitter],
     props: {
+      collapse: Boolean,
       mode: {
         type: String,
         default: 'vertical'
@@ -33,6 +34,13 @@
         default: 'hover'
       }
     },
+
+    provide: function() {
+      return {
+        rootMenu: this
+      };
+    },
+    
     data: function() {
       return {
         activedIndex: this.defaultActive,
@@ -48,9 +56,18 @@
         this.activedIndex = value;
         this.initOpenedMenu();
       },
+
       defaultOpeneds: function(value) {
-        this.openedMenus = value;
+        if (!this.collapse) {
+          this.openedMenus = value;
+        }
       },
+
+      collapse: function(value) {
+        if (value) this.openedMenus = [];
+        this.broadcast('VueSubmenu', 'toggle-collapse', value);
+      },
+
       '$route': {
         immediate: true,
         handler: function(value) {
@@ -61,6 +78,11 @@
             this.initOpenedMenu();
           }
         }
+      }
+    },
+    computed: {
+      isMenuPopup: function() {
+        return this.mode === 'horizontal' || (this.mode === 'vertical' && this.collapse);
       }
     },
     methods: {
@@ -88,7 +110,10 @@
         this.openedMenus.push(index);
       },
       closeMenu: function(index, indexPath) {
-        this.openedMenus.splice(this.openedMenus.indexOf(index), 1);
+        var i = this.openedMenus.indexOf(index);
+        if (i !== -1) {
+          this.openedMenus.splice(i, 1);
+        }
       },
       handleSubmenuClick: function(submenu) {
         var isOpened = this.openedMenus.indexOf(submenu.index) !== -1;
@@ -102,9 +127,11 @@
       },
       handleItemClick: function(item) {
         this.$emit('select', item.index, item.indexPath, item);
-        if (this.mode === 'horizontal') {
+
+        if (this.mode === 'horizontal' || this.collapse) {
           this.openedMenus = [];
         }
+
         if (this.router) {
           this.routeToItem(item);
         } else {
@@ -115,7 +142,7 @@
         var self = this;
         var index = self.activedIndex;
         var activeItem = self.items[index];
-        if (!activeItem || self.mode === 'horizontal') return;
+        if (!activeItem || this.mode === 'horizontal' || this.collapse) return;
         var indexPath = activeItem.indexPath;
         VueUtil.loop(indexPath, function(index) {
           var submenu = self.submenus[index];

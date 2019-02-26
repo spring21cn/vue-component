@@ -1,0 +1,45 @@
+<template>
+  <div class="app-container">
+    <switch-roles @change="handleRolesChange"></switch-roles>
+  </div>
+</template>
+
+<script>
+var SwitchRoles = {
+  template: '  <div>'
++ '    <div style="margin-bottom:15px;">{{ $t(\'permission.roles\') }}： {{ roles }}</div>'
++ '    {{ $t(\'permission.switchRoles\') }}：'
++ '    <vue-radio-group v-model="switchRoles">'
++ '      <vue-radio-button label="editor"/>'
++ '      <vue-radio-button label="admin"/>'
++ '    </vue-radio-group>'
++ '  </div>',
+computed: {
+    roles: function() {
+      return MenuStore.getters.roles;
+    },
+    switchRoles: {
+      get: function() {
+        return this.roles[0];
+      },
+      set: function(val) {
+        var self = this;
+
+        MenuStore.dispatch('ChangeRoles', val).then(function () {
+          self.$emit('change');
+        });
+      }
+    }
+  }
+};
+
+module.exports = {
+  name: 'PagePermission',
+  components: { SwitchRoles: SwitchRoles },
+  methods: {
+    handleRolesChange: function() {
+      this.$router.push({ path: '/permission/index?' + +new Date() });
+    }
+  }
+};
+</script>

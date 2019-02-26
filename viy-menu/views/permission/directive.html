@@ -1,0 +1,94 @@
+<template>
+  <div class="app-container">
+    <switch-roles @change="handleRolesChange" ></switch-roles>
+    <div :key="key" style="margin-top:30px;">
+      <span v-permission="['admin']" class="permission-alert">
+        Only
+        <vue-tag class="permission-tag" size="small">admin</vue-tag> can see this
+      </span>
+      <span v-permission="['editor']" class="permission-alert">
+        Only
+        <vue-tag class="permission-tag" size="small">editor</vue-tag> can see this
+      </span>
+      <span v-permission="['admin','editor']" class="permission-alert">
+        Both
+        <vue-tag class="permission-tag" size="small">admin</vue-tag> and
+        <vue-tag class="permission-tag" size="small">editor</vue-tag> can see this
+      </span>
+    </div>
+
+    <div :key="'checkPermission'+key" style="margin-top:30px;">
+      <code>In some cases it is not suitable to use v-permission, such as Tab component  which can only be achieved by manually setting the v-if.
+        <br> e.g.
+      </code>
+      <vue-tabs type="border-card" style="width:500px;">
+        <vue-tab-pane v-if="checkPermission(['admin'])" label="Admin">Admin can see this</vue-tab-pane>
+        <vue-tab-pane v-if="checkPermission(['editor'])" label="Editor">Editor can see this</vue-tab-pane>
+        <vue-tab-pane v-if="checkPermission(['admin','editor'])" label="Admin-OR-Editor">Both admin or editor can see this</vue-tab-pane>
+      </vue-tabs>
+    </div>
+  </div>
+</template>
+<script>
+var SwitchRoles = {
+  template: '  <div>'
++ '    <div style="margin-bottom:15px;">{{ $t(\'permission.roles\') }}： {{ roles }}</div>'
++ '    {{ $t(\'permission.switchRoles\') }}：'
++ '    <vue-radio-group v-model="switchRoles">'
++ '      <vue-radio-button label="editor"/>'
++ '      <vue-radio-button label="admin"/>'
++ '    </vue-radio-group>'
++ '  </div>',
+  computed: {
+    roles: function() {
+      return MenuStore.getters.roles;
+    },
+
+    switchRoles: {
+      get: function() {
+        return this.roles[0];
+      },
+      set: function(val) {
+        var self = this;
+
+        MenuStore.dispatch('ChangeRoles', val).then(function () {
+          self.$emit('change');
+        });
+      }
+    }
+  }
+};
+
+module.exports = {
+  name: 'DirectivePermission',
+  components: { SwitchRoles: SwitchRoles },
+  data: function() {
+    return {
+      key: 1 // 为了能每次切换权限的时候重新初始化指令
+    };
+  },
+
+  methods: {
+    checkPermission: MenuUtils.checkPermission,
+    handleRolesChange: function() {
+      this.key++;
+    }
+  }
+};
+</script>
+
+<style scoped>
+.app-container .permission-alert {
+  width: 320px;
+  margin-top: 30px;
+  background-color: #f0f9eb;
+  color: #67c23a;
+  padding: 8px 16px;
+  border-radius: 4px;
+  display: block;
+}
+.app-container .permission-tag {
+  background-color: #ecf5ff;
+}
+</style>
+

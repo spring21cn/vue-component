@@ -47,7 +47,7 @@
         if (this.multiple) {
           if (this.visible) {
             criteria = this.clearable && !this.disabled && this.inputHovering;
-            return criteria ? 'vue-icon-success is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up is-reverse');
+            return criteria && !this.multipleLimit ? 'vue-icon-success is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up is-reverse');
           } else {
             criteria = this.clearable && !this.disabled && this.inputHovering && VueUtil.isDef(this.value) && this.value.length > 0;
             return criteria ? 'vue-icon-error is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up');
@@ -538,7 +538,11 @@
         if (index !== -1) {
           this.options.splice(index, 1);
         }
-        this.broadcast('VueOption', 'resetIndex');
+        
+        var self = this;
+        VueUtil.throttle(100, function() {
+          self.broadcast('VueOption', 'resetIndex');
+        }).apply(self);
       },
       resetInputWidth: function() {
         this.inputWidth = this.$refs.reference.$el.getBoundingClientRect().width;

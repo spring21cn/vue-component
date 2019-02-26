@@ -190,9 +190,9 @@ p.catch = function (onRejected) {
  * Promise adapter.
  */
 
-//if (typeof Promise === 'undefined') {
+if (typeof Promise === 'undefined') {
     window.Promise = Promise$1;
-//}
+}
 
 function PromiseObj(executor, context) {
 

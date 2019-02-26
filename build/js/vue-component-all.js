@@ -521,7 +521,7 @@
   }
 })(this, function(Vue, SystemInfo, DateUtil) {
   'use strict';
-  var version = '1.50.180920';
+  var version = '1.50.190116';
   var _toString = Object.prototype.toString;
   var _map = Array.prototype.map;
   var _filter = Array.prototype.filter;
@@ -636,6 +636,7 @@
     switch (type.toLowerCase()) {
       case 'week':
         var week = 7;
+        result.setTime(src.getTime() + 86400000 * num * (week || 1));
         break;
       case 'day':
         result.setTime(src.getTime() + 86400000 * num * (week || 1));
@@ -1009,7 +1010,7 @@
         if (/5\.1[.\d]* Safari/.test(navigator.userAgent)) {
           elem[request]();
         } else {
-          elem[request]('ALLOW_KEYBOARD_INPUT' in Element && Element.ALLOW_KEYBOARD_INPUT);
+          elem[request]((typeof Element !== 'undefined' && 'ALLOW_KEYBOARD_INPUT' in Element) ? Element.ALLOW_KEYBOARD_INPUT : {});
         }
       },
       exit: function() {
@@ -1178,15 +1179,26 @@
         if (this.rootMenu.mode !== 'vertical') return {};
         var padding = 20;
         var parent = this.$parent;
-        while (parent && parent.$options.name !== 'VueMenu') {
-          if (parent.$options.name === 'VueSubmenu') {
-            padding += 20;
+
+        if (this.rootMenu.collapse) {
+          return {
+            paddingLeft: '20px',
+            paddingRight: '20px'
+          };
+        } else {
+          while (parent && parent.$options.name !== 'VueMenu') {
+            if (parent.$options.name === 'VueSubmenu') {
+              padding += 20;
+            }
+            parent = parent.$parent;
           }
-          parent = parent.$parent;
+
+          return {
+            paddingLeft: padding + 'px'
+          };
         }
-        return {
-          paddingLeft: padding + 'px'
-        };
+
+        
       }
     }
   };
@@ -1198,6 +1210,7 @@
       var data = {
         on: {
           'beforeEnter': function(el) {
+            addClass(el, 'collapse-transition');
             if (!isDef(el.dataset)) el.dataset = {};
             el.dataset.oldPaddingTop = el.style.paddingTop;
             el.dataset.oldPaddingBottom = el.style.paddingBottom;
@@ -1225,6 +1238,7 @@
             }
           },
           'afterEnter': function(el) {
+            removeClass(el, 'collapse-transition');
             el.style.height = '';
             el.style.overflow = el.dataset.oldOverflow;
             if (isFunction(vueComponent.collapseAfterEnter)) {
@@ -1244,6 +1258,7 @@
           },
           'leave': function(el) {
             if (el.scrollHeight !== 0) {
+              addClass(el, 'collapse-transition');
               el.style.height = 0;
               el.style.paddingTop = 0;
               el.style.paddingBottom = 0;
@@ -1253,6 +1268,7 @@
             }
           },
           'afterLeave': function(el) {
+            removeClass(el, 'collapse-transition');
             el.style.height = '';
             el.style.overflow = el.dataset.oldOverflow;
             el.style.paddingTop = el.dataset.oldPaddingTop;
@@ -1263,9 +1279,6 @@
           }
         }
       };
-      loop(children, function(child) {
-        child.data.class = ['collapse-transition'];
-      });
       return createElement('transition', data, children);
     }
   };
@@ -5240,6 +5253,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            value = Util.headStr(value, value.length - pps.delimiterLength);
 	        }
 
+          //修改Cleave.js源码，添加非官方customFormatter参数，如果更新cleavejs需要对应修改此处以及上面的customFormatter参数声明。
+          if (pps.formatter) {
+            value = pps.formatter(value);
+          }
+
 	        // phone formatter
 	        if (pps.phone) {
 	            if (pps.prefix && (!pps.noImmediatePrefix || value.length)) {
@@ -6359,6 +6377,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        target.uppercase = !!opts.uppercase;
 	        target.lowercase = !!opts.lowercase;
 
+          target.formatter = typeof opts.customFormatter === 'function' ? opts.customFormatter : null;
+
 	        target.prefix = (target.creditCard || target.date) ? '' : (opts.prefix || '');
 	        target.noImmediatePrefix = !!opts.noImmediatePrefix;
 	        target.prefixLength = target.prefix.length;
@@ -6434,6 +6454,7 @@ return /******/ (function(modules) { // webpackBootstrap
       icon: String,
       tabindex: Number,
       disabled: Boolean,
+      noime: Boolean,
       type: {
         type: String,
         default: 'text'
@@ -6560,7 +6581,15 @@ return /******/ (function(modules) { // webpackBootstrap
         this.$emit('focus', event);
       },
       handleInput: function(event) {
-        this.setCurrentValue(event.target.value);
+        if (this.noime) {
+          if(!event.isComposing) {
+            this.setCurrentValue(event.target.value);
+          } else {
+            this.setCurrentValue(this.currentValue,true);
+          }
+        } else {
+          this.setCurrentValue(event.target.value);
+        }
       },
       handleIconClick: function(event) {
         if (this.onIconClick) {
@@ -6577,14 +6606,21 @@ return /******/ (function(modules) { // webpackBootstrap
           self.resizeTextarea();
         });
         if (self.type !== 'textarea' && self.cleave !== null) {
+          var endPos = self.$refs.input.selectionEnd;
           self.$refs.input.value = value;
           var cleaveObj = new Cleave(self.$refs.input, self.cleave);
           self.currentValue = cleaveObj.getFormattedValue();
-          if (cleaveObj.getFormattedValue().length >= value.length && !watchFlg) {
+          if (cleaveObj.getFormattedValue().length >= value.length && !watchFlg) { 
             self.currentValue = value;
           }
           value = cleaveObj.getRawValue();
           cleaveObj.destroy && cleaveObj.destroy();
+
+          var pos = Cleave.Util.getNextCursorPosition(endPos, self.currentValue, cleaveObj.properties.result, cleaveObj.properties.delimiter, cleaveObj.properties.delimiters);
+          if (document.activeElement == self.$refs.input) {
+            self.$refs.input.setSelectionRange(pos, pos);
+          }
+          
         } else {
           self.currentValue = value;
         }
@@ -7559,6 +7595,7 @@ return /******/ (function(modules) { // webpackBootstrap
   var VueMenuItemGroup = {
     template: '<li class="vue-menu-item-group"><div class="vue-menu-item-group__title" :style="{paddingLeft: levelPadding + \'px\'}" v-if="showTitle"><template v-if="!$slots.title">{{title}}</template><slot v-else name="title"></slot></div><ul><slot></slot></ul></li>',
     name: 'VueMenuItemGroup',
+    inject: ['rootMenu'],
     props: {
       title: {
         type: String,
@@ -7580,6 +7617,7 @@ return /******/ (function(modules) { // webpackBootstrap
       levelPadding: function() {
         var padding = 10;
         var parent = this.$parent;
+        if (this.rootMenu.collapse) return 20;
         while (parent && parent.$options.name !== 'VueMenu') {
           if (parent.$options.name === 'VueSubmenu') {
             padding += 20;
@@ -7605,7 +7643,29 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueMenuItem = {
-    template: '<li :style="paddingStyle" @click="handleClick" :class="[\'vue-menu-item\', {\'is-active\': active, \'is-disabled\': disabled}]"><slot></slot></li>',
+    // template: '<li :style="paddingStyle" @click="handleClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave" :class="[\'vue-menu-item\', {\'is-active\': active, \'is-disabled\': disabled}]"><template v-else><slot></slot></template></li>',
+    template: '<li class="vue-menu-item"'
+    + '    :style="[paddingStyle]"'
+    + '    :class="{'
+    + '      \'is-active\': active,'
+    + '      \'is-disabled\': disabled'
+    + '    }"'
+    + '    @click="handleClick"'
+    + '  >'
+    + '    <vue-tooltip'
+    + '      v-if="parentMenu.$options.name === \'VueMenu\' && rootMenu.collapse && $slots.title"'
+    + '      effect="dark"'
+    + '      placement="right">'
+    + '      <div slot="content"><slot name="title"></slot></div>'
+    + '      <div style="position: absolute;left: 0;top: 0;height: 100%;width: 100%;display: inline-block;box-sizing: border-box;padding: 0 20px;">'
+    + '        <slot></slot>'
+    + '      </div>'
+    + '    </vue-tooltip>'
+    + '    <template v-else>'
+    + '      <slot></slot>'
+    + '      <slot name="title"></slot>'
+    + '    </template>'
+    + '  </li>',
     name: 'VueMenuItem',
     mixins: [VueUtil.component.menumixin, VueUtil.component.emitter],
     props: {
@@ -7652,10 +7712,11 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueMenu = {
-    template: '<ul :class="[\'vue-menu\', {\'vue-menu--horizontal\': mode === \'horizontal\', \'vue-menu--dark\': theme === \'dark\'}]"><slot></slot></ul>',
+    template: '<ul :class="[\'vue-menu\', {\'vue-menu--horizontal\': mode === \'horizontal\', \'vue-menu--dark\': theme === \'dark\', \'vue-menu--collapse\': collapse}]"><slot></slot></ul>',
     name: 'VueMenu',
     mixins: [VueUtil.component.emitter],
     props: {
+      collapse: Boolean,
       mode: {
         type: String,
         default: 'vertical'
@@ -7676,6 +7737,13 @@ return /******/ (function(modules) { // webpackBootstrap
         default: 'hover'
       }
     },
+
+    provide: function() {
+      return {
+        rootMenu: this
+      };
+    },
+    
     data: function() {
       return {
         activedIndex: this.defaultActive,
@@ -7691,9 +7759,18 @@ return /******/ (function(modules) { // webpackBootstrap
         this.activedIndex = value;
         this.initOpenedMenu();
       },
+
       defaultOpeneds: function(value) {
-        this.openedMenus = value;
+        if (!this.collapse) {
+          this.openedMenus = value;
+        }
       },
+
+      collapse: function(value) {
+        if (value) this.openedMenus = [];
+        this.broadcast('VueSubmenu', 'toggle-collapse', value);
+      },
+
       '$route': {
         immediate: true,
         handler: function(value) {
@@ -7704,6 +7781,11 @@ return /******/ (function(modules) { // webpackBootstrap
             this.initOpenedMenu();
           }
         }
+      }
+    },
+    computed: {
+      isMenuPopup: function() {
+        return this.mode === 'horizontal' || (this.mode === 'vertical' && this.collapse);
       }
     },
     methods: {
@@ -7731,7 +7813,10 @@ return /******/ (function(modules) { // webpackBootstrap
         this.openedMenus.push(index);
       },
       closeMenu: function(index, indexPath) {
-        this.openedMenus.splice(this.openedMenus.indexOf(index), 1);
+        var i = this.openedMenus.indexOf(index);
+        if (i !== -1) {
+          this.openedMenus.splice(i, 1);
+        }
       },
       handleSubmenuClick: function(submenu) {
         var isOpened = this.openedMenus.indexOf(submenu.index) !== -1;
@@ -7745,9 +7830,11 @@ return /******/ (function(modules) { // webpackBootstrap
       },
       handleItemClick: function(item) {
         this.$emit('select', item.index, item.indexPath, item);
-        if (this.mode === 'horizontal') {
+
+        if (this.mode === 'horizontal' || this.collapse) {
           this.openedMenus = [];
         }
+
         if (this.router) {
           this.routeToItem(item);
         } else {
@@ -7758,7 +7845,7 @@ return /******/ (function(modules) { // webpackBootstrap
         var self = this;
         var index = self.activedIndex;
         var activeItem = self.items[index];
-        if (!activeItem || self.mode === 'horizontal') return;
+        if (!activeItem || this.mode === 'horizontal' || this.collapse) return;
         var indexPath = activeItem.indexPath;
         VueUtil.loop(indexPath, function(index) {
           var submenu = self.submenus[index];
@@ -8057,8 +8144,101 @@ return /******/ (function(modules) { // webpackBootstrap
   }
 })(this, function(Vue, VueUtil) {
   'use strict';
+
   var VueSubMenu = {
-    template: '<li :class="{\'vue-submenu\': true, \'is-active\': active, \'is-opened\': opened}"><div class="vue-submenu__title" ref="submenu-title" :style="paddingStyle"><slot name="title"></slot><i :class="[\'vue-icon-arrow-down\', {\'vue-submenu__icon-arrow\': true}]"></i></div><template v-if="rootMenu.mode === \'horizontal\'"><ul class="vue-menu" v-show="opened"><slot></slot></ul></template><collapse-transition v-else><ul class="vue-menu" v-show="opened"><slot></slot></ul></collapse-transition></li>',
+    //template: '<li :class="{\'vue-submenu\': true, \'is-active\': active, \'is-opened\': opened}"><div class="vue-submenu__title" ref="submenu-title" :style="[paddingStyle, titleStyle, { backgroundColor: backgroundColor }]"><slot name="title"></slot><i :class="[\'vue-submenu__icon-arrow\', submenuTitleIcon]"></i></div><template v-if="rootMenu.mode === \'horizontal\'"><ul class="vue-menu" v-show="opened"><slot></slot></ul></template><collapse-transition v-else><ul class="vue-menu" v-show="opened"><slot></slot></ul></collapse-transition></li>',
+    render: function(h) {
+      var active = this.active,
+      opened = this.opened,
+      paddingStyle = this.paddingStyle,
+      rootMenu = this.rootMenu,
+      mode = this.mode,
+      disabled = this.disabled,
+      $slots = this.$slots,
+      isFirstLevel = this.isFirstLevel;
+
+      var popupMenu = h(
+        'transition',
+        {},
+        [h(
+          'div',
+          {
+            ref: 'menu',
+            directives: [{
+              name: 'show',
+              value: opened
+            }],
+            'class': ['vue-menu--' + mode]
+          },
+          [h(
+            'ul',
+            {
+              attrs: {
+                role: 'menu'
+              },
+              'class': ['vue-menu vue-menu--popup']
+            },
+            [$slots.default]
+          )]
+        )]
+      );
+
+      var inlineMenu = h('collapse-transition', [h(
+        'ul',
+        {
+          attrs: {
+            role: 'menu'
+          },
+          'class': 'vue-menu vue-menu--inline',
+          directives: [{
+            name: 'show',
+            value: opened
+          }]
+        },
+        [$slots.default]
+      )]);
+
+
+      var submenuTitleIcon = (
+          rootMenu.mode === 'horizontal' && isFirstLevel ||
+          rootMenu.mode === 'vertical' && !rootMenu.collapse
+        ) ? 'vue-icon-arrow-down' : 'vue-icon-arrow-right';
+      
+      
+      return h(
+        'li',
+        {
+          'class': {
+            'vue-submenu': true,
+            'is-active': active,
+            'is-opened': opened,
+            'is-disabled': disabled
+          },
+          attrs: { role: 'menuitem',
+            'aria-haspopup': 'true',
+            'aria-expanded': opened
+          },
+          on: {
+            'mouseenter': this.handleMouseenter,
+            'mouseleave': this.handleMouseleave,
+            'focus': this.handleMouseenter
+          }
+        },
+        [h(
+          'div',
+          {
+            'class': 'vue-submenu__title',
+            ref: 'submenu-title',
+            on: {
+              'click': this.handleClick
+            },
+      
+            style: [paddingStyle]
+          },
+          [$slots.title, h('i', { 'class': [submenuTitleIcon, 'vue-submenu__icon-arrow'] })]
+        ), this.isMenuPopup ? popupMenu : inlineMenu]
+      );
+    },
     name: 'VueSubmenu',
     mixins: [VueUtil.component.menumixin, VueUtil.component.emitter],
     components: {
@@ -8068,12 +8248,23 @@ return /******/ (function(modules) { // webpackBootstrap
       index: {
         type: String,
         required: true
-      }
+      },
+      showTimeout: {
+        type: Number,
+        default: 300
+      },
+      hideTimeout: {
+        type: Number,
+        default: 300
+      },
+      disabled: Boolean
     },
     data: function() {
       return {
+        timeout: null,
         items: {},
-        submenus: {}
+        submenus: {},
+        mouseInChild: false
       };
     },
     computed: {
@@ -8098,6 +8289,34 @@ return /******/ (function(modules) { // webpackBootstrap
           });
           return isActive;
         }
+      },
+      mode: function() {
+        return this.rootMenu.mode;
+      },
+      isMenuPopup: function() {
+        return this.rootMenu.isMenuPopup;
+      },
+      isFirstLevel: function() {
+        var isFirstLevel = true;
+        var parent = this.$parent;
+        while (parent && parent !== this.rootMenu) {
+          if (['VueSubmenu', 'VueMenuItemGroup'].indexOf(parent.$options.name) > -1) {
+            isFirstLevel = false;
+            break;
+          } else {
+            parent = parent.$parent;
+          }
+        }
+        return isFirstLevel;
+      }
+    },
+    watch: {
+      opened: function(val) {
+        if (this.isMenuPopup) {
+          this.$nextTick(function (_) {
+            this.updatePopper();
+          });
+        }
       }
     },
     methods: {
@@ -8114,59 +8333,132 @@ return /******/ (function(modules) { // webpackBootstrap
         delete this.submenus[item.index];
       },
       handleClick: function() {
+
+        var rootMenu = this.rootMenu;
+        var disabled = this.disabled;
+
+        if (rootMenu.menuTrigger === 'hover' && rootMenu.mode === 'horizontal' || rootMenu.collapse && rootMenu.mode === 'vertical' || disabled) {
+          return;
+        }
         this.dispatch('VueMenu', 'submenu-click', this);
       },
-      mouseToggle: VueUtil.debounce(300, function(val) {
-        if (val) {
-          this.rootMenu.openMenu(this.index, this.indexPath);
-        } else {
-          this.rootMenu.closeMenu(this.index, this.indexPath);
+
+      handleMouseenter: function () {
+        var self = this;
+    
+        var rootMenu = this.rootMenu,
+            disabled = this.disabled;
+
+        if (rootMenu.menuTrigger === 'click' && rootMenu.mode === 'horizontal' || !rootMenu.collapse && rootMenu.mode === 'vertical' || disabled) {
+          return;
         }
-      }),
-      mouseEnter: function() {
-        this.mouseToggle(true);
+        this.dispatch('VueSubmenu', 'mouse-enter-child');
+        
+        clearTimeout(this.timeout);
+        this.timeout = setTimeout(function () {
+          self.rootMenu.openMenu(self.index, self.indexPath);
+        }, this.showTimeout);
       },
-      mouseLeave: function() {
-        this.mouseToggle(false);
-      },
-      bindEvents: function() {
-        var triggerElm;
-        if (this.rootMenu.mode === 'horizontal' && this.rootMenu.menuTrigger === 'hover') {
-          triggerElm = this.$el;
-          VueUtil.on(triggerElm, 'mouseenter', this.mouseEnter);
-          VueUtil.on(triggerElm, 'mouseleave', this.mouseLeave);
-        } else {
-          triggerElm = this.$refs['submenu-title'];
-          VueUtil.on(triggerElm, 'click', this.handleClick);
+      handleMouseleave: function () {
+        var self = this;
+        var rootMenu = this.rootMenu;
+    
+        if (rootMenu.menuTrigger === 'click' && rootMenu.mode === 'horizontal' || !rootMenu.collapse && rootMenu.mode === 'vertical') {
+          return;
         }
+        this.dispatch('VueSubmenu', 'mouse-leave-child');
+        clearTimeout(this.timeout);
+        this.timeout = setTimeout(function () {
+          !self.mouseInChild && self.rootMenu.closeMenu(self.index);
+        }, this.hideTimeout);
       },
-      unBindEvents: function() {
-        var triggerElm;
-        if (this.rootMenu.mode === 'horizontal' && this.rootMenu.menuTrigger === 'hover') {
-          triggerElm = this.$el;
-          VueUtil.off(triggerElm, 'mouseenter', this.mouseEnter);
-          VueUtil.off(triggerElm, 'mouseleave', this.mouseLeave);
-        } else {
-          triggerElm = this.$refs['submenu-title'];
-          VueUtil.off(triggerElm, 'click', this.handleClick);
+      updatePopper: function () {
+        var submenu = this.$el.querySelector('.vue-menu');
+
+        if(!this.opened) {
+          submenu.style.top = '';
+          submenu.style.height = '';
+          submenu.style.overflow = '';
+          return;
+        }
+
+        var rect = submenu.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight) {
+          var over = rect.bottom - window.innerHeight;
+          if (over > rect.top) {
+            submenu.style.top = -rect.top + 'px';
+            submenu.style.height = window.innerHeight + 'px';
+            submenu.style.overflow = 'auto';
+          } else {
+            submenu.style.top = -over + 'px';
+          }
         }
       }
+
+
+      // mouseToggle: VueUtil.debounce(300, function(val) {
+      //   if (val) {
+      //     this.rootMenu.openMenu(this.index, this.indexPath);
+      //   } else {
+      //     this.rootMenu.closeMenu(this.index, this.indexPath);
+      //   }
+      // }),
+      // mouseEnter: function() {
+      //   this.mouseToggle(true);
+      // },
+      // mouseLeave: function() {
+      //   this.mouseToggle(false);
+      // },
+      // bindEvents: function() {
+      //   var triggerElm;
+      //   if (this.rootMenu.mode === 'horizontal' && this.rootMenu.menuTrigger === 'hover') {
+      //     triggerElm = this.$el;
+      //     VueUtil.on(triggerElm, 'mouseenter', this.mouseEnter);
+      //     VueUtil.on(triggerElm, 'mouseleave', this.mouseLeave);
+      //   } else {
+      //     triggerElm = this.$refs['submenu-title'];
+      //     VueUtil.on(triggerElm, 'click', this.handleClick);
+      //   }
+      // },
+      // unBindEvents: function() {
+      //   var triggerElm;
+      //   if (this.rootMenu.mode === 'horizontal' && this.rootMenu.menuTrigger === 'hover') {
+      //     triggerElm = this.$el;
+      //     VueUtil.off(triggerElm, 'mouseenter', this.mouseEnter);
+      //     VueUtil.off(triggerElm, 'mouseleave', this.mouseLeave);
+      //   } else {
+      //     triggerElm = this.$refs['submenu-title'];
+      //     VueUtil.off(triggerElm, 'click', this.handleClick);
+      //   }
+      // }
     },
     created: function() {
       this.parentMenu.addSubmenu(this);
       this.rootMenu.addSubmenu(this);
+      var self = this;
+      this.$on('mouse-enter-child', function() {
+        self.mouseInChild = true;
+        clearTimeout(self.timeout);
+      });
+      this.$on('mouse-leave-child', function() {
+        self.mouseInChild = false;
+        clearTimeout(self.timeout);
+      });
+
     },
     beforeDestroy: function() {
       this.parentMenu.removeSubmenu(this);
       this.rootMenu.removeSubmenu(this);
-      this.unBindEvents();
+      // this.unBindEvents();
     },
     mounted: function() {
-      this.bindEvents();
+      // this.bindEvents();
     }
   };
   Vue.component(VueSubMenu.name, VueSubMenu);
 });
+
+
 
 (function(context, definition) {
   'use strict';
@@ -8826,6 +9118,10 @@ return /******/ (function(modules) { // webpackBootstrap
         default: true
       },
       filterable: Boolean,
+      filtered: {
+        type: Boolean,
+        default: false
+      },
       filterMethod: Function,
       filteredValue: Array,
       filters: Array,
@@ -8904,6 +9200,7 @@ return /******/ (function(modules) { // webpackBootstrap
         fixedIndex: -1,
         filterMethod: self.filterMethod,
         filterable: self.filterable,
+        filtered: self.filtered,
         filterOpened: false,
         filteredValue: self.filteredValue || [],
         filters: self.filters || [],
@@ -9118,6 +9415,7 @@ return /******/ (function(modules) { // webpackBootstrap
       var table = this.table;
       var dataInstanceChanged = states._data !== data;
       states._data = data;
+      states.filteredData = data;
       states.data = this.sortData((data || []), states);
       VueUtil.loop(states.data, function(data, index) {
         data.$index = index;
@@ -9156,6 +9454,12 @@ return /******/ (function(modules) { // webpackBootstrap
     changeSortCondition: function(states) {
       var self = this;
       states.data = self.sortData((states.filteredData || states._data || []), states);
+      
+      //序号列重新排序
+      VueUtil.loop(states.data, function(data, index) {
+        data.$index = index;
+      });
+
       self.table.$emit('sort-change', self.states.sortingColumns);
       Vue.nextTick(function() {
         self.table.updateScrollY();
@@ -9199,6 +9503,19 @@ return /******/ (function(modules) { // webpackBootstrap
       });
       states.filteredData = data;
       states.data = self.sortData(data, states);
+
+      //序号列重新排序
+      VueUtil.loop(states.data, function(data, index) {
+        data.$index = index;
+      });
+
+      //过滤条件改变，重设选中行。
+      if (this.table.highlightFirstAfterFilter && data.length) {
+        this.table.setCurrentRow(data[0]);
+      } else {
+        this.table.setCurrentRow(null);
+      }
+
       if (!silent) {
         self.table.$emit('filter-change', filters);
       }
@@ -9386,18 +9703,20 @@ return /******/ (function(modules) { // webpackBootstrap
       if (column.visible) {
         columns.push(column);
         if (column.fixed === true || column.fixed === 'left') {
-          if (column.type === 'selection') {
-            column.fixed = false;
-          } else {
+          //Bug #1230
+          // if (column.type === 'selection') {
+          //   column.fixed = false;
+          // } else {
             states.fixedColumns.push(column);
-          }
+          // }
         }
         if (column.fixed === 'right') {
-          if (column.type === 'selection') {
-            column.fixed = false;
-          } else {
+          //Bug #1230
+          // if (column.type === 'selection') {
+          //   column.fixed = false;
+          // } else {
             states.rightFixedColumns.push(column);
-          }
+          // }
         }
       }
     });
@@ -9893,7 +10212,7 @@ return /******/ (function(modules) { // webpackBootstrap
         delta.keeps = 0;
         delta.marginTop = 0;
         delta.marginBottom = 0;
-        delta.size = 0;
+        delta.size = 40;
         delta.remain = 0;
         delta.data = [];
         var table = this.$parent;
@@ -10139,7 +10458,7 @@ return /******/ (function(modules) { // webpackBootstrap
           var columnData = {};
           columnData.value = row[column.property];
           columnData.text = row[column.property];
-          if (filterList.indexOf(columnData) === -1) {
+          if (filterList.map(function(e) { return e.value; }).indexOf(columnData.value) === -1) {
             filterList.push(columnData);
           }
         });
@@ -10339,6 +10658,10 @@ return /******/ (function(modules) { // webpackBootstrap
       handleFilterClick: function(event, column) {
         event.stopPropagation();
         var target = event.target;
+
+        if (target.tagName == 'SPAN') {
+          target = target.querySelector('i');
+        }
         var cell = target.parentNode;
         var filterPanel = this.filterPanels[column.id];
         if (filterPanel && column.filterOpened) {
@@ -10545,7 +10868,95 @@ return /******/ (function(modules) { // webpackBootstrap
     }
   };
   var TableContextMenu = {
-    template: '<vue-dialog v-model="dialogVisible" custom-class="vue-table-context-menu" :title="$t(\'vue.table.contextMenu\')" show-close @close="closeHandle"><vue-tabs><vue-tab-pane :label="$t(\'vue.table.pin\')"><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.leftPin\')"><vue-select clearable v-model="pinForm.leftPin" multiple @change="leftPin" @remove-tag="noPin"><vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label" :value="column"></vue-option></vue-select></vue-form-item><vue-form-item :label="$t(\'vue.table.rightPin\')"><vue-select clearable v-model="pinForm.rightPin" multiple @change="rightPin" @remove-tag="noPin"><vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label" :value="column"></vue-option></vue-select></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.sort\')"><vue-list scrollbar :height="150" :default-selected="false"><vue-list-item v-for="(column, index) in labelColumns" :key="index"><vue-button type="text" style="padding-left:15px" @click="removeSortColumn(column, true)">{{column.label}}</vue-button><div style="float:right;"><vue-button style="padding:10px 0 0 0;" :style="{color: column.order === \'ascending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" icon="vue-icon-caret-top" type="text" @click="sortColumn(column)"></vue-button><vue-button style="padding:10px 15px 0 0;" :style="{color: column.order === \'descending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" icon="vue-icon-caret-bottom" type="text" @click="sortColumn(column, true)"></vue-button></div><vue-divider v-if="index!==labelColumns.length-1"></vue-divider></vue-list-item></vue-list><vue-form label-width="70px"><vue-form-item :label="$t(\'vue.table.sortBy\')"><vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in sortList" :key="index" closable type="info" @close="removeSortColumn(column)">{{column.label}}<i style="padding:5px 0 0 5px;" :class="[{\'vue-icon-caret-top\': column.order === \'ascending\'}, {\'vue-icon-caret-bottom\': column.order === \'descending\'}]"></i></vue-tag></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.filter\')"><vue-form label-width="100px" :model="filterForm"><vue-form-item :label="$t(\'vue.table.column\')"><vue-select v-model="filterForm.filterColumn"><vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label" :value="column"></vue-option></vue-select></vue-form-item><vue-form-item :label="$t(\'vue.table.conditions\')"><vue-input icon="vue-icon-search" v-model="filterForm.conditions" :on-icon-click="filterColumn" @keydown.enter.native="filterColumn" ref="filterInput"><vue-select slot="prepend" v-model="filterForm.operations" style="width:80px;font-size:21px;" @change="operationsChange"><vue-option v-for="(item, index) in operations" :key="index" :label="item" :value="item"></vue-option></vue-select></vue-input></vue-form-item></vue-form><vue-divider></vue-divider><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.filterBy\')"><vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in filterList" :key="index" closable type="info" @close="removeFilterColumn(column)">{{column.label}} {{column.operations}} {{column.conditions}}</vue-tag></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.display\')"><vue-list scrollbar :height="150" :default-selected="false"><vue-list-item v-for="(column, index) in labelColumns" :key="index" @select="displayColumn(column)" style="cursor:pointer;"><vue-button type="text" style="padding-left:15px">{{column.label}}</vue-button><div style="float:right;"><vue-button style="padding:10px 15px 0 0;" :style="{color: column.visible ? \'#13ce66\' : \'#a94442\'}" :icon="column.visible ? \'vue-icon-success\' : \'vue-icon-error\'" type="text"></vue-button></div><vue-divider v-if="index!==labelColumns.length-1"></vue-divider></vue-list-item></vue-list></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.exportData\')"><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.fileName\')"><vue-input v-model="fileName"></vue-input></vue-form-item></vue-form><div style="text-align:right"><vue-button @click="exportData(true)" plain type="info" icon="vue-icon-download2">{{$t(\'vue.table.exportOrgData\')}}</vue-button><vue-button @click="exportData(false)" type="primary" icon="vue-icon-download2">{{$t(\'vue.table.exportHandleData\')}}</vue-button></div></vue-tab-pane></vue-tabs></vue-dialog>',
+    template: '<vue-dialog v-model="dialogVisible" custom-class="vue-table-context-menu" :title="$t(\'vue.table.contextMenu\')" \
+      show-close @close="closeHandle"> \
+      <vue-tabs> \
+        <vue-tab-pane :label="$t(\'vue.table.pin\')"> \
+          <vue-form label-width="100px"> \
+            <vue-form-item :label="$t(\'vue.table.leftPin\')"> \
+              <vue-select clearable v-model="pinForm.leftPin" multiple @change="leftPin" @remove-tag="noPin"> \
+                <vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label?column.label:(column.type==\'index\'?\'#\':\' \')" :value="column"></vue-option> \
+              </vue-select> \
+            </vue-form-item> \
+            <vue-form-item :label="$t(\'vue.table.rightPin\')"> \
+              <vue-select clearable v-model="pinForm.rightPin" multiple @change="rightPin" @remove-tag="noPin"> \
+                <vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label?column.label:(column.type==\'index\'?\'#\':\' \')" :value="column"></vue-option> \
+              </vue-select> \
+            </vue-form-item> \
+          </vue-form> \
+        </vue-tab-pane> \
+        <vue-tab-pane :label="$t(\'vue.table.sort\')"> \
+          <vue-list scrollbar :height="150" :default-selected="false"> \
+            <vue-list-item v-for="(column, index) in labelColumns" v-if="column.type != \'index\'" :key="index"> \
+              <vue-button type="text" style="padding-left:15px" @click="removeSortColumn(column, true)">{{column.label?column.label:(column.type=="index"?"#":"&nbsp;")}}</vue-button> \
+              <div style="float:right;"> \
+                <vue-button style="padding:10px 0 0 0;" :style="{color: column.order === \'ascending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" \
+                  icon="vue-icon-caret-top" type="text" @click="sortColumn(column)"></vue-button> \
+                <vue-button style="padding:10px 15px 0 0;" :style="{color: column.order === \'descending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" \
+                  icon="vue-icon-caret-bottom" type="text" @click="sortColumn(column, true)"></vue-button> \
+              </div> \
+              <vue-divider v-if="index!==labelColumns.length-1"></vue-divider> \
+            </vue-list-item> \
+          </vue-list> \
+          <vue-form label-width="70px"> \
+            <vue-form-item :label="$t(\'vue.table.sortBy\')"> \
+              <vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in sortList" :key="index" closable \
+                type="info" @close="removeSortColumn(column)">{{column.label?column.label:(column.type=="index"?"#":"&nbsp;")}}<i style="padding:5px 0 0 5px;" :class="[{\'vue-icon-caret-top\': column.order === \'ascending\'}, {\'vue-icon-caret-bottom\': column.order === \'descending\'}]"></i></vue-tag> \
+            </vue-form-item> \
+          </vue-form> \
+        </vue-tab-pane> \
+        <vue-tab-pane :label="$t(\'vue.table.filter\')"> \
+          <vue-form label-width="100px" :model="filterForm"> \
+            <vue-form-item :label="$t(\'vue.table.column\')"> \
+              <vue-select v-model="filterForm.filterColumn"> \
+                <vue-option v-for="(column, index) in labelColumns" v-if="column.type != \'index\'" :key="index" :label="column.label?column.label:(column.type==\'index\'?\'#\':\' \')" :value="column"></vue-option> \
+              </vue-select> \
+            </vue-form-item> \
+            <vue-form-item :label="$t(\'vue.table.conditions\')"> \
+              <vue-input icon="vue-icon-search" v-model="filterForm.conditions" :on-icon-click="filterColumn" \
+                @keydown.enter.native="filterColumn" ref="filterInput"> \
+                <vue-select slot="prepend" v-model="filterForm.operations" style="width:80px;font-size:21px;" \
+                  @change="operationsChange"> \
+                  <vue-option v-for="(item, index) in operations" :key="index" :label="item" :value="item"></vue-option> \
+                </vue-select> \
+              </vue-input> \
+            </vue-form-item> \
+          </vue-form> \
+          <vue-divider></vue-divider> \
+          <vue-form label-width="100px"> \
+            <vue-form-item :label="$t(\'vue.table.filterBy\')"> \
+              <vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in filterList" :key="index" closable \
+                type="info" @close="removeFilterColumn(column)">{{column.label?column.label:(column.type=="index"?"#":"&nbsp;")}} {{column.operations}} {{column.conditions}}</vue-tag> \
+            </vue-form-item> \
+          </vue-form> \
+        </vue-tab-pane> \
+        <vue-tab-pane :label="$t(\'vue.table.display\')"> \
+          <vue-list scrollbar :height="150" :default-selected="false"> \
+            <vue-list-item v-for="(column, index) in labelColumns" :key="index" @select="displayColumn(column)" \
+              style="cursor:pointer;"> \
+              <vue-button type="text" style="padding-left:15px">{{column.label?column.label:(column.type=="index"?"#":"&nbsp;")}}</vue-button> \
+              <div style="float:right;"> \
+                <vue-button style="padding:10px 15px 0 0;" :style="{color: column.visible ? \'#13ce66\' : \'#a94442\'}" \
+                  :icon="column.visible ? \'vue-icon-success\' : \'vue-icon-error\'" type="text"></vue-button> \
+              </div> \
+              <vue-divider v-if="index!==labelColumns.length-1"></vue-divider> \
+            </vue-list-item> \
+          </vue-list> \
+        </vue-tab-pane> \
+        <vue-tab-pane :label="$t(\'vue.table.exportData\')"> \
+          <vue-form label-width="100px"> \
+            <vue-form-item :label="$t(\'vue.table.fileName\')"> \
+              <vue-input v-model="fileName"></vue-input> \
+            </vue-form-item> \
+          </vue-form> \
+          <div style="text-align:right"> \
+            <vue-button @click="exportData(true)" plain type="info" icon="vue-icon-download2">{{$t(\'vue.table.exportOrgData\')}}</vue-button> \
+            <vue-button @click="exportData(false)" type="primary" \
+              icon="vue-icon-download2">{{$t(\'vue.table.exportHandleData\')}}</vue-button> \
+          </div> \
+        </vue-tab-pane> \
+      </vue-tabs> \
+    </vue-dialog>',
     data: function() {
       return {
         tableColumns: [],
@@ -10764,7 +11175,7 @@ return /******/ (function(modules) { // webpackBootstrap
     }
   };
   var VueTable = {
-    template: '<div :class="[\'vue-table\', {\'vue-table--fit\': fit, \'vue-table--striped\': stripe, \'vue-table--border\': border}]" @mouseleave="handleMouseLeave($event)" :style="{width: layout.bodyWidth <= 0 ? \'0px\' : \'\'}"><div class="hidden-columns" ref="hiddenColumns"><slot></slot></div><div class="vue-table__main"><div class="vue-table__header-wrapper" ref="headerWrapper" v-show="showHeader"><table-header ref="tableHeader" :style="{width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__body-wrapper" ref="bodyWrapper" :style="[bodyHeight]"><table-body ref="tableBody" :style="{width: bodyWidth}"></table-body><div :style="{width: bodyWidth}" class="vue-table__empty-block" v-show="!data || data.length === 0"><span class="vue-table__empty-text"><slot name="empty">{{emptyText || emptyLabel}}</slot></span></div></div><div class="vue-table__footer-wrapper" ref="footerWrapper" v-show="showFooter"><table-footer ref="tableFooter" :style="{width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed" v-show="leftFixedCount > 0" :style="[{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}, fixedHeight]"><div class="vue-table__fixed-header-wrapper" ref="fixedHeaderWrapper" v-show="showHeader"><table-header fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="fixedBodyWrapper" :style="[{top: layout.headerHeight + \'px\'}, fixedBodyHeight]"><table-body ref="fixedTableBody" fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="fixedFooterWrapper" v-show="showFooter"><table-footer fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed-right" v-show="rightFixedCount > 0" :style="[{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}, {right: layout.scrollY ? (border ? layout.gutterWidth : (layout.gutterWidth || 1)) + \'px\' : \'\'}, fixedHeight]"><div class="vue-table__fixed-header-wrapper" ref="rightFixedHeaderWrapper" v-show="showHeader"><table-header fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="rightFixedBodyWrapper" :style="[{top: layout.headerHeight + \'px\'}, fixedBodyHeight]"><table-body ref="rightFixedTableBody" fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="rightFixedFooterWrapper" v-show="showFooter"><table-footer fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed-right-patch" v-show="rightFixedCount > 0" :style="{width: layout.scrollY ? layout.gutterWidth + \'px\' : \'0\', height: layout.headerHeight + \'px\'}"></div><div class="vue-table__column-resize-proxy" ref="resizeProxy" v-show="resizeProxyVisible"></div><table-context-menu v-if="contextMenu" v-model="showContextMenu""></table-context-menu></div>',
+    template: '<div :class="[\'vue-table\', {\'vue-table--fit\': fit, \'vue-table--striped\': stripe, \'vue-table--border\': border}]" @mouseleave="handleMouseLeave($event)" :style="{width: layout.bodyWidth <= 0 ? \'0px\' : \'\'}"><div class="hidden-columns" ref="hiddenColumns"><slot></slot></div><div class="vue-table__main"><div class="vue-table__header-wrapper" ref="headerWrapper" v-show="showHeader"><table-header ref="tableHeader" :style="{width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__body-wrapper" ref="bodyWrapper" :style="[bodyHeight]"><table-body ref="tableBody" :style="{width: bodyWidth}"></table-body><div :style="{width: bodyWidth}" class="vue-table__empty-block" v-show="!data || data.length === 0"><span class="vue-table__empty-text"><slot name="empty">{{emptyText || emptyLabel}}</slot></span></div></div><div class="vue-table__footer-wrapper" ref="footerWrapper" v-show="showFooter"><table-footer ref="tableFooter" :style="{width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed" v-show="leftFixedCount > 0" :style="[{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}, fixedHeight]"><div class="vue-table__fixed-header-wrapper" ref="fixedHeaderWrapper" v-show="showHeader"><table-header fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="fixedBodyWrapper" :style="[{top: layout.headerHeight + \'px\'}, fixedBodyHeight]"><table-body ref="fixedTableBody" fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="fixedFooterWrapper" v-show="showFooter"><table-footer fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed-right" v-show="rightFixedCount > 0" :style="[{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}, {right: layout.scrollY ? (border ? layout.gutterWidth : (layout.gutterWidth || 1)) + \'px\' : \'\'}, fixedHeight]"><div class="vue-table__fixed-header-wrapper" ref="rightFixedHeaderWrapper" v-show="showHeader"><table-header fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="rightFixedBodyWrapper" :style="[{top: layout.headerHeight + \'px\'}, fixedBodyHeight]"><table-body ref="rightFixedTableBody" fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="rightFixedFooterWrapper" v-show="showFooter"><table-footer fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed-right-patch" v-show="rightFixedCount > 0" :style="{width: layout.scrollY ? layout.gutterWidth + \'px\' : \'0\', height: layout.headerHeight + \'px\'}"></div><div class="vue-table__column-resize-proxy" ref="resizeProxy" v-show="resizeProxyVisible"></div><table-context-menu ref="contextMenu" v-if="contextMenu" v-model="showContextMenu""></table-context-menu></div>',
     name: 'VueTable',
     props: {
       data: {
@@ -10791,6 +11202,7 @@ return /******/ (function(modules) { // webpackBootstrap
       rowClassName: [String, Function],
       rowStyle: [Object, Function],
       highlightCurrentRow: Boolean,
+      highlightFirstAfterFilter: Boolean,
       highlightHoverRow: {
         type: Boolean,
         default: true
@@ -10815,7 +11227,29 @@ return /******/ (function(modules) { // webpackBootstrap
       TableFooter: TableFooter,
       TableContextMenu: TableContextMenu
     },
+    activated: function() {
+      var refs = this.$refs;
+      var scrollTop = this.bodyScroll.top;
+      refs.bodyWrapper.scrollTop = scrollTop;
+      refs.fixedBodyWrapper.scrollTop = scrollTop;
+      refs.rightFixedBodyWrapper.scrollTop = scrollTop;
+    },
     methods: {
+      clearFilters: function() {
+        var filterPanels = this.$refs.tableHeader.filterPanels;
+
+        for (var key in filterPanels) {
+          filterPanels[key].handleReset();
+        }
+      },
+      clearSorts: function() {
+        var self = this;
+        self.store.states.sortingColumns = [];
+        VueUtil.loop(self.store.states.columns, function(column) {
+          column.order = null;
+        });
+        self.store.commit('changeSortCondition');
+      },
       exportCsv: function(params) {
         if (!VueUtil.isObject(params)) params = {};
         if (params.fileName) {
@@ -11151,7 +11585,7 @@ return /******/ (function(modules) { // webpackBootstrap
               VueUtil.loop(store.states.columns, function(column) {
                 if (column.filteredValue && column.filteredValue.length) {
                   store.commit('filterChange', {
-                    column: cloumn,
+                    column: column,
                     values: column.filteredValue,
                     silent: true
                   });
@@ -11187,6 +11621,11 @@ return /******/ (function(modules) { // webpackBootstrap
       this.layout.setHeight(this.height);
       this.bindEvents();
       this.doLayout();
+
+      //table的contextmenu在多个table的情况，会被覆盖 Bug #1263
+      if (this.contextMenu) {
+        this.$el.parentNode.append(this.$refs.contextMenu.$el);
+      }
     },
     data: function() {
       var store = new TableStore(this, {defaultExpandAll: self.defaultExpandAll});
@@ -11462,7 +11901,7 @@ return /******/ (function(modules) { // webpackBootstrap
         if (this.multiple) {
           if (this.visible) {
             criteria = this.clearable && !this.disabled && this.inputHovering;
-            return criteria ? 'vue-icon-success is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up is-reverse');
+            return criteria && !this.multipleLimit ? 'vue-icon-success is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up is-reverse');
           } else {
             criteria = this.clearable && !this.disabled && this.inputHovering && VueUtil.isDef(this.value) && this.value.length > 0;
             return criteria ? 'vue-icon-error is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up');
@@ -11953,7 +12392,11 @@ return /******/ (function(modules) { // webpackBootstrap
         if (index !== -1) {
           this.options.splice(index, 1);
         }
-        this.broadcast('VueOption', 'resetIndex');
+        
+        var self = this;
+        VueUtil.throttle(100, function() {
+          self.broadcast('VueOption', 'resetIndex');
+        }).apply(self);
       },
       resetInputWidth: function() {
         this.inputWidth = this.$refs.reference.$el.getBoundingClientRect().width;
@@ -15699,12 +16142,19 @@ return /******/ (function(modules) { // webpackBootstrap
             if (isToday) {
               cell.type = 'today';
             }
-            if (nowDate.getMonth() < date.getMonth()) {
+            if (nowDate.getFullYear() < date.getFullYear()) {
               cell.type = 'prev-month';
-            }
-            if (nowDate.getMonth() > date.getMonth()) {
+            } else if(nowDate.getFullYear() > date.getFullYear()) {
               cell.type = 'next-month';
+            } else {
+              if (nowDate.getMonth() < date.getMonth()) {
+                cell.type = 'prev-month';
+              }
+              if (nowDate.getMonth() > date.getMonth()) {
+                cell.type = 'next-month';
+              }
             }
+            
             cell.text = nowDate.getDate();
             cell.disabled = VueUtil.isFunction(disabledDate) && disabledDate(new Date(time));
             cell.event = false;
@@ -19640,7 +20090,22 @@ return /******/ (function(modules) { // webpackBootstrap
     }
   };
   var VueColorPicker = {
-    template: '<div class="vue-color-picker" :class="[disabled ? \'is-disabled\' : \'\']" v-clickoutside="hide"><div class="vue-color-picker__mask" v-if="disabled"></div><div class="vue-color-picker__trigger" @click="handleTrigger"><span :class="[\'vue-color-picker__color\', {\'is-alpha\': showAlpha}]"><span class="vue-color-picker__color-inner" :style="{backgroundColor: displayedColor}"></span><span class="vue-color-picker__empty vue-icon-close" v-if="!value && !showPanelColor"></span></span><span class="vue-color-picker__icon vue-icon-arrow-down"></span></div><picker-dropdown ref="dropdown" class="vue-color-picker__panel" v-model="showPicker" @pick="confirmValue" @clear="clearValue" :color="color" :show-alpha="showAlpha"></picker-dropdown></div>',
+    template: '<div class="vue-color-picker" :class="[disabled ? \'is-disabled\' : \'\']" v-clickoutside="hide"> \
+                <div class="vue-color-picker__mask" v-if="disabled"></div> \
+                <div class="vue-color-picker__trigger" @click="handleTrigger"> \
+                  <slot>\
+                  <span :class="[\'vue-color-picker__color\', {\'is-alpha\': showAlpha}]">\
+                    <span class="vue-color-picker__color-inner" :style="{backgroundColor: displayedColor}"></span> \
+                    <span class="vue-color-picker__empty vue-icon-close" v-if="!value && !showPanelColor"></span> \
+                  </span> \
+                  <span class="vue-color-picker__icon vue-icon-arrow-down"></span>\
+                  </slot>\
+                </div> \
+                <picker-dropdown ref="dropdown" \
+                  class="vue-color-picker__panel" v-model="showPicker" @pick="confirmValue" @clear="clearValue" :color="color" \
+                  :show-alpha="showAlpha">\
+                </picker-dropdown> \
+              </div>',
     name: 'VueColorPicker',
     props: {
       value: String,
@@ -20886,6 +21351,826 @@ return /******/ (function(modules) { // webpackBootstrap
   Vue.use(imgload);
 });
 
+/*!
+ * Signature Pad v2.3.2
+ * https://github.com/szimek/signature_pad
+ *
+ * Copyright 2017 Szymon Nowak
+ * Released under the MIT license
+ *
+ * The main idea and some parts of the code (e.g. drawing variable width Bézier curve) are taken from:
+ * http://corner.squareup.com/2012/07/smoother-signatures.html
+ *
+ * Implementation of interpolation using cubic Bézier curves is taken from:
+ * http://benknowscode.wordpress.com/2012/09/14/path-interpolation-using-cubic-bezier-and-control-point-estimation-in-javascript
+ *
+ * Algorithm for approximated length of a Bézier curve is taken from:
+ * http://www.lemoda.net/maths/bezier-length/index.html
+ *
+ */
+
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.SignaturePad = factory());
+}(this, (function () { 'use strict';
+
+function Point(x, y, time) {
+  this.x = x;
+  this.y = y;
+  this.time = time || new Date().getTime();
+}
+
+Point.prototype.velocityFrom = function (start) {
+  return this.time !== start.time ? this.distanceTo(start) / (this.time - start.time) : 1;
+};
+
+Point.prototype.distanceTo = function (start) {
+  return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
+};
+
+Point.prototype.equals = function (other) {
+  return this.x === other.x && this.y === other.y && this.time === other.time;
+};
+
+function Bezier(startPoint, control1, control2, endPoint) {
+  this.startPoint = startPoint;
+  this.control1 = control1;
+  this.control2 = control2;
+  this.endPoint = endPoint;
+}
+
+// Returns approximated length.
+Bezier.prototype.length = function () {
+  var steps = 10;
+  var length = 0;
+  var px = void 0;
+  var py = void 0;
+
+  for (var i = 0; i <= steps; i += 1) {
+    var t = i / steps;
+    var cx = this._point(t, this.startPoint.x, this.control1.x, this.control2.x, this.endPoint.x);
+    var cy = this._point(t, this.startPoint.y, this.control1.y, this.control2.y, this.endPoint.y);
+    if (i > 0) {
+      var xdiff = cx - px;
+      var ydiff = cy - py;
+      length += Math.sqrt(xdiff * xdiff + ydiff * ydiff);
+    }
+    px = cx;
+    py = cy;
+  }
+
+  return length;
+};
+
+/* eslint-disable no-multi-spaces, space-in-parens */
+Bezier.prototype._point = function (t, start, c1, c2, end) {
+  return start * (1.0 - t) * (1.0 - t) * (1.0 - t) + 3.0 * c1 * (1.0 - t) * (1.0 - t) * t + 3.0 * c2 * (1.0 - t) * t * t + end * t * t * t;
+};
+
+/* eslint-disable */
+
+// http://stackoverflow.com/a/27078401/815507
+function throttle(func, wait, options) {
+  var context, args, result;
+  var timeout = null;
+  var previous = 0;
+  if (!options) options = {};
+  var later = function later() {
+    previous = options.leading === false ? 0 : Date.now();
+    timeout = null;
+    result = func.apply(context, args);
+    if (!timeout) context = args = null;
+  };
+  return function () {
+    var now = Date.now();
+    if (!previous && options.leading === false) previous = now;
+    var remaining = wait - (now - previous);
+    context = this;
+    args = arguments;
+    if (remaining <= 0 || remaining > wait) {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      previous = now;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
+    } else if (!timeout && options.trailing !== false) {
+      timeout = setTimeout(later, remaining);
+    }
+    return result;
+  };
+}
+
+function SignaturePad(canvas, options) {
+  var self = this;
+  var opts = options || {};
+
+  this.velocityFilterWeight = opts.velocityFilterWeight || 0.7;
+  this.minWidth = opts.minWidth || 0.5;
+  this.maxWidth = opts.maxWidth || 2.5;
+  this.throttle = 'throttle' in opts ? opts.throttle : 16; // in miliseconds
+  this.minDistance = 'minDistance' in opts ? opts.minDistance : 5;
+
+  if (this.throttle) {
+    this._strokeMoveUpdate = throttle(SignaturePad.prototype._strokeUpdate, this.throttle);
+  } else {
+    this._strokeMoveUpdate = SignaturePad.prototype._strokeUpdate;
+  }
+
+  this.dotSize = opts.dotSize || function () {
+    return (this.minWidth + this.maxWidth) / 2;
+  };
+  this.penColor = opts.penColor || 'black';
+  this.backgroundColor = opts.backgroundColor || 'rgba(0,0,0,0)';
+  this.onBegin = opts.onBegin;
+  this.onEnd = opts.onEnd;
+
+  this._canvas = canvas;
+  this._ctx = canvas.getContext('2d');
+  this.clear();
+
+  // We need add these inline so they are available to unbind while still having
+  // access to 'self' we could use _.bind but it's not worth adding a dependency.
+  this._handleMouseDown = function (event) {
+    if (event.which === 1) {
+      self._mouseButtonDown = true;
+      self._strokeBegin(event);
+    }
+  };
+
+  this._handleMouseMove = function (event) {
+    if (self._mouseButtonDown) {
+      self._strokeMoveUpdate(event);
+    }
+  };
+
+  this._handleMouseUp = function (event) {
+    if (event.which === 1 && self._mouseButtonDown) {
+      self._mouseButtonDown = false;
+      self._strokeEnd(event);
+    }
+  };
+
+  this._handleTouchStart = function (event) {
+    if (event.targetTouches.length === 1) {
+      var touch = event.changedTouches[0];
+      self._strokeBegin(touch);
+    }
+  };
+
+  this._handleTouchMove = function (event) {
+    // Prevent scrolling.
+    event.preventDefault();
+
+    var touch = event.targetTouches[0];
+    self._strokeMoveUpdate(touch);
+  };
+
+  this._handleTouchEnd = function (event) {
+    var wasCanvasTouched = event.target === self._canvas;
+    if (wasCanvasTouched) {
+      event.preventDefault();
+      self._strokeEnd(event);
+    }
+  };
+
+  // Enable mouse and touch event handlers
+  this.on();
+}
+
+// Public methods
+SignaturePad.prototype.clear = function () {
+  var ctx = this._ctx;
+  var canvas = this._canvas;
+
+  ctx.fillStyle = this.backgroundColor;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  this._data = [];
+  this._reset();
+  this._isEmpty = true;
+};
+
+SignaturePad.prototype.fromDataURL = function (dataUrl) {
+  var _this = this;
+
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  var image = new Image();
+  var ratio = options.ratio || window.devicePixelRatio || 1;
+  var width = options.width || this._canvas.width / ratio;
+  var height = options.height || this._canvas.height / ratio;
+
+  this._reset();
+  image.src = dataUrl;
+  image.onload = function () {
+    _this._ctx.drawImage(image, 0, 0, width, height);
+  };
+  this._isEmpty = false;
+};
+
+SignaturePad.prototype.toDataURL = function (type) {
+  var _canvas;
+
+  switch (type) {
+    case 'image/svg+xml':
+      return this._toSVG();
+    default:
+      for (var _len = arguments.length, options = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        options[_key - 1] = arguments[_key];
+      }
+
+      return (_canvas = this._canvas).toDataURL.apply(_canvas, [type].concat(options));
+  }
+};
+
+SignaturePad.prototype.on = function () {
+  this._handleMouseEvents();
+  this._handleTouchEvents();
+};
+
+SignaturePad.prototype.off = function () {
+  this._canvas.removeEventListener('mousedown', this._handleMouseDown);
+  this._canvas.removeEventListener('mousemove', this._handleMouseMove);
+  document.removeEventListener('mouseup', this._handleMouseUp);
+
+  this._canvas.removeEventListener('touchstart', this._handleTouchStart);
+  this._canvas.removeEventListener('touchmove', this._handleTouchMove);
+  this._canvas.removeEventListener('touchend', this._handleTouchEnd);
+};
+
+SignaturePad.prototype.isEmpty = function () {
+  return this._isEmpty;
+};
+
+// Private methods
+SignaturePad.prototype._strokeBegin = function (event) {
+  this._data.push([]);
+  this._reset();
+  this._strokeUpdate(event);
+
+  if (typeof this.onBegin === 'function') {
+    this.onBegin(event);
+  }
+};
+
+SignaturePad.prototype._strokeUpdate = function (event) {
+  var x = event.clientX;
+  var y = event.clientY;
+
+  var point = this._createPoint(x, y);
+  var lastPointGroup = this._data[this._data.length - 1];
+  var lastPoint = lastPointGroup && lastPointGroup[lastPointGroup.length - 1];
+  var isLastPointTooClose = lastPoint && point.distanceTo(lastPoint) < this.minDistance;
+
+  // Skip this point if it's too close to the previous one
+  if (!(lastPoint && isLastPointTooClose)) {
+    var _addPoint = this._addPoint(point),
+        curve = _addPoint.curve,
+        widths = _addPoint.widths;
+
+    if (curve && widths) {
+      this._drawCurve(curve, widths.start, widths.end);
+    }
+
+    this._data[this._data.length - 1].push({
+      x: point.x,
+      y: point.y,
+      time: point.time,
+      color: this.penColor
+    });
+  }
+};
+
+SignaturePad.prototype._strokeEnd = function (event) {
+  var canDrawCurve = this.points.length > 2;
+  var point = this.points[0]; // Point instance
+
+  if (!canDrawCurve && point) {
+    this._drawDot(point);
+  }
+
+  if (point) {
+    var lastPointGroup = this._data[this._data.length - 1];
+    var lastPoint = lastPointGroup[lastPointGroup.length - 1]; // plain object
+
+    // When drawing a dot, there's only one point in a group, so without this check
+    // such group would end up with exactly the same 2 points.
+    if (!point.equals(lastPoint)) {
+      lastPointGroup.push({
+        x: point.x,
+        y: point.y,
+        time: point.time,
+        color: this.penColor
+      });
+    }
+  }
+
+  if (typeof this.onEnd === 'function') {
+    this.onEnd(event);
+  }
+};
+
+SignaturePad.prototype._handleMouseEvents = function () {
+  this._mouseButtonDown = false;
+
+  this._canvas.addEventListener('mousedown', this._handleMouseDown);
+  this._canvas.addEventListener('mousemove', this._handleMouseMove);
+  document.addEventListener('mouseup', this._handleMouseUp);
+};
+
+SignaturePad.prototype._handleTouchEvents = function () {
+  // Pass touch events to canvas element on mobile IE11 and Edge.
+  this._canvas.style.msTouchAction = 'none';
+  this._canvas.style.touchAction = 'none';
+
+  this._canvas.addEventListener('touchstart', this._handleTouchStart);
+  this._canvas.addEventListener('touchmove', this._handleTouchMove);
+  this._canvas.addEventListener('touchend', this._handleTouchEnd);
+};
+
+SignaturePad.prototype._reset = function () {
+  this.points = [];
+  this._lastVelocity = 0;
+  this._lastWidth = (this.minWidth + this.maxWidth) / 2;
+  this._ctx.fillStyle = this.penColor;
+};
+
+SignaturePad.prototype._createPoint = function (x, y, time) {
+  var rect = this._canvas.getBoundingClientRect();
+
+  return new Point(x - rect.left, y - rect.top, time || new Date().getTime());
+};
+
+SignaturePad.prototype._addPoint = function (point) {
+  var points = this.points;
+  var tmp = void 0;
+
+  points.push(point);
+
+  if (points.length > 2) {
+    // To reduce the initial lag make it work with 3 points
+    // by copying the first point to the beginning.
+    if (points.length === 3) points.unshift(points[0]);
+
+    tmp = this._calculateCurveControlPoints(points[0], points[1], points[2]);
+    var c2 = tmp.c2;
+    tmp = this._calculateCurveControlPoints(points[1], points[2], points[3]);
+    var c3 = tmp.c1;
+    var curve = new Bezier(points[1], c2, c3, points[2]);
+    var widths = this._calculateCurveWidths(curve);
+
+    // Remove the first element from the list,
+    // so that we always have no more than 4 points in points array.
+    points.shift();
+
+    return { curve: curve, widths: widths };
+  }
+
+  return {};
+};
+
+SignaturePad.prototype._calculateCurveControlPoints = function (s1, s2, s3) {
+  var dx1 = s1.x - s2.x;
+  var dy1 = s1.y - s2.y;
+  var dx2 = s2.x - s3.x;
+  var dy2 = s2.y - s3.y;
+
+  var m1 = { x: (s1.x + s2.x) / 2.0, y: (s1.y + s2.y) / 2.0 };
+  var m2 = { x: (s2.x + s3.x) / 2.0, y: (s2.y + s3.y) / 2.0 };
+
+  var l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+  var l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+  var dxm = m1.x - m2.x;
+  var dym = m1.y - m2.y;
+
+  var k = l2 / (l1 + l2);
+  var cm = { x: m2.x + dxm * k, y: m2.y + dym * k };
+
+  var tx = s2.x - cm.x;
+  var ty = s2.y - cm.y;
+
+  return {
+    c1: new Point(m1.x + tx, m1.y + ty),
+    c2: new Point(m2.x + tx, m2.y + ty)
+  };
+};
+
+SignaturePad.prototype._calculateCurveWidths = function (curve) {
+  var startPoint = curve.startPoint;
+  var endPoint = curve.endPoint;
+  var widths = { start: null, end: null };
+
+  var velocity = this.velocityFilterWeight * endPoint.velocityFrom(startPoint) + (1 - this.velocityFilterWeight) * this._lastVelocity;
+
+  var newWidth = this._strokeWidth(velocity);
+
+  widths.start = this._lastWidth;
+  widths.end = newWidth;
+
+  this._lastVelocity = velocity;
+  this._lastWidth = newWidth;
+
+  return widths;
+};
+
+SignaturePad.prototype._strokeWidth = function (velocity) {
+  return Math.max(this.maxWidth / (velocity + 1), this.minWidth);
+};
+
+SignaturePad.prototype._drawPoint = function (x, y, size) {
+  var ctx = this._ctx;
+
+  ctx.moveTo(x, y);
+  ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+  this._isEmpty = false;
+};
+
+SignaturePad.prototype._drawCurve = function (curve, startWidth, endWidth) {
+  var ctx = this._ctx;
+  var widthDelta = endWidth - startWidth;
+  var drawSteps = Math.floor(curve.length());
+
+  ctx.beginPath();
+
+  for (var i = 0; i < drawSteps; i += 1) {
+    // Calculate the Bezier (x, y) coordinate for this step.
+    var t = i / drawSteps;
+    var tt = t * t;
+    var ttt = tt * t;
+    var u = 1 - t;
+    var uu = u * u;
+    var uuu = uu * u;
+
+    var x = uuu * curve.startPoint.x;
+    x += 3 * uu * t * curve.control1.x;
+    x += 3 * u * tt * curve.control2.x;
+    x += ttt * curve.endPoint.x;
+
+    var y = uuu * curve.startPoint.y;
+    y += 3 * uu * t * curve.control1.y;
+    y += 3 * u * tt * curve.control2.y;
+    y += ttt * curve.endPoint.y;
+
+    var width = startWidth + ttt * widthDelta;
+    this._drawPoint(x, y, width);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+};
+
+SignaturePad.prototype._drawDot = function (point) {
+  var ctx = this._ctx;
+  var width = typeof this.dotSize === 'function' ? this.dotSize() : this.dotSize;
+
+  ctx.beginPath();
+  this._drawPoint(point.x, point.y, width);
+  ctx.closePath();
+  ctx.fill();
+};
+
+SignaturePad.prototype._fromData = function (pointGroups, drawCurve, drawDot) {
+  for (var i = 0; i < pointGroups.length; i += 1) {
+    var group = pointGroups[i];
+
+    if (group.length > 1) {
+      for (var j = 0; j < group.length; j += 1) {
+        var rawPoint = group[j];
+        var point = new Point(rawPoint.x, rawPoint.y, rawPoint.time);
+        var color = rawPoint.color;
+
+        if (j === 0) {
+          // First point in a group. Nothing to draw yet.
+
+          // All points in the group have the same color, so it's enough to set
+          // penColor just at the beginning.
+          this.penColor = color;
+          this._reset();
+
+          this._addPoint(point);
+        } else if (j !== group.length - 1) {
+          // Middle point in a group.
+          var _addPoint2 = this._addPoint(point),
+              curve = _addPoint2.curve,
+              widths = _addPoint2.widths;
+
+          if (curve && widths) {
+            drawCurve(curve, widths, color);
+          }
+        } else {
+          // Last point in a group. Do nothing.
+        }
+      }
+    } else {
+      this._reset();
+      var _rawPoint = group[0];
+      drawDot(_rawPoint);
+    }
+  }
+};
+
+SignaturePad.prototype._toSVG = function () {
+  var _this2 = this;
+
+  var pointGroups = this._data;
+  var canvas = this._canvas;
+  var ratio = Math.max(window.devicePixelRatio || 1, 1);
+  var minX = 0;
+  var minY = 0;
+  var maxX = canvas.width / ratio;
+  var maxY = canvas.height / ratio;
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+  svg.setAttributeNS(null, 'width', canvas.width);
+  svg.setAttributeNS(null, 'height', canvas.height);
+
+  this._fromData(pointGroups, function (curve, widths, color) {
+    var path = document.createElement('path');
+
+    // Need to check curve for NaN values, these pop up when drawing
+    // lines on the canvas that are not continuous. E.g. Sharp corners
+    // or stopping mid-stroke and than continuing without lifting mouse.
+    if (!isNaN(curve.control1.x) && !isNaN(curve.control1.y) && !isNaN(curve.control2.x) && !isNaN(curve.control2.y)) {
+      var attr = 'M ' + curve.startPoint.x.toFixed(3) + ',' + curve.startPoint.y.toFixed(3) + ' ' + ('C ' + curve.control1.x.toFixed(3) + ',' + curve.control1.y.toFixed(3) + ' ') + (curve.control2.x.toFixed(3) + ',' + curve.control2.y.toFixed(3) + ' ') + (curve.endPoint.x.toFixed(3) + ',' + curve.endPoint.y.toFixed(3));
+
+      path.setAttribute('d', attr);
+      path.setAttribute('stroke-width', (widths.end * 2.25).toFixed(3));
+      path.setAttribute('stroke', color);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'round');
+
+      svg.appendChild(path);
+    }
+  }, function (rawPoint) {
+    var circle = document.createElement('circle');
+    var dotSize = typeof _this2.dotSize === 'function' ? _this2.dotSize() : _this2.dotSize;
+    circle.setAttribute('r', dotSize);
+    circle.setAttribute('cx', rawPoint.x);
+    circle.setAttribute('cy', rawPoint.y);
+    circle.setAttribute('fill', rawPoint.color);
+
+    svg.appendChild(circle);
+  });
+
+  var prefix = 'data:image/svg+xml;base64,';
+  var header = '<svg' + ' xmlns="http://www.w3.org/2000/svg"' + ' xmlns:xlink="http://www.w3.org/1999/xlink"' + (' viewBox="' + minX + ' ' + minY + ' ' + maxX + ' ' + maxY + '"') + (' width="' + maxX + '"') + (' height="' + maxY + '"') + '>';
+  var body = svg.innerHTML;
+
+  // IE hack for missing innerHTML property on SVGElement
+  if (body === undefined) {
+    var dummy = document.createElement('dummy');
+    var nodes = svg.childNodes;
+    dummy.innerHTML = '';
+
+    for (var i = 0; i < nodes.length; i += 1) {
+      dummy.appendChild(nodes[i].cloneNode(true));
+    }
+
+    body = dummy.innerHTML;
+  }
+
+  var footer = '</svg>';
+  var data = header + body + footer;
+
+  return prefix + btoa(data);
+};
+
+SignaturePad.prototype.fromData = function (pointGroups) {
+  var _this3 = this;
+
+  this.clear();
+
+  this._fromData(pointGroups, function (curve, widths) {
+    return _this3._drawCurve(curve, widths.start, widths.end);
+  }, function (rawPoint) {
+    return _this3._drawDot(rawPoint);
+  });
+
+  this._data = pointGroups;
+};
+
+SignaturePad.prototype.toData = function () {
+  return this._data;
+};
+
+return SignaturePad;
+
+})));
+
+(function(context, definition) {
+  'use strict';
+  if (typeof define === 'function' && define.amd) {
+    define(['Vue', 'VueUtil'], definition);
+  } else {
+    context.VueSignature = definition(context.Vue, context.VueUtil);
+    delete context.VueSignature;
+  }
+})(this, function(Vue, VueUtil) {
+  'use strict';
+
+  var DEFAULT_OPTIONS = {
+    dotSize: (0.5 + 2.5) / 2,
+    minWidth: 0.5,
+    maxWidth: 2.5,
+    throttle: 16,
+    minDistance: 5,
+    backgroundColor: 'rgba(0,0,0,0)',
+    penColor: 'black',
+    velocityFilterWeight: 0.7,
+    onBegin: function onBegin() {},
+    onEnd: function onEnd() {}
+  };
+
+  var convert2NonReactive = function (observerValue) {
+    return JSON.parse(JSON.stringify(observerValue));
+  };
+
+  var TRANSPARENT_PNG = {
+    src:
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    x: 0,
+    y: 0
+  };
+  var VueSignature = {
+    name: 'VueSignature',
+    props: {
+      width: {
+        type: String,
+        default: '100%'
+      },
+      height: {
+        type: String,
+        default: '100%'
+      },
+      customStyle: {
+        type: Object
+      },
+      saveType: {
+        type: String,
+        default: 'image/png'
+      },
+      options: {
+        type: Object,
+        default: function () {
+          return {};
+        }
+      },
+      images: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      }
+    },
+    data: function() {
+      return {
+        signaturePad: {},
+        cacheImages: [],
+        signatureData: TRANSPARENT_PNG,
+        onResizeHandler: null
+      };
+    },
+    mounted: function() {
+      var options = this.options;
+      var canvas = this.$refs.signaturePadCanvas;
+      var signaturePad = new SignaturePad(canvas, VueUtil.merge({}, DEFAULT_OPTIONS, options));
+      this.signaturePad = signaturePad;
+  
+      this.onResizeHandler = this.resizeCanvas.bind(this);
+  
+      window.addEventListener('resize', this.onResizeHandler, false);
+  
+      this.resizeCanvas();
+    },
+    beforeDestroy: function() {
+      if (this.onResizeHandler) {
+        window.removeEventListener('resize', this.onResizeHandler, false);
+      }
+    },
+    methods: {
+      resizeCanvas: function() {
+        var canvas = this.$refs.signaturePadCanvas;
+        var data = this.signaturePad.toData();
+        var ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext('2d').scale(ratio, ratio);
+        this.signaturePad.clear();
+        this.signatureData = TRANSPARENT_PNG;
+        this.signaturePad.fromData(data);
+      },
+      saveSignature: function() {
+        var signaturePad = this.signaturePad;
+        var saveType = this.saveType;
+  
+        if (['image/png', 'image/jpeg', 'image/svg+xml'].indexOf(saveType) == -1) {
+          throw new Error('Image type is incorrect!');
+        }
+  
+        if (signaturePad.isEmpty()) {
+          return {
+            data: undefined,
+            isEmpty: true
+          };
+        } else {
+          this.signatureData = signaturePad.toDataURL(saveType);
+  
+          return {
+            isEmpty: false,
+            data: this.signatureData
+          };
+        }
+      },
+      undoSignature: function() {
+        var signaturePad = this.signaturePad;
+        var record = signaturePad.toData();
+  
+        if (record) {
+          return signaturePad.fromData(record.slice(0, -1));
+        }
+      },
+      // mergeImageAndSignature(customSignature) {
+      //   this.signatureData = customSignature;
+  
+      //   return mergeImages([
+      //     ...this.images,
+      //     ...this.cacheImages,
+      //     this.signatureData
+      //   ]);
+      // },
+      // addImages(images = []) {
+      //   this.cacheImages = [...this.cacheImages, ...images];
+  
+      //   return mergeImages([
+      //     ...this.images,
+      //     ...this.cacheImages,
+      //     this.signatureData
+      //   ]);
+      // },
+      fromDataURL: function(data) {
+        return this.signaturePad.fromDataURL(data);
+      },
+      lockSignaturePad: function() {
+        return this.signaturePad.off();
+      },
+      openSignaturePad: function() {
+        return this.signaturePad.on();
+      },
+      isEmpty: function() {
+        return this.signaturePad.isEmpty();
+      },
+      getPropImagesAndCacheImages: function() {
+        return this.propsImagesAndCustomImages;
+      },
+      clearCacheImages: function() {
+        this.cacheImages = [];
+  
+        return this.cacheImages;
+      },
+      clearSignature: function() {
+        return this.signaturePad.clear();
+      }
+    },
+    computed: {
+      propsImagesAndCustomImages: function() {
+        var nonReactiveProrpImages = convert2NonReactive(this.images);
+        var nonReactiveCachImages = convert2NonReactive(this.cacheImages);
+  
+        return nonReactiveProrpImages.concat(nonReactiveCachImages);
+      }
+    },
+    render: function(createElement) {
+      var width = this.width;
+      var height = this.height;
+      var customStyle = this.customStyle;
+
+      return createElement(
+        'div',
+        {
+          style: VueUtil.merge({
+            width: width,
+            height: height,
+          }, customStyle)
+        },
+        [
+          createElement('canvas', {
+            style: {
+              width: '100%',
+              height: '100%'
+            },
+            ref: 'signaturePadCanvas'
+          })
+        ]
+      );
+    }
+  };
+  Vue.component(VueSignature.name, VueSignature);
+});
 (function(context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {

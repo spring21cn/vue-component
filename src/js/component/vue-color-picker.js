@@ -613,7 +613,22 @@
     }
   };
   var VueColorPicker = {
-    template: '<div class="vue-color-picker" :class="[disabled ? \'is-disabled\' : \'\']" v-clickoutside="hide"><div class="vue-color-picker__mask" v-if="disabled"></div><div class="vue-color-picker__trigger" @click="handleTrigger"><span :class="[\'vue-color-picker__color\', {\'is-alpha\': showAlpha}]"><span class="vue-color-picker__color-inner" :style="{backgroundColor: displayedColor}"></span><span class="vue-color-picker__empty vue-icon-close" v-if="!value && !showPanelColor"></span></span><span class="vue-color-picker__icon vue-icon-arrow-down"></span></div><picker-dropdown ref="dropdown" class="vue-color-picker__panel" v-model="showPicker" @pick="confirmValue" @clear="clearValue" :color="color" :show-alpha="showAlpha"></picker-dropdown></div>',
+    template: '<div class="vue-color-picker" :class="[disabled ? \'is-disabled\' : \'\']" v-clickoutside="hide"> \
+                <div class="vue-color-picker__mask" v-if="disabled"></div> \
+                <div class="vue-color-picker__trigger" @click="handleTrigger"> \
+                  <slot>\
+                  <span :class="[\'vue-color-picker__color\', {\'is-alpha\': showAlpha}]">\
+                    <span class="vue-color-picker__color-inner" :style="{backgroundColor: displayedColor}"></span> \
+                    <span class="vue-color-picker__empty vue-icon-close" v-if="!value && !showPanelColor"></span> \
+                  </span> \
+                  <span class="vue-color-picker__icon vue-icon-arrow-down"></span>\
+                  </slot>\
+                </div> \
+                <picker-dropdown ref="dropdown" \
+                  class="vue-color-picker__panel" v-model="showPicker" @pick="confirmValue" @clear="clearValue" :color="color" \
+                  :show-alpha="showAlpha">\
+                </picker-dropdown> \
+              </div>',
     name: 'VueColorPicker',
     props: {
       value: String,

@@ -37,6 +37,7 @@
       var table = this.table;
       var dataInstanceChanged = states._data !== data;
       states._data = data;
+      states.filteredData = data;
       states.data = this.sortData((data || []), states);
       VueUtil.loop(states.data, function(data, index) {
         data.$index = index;
@@ -75,6 +76,12 @@
     changeSortCondition: function(states) {
       var self = this;
       states.data = self.sortData((states.filteredData || states._data || []), states);
+      
+      //序号列重新排序
+      VueUtil.loop(states.data, function(data, index) {
+        data.$index = index;
+      });
+
       self.table.$emit('sort-change', self.states.sortingColumns);
       Vue.nextTick(function() {
         self.table.updateScrollY();
@@ -118,6 +125,19 @@
       });
       states.filteredData = data;
       states.data = self.sortData(data, states);
+
+      //序号列重新排序
+      VueUtil.loop(states.data, function(data, index) {
+        data.$index = index;
+      });
+
+      //过滤条件改变，重设选中行。
+      if (this.table.highlightFirstAfterFilter && data.length) {
+        this.table.setCurrentRow(data[0]);
+      } else {
+        this.table.setCurrentRow(null);
+      }
+
       if (!silent) {
         self.table.$emit('filter-change', filters);
       }
@@ -305,18 +325,20 @@
       if (column.visible) {
         columns.push(column);
         if (column.fixed === true || column.fixed === 'left') {
-          if (column.type === 'selection') {
-            column.fixed = false;
-          } else {
+          //Bug #1230
+          // if (column.type === 'selection') {
+          //   column.fixed = false;
+          // } else {
             states.fixedColumns.push(column);
-          }
+          // }
         }
         if (column.fixed === 'right') {
-          if (column.type === 'selection') {
-            column.fixed = false;
-          } else {
+          //Bug #1230
+          // if (column.type === 'selection') {
+          //   column.fixed = false;
+          // } else {
             states.rightFixedColumns.push(column);
-          }
+          // }
         }
       }
     });
@@ -812,7 +834,7 @@
         delta.keeps = 0;
         delta.marginTop = 0;
         delta.marginBottom = 0;
-        delta.size = 0;
+        delta.size = 40;
         delta.remain = 0;
         delta.data = [];
         var table = this.$parent;
@@ -1058,7 +1080,7 @@
           var columnData = {};
           columnData.value = row[column.property];
           columnData.text = row[column.property];
-          if (filterList.indexOf(columnData) === -1) {
+          if (filterList.map(function(e) { return e.value; }).indexOf(columnData.value) === -1) {
             filterList.push(columnData);
           }
         });
@@ -1258,6 +1280,10 @@
       handleFilterClick: function(event, column) {
         event.stopPropagation();
         var target = event.target;
+
+        if (target.tagName == 'SPAN') {
+          target = target.querySelector('i');
+        }
         var cell = target.parentNode;
         var filterPanel = this.filterPanels[column.id];
         if (filterPanel && column.filterOpened) {
@@ -1464,7 +1490,95 @@
     }
   };
   var TableContextMenu = {
-    template: '<vue-dialog v-model="dialogVisible" custom-class="vue-table-context-menu" :title="$t(\'vue.table.contextMenu\')" show-close @close="closeHandle"><vue-tabs><vue-tab-pane :label="$t(\'vue.table.pin\')"><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.leftPin\')"><vue-select clearable v-model="pinForm.leftPin" multiple @change="leftPin" @remove-tag="noPin"><vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label" :value="column"></vue-option></vue-select></vue-form-item><vue-form-item :label="$t(\'vue.table.rightPin\')"><vue-select clearable v-model="pinForm.rightPin" multiple @change="rightPin" @remove-tag="noPin"><vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label" :value="column"></vue-option></vue-select></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.sort\')"><vue-list scrollbar :height="150" :default-selected="false"><vue-list-item v-for="(column, index) in labelColumns" :key="index"><vue-button type="text" style="padding-left:15px" @click="removeSortColumn(column, true)">{{column.label}}</vue-button><div style="float:right;"><vue-button style="padding:10px 0 0 0;" :style="{color: column.order === \'ascending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" icon="vue-icon-caret-top" type="text" @click="sortColumn(column)"></vue-button><vue-button style="padding:10px 15px 0 0;" :style="{color: column.order === \'descending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" icon="vue-icon-caret-bottom" type="text" @click="sortColumn(column, true)"></vue-button></div><vue-divider v-if="index!==labelColumns.length-1"></vue-divider></vue-list-item></vue-list><vue-form label-width="70px"><vue-form-item :label="$t(\'vue.table.sortBy\')"><vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in sortList" :key="index" closable type="info" @close="removeSortColumn(column)">{{column.label}}<i style="padding:5px 0 0 5px;" :class="[{\'vue-icon-caret-top\': column.order === \'ascending\'}, {\'vue-icon-caret-bottom\': column.order === \'descending\'}]"></i></vue-tag></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.filter\')"><vue-form label-width="100px" :model="filterForm"><vue-form-item :label="$t(\'vue.table.column\')"><vue-select v-model="filterForm.filterColumn"><vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label" :value="column"></vue-option></vue-select></vue-form-item><vue-form-item :label="$t(\'vue.table.conditions\')"><vue-input icon="vue-icon-search" v-model="filterForm.conditions" :on-icon-click="filterColumn" @keydown.enter.native="filterColumn" ref="filterInput"><vue-select slot="prepend" v-model="filterForm.operations" style="width:80px;font-size:21px;" @change="operationsChange"><vue-option v-for="(item, index) in operations" :key="index" :label="item" :value="item"></vue-option></vue-select></vue-input></vue-form-item></vue-form><vue-divider></vue-divider><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.filterBy\')"><vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in filterList" :key="index" closable type="info" @close="removeFilterColumn(column)">{{column.label}} {{column.operations}} {{column.conditions}}</vue-tag></vue-form-item></vue-form></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.display\')"><vue-list scrollbar :height="150" :default-selected="false"><vue-list-item v-for="(column, index) in labelColumns" :key="index" @select="displayColumn(column)" style="cursor:pointer;"><vue-button type="text" style="padding-left:15px">{{column.label}}</vue-button><div style="float:right;"><vue-button style="padding:10px 15px 0 0;" :style="{color: column.visible ? \'#13ce66\' : \'#a94442\'}" :icon="column.visible ? \'vue-icon-success\' : \'vue-icon-error\'" type="text"></vue-button></div><vue-divider v-if="index!==labelColumns.length-1"></vue-divider></vue-list-item></vue-list></vue-tab-pane><vue-tab-pane :label="$t(\'vue.table.exportData\')"><vue-form label-width="100px"><vue-form-item :label="$t(\'vue.table.fileName\')"><vue-input v-model="fileName"></vue-input></vue-form-item></vue-form><div style="text-align:right"><vue-button @click="exportData(true)" plain type="info" icon="vue-icon-download2">{{$t(\'vue.table.exportOrgData\')}}</vue-button><vue-button @click="exportData(false)" type="primary" icon="vue-icon-download2">{{$t(\'vue.table.exportHandleData\')}}</vue-button></div></vue-tab-pane></vue-tabs></vue-dialog>',
+    template: '<vue-dialog v-model="dialogVisible" custom-class="vue-table-context-menu" :title="$t(\'vue.table.contextMenu\')" \
+      show-close @close="closeHandle"> \
+      <vue-tabs> \
+        <vue-tab-pane :label="$t(\'vue.table.pin\')"> \
+          <vue-form label-width="100px"> \
+            <vue-form-item :label="$t(\'vue.table.leftPin\')"> \
+              <vue-select clearable v-model="pinForm.leftPin" multiple @change="leftPin" @remove-tag="noPin"> \
+                <vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label?column.label:(column.type==\'index\'?\'#\':\' \')" :value="column"></vue-option> \
+              </vue-select> \
+            </vue-form-item> \
+            <vue-form-item :label="$t(\'vue.table.rightPin\')"> \
+              <vue-select clearable v-model="pinForm.rightPin" multiple @change="rightPin" @remove-tag="noPin"> \
+                <vue-option v-for="(column, index) in labelColumns" :key="index" :label="column.label?column.label:(column.type==\'index\'?\'#\':\' \')" :value="column"></vue-option> \
+              </vue-select> \
+            </vue-form-item> \
+          </vue-form> \
+        </vue-tab-pane> \
+        <vue-tab-pane :label="$t(\'vue.table.sort\')"> \
+          <vue-list scrollbar :height="150" :default-selected="false"> \
+            <vue-list-item v-for="(column, index) in labelColumns" v-if="column.type != \'index\'" :key="index"> \
+              <vue-button type="text" style="padding-left:15px" @click="removeSortColumn(column, true)">{{column.label?column.label:(column.type=="index"?"#":"&nbsp;")}}</vue-button> \
+              <div style="float:right;"> \
+                <vue-button style="padding:10px 0 0 0;" :style="{color: column.order === \'ascending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" \
+                  icon="vue-icon-caret-top" type="text" @click="sortColumn(column)"></vue-button> \
+                <vue-button style="padding:10px 15px 0 0;" :style="{color: column.order === \'descending\' ? \'#eb9e05\' : \'rgb(151, 168, 190)\'}" \
+                  icon="vue-icon-caret-bottom" type="text" @click="sortColumn(column, true)"></vue-button> \
+              </div> \
+              <vue-divider v-if="index!==labelColumns.length-1"></vue-divider> \
+            </vue-list-item> \
+          </vue-list> \
+          <vue-form label-width="70px"> \
+            <vue-form-item :label="$t(\'vue.table.sortBy\')"> \
+              <vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in sortList" :key="index" closable \
+                type="info" @close="removeSortColumn(column)">{{column.label?column.label:(column.type=="index"?"#":"&nbsp;")}}<i style="padding:5px 0 0 5px;" :class="[{\'vue-icon-caret-top\': column.order === \'ascending\'}, {\'vue-icon-caret-bottom\': column.order === \'descending\'}]"></i></vue-tag> \
+            </vue-form-item> \
+          </vue-form> \
+        </vue-tab-pane> \
+        <vue-tab-pane :label="$t(\'vue.table.filter\')"> \
+          <vue-form label-width="100px" :model="filterForm"> \
+            <vue-form-item :label="$t(\'vue.table.column\')"> \
+              <vue-select v-model="filterForm.filterColumn"> \
+                <vue-option v-for="(column, index) in labelColumns" v-if="column.type != \'index\'" :key="index" :label="column.label?column.label:(column.type==\'index\'?\'#\':\' \')" :value="column"></vue-option> \
+              </vue-select> \
+            </vue-form-item> \
+            <vue-form-item :label="$t(\'vue.table.conditions\')"> \
+              <vue-input icon="vue-icon-search" v-model="filterForm.conditions" :on-icon-click="filterColumn" \
+                @keydown.enter.native="filterColumn" ref="filterInput"> \
+                <vue-select slot="prepend" v-model="filterForm.operations" style="width:80px;font-size:21px;" \
+                  @change="operationsChange"> \
+                  <vue-option v-for="(item, index) in operations" :key="index" :label="item" :value="item"></vue-option> \
+                </vue-select> \
+              </vue-input> \
+            </vue-form-item> \
+          </vue-form> \
+          <vue-divider></vue-divider> \
+          <vue-form label-width="100px"> \
+            <vue-form-item :label="$t(\'vue.table.filterBy\')"> \
+              <vue-tag hit style="margin:5px 5px 0 0;" v-for="(column, index) in filterList" :key="index" closable \
+                type="info" @close="removeFilterColumn(column)">{{column.label?column.label:(column.type=="index"?"#":"&nbsp;")}} {{column.operations}} {{column.conditions}}</vue-tag> \
+            </vue-form-item> \
+          </vue-form> \
+        </vue-tab-pane> \
+        <vue-tab-pane :label="$t(\'vue.table.display\')"> \
+          <vue-list scrollbar :height="150" :default-selected="false"> \
+            <vue-list-item v-for="(column, index) in labelColumns" :key="index" @select="displayColumn(column)" \
+              style="cursor:pointer;"> \
+              <vue-button type="text" style="padding-left:15px">{{column.label?column.label:(column.type=="index"?"#":"&nbsp;")}}</vue-button> \
+              <div style="float:right;"> \
+                <vue-button style="padding:10px 15px 0 0;" :style="{color: column.visible ? \'#13ce66\' : \'#a94442\'}" \
+                  :icon="column.visible ? \'vue-icon-success\' : \'vue-icon-error\'" type="text"></vue-button> \
+              </div> \
+              <vue-divider v-if="index!==labelColumns.length-1"></vue-divider> \
+            </vue-list-item> \
+          </vue-list> \
+        </vue-tab-pane> \
+        <vue-tab-pane :label="$t(\'vue.table.exportData\')"> \
+          <vue-form label-width="100px"> \
+            <vue-form-item :label="$t(\'vue.table.fileName\')"> \
+              <vue-input v-model="fileName"></vue-input> \
+            </vue-form-item> \
+          </vue-form> \
+          <div style="text-align:right"> \
+            <vue-button @click="exportData(true)" plain type="info" icon="vue-icon-download2">{{$t(\'vue.table.exportOrgData\')}}</vue-button> \
+            <vue-button @click="exportData(false)" type="primary" \
+              icon="vue-icon-download2">{{$t(\'vue.table.exportHandleData\')}}</vue-button> \
+          </div> \
+        </vue-tab-pane> \
+      </vue-tabs> \
+    </vue-dialog>',
     data: function() {
       return {
         tableColumns: [],
@@ -1683,7 +1797,7 @@
     }
   };
   var VueTable = {
-    template: '<div :class="[\'vue-table\', {\'vue-table--fit\': fit, \'vue-table--striped\': stripe, \'vue-table--border\': border}]" @mouseleave="handleMouseLeave($event)" :style="{width: layout.bodyWidth <= 0 ? \'0px\' : \'\'}"><div class="hidden-columns" ref="hiddenColumns"><slot></slot></div><div class="vue-table__main"><div class="vue-table__header-wrapper" ref="headerWrapper" v-show="showHeader"><table-header ref="tableHeader" :style="{width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__body-wrapper" ref="bodyWrapper" :style="[bodyHeight]"><table-body ref="tableBody" :style="{width: bodyWidth}"></table-body><div :style="{width: bodyWidth}" class="vue-table__empty-block" v-show="!data || data.length === 0"><span class="vue-table__empty-text"><slot name="empty">{{emptyText || emptyLabel}}</slot></span></div></div><div class="vue-table__footer-wrapper" ref="footerWrapper" v-show="showFooter"><table-footer ref="tableFooter" :style="{width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed" v-show="leftFixedCount > 0" :style="[{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}, fixedHeight]"><div class="vue-table__fixed-header-wrapper" ref="fixedHeaderWrapper" v-show="showHeader"><table-header fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="fixedBodyWrapper" :style="[{top: layout.headerHeight + \'px\'}, fixedBodyHeight]"><table-body ref="fixedTableBody" fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="fixedFooterWrapper" v-show="showFooter"><table-footer fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed-right" v-show="rightFixedCount > 0" :style="[{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}, {right: layout.scrollY ? (border ? layout.gutterWidth : (layout.gutterWidth || 1)) + \'px\' : \'\'}, fixedHeight]"><div class="vue-table__fixed-header-wrapper" ref="rightFixedHeaderWrapper" v-show="showHeader"><table-header fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="rightFixedBodyWrapper" :style="[{top: layout.headerHeight + \'px\'}, fixedBodyHeight]"><table-body ref="rightFixedTableBody" fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="rightFixedFooterWrapper" v-show="showFooter"><table-footer fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed-right-patch" v-show="rightFixedCount > 0" :style="{width: layout.scrollY ? layout.gutterWidth + \'px\' : \'0\', height: layout.headerHeight + \'px\'}"></div><div class="vue-table__column-resize-proxy" ref="resizeProxy" v-show="resizeProxyVisible"></div><table-context-menu v-if="contextMenu" v-model="showContextMenu""></table-context-menu></div>',
+    template: '<div :class="[\'vue-table\', {\'vue-table--fit\': fit, \'vue-table--striped\': stripe, \'vue-table--border\': border}]" @mouseleave="handleMouseLeave($event)" :style="{width: layout.bodyWidth <= 0 ? \'0px\' : \'\'}"><div class="hidden-columns" ref="hiddenColumns"><slot></slot></div><div class="vue-table__main"><div class="vue-table__header-wrapper" ref="headerWrapper" v-show="showHeader"><table-header ref="tableHeader" :style="{width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__body-wrapper" ref="bodyWrapper" :style="[bodyHeight]"><table-body ref="tableBody" :style="{width: bodyWidth}"></table-body><div :style="{width: bodyWidth}" class="vue-table__empty-block" v-show="!data || data.length === 0"><span class="vue-table__empty-text"><slot name="empty">{{emptyText || emptyLabel}}</slot></span></div></div><div class="vue-table__footer-wrapper" ref="footerWrapper" v-show="showFooter"><table-footer ref="tableFooter" :style="{width: layout.bodyWidth ? layout.bodyWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed" v-show="leftFixedCount > 0" :style="[{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}, fixedHeight]"><div class="vue-table__fixed-header-wrapper" ref="fixedHeaderWrapper" v-show="showHeader"><table-header fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="fixedBodyWrapper" :style="[{top: layout.headerHeight + \'px\'}, fixedBodyHeight]"><table-body ref="fixedTableBody" fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="fixedFooterWrapper" v-show="showFooter"><table-footer fixed="left" :style="{width: layout.fixedWidth ? layout.fixedWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed-right" v-show="rightFixedCount > 0" :style="[{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}, {right: layout.scrollY ? (border ? layout.gutterWidth : (layout.gutterWidth || 1)) + \'px\' : \'\'}, fixedHeight]"><div class="vue-table__fixed-header-wrapper" ref="rightFixedHeaderWrapper" v-show="showHeader"><table-header fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-header></div><div class="vue-table__fixed-body-wrapper" ref="rightFixedBodyWrapper" :style="[{top: layout.headerHeight + \'px\'}, fixedBodyHeight]"><table-body ref="rightFixedTableBody" fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-body></div><div class="vue-table__fixed-footer-wrapper" ref="rightFixedFooterWrapper" v-show="showFooter"><table-footer fixed="right" :style="{width: layout.rightFixedWidth ? layout.rightFixedWidth + \'px\' : \'\'}"></table-footer></div></div><div class="vue-table__fixed-right-patch" v-show="rightFixedCount > 0" :style="{width: layout.scrollY ? layout.gutterWidth + \'px\' : \'0\', height: layout.headerHeight + \'px\'}"></div><div class="vue-table__column-resize-proxy" ref="resizeProxy" v-show="resizeProxyVisible"></div><table-context-menu ref="contextMenu" v-if="contextMenu" v-model="showContextMenu""></table-context-menu></div>',
     name: 'VueTable',
     props: {
       data: {
@@ -1710,6 +1824,7 @@
       rowClassName: [String, Function],
       rowStyle: [Object, Function],
       highlightCurrentRow: Boolean,
+      highlightFirstAfterFilter: Boolean,
       highlightHoverRow: {
         type: Boolean,
         default: true
@@ -1734,7 +1849,29 @@
       TableFooter: TableFooter,
       TableContextMenu: TableContextMenu
     },
+    activated: function() {
+      var refs = this.$refs;
+      var scrollTop = this.bodyScroll.top;
+      refs.bodyWrapper.scrollTop = scrollTop;
+      refs.fixedBodyWrapper.scrollTop = scrollTop;
+      refs.rightFixedBodyWrapper.scrollTop = scrollTop;
+    },
     methods: {
+      clearFilters: function() {
+        var filterPanels = this.$refs.tableHeader.filterPanels;
+
+        for (var key in filterPanels) {
+          filterPanels[key].handleReset();
+        }
+      },
+      clearSorts: function() {
+        var self = this;
+        self.store.states.sortingColumns = [];
+        VueUtil.loop(self.store.states.columns, function(column) {
+          column.order = null;
+        });
+        self.store.commit('changeSortCondition');
+      },
       exportCsv: function(params) {
         if (!VueUtil.isObject(params)) params = {};
         if (params.fileName) {
@@ -2070,7 +2207,7 @@
               VueUtil.loop(store.states.columns, function(column) {
                 if (column.filteredValue && column.filteredValue.length) {
                   store.commit('filterChange', {
-                    column: cloumn,
+                    column: column,
                     values: column.filteredValue,
                     silent: true
                   });
@@ -2106,6 +2243,11 @@
       this.layout.setHeight(this.height);
       this.bindEvents();
       this.doLayout();
+
+      //table的contextmenu在多个table的情况，会被覆盖 Bug #1263
+      if (this.contextMenu) {
+        this.$el.parentNode.append(this.$refs.contextMenu.$el);
+      }
     },
     data: function() {
       var store = new TableStore(this, {defaultExpandAll: self.defaultExpandAll});

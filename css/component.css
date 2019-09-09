@@ -1707,7 +1707,7 @@
 	display: none;
 }
 .vue-checkbox__input.is-focus .vue-checkbox__inner {
-	border-color: #409eff;
+	box-shadow: 0 0 2px 2px #409eff;
 }
 .vue-checkbox__input.is-checked .vue-checkbox__inner {
 	background-color: #409eff;
@@ -1773,7 +1773,13 @@
 	transform-origin: center;
 }
 .vue-checkbox__original {
-	display: none;
+	opacity: 0;
+    outline: none;
+    position: absolute;
+    margin: 0;
+    width: 0;
+    height: 0;
+    z-index: -1;
 }
 .vue-checkbox__label {
 	font-size: 14px;
@@ -4655,7 +4661,7 @@
 	border-radius: 4px;
 	border: 1px solid #bfcbd9;
 	color: #1f2d3d;
-	display: block;
+	display: inline-block;
 	height: 36px;
 	line-height: 1;
 	outline: 0;
@@ -4678,8 +4684,8 @@
 .vue-input__icon {
 	position: absolute;
 	width: 36px;
-	height: 100%;
-	right: 0;
+  height: 100%;
+  right: 0;
 	top: 0;
 	text-align: center;
 	color: #bfcbd9;
@@ -4824,6 +4830,19 @@
 	border-color: #409eff;
 }
 
+.vue-input__prefix {
+  position: absolute;
+  left: 0px;
+  top: 0;
+}
+
+.vue-input__prefix .vue-input__icon{
+  right: auto;
+}
+
+.vue-input--prefix .vue-input__inner {
+  padding-left: 30px
+}
 .vue-list {
 	border-radius: 3px;
 	border: 1px solid #ddd;
@@ -5822,11 +5841,11 @@
 }
 .vue-date-editor .vue-range__icon {
   font-size: 14px;
-  margin-left: -12px;
+  margin-left: -11px;
   color: #C0C4CC;
   float: left;
   line-height: 32px;
-  right: unset;
+  right: auto;
 }
 .vue-date-editor .vue-range-input {
   appearance: none;
@@ -6277,10 +6296,15 @@
 	display: inline-block;
 }
 .vue-radio {
+	outline: none;
 	color: #1f2d3d;
 	-webkit-user-select: none;
 	-ms-user-select: none;
 }
+.vue-radio:focus:not(.is-focus):not(:active):not(.is-disabled) .vue-radio__inner {
+    box-shadow: 0 0 2px 2px #409eff;
+}
+
 .vue-radio+.vue-radio {
 	margin-left: 15px;
 }
@@ -6344,7 +6368,15 @@
 	top: 50%;
 }
 .vue-radio__original {
-	display: none;
+	opacity: 0;
+    outline: none;
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
 }
 .vue-radio__label {
 	font-size: 14px;
@@ -7272,7 +7304,7 @@
 }
 .vue-table__sort-wrapper {
 	display: inline-block;
-	line-height: 34px;
+	line-height: 39px;
 	margin-left: 5px;
 	cursor: pointer;
 }
@@ -7471,6 +7503,7 @@
 .vue-table__body-wrapper {
 	overflow: auto;
 	position: relative;
+	outline: none;
 }
 .vue-table__column-resize-proxy {
 	position: absolute;
@@ -7483,7 +7516,7 @@
 }
 .vue-table__column-filter-trigger {
 	display: inline-block;
-	line-height: 34px;
+	line-height: 39px;
 	margin-left: 5px;
 	cursor: pointer;
 }
@@ -7491,7 +7524,7 @@
 	color: #97a8be;
 }
 .vue-table__column-filter-trigger .vue-icon-filter.is-filtered {
-	color: #1f2d3d;
+	color: #ff982a;
 }
 .vue-table__body .vue-table__cell {
 	background-color: #fff;
@@ -7537,6 +7570,18 @@
 	padding: 0 10px;
 	cursor: pointer;
 	font-size: 14px;
+}
+.table-complexfilter .vue-checkbox__input .vue-checkbox__inner{
+	background-color: #ea5b5b;
+    border-color: #f32f2f;
+}
+.table-complexfilter .vue-checkbox__input .vue-checkbox__inner::after{
+	content: 'x';
+	color: white;
+    transform: unset;
+	border: none;
+	left: 4px;
+    top: 0;
 }
 .vue-table-filter__bottom {
 	border-top: 1px solid #d1dbe5;

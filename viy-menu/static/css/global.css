@@ -46,6 +46,27 @@
 .hideSidebar .main-container {
   margin-left: 36px;
 }
+
+.sidebar-logo {
+  font-size: 16px;
+  padding: 7px 7px 0 7px;
+}
+
+.hideSidebar .sidebar-logo {
+  width: 36px;
+  overflow: hidden;
+  padding-left: 2px;
+}
+
+.sidebar-logo img {
+  height: 30px;
+  transition: height .2s;
+}
+
+.hideSidebar .sidebar-logo img {
+  height: 23px;
+}
+
 /* .hideSidebar .submenu-title-noDropdown {
   padding-left: 10px;
   position: relative;
@@ -54,13 +75,13 @@
   padding: 0 10px !important;
 }
 
-.hideSidebar .sidebar-container>.vue-menu>.menu-wrapper>.vue-submenu>.vue-submenu__title {
+.hideSidebar .sidebar-container>div>.vue-menu>.menu-wrapper>.vue-submenu>.vue-submenu__title {
   padding-left: 10px !important;
 }
-.hideSidebar .sidebar-container>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>.vue-submenu__icon-arrow {
+.hideSidebar .sidebar-container>div>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>.vue-submenu__icon-arrow {
   display: none;
 }
-.hideSidebar .sidebar-container>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>span {
+.hideSidebar .sidebar-container>div>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>span {
   height: 0;
   width: 0;
   overflow: hidden;
@@ -68,7 +89,7 @@
   display: inline-block;
 }
 
-.openSidebar .vue-scrollbar__thumb {
+.openSidebar .sidebar-container .vue-scrollbar__thumb {
   background-color: lightgray;
   opacity: .3;
 }

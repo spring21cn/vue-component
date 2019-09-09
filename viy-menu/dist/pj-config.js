@@ -1,4 +1,15 @@
-﻿/**
+/**
+
+Vue.config.menu = {
+  data: 菜单数据，下方有详细说明。
+  logOut: 登出函数。点击navbar右上角头像下拉框的登出按钮触发。
+  getUserInfo: 获取用户数据接口，首次进入路由触发。
+  viewsPath: 画面HTML的URL在contextpath后的路径，默认views，如： 需要被load的HTML路径为 http://xxx/a1-escort/screen/xxx.html 则viewsPath为screen
+  breadcrumbFromDashboard: 面包屑导航是否默认从首页开始。默认true
+  layoutPageCode: 画面外框HTML的code，会在views目录下寻找对应的文件名作为画面外框组件
+  homePageCode: 画面首页HTML的code，会在views目录下寻找对应的文件名作为画面首页
+}
+
 关于菜单路由配置方式：实现Vue.config.menu.data方法
 如需要ajax取得的后台数据，建议返回一个Promise对象（参考下面例子），程序可以异步加载。否则也可以直接返回数组类型。
 
@@ -19,11 +30,11 @@ alwaysShow     当你一个路由下面的 children 声明的路由大于1个时
 roles          设置该路由进入的权限，支持多个权限叠加
 noCache        如果设置为true，则不会被 <keep-alive> 缓存(默认 false)
 breadcrumb     如果设置为false，则不会在breadcrumb面包屑中显示(默认 true)
-props          参数传递 { key: value }, 对应的画面中需要预先定义参数
+props          参数传递 { key: value }, 对应的画面html中需要预先定义参数，如props: ['name', 'id']
 children       子菜单
 */
 
-Vue.config.menu = {
+Vue.config.menu = VueUtil.merge({
   data: function (username, roles) {
     //例
     // return new Promise(function(resolve, reject) {
@@ -41,38 +52,51 @@ Vue.config.menu = {
     //mock
     var data = [{
       code: 'dashboard',
-      title: 'dashboard',
-      icon: 'desktop',
-      url: '/views/dashboard.html'
+      title: 'title.dashboard',
+      icon: 'vue-icon-desktop',
+      url: 'views/dashboard.html'
     }, {
-      code: 'permission',
-      title: 'permission',
-      icon: 'lock',
+      code: 'demo',
+      title: 'title.demo',
+      icon: 'vue-icon-lock',
       alwaysShow: true,
       breadcrumb: false,
       children: [{
-        code: 'PagePermission',
-        title: 'pagePermission',
-        icon: 'desktop',
-        roles: ['admin'],
-        url: '/views/permission/page.html'
+        code: 'demo01',
+        title: 'title.demo01',
+        icon: 'vue-icon-desktop',
+        url: 'views/demo/demo01.html',
+        params: {
+          name: 'ddd'
+        },
+        props: {
+          name: 'demo11111'
+        }
+      },{
+        code: 'demo011',
+        title: 'title.demo011',
+        icon: 'vue-icon-desktop',
+        url: 'views/demo/demo01.html',
+        props: {
+          name: 'demo011'
+        }
       }, {
-        code: 'DirectivePermission',
-        title: 'directivePermission',
-        icon: 'desktop',
-        url: '/views/permission/directive.html'
+        code: 'demo02',
+        title: 'title.demo02',
+        icon: 'vue-icon-desktop',
+        url: 'views/demo/demo02.html'
       }],
     }, {
       code: 'externalLink',
-      title: 'externalLink',
+      title: 'title.externalLink',
       type: 'link',
-      icon: 'share',
+      icon: 'vue-icon-share',
       url: 'http://www.baidu.com'
     }, {
       code: 'iframe',
-      title: 'iframePage',
+      title: 'title.iframePage',
       type: 'iframe',
-      icon: 'share',
+      icon: 'vue-icon-share',
       url: 'http://www.baidu.com'
     }
     ];
@@ -80,32 +104,6 @@ Vue.config.menu = {
     return new Promise(function(resolve, reject) {
         resolve(data);
     });
-  },
-
-  /**
-   * 调用登录接口，返回一个promise且resolve的值为后端token {data: {token: 'token'}}
-   * @param {string} username 
-   * @param {string} password 
-   * @returns {promise} 
-   */
-  loginByUsername: function (username, password) {
-    // 例
-    // return Vue.http.post(
-    //   '/login/login',
-    //   {
-    //     username: username,
-    //     password: password
-    //   }
-    // )
-
-    //mock
-    return new Promise(function(resolve, reject) {
-      if(userMap.hasOwnProperty(username)) {
-        resolve({data: {token: username}});
-      } else {
-        reject('no such user!');
-      }
-    })
   },
 
   /**
@@ -118,9 +116,7 @@ Vue.config.menu = {
     // )
 
     //mock
-    return new Promise(function(resolve, reject) {
-      resolve();
-    })
+    location.href = 'index.html'
   },
 
   /**
@@ -136,21 +132,15 @@ Vue.config.menu = {
 
     //mock
     return new Promise(function(resolve, reject) {
-      resolve({data: userMap[token]});
+      resolve(userMap['admin']);
     })
   }
-}
+}, Vue.config.menu)
 
 //demo测试用户数据
 var userMap = {
   admin: {
-    roles: ['admin'],
-    avatar: './static/img/avatar/1.jpg',
+    avatar: './static/img/avatar/1.png',
     name: 'Super Admin'
-  },
-  editor: {
-    roles: ['editor'],
-    avatar: './static/img/avatar/2.jpg',
-    name: 'Normal Editor'
   }
 }

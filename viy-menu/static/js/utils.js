@@ -11,7 +11,7 @@
     if (!title) {
       title = 'noName'
     }
-    var translatedTitle = Vue.t('title.' + title);
+    var translatedTitle = Vue.t(title);
     return translatedTitle;
   }
   
@@ -33,24 +33,6 @@
     return VueUtil.removeCookie(TokenKey);
   }
   
-  function checkPermission(value) {
-    if (value && value instanceof Array && value.length > 0) {
-      var roles = MenuStore.getters && MenuStore.getters.roles;
-      var permissionRoles = value;
-  
-      var hasPermission = roles.some(function (role) {
-        return permissionRoles.indexOf(role) > -1
-      });
-  
-      if (!hasPermission) {
-        return false;
-      }
-      return true;
-    } else {
-      console.error('need roles!');
-      return false;
-    }
-  }
   
   function toConsumableArray(arr) {
     if (Array.isArray(arr)) {
@@ -68,13 +50,23 @@
     return false;
   }
 
+  Vue.menu = {
+    push: function(location, onComplete, onAbort) {
+      router.push(location, onComplete, onAbort);
+      var match = MenuStore.getters.visitedViews.filter(function(v) {
+        return v.path === router.currentRoute.path;
+      })
+      
+      match.length > 0 && (match[0].params = location.params)
+    }
+  }
+
   return {
     generateTitle: generateTitle,
     isExternal: isExternal,
     getToken: getToken,
     setToken: setToken,
     removeToken: removeToken,
-    checkPermission: checkPermission,
     toConsumableArray: toConsumableArray,
     openMenuItemInWindow: openMenuItemInWindow
   }

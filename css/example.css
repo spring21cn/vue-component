@@ -2,45 +2,11 @@
  *  Examples css
  */ 
 body, html {
-    background: #eaeff2 url("../image/background.png") 0 0 repeat;
+	margin:0;
+	padding:0;
+	height:100%;
+	overflow:hidden;
 }
 
-.view-pad {
-	height: 910px!important;
-	margin: 0 auto;
-	padding: 96px 100px 115px 49px;
-	width: 785px;
-	margin-top: 40px;
-	margin-bottom: 20px;
-	background: url(../image/bgipad.png) no-repeat 0 0;
-	transition: all 0.5s ease 0s;
-}
-.view-pad-w {
-	height: 653px!important;
-	margin: 0 auto;
-	padding: 41px 115px 100px 75px;
-	width: 1041px;
-	margin-top: 40px;
-	background: url(../image/bgipadw.png) no-repeat;
-	transition: all 0.5s ease 0s;
-}
-.view-mobile {
-	height: 534px!important;
-	margin: 0 auto;
-	padding: 102px 25px 159px 23px;
-	width: 337px;
-	margin-top: 40px;
-	background: url(../image/bgiphone.png) no-repeat;
-	transition: all 0.5s ease 0s;
-}
-.view-mobile-w {
-	height: 266px!important;
-	margin: 0 auto;
-	padding: 43px 115px 69px 82px;
-	width: 605px;
-	margin-top: 40px;
-	background: url(../image/bgiphonew.png) no-repeat;
-	transition: all 0.5s ease 0s;
-}
 
 

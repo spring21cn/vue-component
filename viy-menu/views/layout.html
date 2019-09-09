@@ -1,15 +1,27 @@
 <template>
   <div :class="classObj" class="app-wrapper">
     <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside"></div>
-    <sidebar class="sidebar-container"></sidebar>
     <div class="main-container">
+        <sidebar>
+          <router-link slot="logo" to="/">
+            <img  src="https://cn.vuejs.org/images/logo.png">
+          </router-link>
+        </sidebar>
       <div class="navbar">
         <hamburger></hamburger>
         <breadcrumb></breadcrumb>
         <div class="right-menu">
             <screenfull class="right-menu-item"></screenfull>
             <lang-select :languages="languages" class="right-menu-item"></lang-select>
-            <avatar></avatar>
+            <avatar>
+              <template slot="dropdown">
+                  <router-link to="/">
+                    <vue-dropdown-item>
+                      {{ $t('menu.navbar.dashboard') }}
+                    </vue-dropdown-item>
+                  </router-link>
+              </template>
+            </avatar>
         </div>
       </div>
       <tags-view></tags-view>

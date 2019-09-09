@@ -12,13 +12,6 @@
 var locales = {
   zh: {
     menu: {
-      login: {
-        title: '系统登录',
-        logIn: '登录',
-        username: '账号',
-        password: '密码',
-        any: '随便填',
-      },
       tagsView: {
         refresh: '刷新',
         close: '关闭',
@@ -37,13 +30,6 @@ var locales = {
   },
   en: {
     menu: {
-      login: {
-        title: 'Login Form',
-        logIn: 'Log in',
-        username: 'Username',
-        password: 'Password',
-        any: 'any'
-      },
       tagsView: {
         refresh: 'Refresh',
         close: 'Close',
@@ -62,13 +48,6 @@ var locales = {
   },
   ja: {
     menu: {
-      login: {
-        title: 'システムログイン',
-        logIn: 'ログイン',
-        username: 'ユーザー',
-        password: 'パスワード',
-        any: 'Any',
-      },
       tagsView: {
         refresh: 'リフレッシュ',
         close: '閉じる',
@@ -89,8 +68,6 @@ var locales = {
 VueUtil.setLocale("zh", locales.zh);
 VueUtil.setLocale("en", locales.en);
 VueUtil.setLocale("ja", locales.ja);
-
-VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefined" ? clientLang : 'zh'));
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     define([], factory);
@@ -104,7 +81,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     if (!title) {
       title = 'noName'
     }
-    var translatedTitle = Vue.t('title.' + title);
+    var translatedTitle = Vue.t(title);
     return translatedTitle;
   }
   
@@ -126,24 +103,6 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     return VueUtil.removeCookie(TokenKey);
   }
   
-  function checkPermission(value) {
-    if (value && value instanceof Array && value.length > 0) {
-      var roles = MenuStore.getters && MenuStore.getters.roles;
-      var permissionRoles = value;
-  
-      var hasPermission = roles.some(function (role) {
-        return permissionRoles.indexOf(role) > -1
-      });
-  
-      if (!hasPermission) {
-        return false;
-      }
-      return true;
-    } else {
-      console.error('need roles!');
-      return false;
-    }
-  }
   
   function toConsumableArray(arr) {
     if (Array.isArray(arr)) {
@@ -161,13 +120,23 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     return false;
   }
 
+  Vue.menu = {
+    push: function(location, onComplete, onAbort) {
+      router.push(location, onComplete, onAbort);
+      var match = MenuStore.getters.visitedViews.filter(function(v) {
+        return v.path === router.currentRoute.path;
+      })
+      
+      match.length > 0 && (match[0].params = location.params)
+    }
+  }
+
   return {
     generateTitle: generateTitle,
     isExternal: isExternal,
     getToken: getToken,
     setToken: setToken,
     removeToken: removeToken,
-    checkPermission: checkPermission,
     toConsumableArray: toConsumableArray,
     openMenuItemInWindow: openMenuItemInWindow
   }
@@ -198,8 +167,8 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     cachedViews: function(state) {
         return state.tagsView.cachedViews;
     },
-    token: function(state) {
-        return state.user.token;
+    initTagsView: function(state) {
+      return state.tagsView.init;
     },
     avatar: function(state) {
         return state.user.avatar;
@@ -212,9 +181,6 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     },
     status: function(state) {
         return state.user.status;
-    },
-    roles: function(state) {
-        return state.user.roles;
     },
     setting: function(state) {
         return state.user.setting;
@@ -291,22 +257,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       }
     }
   };
-  //permission.js
-  /**
-   * 通过meta.role判断是否与当前用户权限匹配
-   * @param roles
-   * @param route
-   */
-  function hasPermission(roles, route) {
-    if (route.meta && route.meta.roles) {
-      return roles.some(function (role) {
-        return route.meta.roles.indexOf(role) > -1;
-      });
-    } else {
-      return true;
-    }
-  }
-  
+
   /**
    * 处理vue.config.menu配置项传回的菜单JSON数据
    */
@@ -319,9 +270,8 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       }
       if (typeof data === "function") {
         var username = MenuStore.getters.name
-        var roles = VueUtil.merge([], MenuStore.getters.roles);
   
-        var res = data(username, roles);
+        var res = data(username);
         if(typeof res.then == 'function') {
           res.then(function(data) {
             resolve(dataToRoute(data));
@@ -357,11 +307,12 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       route.redirect = data.redirect;
       route.props = data.props;
       route.meta = {
-        roles: data.roles,
         features: data.features,
         title: data.title,
         target: data.target,
         icon: data.icon,
+        id: data.id,
+        iconColor: data.iconColor,
         noCache: data.noCache,
         breadcrumb: data.breadcrumb,
         type: data.type
@@ -386,7 +337,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
           return true;
         } else {
           if (route.meta.type !== 'iframe') {
-            route.component = VueLoader(contextPath + data.url);
+            route.component = VueLoader(data.url);
           } else {
             route.meta.url = data.url;
           }
@@ -412,26 +363,6 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     return res;
   }
 
-  /**
-   * 递归过滤异步路由表，返回符合用户角色权限的路由表
-   * @param routes asyncRouterMap
-   * @param roles
-   */
-  function filterAsyncRouter(routes, roles) {
-    var res = [];
-  
-    routes.forEach(function (route) {
-      var tmp = VueUtil.merge({}, route);
-      if (hasPermission(roles, tmp)) {
-        if (tmp.children) {
-          tmp.children = filterAsyncRouter(tmp.children, roles);
-        }
-        res.push(tmp);
-      }
-    });
-  
-    return res;
-  }
   
   var permission = {
     state: {
@@ -449,7 +380,6 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
         var commit = state.commit;
   
         return new Promise(function (resolve) {
-          var roles = data.roles;
           processMenuData().then(function(asyncRouterMap) {
             asyncRouterMap.push({
               path: '*',
@@ -457,12 +387,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
               hidden: true 
             })
   
-            if (roles.indexOf('admin') > -1) {
-              accessedRouters = asyncRouterMap;
-            } else {
-              accessedRouters = filterAsyncRouter(asyncRouterMap, roles);
-            }
-            commit('SET_ROUTERS', accessedRouters);
+            commit('SET_ROUTERS', asyncRouterMap);
             resolve();
           });
         });
@@ -474,7 +399,8 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
   var tagsView = {
     state: {
       visitedViews: [],
-      cachedViews: []
+      cachedViews: [],
+      init: false
     },
     mutations: {
       ADD_VISITED_VIEW: function(state, view) {
@@ -544,7 +470,11 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
             break;
           }
         }
-      }
+      },
+
+      INIT_TAGSVIEW: function(state) {
+        state.init = true;
+      },
     },
     actions: {
       addView: function(context, view) {
@@ -656,7 +586,12 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       updateVisitedView: function(context, view) {
         var commit = context.commit;
         commit('UPDATE_VISITED_VIEW', view);
+      },
+      initTagsView: function(context) {
+        var commit = context.commit;
+        commit('INIT_TAGSVIEW');
       }
+      
     }
   };
   
@@ -665,22 +600,16 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       user: '',
       status: '',
       code: '',
-      token: MenuUtils.getToken(),
       name: '',
       avatar: '',
       introduction: '',
-      roles: [],
       setting: {
-        articlePlatform: []
       }
     },
   
     mutations: {
       SET_CODE: function(state, code) {
         state.code = code;
-      },
-      SET_TOKEN: function(state, token) {
-        state.token = token;
       },
       SET_INTRODUCTION: function(state, introduction) {
         state.introduction = introduction;
@@ -697,103 +626,38 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       SET_AVATAR: function(state, avatar) {
         state.avatar = avatar;
       },
-      SET_ROLES: function(state, roles) {
-        state.roles = roles;
-      }
     },
   
     actions: {
-      // 用户名登录
-      LoginByUsername: function(context, userInfo) {
-        var commit = context.commit;
-        var username = userInfo.username.trim();
-
-        return new Promise(function (resolve, reject) {
-          Vue.config.menu.loginByUsername(username, userInfo.password).then(function(response) {
-            var data = response.data;
-            commit('SET_TOKEN', data.token);
-            MenuUtils.setToken(data.token);
-            resolve();
-          }).catch(function(error) {
-            reject(error)
-          })
-        });
-      },
-  
-  
       // 获取用户信息
       GetUserInfo: function(context) {
         var commit = context.commit,
             state = context.state;
   
         return new Promise(function (resolve, reject) {
-          Vue.config.menu.getUserInfo(state.token).then(function(response) {
-            if (!response.data) {
+          Vue.config.menu.getUserInfo().then(function(data) {
+            if (!data) {
               reject('Verification failed, please login again.')
             }
 
-            var data = response.data;
-
-            if (data.roles && data.roles.length > 0) {
-              // 验证返回的roles是否是一个非空数组
-              commit('SET_ROLES', data.roles);
-            } else {
-              reject('getInfo: roles must be a non-null array !');
-            }
-    
             commit('SET_NAME', data.name);
             commit('SET_AVATAR', data.avatar);
             commit('SET_INTRODUCTION', data.introduction);
             resolve(data);
           })
+        }).catch(function() {
+            commit('SET_NAME', 'Null');
         });
       },
   
   
       // 登出
       LogOut: function(context) {
-        var commit = context.commit,
-            state = context.state;
-  
         return new Promise(function (resolve, reject) {
           Vue.config.menu.logOut().then(function() {
-            commit('SET_TOKEN', '');
-            commit('SET_ROLES', []);
-            MenuUtils.removeToken();
             resolve();
-          })
-        });
-      },
-  
-  
-      // 前端 登出
-      FedLogOut: function(context) {
-        var commit = context.commit;
-  
-        return new Promise(function (resolve) {
-          commit('SET_TOKEN', '');
-          MenuUtils.removeToken();
-          resolve();
-        });
-      },
-  
-  
-      // 动态修改权限
-      ChangeRoles: function(context, token) {
-        var commit = context.commit,
-            dispatch = context.dispatch;
-  
-        return new Promise(function (resolve) {
-          commit('SET_TOKEN', token);
-          MenuUtils.setToken(token);
-          Vue.config.menu.getUserInfo(token).then(function(response) {
-            var data = response.data;
-            commit('SET_ROLES', data.roles);
-            commit('SET_NAME', data.name);
-            commit('SET_AVATAR', data.avatar);
-            commit('SET_INTRODUCTION', data.introduction);
-            dispatch('GenerateRoutes', data); // 动态修改权限后 重绘侧边菜单
-            resolve();
+          }).catch(function() {
+            reject()
           })
         });
       }
@@ -827,7 +691,8 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     +   '</vue-breadcrumb>',
     data: function() {
       return {
-        levelList: null
+        levelList: null,
+        dashboardTitle: ''
       };
     },
     watch: {
@@ -836,10 +701,24 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       }
     },
     created: function() {
+      this.getDashboardTitle();
       this.getBreadcrumb();
     },
     methods: {
       generateTitle: MenuUtils.generateTitle,
+      getDashboardTitle: function() {
+        if(this.dashboardTitle) {
+          return;
+        }
+        var dashboard;
+        MenuStore.state.permission.routers.forEach(function(r) { 
+          if (r.children && r.children.length == 1 && r.children[0].path.toLocaleLowerCase() == '/dashboard') {
+            dashboard = r;
+            return false;
+          }
+        })
+        this.dashboardTitle = dashboard && dashboard.children[0].meta ? dashboard.children[0].meta.title : 'dashboard';
+      },
       getBreadcrumb: function() {
         var params = this.$route.params;
   
@@ -852,7 +731,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
         });
         var first = matched[0];
         if (first && first.name.trim().toLocaleLowerCase() !== 'Dashboard'.toLocaleLowerCase()) {
-          matched = [{ path: '/dashboard', meta: { title: 'dashboard' } }].concat(matched);
+          matched = (Vue.config.menu.breadcrumbFromDashboard === false ? [] : [{ path: '/dashboard', meta: { title: this.dashboardTitle } }]).concat(matched);
         }
         this.levelList = matched;
       }
@@ -1022,7 +901,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     +         '@click.middle.native="closeSelectedTag(tag)" '
     +         '@contextmenu.prevent.native="openMenu(tag,$event)">'
     +         ' {{ generateTitle(tag.title) }} '
-    +         '<span class="vue-icon-close" @click.prevent.stop="closeSelectedTag(tag)" />'
+    +         '<span class="vue-icon-close" :style="{display: closeBtnDisplay}" @click.prevent.stop="closeSelectedTag(tag)" />'
     +       '      </router-link>'
     +     '</scroll-pane>'
     +     '<ul v-show="visible" :style="{left:left+\'px\',top:top+\'px\'}" class="contextmenu">'
@@ -1043,6 +922,13 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     computed: {
       visitedViews: function() {
         return MenuStore.state.tagsView.visitedViews;
+      },
+      closeBtnDisplay: function() {
+        var homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
+        if (Array.isArray(this.visitedViews) && this.visitedViews.length == 1 && this.visitedViews[0].name == homePageCode) {
+          return 'none'
+        }
+        return 'inline-block'
       }
     },
     watch: {
@@ -1060,6 +946,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     },
     mounted: function() {
       this.addViewTags();
+      MenuStore.dispatch('initTagsView');
     },
     methods: {
       generateTitle: MenuUtils.generateTitle,
@@ -1068,7 +955,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       },
       addViewTags: function() {
         var name = this.$route.name;
-        if (name) {
+        if (name && name != 'router-error') {
           MenuStore.dispatch('addView', this.$route);
         }
         return false;
@@ -1162,12 +1049,8 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     +   '<div class="avatar-wrapper">'
     +     '<img :src="avatar" class="user-avatar">'
     +   '</div>'
-    +   '<vue-dropdown-menu slot="dropdown">'
-    +     '<router-link to="/">'
-    +       '<vue-dropdown-item>'
-    +         '{{ $t(\'menu.navbar.dashboard\') }}'
-    +       '</vue-dropdown-item>'
-    +     '</router-link>'
+    +   '<vue-dropdown-menu>'
+    +     '<slot name="dropdown"></slot>'
     +     '<vue-dropdown-item divided>'
     +       '<span style="display:block;" @click="logout">{{ $t(\'menu.navbar.logOut\') }}</span>'
     +     '</vue-dropdown-item>'
@@ -1182,6 +1065,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       logout: function() {
         MenuStore.dispatch('LogOut').then(function () {
           location.reload(); // In order to re-instantiate the vue-router object to avoid bugs
+        }).catch(function(error) {
         });
       }
     }
@@ -1195,7 +1079,7 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     +       '<keep-alive :include="cachedViews">'
     +         '<router-view :key="key"></router-view>'
     +       '</keep-alive>'
-    +       '<iframe v-for="view in iframeViews" :id="\'app-main-iframe-\' + view.name" class="app-main-iframe" :src="view.meta.url" v-show="$router.currentRoute.name === view.name"></iframe>'
+    +       '<iframe v-for="view in iframeViews" :id="\'app-main-iframe-\' + view.name" class="app-main-iframe" :src="iframeUrl(view)" v-show="$router.currentRoute.name === view.name"></iframe>'
     // +     '</transition>'
     + '  </section>',
     computed: {
@@ -1206,10 +1090,38 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
         return this.$route.fullPath;
       },
       iframeViews: function() {
-        return MenuStore.state.tagsView.visitedViews.filter(function(view) {
-            return view.meta && view.meta.type === 'iframe';
-        })
+        var hasTags = MenuStore.getters.initTagsView;
+        if (hasTags) {
+          return MenuStore.state.tagsView.visitedViews.filter(function(view) {
+              return view.meta && view.meta.type === 'iframe';
+          })
+        } else {
+          var view = this.$route;
+          if(view && view.meta && view.meta.type == 'iframe') {
+            return [VueUtil.merge({}, view, {
+              title: view.meta.title
+            })]
+          } else {
+            return [];
+          }
+        }
       },
+    },
+    methods: {
+      iframeUrl: function(view) {
+        var params = view.params;
+        var query = "";
+
+        for (var key in params) {
+            if (query != "") {
+              query += "&";
+            }
+            query += key + "=" + encodeURIComponent(params[key]);
+        }
+
+        if(query) query = "?" + query; 
+        return view.meta.url + query
+      }
     }
   };
   Vue.component(AppMain.name, AppMain);
@@ -1220,17 +1132,15 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     +     '<template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild.children||onlyOneChild.noShowingChildren)&&!item.alwaysShow">'
     +       '<app-link :to="resolvePath(onlyOneChild.path)" :link-route="onlyOneChild">'
     +         '<vue-menu-item :index="resolvePath(onlyOneChild.path)" :class="{\'submenu-title-noDropdown\':!isNest}">'
-    +           '<i v-if="onlyOneChild.meta" :class="\'vue-icon-\' + (onlyOneChild.meta.icon||item.meta.icon)"></i> '
+    +           '<i v-if="onlyOneChild.meta" :class="(onlyOneChild.meta.icon||(item.meta && item.meta.icon))"></i> '
     +           '<span v-if="onlyOneChild.meta" slot="title">{{generateTitle(onlyOneChild.meta.title)}}</span>'
-    // +           '<menu-item v-if="onlyOneChild.meta" :icon="onlyOneChild.meta.icon||item.meta.icon" :title="generateTitle(onlyOneChild.meta.title)" />'
     +         '</vue-menu-item>'
     +       '</app-link>'
     +     '</template>'
     +     '<vue-submenu v-else ref="submenu" :index="resolvePath(item.path)">'
     +       '<template slot="title">'
-    +           '<i  v-if="item.meta" :class="\'vue-icon-\' + item.meta.icon"></i> '
+    +           '<i  v-if="item.meta" :class="item.meta.icon"></i> '
     +           '<span  v-if="item.meta" slot="title">{{generateTitle(item.meta.title)}}</span>'
-    // +         '<menu-item v-if="item.meta" :icon="item.meta.icon" :title="generateTitle(item.meta.title)" />'
     +       '</template>'
     +       '<template v-for="child in item.children" v-if="!child.hidden">'
     +         '<sidebar-item '
@@ -1242,9 +1152,8 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     +           'class="nest-menu" />'
     +         '<app-link v-else :to="resolvePath(child.path)" :link-route="child" :key="child.name">'
     +           '<vue-menu-item :index="resolvePath(child.path)">'
-    +           '<i v-if="child.meta" :class="\'vue-icon-\' + child.meta.icon"></i> '
+    +           '<i v-if="child.meta" :class="child.meta.icon"></i> '
     +           '<span v-if="child.meta" slot="title">{{generateTitle(child.meta.title)}}</span>'
-    // +             '<menu-item v-if="child.meta" :icon="child.meta.icon" :title="generateTitle(child.meta.title)" />'
     +           '</vue-menu-item>'
     +         '</app-link>'
     +       '</template>'
@@ -1370,12 +1279,14 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
           };
         }
 
-        if (this.linkRoute.meta.target === 'blank') {
-          res.target = '_blank';
-        } else if (this.linkRoute.meta.target === 'window') {
-          res.target = '_blank';
-          res.onclick= 'return MenuUtils.openMenuItemInWindow(this)'
-          res.features = this.linkRoute.meta.features;
+        if (this.linkRoute.meta) {
+          if (this.linkRoute.meta.target === 'blank') {
+            res.target = '_blank';
+          } else if (this.linkRoute.meta.target === 'window') {
+            res.target = '_blank';
+            res.onclick= 'return MenuUtils.openMenuItemInWindow(this)'
+            res.features = this.linkRoute.meta.features;
+          }
         }
         
         return res;
@@ -1422,7 +1333,26 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
 
   var Sidebar = {
     name: 'Sidebar',
-    template: '  <component :is="needScroll" :height="menuHeight">'
+    // template: '  <component :is="needScroll" :height="menuHeight">'
+    // + '    <div v-if="$slots.logo" class="sidebar-logo"><slot v-if="!isCollapse || !$slots.miniLogo" name="logo"></slot><slot v-else="isCollapse" name="mini-logo"></slot></div>'
+    // + '    <vue-menu '
+    // + '      mode="vertical" '
+    // + '      :show-timeout="200" '
+    // + '      :collapse="isCollapse" '
+    // + '      :default-active="$route.path" '
+    // + '      theme="dark"'
+    // + '    >'
+    // + '      <sidebar-item v-for="route in permission_routers" :key="route.path" :item="route" :base-path="route.path"/>'
+    // + '    </vue-menu>'
+    // + '  </component>',
+    template: '  <div class="sidebar-container">'
+    + '    <div ref="logoContainer" v-if="$slots.logo" class="sidebar-logo">'
+    + '        <slot v-if="!isCollapse || !$slots.miniLogo" name="logo"></slot>'
+    + '        <slot v-else name="miniLogo"></slot>'
+    + '    </div>'
+    + '    <component :is="needScroll" :height="menuHeight">   '
+    + '       '
+    + '       '
     + '    <vue-menu '
     + '      mode="vertical" '
     + '      :show-timeout="200" '
@@ -1432,7 +1362,12 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
     + '    >'
     + '      <sidebar-item v-for="route in permission_routers" :key="route.path" :item="route" :base-path="route.path"/>'
     + '    </vue-menu>'
-    + '  </component>',
+    + '  </component></div>',
+    data: function() {
+      return {
+        logoHeight: 0
+      }
+    },
     computed: {
       'permission_routers': function() {
         return MenuStore.getters.permission_routers;
@@ -1448,17 +1383,22 @@ VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefin
       },
   
       menuHeight: function() {
-        return MenuStore.getters.height;
+        return MenuStore.getters.height - this.logoHeight;
       }
+    },
+    mounted: function() {
+      this.logoHeight = this.$refs.logoContainer ? this.$refs.logoContainer.offsetHeight : 0;
     }
   };
   Vue.component(Sidebar.name, Sidebar);
 });
-var Layout = { template: '<layout></layout>', components: { layout: VueLoader(contextPath + '/views/layout.html') } };
-var Login = VueLoader(contextPath + '/views/login.html');
-var Error404 = VueLoader(contextPath + '/views/errorPage/404.html');
-var Error401 = VueLoader(contextPath + '/views/errorPage/401.html');
-var Dashboard = VueLoader(contextPath + '/views/dashboard.html');
+var viewsPath = Vue.config.menu && Vue.config.menu.viewsPath || 'views'
+var homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
+var layoutPageCode = Vue.config.menu && Vue.config.menu.layoutPageCode || 'layout'
+
+var Layout = { template: '<layout></layout>', components: { layout: VueLoader(viewsPath+'/' + layoutPageCode + '.html') } };
+var Error404 = VueLoader(viewsPath+'/errorPage/404.html');
+var Error401 = VueLoader(viewsPath+'/errorPage/401.html');
 
 var Redirect = {
   beforeCreate: function () {
@@ -1474,22 +1414,6 @@ var Redirect = {
   }
 };
 
-var Aauthredirect = {
-  created: function() {
-    var hash = window.location.search.slice(1);
-    window.opener.location.href = window.location.origin + '/login#' + hash;
-    window.close();
-  }
-};
-
-//TODO
-var PermissionPage = VueLoader(contextPath + '/views/permission/page.html');
-var PermissionDirective = VueLoader(contextPath + '/views/permission/directive.html');
-
-Vue.config.menu = VueUtil.merge({}, {
-  data:[]
-}, Vue.config.menu);
-
 var constantRouterMap = [{
   path: '/redirect',
   component: Layout,
@@ -1499,18 +1423,10 @@ var constantRouterMap = [{
     component: Redirect
   }]
 }, {
-  path: '/login',
-  component: Login,
-  hidden: true
-}, {
-  path: '/auth-redirect',
-  component: Aauthredirect,
-  hidden: true
-}, {
   path: '/',
   component: Layout,
   hidden: true,
-  redirect: 'dashboard',
+  redirect: homePageCode,
   children: [
     {
       path: '/404',
@@ -1521,6 +1437,11 @@ var constantRouterMap = [{
       path: '/401',
       component: Error401,
       hidden: true
+    },{
+      name: 'router-error',
+      path: '/router-error',
+      hidden: true,
+      component: {template: '<pre>{{$route.params.error}}</pre>'}
     }
   ]
 }];
@@ -1533,104 +1454,38 @@ window.router = new VueRouter({
   routes: constantRouterMap
 });
 
-// permission.js
 NProgress.configure({ showSpinner: false }); // NProgress Configuration
 
-// permission judge function
-function hasPermission(roles, permissionRoles) {
-  if (roles.indexOf('admin') >= 0) return true; // admin permission passed directly
-  if (!permissionRoles) return true;
-  return roles.some(function (role) {
-    return permissionRoles.indexOf(role) >= 0;
-  });
-}
-
-var whiteList = ['/login', '/auth-redirect']; // no redirect whitelist
+router.onError(function(error) {
+  var msg = typeof error == 'string' ? error : error.message ? (error.message + '\r\n' + (error.stack || '')) : 'Router System Error!';
+  router.push({ name: 'router-error', params: { error: msg }})
+  NProgress.done();
+});
 
 router.beforeEach(function (to, from, next) {
   NProgress.start(); // start progress bar
-  if (MenuUtils.getToken()) {
-    // determine if there has token
-    /* has token*/
-    if (to.path === '/login') {
+  if (MenuStore.getters.name.length === 0) {// 判断当前用户是否已拉取完user_info信息
+    MenuStore.dispatch('GetUserInfo').then(function (data) {
+      // 拉取user_info
+      MenuStore.dispatch('GenerateRoutes').then(function () {
+        // 根据roles权限生成可访问的路由表
+        router.addRoutes(MenuStore.getters.addRouters); // 动态添加可访问路由表
+        next(VueUtil.merge({}, to, { replace: true })); // hack方法 确保addRoutes已完成 ,set the replace: true so the navigation will not leave a history record
+      });
+    }).catch(function (err) {
+      MenuStore._vm.$notify({
+        message: (typeof err == 'string' ? err : err.message) || 'Verification failed, please login again',
+        type: 'error',
+        position: "top-center"
+      });
       next({ path: '/' });
-      NProgress.done(); // if current page is dashboard will not trigger	afterEach hook, so manually handle it
-    } else {
-      if (MenuStore.getters.roles.length === 0) {// 判断当前用户是否已拉取完user_info信息
-        MenuStore.dispatch('GetUserInfo').then(function (data) {
-          // 拉取user_info
-          var roles = data.roles; // note: roles must be a array! such as: ['editor','develop']
-          MenuStore.dispatch('GenerateRoutes', { roles: roles }).then(function () {
-            // 根据roles权限生成可访问的路由表
-            router.addRoutes(MenuStore.getters.addRouters); // 动态添加可访问路由表
-            next(VueUtil.merge({}, to, { replace: true })); // hack方法 确保addRoutes已完成 ,set the replace: true so the navigation will not leave a history record
-          });
-        }).catch(function (err) {
-          MenuStore.dispatch('FedLogOut').then(function () {
-            MenuStore._vm.$notify({
-              message: (typeof err == 'string' ? err : err.message) || 'Verification failed, please login again',
-              type: 'error',
-              position: "top-center"
-            });
-            next({ path: '/' });
-          });
-        });
-      } else {
-        // 没有动态改变权限的需求可直接next() 删除下方权限判断 ↓
-        if (hasPermission(MenuStore.getters.roles, to.meta.roles)) {
-          next();
-        } else {
-          next({ path: '/401', replace: true, query: { noGoBack: true } });
-        }
-        // 可删 ↑
-      }
-    }
+    });
   } else {
-    /* has no token*/
-    if (whiteList.indexOf(to.path) !== -1) {
-      // 在免登录白名单，直接进入
+    // 没有动态改变权限的需求可直接next() 删除下方权限判断 ↓
       next();
-    } else {
-      next('/login?redirect=' + to.path); // 否则全部重定向到登录页
-      NProgress.done(); // if current page is login will not trigger afterEach hook, so manually handle it
-    }
   }
 });
 
 router.afterEach(function () {
   NProgress.done(); // finish progress bar
 });
-(function (root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define([], factory);
-  } else if (typeof exports === 'object') {
-    module.exports = factory();
-  } else {
-    root.directives = factory();
-}
-}(this, function () {
-
-  var permission = {
-    inserted: function(el, binding, vnode) {
-      var value = binding.value;
-    
-      var roles = MenuStore.getters && MenuStore.getters.roles;
-    
-      if (value && value instanceof Array && value.length > 0) {
-        var permissionRoles = value;
-    
-        var hasPermission = roles.some(function (role) {
-          return permissionRoles.indexOf(role) > -1;
-        });
-    
-        if (!hasPermission) {
-          el.parentNode && el.parentNode.removeChild(el);
-        }
-      } else {
-        throw new Error("need roles! Like v-permission=\"['admin','editor']\"");
-      }
-    }
-  }
-  Vue.directive('permission', permission);
-
-}));

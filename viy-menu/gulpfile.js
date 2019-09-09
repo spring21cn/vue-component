@@ -30,7 +30,6 @@ const jsList = [
   jsPath + 'store.js',
   jsPath + 'components.js',
   jsPath + 'router.js',
-  jsPath + 'directives.js',
 ]
 const dist = './dist';
 

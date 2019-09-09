@@ -205,6 +205,27 @@ template {
 .hideSidebar .main-container {
   margin-left: 36px;
 }
+
+.sidebar-logo {
+  font-size: 16px;
+  padding: 7px 7px 0 7px;
+}
+
+.hideSidebar .sidebar-logo {
+  width: 36px;
+  overflow: hidden;
+  padding-left: 2px;
+}
+
+.sidebar-logo img {
+  height: 30px;
+  transition: height .2s;
+}
+
+.hideSidebar .sidebar-logo img {
+  height: 23px;
+}
+
 /* .hideSidebar .submenu-title-noDropdown {
   padding-left: 10px;
   position: relative;
@@ -213,13 +234,13 @@ template {
   padding: 0 10px !important;
 }
 
-.hideSidebar .sidebar-container>.vue-menu>.menu-wrapper>.vue-submenu>.vue-submenu__title {
+.hideSidebar .sidebar-container>div>.vue-menu>.menu-wrapper>.vue-submenu>.vue-submenu__title {
   padding-left: 10px !important;
 }
-.hideSidebar .sidebar-container>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>.vue-submenu__icon-arrow {
+.hideSidebar .sidebar-container>div>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>.vue-submenu__icon-arrow {
   display: none;
 }
-.hideSidebar .sidebar-container>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>span {
+.hideSidebar .sidebar-container>div>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>span {
   height: 0;
   width: 0;
   overflow: hidden;
@@ -227,7 +248,7 @@ template {
   display: inline-block;
 }
 
-.openSidebar .vue-scrollbar__thumb {
+.openSidebar .sidebar-container .vue-scrollbar__thumb {
   background-color: lightgray;
   opacity: .3;
 }
@@ -467,7 +488,8 @@ div:focus {
 .app-main-iframe {
   border: 0;
   width: 100%;
-  height: calc(100vh - 88px);
+  height: 100%;
+  display: block;
 }
 
 /* navbar */
@@ -514,6 +536,35 @@ div:focus {
   border-radius: 20px;
 }
 
+/* tags view inside navbar (不显示面包屑导航，把tags放在汉堡图标右边时的布局设置) */
+/* 操作方法：调整layout，把breadcrumb删除，tags-view移上来， navbar 加上class divided（上下分割线） */
+.navbar .tags-view-container {
+  width: calc(100% - 176px);
+  float: left;
+  line-height: 1.15;
+  height: 50px;
+  border-bottom: none;
+  box-shadow: none;
+}
+
+.navbar .tags-view-container .tags-view-wrapper .tags-view-item {
+  margin-top: 12px;
+}
+
+.navbar .scroll-container .vue-scrollbar__wrap {
+  height: 50px
+}
+
+.navbar.divided {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 0 3px 0 rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 1;
+}
+
+.navbar.divided + .app-main {
+  height: calc(100vh - 50px);
+}
+
 /* tags-view */
 .tags-view-container {
   height: 34px;
@@ -521,6 +572,7 @@ div:focus {
   background: #fff;
   border-bottom: 1px solid #d8dce5;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 0 3px 0 rgba(0, 0, 0, 0.04);
+  z-index: 1;
 }
 .tags-view-container .tags-view-wrapper .tags-view-item {
   display: inline-block;
@@ -596,101 +648,4 @@ div:focus {
 .tags-view-wrapper .tags-view-item .vue-icon-close:hover {
   background-color: #b4bccc;
   color: #fff;
-}
-
-
-/* login */
-@supports (-webkit-mask: none) and (not (cater-color: #fff)) {
-  .login-container .vue-input input {
-    color: #fff;
-  }
-  .login-container .vue-input input::first-line {
-    color: #eee;
-  }
-}
-/* reset element-ui css */
-.login-container .vue-input {
-  display: inline-block;
-  height: 47px;
-  width: 85%;
-}
-.login-container .vue-input input {
-  background: transparent;
-  border: 0px;
-  -webkit-appearance: none;
-  border-radius: 0px;
-  padding: 12px 5px 12px 15px;
-  color: #eee;
-  height: 47px;
-  caret-color: #fff;
-}
-.login-container .vue-input input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0px 1000px #283443 inset !important;
-  -webkit-text-fill-color: #fff !important;
-}
-.login-container .vue-form-item {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 5px;
-  color: #454545;
-}
-
-.login-container {
-  position: fixed;
-  height: 100%;
-  width: 100%;
-  background-color: #2d3a4b;
-}
-.login-container .login-form {
-  position: absolute;
-  left: 0;
-  right: 0;
-  width: 520px;
-  max-width: 100%;
-  padding: 35px 35px 15px 35px;
-  margin: 120px auto;
-}
-.login-container .login-form .vue-form-item{
-  margin-bottom: 22px;
-}
-.login-container .tips {
-  font-size: 14px;
-  color: #fff;
-  margin-bottom: 10px;
-}
-.login-container .tips span:first-of-type {
-  margin-right: 16px;
-}
-.login-container .icon-container {
-  padding: 8px 5px 8px 15px;
-  color: #889aa4;
-  vertical-align: middle;
-  width: 30px;
-  display: inline-block;
-}
-.login-container .title-container {
-  position: relative;
-}
-.login-container .title-container .title {
-  font-size: 26px;
-  color: #eee;
-  margin: 0px auto 40px auto;
-  text-align: center;
-  font-weight: bold;
-}
-.login-container .title-container .select-language {
-  color: #fff;
-  position: absolute;
-  font-size: 22px;
-  top: 5px;
-  right: 0px;
-}
-.login-container .show-pwd {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  font-size: 16px;
-  color: #889aa4;
-  cursor: pointer;
-  user-select: none;
 }

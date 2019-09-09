@@ -24,8 +24,8 @@
     cachedViews: function(state) {
         return state.tagsView.cachedViews;
     },
-    token: function(state) {
-        return state.user.token;
+    initTagsView: function(state) {
+      return state.tagsView.init;
     },
     avatar: function(state) {
         return state.user.avatar;
@@ -38,9 +38,6 @@
     },
     status: function(state) {
         return state.user.status;
-    },
-    roles: function(state) {
-        return state.user.roles;
     },
     setting: function(state) {
         return state.user.setting;
@@ -117,22 +114,7 @@
       }
     }
   };
-  //permission.js
-  /**
-   * 通过meta.role判断是否与当前用户权限匹配
-   * @param roles
-   * @param route
-   */
-  function hasPermission(roles, route) {
-    if (route.meta && route.meta.roles) {
-      return roles.some(function (role) {
-        return route.meta.roles.indexOf(role) > -1;
-      });
-    } else {
-      return true;
-    }
-  }
-  
+
   /**
    * 处理vue.config.menu配置项传回的菜单JSON数据
    */
@@ -145,9 +127,8 @@
       }
       if (typeof data === "function") {
         var username = MenuStore.getters.name
-        var roles = VueUtil.merge([], MenuStore.getters.roles);
   
-        var res = data(username, roles);
+        var res = data(username);
         if(typeof res.then == 'function') {
           res.then(function(data) {
             resolve(dataToRoute(data));
@@ -183,11 +164,12 @@
       route.redirect = data.redirect;
       route.props = data.props;
       route.meta = {
-        roles: data.roles,
         features: data.features,
         title: data.title,
         target: data.target,
         icon: data.icon,
+        id: data.id,
+        iconColor: data.iconColor,
         noCache: data.noCache,
         breadcrumb: data.breadcrumb,
         type: data.type
@@ -212,7 +194,7 @@
           return true;
         } else {
           if (route.meta.type !== 'iframe') {
-            route.component = VueLoader(contextPath + data.url);
+            route.component = VueLoader(data.url);
           } else {
             route.meta.url = data.url;
           }
@@ -238,26 +220,6 @@
     return res;
   }
 
-  /**
-   * 递归过滤异步路由表，返回符合用户角色权限的路由表
-   * @param routes asyncRouterMap
-   * @param roles
-   */
-  function filterAsyncRouter(routes, roles) {
-    var res = [];
-  
-    routes.forEach(function (route) {
-      var tmp = VueUtil.merge({}, route);
-      if (hasPermission(roles, tmp)) {
-        if (tmp.children) {
-          tmp.children = filterAsyncRouter(tmp.children, roles);
-        }
-        res.push(tmp);
-      }
-    });
-  
-    return res;
-  }
   
   var permission = {
     state: {
@@ -275,7 +237,6 @@
         var commit = state.commit;
   
         return new Promise(function (resolve) {
-          var roles = data.roles;
           processMenuData().then(function(asyncRouterMap) {
             asyncRouterMap.push({
               path: '*',
@@ -283,12 +244,7 @@
               hidden: true 
             })
   
-            if (roles.indexOf('admin') > -1) {
-              accessedRouters = asyncRouterMap;
-            } else {
-              accessedRouters = filterAsyncRouter(asyncRouterMap, roles);
-            }
-            commit('SET_ROUTERS', accessedRouters);
+            commit('SET_ROUTERS', asyncRouterMap);
             resolve();
           });
         });
@@ -300,7 +256,8 @@
   var tagsView = {
     state: {
       visitedViews: [],
-      cachedViews: []
+      cachedViews: [],
+      init: false
     },
     mutations: {
       ADD_VISITED_VIEW: function(state, view) {
@@ -370,7 +327,11 @@
             break;
           }
         }
-      }
+      },
+
+      INIT_TAGSVIEW: function(state) {
+        state.init = true;
+      },
     },
     actions: {
       addView: function(context, view) {
@@ -482,7 +443,12 @@
       updateVisitedView: function(context, view) {
         var commit = context.commit;
         commit('UPDATE_VISITED_VIEW', view);
+      },
+      initTagsView: function(context) {
+        var commit = context.commit;
+        commit('INIT_TAGSVIEW');
       }
+      
     }
   };
   
@@ -491,22 +457,16 @@
       user: '',
       status: '',
       code: '',
-      token: MenuUtils.getToken(),
       name: '',
       avatar: '',
       introduction: '',
-      roles: [],
       setting: {
-        articlePlatform: []
       }
     },
   
     mutations: {
       SET_CODE: function(state, code) {
         state.code = code;
-      },
-      SET_TOKEN: function(state, token) {
-        state.token = token;
       },
       SET_INTRODUCTION: function(state, introduction) {
         state.introduction = introduction;
@@ -523,103 +483,38 @@
       SET_AVATAR: function(state, avatar) {
         state.avatar = avatar;
       },
-      SET_ROLES: function(state, roles) {
-        state.roles = roles;
-      }
     },
   
     actions: {
-      // 用户名登录
-      LoginByUsername: function(context, userInfo) {
-        var commit = context.commit;
-        var username = userInfo.username.trim();
-
-        return new Promise(function (resolve, reject) {
-          Vue.config.menu.loginByUsername(username, userInfo.password).then(function(response) {
-            var data = response.data;
-            commit('SET_TOKEN', data.token);
-            MenuUtils.setToken(data.token);
-            resolve();
-          }).catch(function(error) {
-            reject(error)
-          })
-        });
-      },
-  
-  
       // 获取用户信息
       GetUserInfo: function(context) {
         var commit = context.commit,
             state = context.state;
   
         return new Promise(function (resolve, reject) {
-          Vue.config.menu.getUserInfo(state.token).then(function(response) {
-            if (!response.data) {
+          Vue.config.menu.getUserInfo().then(function(data) {
+            if (!data) {
               reject('Verification failed, please login again.')
             }
 
-            var data = response.data;
-
-            if (data.roles && data.roles.length > 0) {
-              // 验证返回的roles是否是一个非空数组
-              commit('SET_ROLES', data.roles);
-            } else {
-              reject('getInfo: roles must be a non-null array !');
-            }
-    
             commit('SET_NAME', data.name);
             commit('SET_AVATAR', data.avatar);
             commit('SET_INTRODUCTION', data.introduction);
             resolve(data);
           })
+        }).catch(function() {
+            commit('SET_NAME', 'Null');
         });
       },
   
   
       // 登出
       LogOut: function(context) {
-        var commit = context.commit,
-            state = context.state;
-  
         return new Promise(function (resolve, reject) {
           Vue.config.menu.logOut().then(function() {
-            commit('SET_TOKEN', '');
-            commit('SET_ROLES', []);
-            MenuUtils.removeToken();
             resolve();
-          })
-        });
-      },
-  
-  
-      // 前端 登出
-      FedLogOut: function(context) {
-        var commit = context.commit;
-  
-        return new Promise(function (resolve) {
-          commit('SET_TOKEN', '');
-          MenuUtils.removeToken();
-          resolve();
-        });
-      },
-  
-  
-      // 动态修改权限
-      ChangeRoles: function(context, token) {
-        var commit = context.commit,
-            dispatch = context.dispatch;
-  
-        return new Promise(function (resolve) {
-          commit('SET_TOKEN', token);
-          MenuUtils.setToken(token);
-          Vue.config.menu.getUserInfo(token).then(function(response) {
-            var data = response.data;
-            commit('SET_ROLES', data.roles);
-            commit('SET_NAME', data.name);
-            commit('SET_AVATAR', data.avatar);
-            commit('SET_INTRODUCTION', data.introduction);
-            dispatch('GenerateRoutes', data); // 动态修改权限后 重绘侧边菜单
-            resolve();
+          }).catch(function() {
+            reject()
           })
         });
       }

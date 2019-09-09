@@ -15,7 +15,8 @@
     +   '</vue-breadcrumb>',
     data: function() {
       return {
-        levelList: null
+        levelList: null,
+        dashboardTitle: ''
       };
     },
     watch: {
@@ -24,10 +25,24 @@
       }
     },
     created: function() {
+      this.getDashboardTitle();
       this.getBreadcrumb();
     },
     methods: {
       generateTitle: MenuUtils.generateTitle,
+      getDashboardTitle: function() {
+        if(this.dashboardTitle) {
+          return;
+        }
+        var dashboard;
+        MenuStore.state.permission.routers.forEach(function(r) { 
+          if (r.children && r.children.length == 1 && r.children[0].path.toLocaleLowerCase() == '/dashboard') {
+            dashboard = r;
+            return false;
+          }
+        })
+        this.dashboardTitle = dashboard && dashboard.children[0].meta ? dashboard.children[0].meta.title : 'dashboard';
+      },
       getBreadcrumb: function() {
         var params = this.$route.params;
   
@@ -40,7 +55,7 @@
         });
         var first = matched[0];
         if (first && first.name.trim().toLocaleLowerCase() !== 'Dashboard'.toLocaleLowerCase()) {
-          matched = [{ path: '/dashboard', meta: { title: 'dashboard' } }].concat(matched);
+          matched = (Vue.config.menu.breadcrumbFromDashboard === false ? [] : [{ path: '/dashboard', meta: { title: this.dashboardTitle } }]).concat(matched);
         }
         this.levelList = matched;
       }
@@ -210,7 +225,7 @@
     +         '@click.middle.native="closeSelectedTag(tag)" '
     +         '@contextmenu.prevent.native="openMenu(tag,$event)">'
     +         ' {{ generateTitle(tag.title) }} '
-    +         '<span class="vue-icon-close" @click.prevent.stop="closeSelectedTag(tag)" />'
+    +         '<span class="vue-icon-close" :style="{display: closeBtnDisplay}" @click.prevent.stop="closeSelectedTag(tag)" />'
     +       '      </router-link>'
     +     '</scroll-pane>'
     +     '<ul v-show="visible" :style="{left:left+\'px\',top:top+\'px\'}" class="contextmenu">'
@@ -231,6 +246,13 @@
     computed: {
       visitedViews: function() {
         return MenuStore.state.tagsView.visitedViews;
+      },
+      closeBtnDisplay: function() {
+        var homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
+        if (Array.isArray(this.visitedViews) && this.visitedViews.length == 1 && this.visitedViews[0].name == homePageCode) {
+          return 'none'
+        }
+        return 'inline-block'
       }
     },
     watch: {
@@ -248,6 +270,7 @@
     },
     mounted: function() {
       this.addViewTags();
+      MenuStore.dispatch('initTagsView');
     },
     methods: {
       generateTitle: MenuUtils.generateTitle,
@@ -256,7 +279,7 @@
       },
       addViewTags: function() {
         var name = this.$route.name;
-        if (name) {
+        if (name && name != 'router-error') {
           MenuStore.dispatch('addView', this.$route);
         }
         return false;
@@ -350,12 +373,8 @@
     +   '<div class="avatar-wrapper">'
     +     '<img :src="avatar" class="user-avatar">'
     +   '</div>'
-    +   '<vue-dropdown-menu slot="dropdown">'
-    +     '<router-link to="/">'
-    +       '<vue-dropdown-item>'
-    +         '{{ $t(\'menu.navbar.dashboard\') }}'
-    +       '</vue-dropdown-item>'
-    +     '</router-link>'
+    +   '<vue-dropdown-menu>'
+    +     '<slot name="dropdown"></slot>'
     +     '<vue-dropdown-item divided>'
     +       '<span style="display:block;" @click="logout">{{ $t(\'menu.navbar.logOut\') }}</span>'
     +     '</vue-dropdown-item>'
@@ -370,6 +389,7 @@
       logout: function() {
         MenuStore.dispatch('LogOut').then(function () {
           location.reload(); // In order to re-instantiate the vue-router object to avoid bugs
+        }).catch(function(error) {
         });
       }
     }
@@ -383,7 +403,7 @@
     +       '<keep-alive :include="cachedViews">'
     +         '<router-view :key="key"></router-view>'
     +       '</keep-alive>'
-    +       '<iframe v-for="view in iframeViews" :id="\'app-main-iframe-\' + view.name" class="app-main-iframe" :src="view.meta.url" v-show="$router.currentRoute.name === view.name"></iframe>'
+    +       '<iframe v-for="view in iframeViews" :id="\'app-main-iframe-\' + view.name" class="app-main-iframe" :src="iframeUrl(view)" v-show="$router.currentRoute.name === view.name"></iframe>'
     // +     '</transition>'
     + '  </section>',
     computed: {
@@ -394,10 +414,38 @@
         return this.$route.fullPath;
       },
       iframeViews: function() {
-        return MenuStore.state.tagsView.visitedViews.filter(function(view) {
-            return view.meta && view.meta.type === 'iframe';
-        })
+        var hasTags = MenuStore.getters.initTagsView;
+        if (hasTags) {
+          return MenuStore.state.tagsView.visitedViews.filter(function(view) {
+              return view.meta && view.meta.type === 'iframe';
+          })
+        } else {
+          var view = this.$route;
+          if(view && view.meta && view.meta.type == 'iframe') {
+            return [VueUtil.merge({}, view, {
+              title: view.meta.title
+            })]
+          } else {
+            return [];
+          }
+        }
       },
+    },
+    methods: {
+      iframeUrl: function(view) {
+        var params = view.params;
+        var query = "";
+
+        for (var key in params) {
+            if (query != "") {
+              query += "&";
+            }
+            query += key + "=" + encodeURIComponent(params[key]);
+        }
+
+        if(query) query = "?" + query; 
+        return view.meta.url + query
+      }
     }
   };
   Vue.component(AppMain.name, AppMain);
@@ -408,17 +456,15 @@
     +     '<template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild.children||onlyOneChild.noShowingChildren)&&!item.alwaysShow">'
     +       '<app-link :to="resolvePath(onlyOneChild.path)" :link-route="onlyOneChild">'
     +         '<vue-menu-item :index="resolvePath(onlyOneChild.path)" :class="{\'submenu-title-noDropdown\':!isNest}">'
-    +           '<i v-if="onlyOneChild.meta" :class="\'vue-icon-\' + (onlyOneChild.meta.icon||item.meta.icon)"></i> '
+    +           '<i v-if="onlyOneChild.meta" :class="(onlyOneChild.meta.icon||(item.meta && item.meta.icon))"></i> '
     +           '<span v-if="onlyOneChild.meta" slot="title">{{generateTitle(onlyOneChild.meta.title)}}</span>'
-    // +           '<menu-item v-if="onlyOneChild.meta" :icon="onlyOneChild.meta.icon||item.meta.icon" :title="generateTitle(onlyOneChild.meta.title)" />'
     +         '</vue-menu-item>'
     +       '</app-link>'
     +     '</template>'
     +     '<vue-submenu v-else ref="submenu" :index="resolvePath(item.path)">'
     +       '<template slot="title">'
-    +           '<i  v-if="item.meta" :class="\'vue-icon-\' + item.meta.icon"></i> '
+    +           '<i  v-if="item.meta" :class="item.meta.icon"></i> '
     +           '<span  v-if="item.meta" slot="title">{{generateTitle(item.meta.title)}}</span>'
-    // +         '<menu-item v-if="item.meta" :icon="item.meta.icon" :title="generateTitle(item.meta.title)" />'
     +       '</template>'
     +       '<template v-for="child in item.children" v-if="!child.hidden">'
     +         '<sidebar-item '
@@ -430,9 +476,8 @@
     +           'class="nest-menu" />'
     +         '<app-link v-else :to="resolvePath(child.path)" :link-route="child" :key="child.name">'
     +           '<vue-menu-item :index="resolvePath(child.path)">'
-    +           '<i v-if="child.meta" :class="\'vue-icon-\' + child.meta.icon"></i> '
+    +           '<i v-if="child.meta" :class="child.meta.icon"></i> '
     +           '<span v-if="child.meta" slot="title">{{generateTitle(child.meta.title)}}</span>'
-    // +             '<menu-item v-if="child.meta" :icon="child.meta.icon" :title="generateTitle(child.meta.title)" />'
     +           '</vue-menu-item>'
     +         '</app-link>'
     +       '</template>'
@@ -558,12 +603,14 @@
           };
         }
 
-        if (this.linkRoute.meta.target === 'blank') {
-          res.target = '_blank';
-        } else if (this.linkRoute.meta.target === 'window') {
-          res.target = '_blank';
-          res.onclick= 'return MenuUtils.openMenuItemInWindow(this)'
-          res.features = this.linkRoute.meta.features;
+        if (this.linkRoute.meta) {
+          if (this.linkRoute.meta.target === 'blank') {
+            res.target = '_blank';
+          } else if (this.linkRoute.meta.target === 'window') {
+            res.target = '_blank';
+            res.onclick= 'return MenuUtils.openMenuItemInWindow(this)'
+            res.features = this.linkRoute.meta.features;
+          }
         }
         
         return res;
@@ -610,7 +657,26 @@
 
   var Sidebar = {
     name: 'Sidebar',
-    template: '  <component :is="needScroll" :height="menuHeight">'
+    // template: '  <component :is="needScroll" :height="menuHeight">'
+    // + '    <div v-if="$slots.logo" class="sidebar-logo"><slot v-if="!isCollapse || !$slots.miniLogo" name="logo"></slot><slot v-else="isCollapse" name="mini-logo"></slot></div>'
+    // + '    <vue-menu '
+    // + '      mode="vertical" '
+    // + '      :show-timeout="200" '
+    // + '      :collapse="isCollapse" '
+    // + '      :default-active="$route.path" '
+    // + '      theme="dark"'
+    // + '    >'
+    // + '      <sidebar-item v-for="route in permission_routers" :key="route.path" :item="route" :base-path="route.path"/>'
+    // + '    </vue-menu>'
+    // + '  </component>',
+    template: '  <div class="sidebar-container">'
+    + '    <div ref="logoContainer" v-if="$slots.logo" class="sidebar-logo">'
+    + '        <slot v-if="!isCollapse || !$slots.miniLogo" name="logo"></slot>'
+    + '        <slot v-else name="miniLogo"></slot>'
+    + '    </div>'
+    + '    <component :is="needScroll" :height="menuHeight">   '
+    + '       '
+    + '       '
     + '    <vue-menu '
     + '      mode="vertical" '
     + '      :show-timeout="200" '
@@ -620,7 +686,12 @@
     + '    >'
     + '      <sidebar-item v-for="route in permission_routers" :key="route.path" :item="route" :base-path="route.path"/>'
     + '    </vue-menu>'
-    + '  </component>',
+    + '  </component></div>',
+    data: function() {
+      return {
+        logoHeight: 0
+      }
+    },
     computed: {
       'permission_routers': function() {
         return MenuStore.getters.permission_routers;
@@ -636,8 +707,11 @@
       },
   
       menuHeight: function() {
-        return MenuStore.getters.height;
+        return MenuStore.getters.height - this.logoHeight;
       }
+    },
+    mounted: function() {
+      this.logoHeight = this.$refs.logoContainer ? this.$refs.logoContainer.offsetHeight : 0;
     }
   };
   Vue.component(Sidebar.name, Sidebar);

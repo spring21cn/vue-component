@@ -1,13 +1,6 @@
 var locales = {
   zh: {
     menu: {
-      login: {
-        title: '系统登录',
-        logIn: '登录',
-        username: '账号',
-        password: '密码',
-        any: '随便填',
-      },
       tagsView: {
         refresh: '刷新',
         close: '关闭',
@@ -26,13 +19,6 @@ var locales = {
   },
   en: {
     menu: {
-      login: {
-        title: 'Login Form',
-        logIn: 'Log in',
-        username: 'Username',
-        password: 'Password',
-        any: 'any'
-      },
       tagsView: {
         refresh: 'Refresh',
         close: 'Close',
@@ -51,13 +37,6 @@ var locales = {
   },
   ja: {
     menu: {
-      login: {
-        title: 'システムログイン',
-        logIn: 'ログイン',
-        username: 'ユーザー',
-        password: 'パスワード',
-        any: 'Any',
-      },
       tagsView: {
         refresh: 'リフレッシュ',
         close: '閉じる',
@@ -78,5 +57,3 @@ var locales = {
 VueUtil.setLocale("zh", locales.zh);
 VueUtil.setLocale("en", locales.en);
 VueUtil.setLocale("ja", locales.ja);
-
-VueUtil.setLang(VueUtil.getCookie('language') || (typeof clientLang !== "undefined" ? clientLang : 'zh'));

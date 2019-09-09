@@ -1,0 +1,352 @@
+.vue-upload-cover__title,
+.vue-upload-list__item-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.vue-upload {
+	display: inline-block;
+	text-align: center;
+	cursor: pointer;
+}
+.vue-upload iframe {
+	position: absolute;
+	z-index: -1;
+	top: 0;
+	left: 0;
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+.vue-upload__input {
+	display: none;
+}
+.vue-upload__tip {
+	font-size: 12px;
+	color: #8391a5;
+	margin-top: 7px;
+}
+.vue-upload--picture-card {
+	background-color: #fbfdff;
+	border: 1px dashed #c0ccda;
+	border-radius: 6px;
+	width: 148px;
+	height: 148px;
+	cursor: pointer;
+	line-height: 146px;
+	vertical-align: top;
+}
+.vue-upload--picture-card i {
+	font-size: 28px;
+	color: #8c939d;
+}
+.vue-upload--picture-card:hover {
+	border-color: #409eff;
+	color: #409eff;
+}
+.vue-upload-dragger {
+	background-color: #fff;
+	border: 1px dashed #d9d9d9;
+	border-radius: 6px;
+	width: 360px;
+	height: 180px;
+	text-align: center;
+	cursor: pointer;
+	position: relative;
+	overflow: hidden;
+}
+.vue-upload-dragger .vue-upload__text {
+	color: #97a8be;
+	font-size: 14px;
+	text-align: center;
+}
+.vue-upload-dragger .vue-upload__text em {
+	color: #409eff;
+	font-style: normal;
+}
+.vue-upload-dragger .vue-icon-upload {
+	font-size: 67px;
+	color: #97a8be;
+	margin: 40px 0 16px;
+	line-height: 50px;
+}
+.vue-upload-dragger+.vue-upload__tip {
+	text-align: center;
+}
+.vue-upload-dragger~.vue-upload__files {
+	border-top: 1px solid rgba(191,203,217,.2);
+	margin-top: 7px;
+	padding-top: 5px;
+}
+.vue-upload-dragger:hover {
+	border-color: #409eff;
+}
+.vue-upload-dragger.is-dragover {
+	background-color: rgba(32,159,255,.06);
+	border: 2px dashed #409eff;
+}
+.vue-upload-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.vue-upload-list.is-disabled .vue-upload-list__item:hover .vue-upload-list__item-status-label {
+	display: block;
+}
+.vue-upload-list__item {
+	font-size: 14px;
+	color: #48576a;
+	line-height: 1.8;
+	margin-top: 5px;
+	border-radius: 4px;
+	width: 100%;
+	position: relative;
+}
+.vue-upload-list__item .vue-progress-bar {
+	margin-right: 0;
+	padding-right: 0;
+}
+.vue-upload-list__item .vue-progress {
+	position: absolute;
+	top: 20px;
+	width: 100%;
+}
+.vue-upload-list__item .vue-progress__text {
+	position: absolute;
+	top: -13px;
+	right: 0;
+}
+.vue-upload-list__item:first-child {
+	margin-top: 10px;
+}
+.vue-upload-list__item .vue-icon-upload-success {
+	color: #67c23a;
+}
+.vue-upload-list__item .vue-icon-close {
+	display: none;
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	cursor: pointer;
+	opacity: .75;
+	color: #48576a;
+	transform: scale3d(.7,.7,.7);
+}
+.vue-upload-list__item .vue-icon-close:hover {
+	opacity: 1;
+}
+.vue-upload-list__item:hover {
+	background-color: #eef1f6;
+}
+.vue-upload-list__item:hover .vue-icon-close {
+	display: inline-block;
+}
+.vue-upload-list__item.is-success .vue-upload-list__item-status-label {
+	display: block;
+}
+.vue-upload-list__item.is-success .vue-upload-list__item-name:hover {
+	color: #409eff;
+	cursor: pointer;
+}
+.vue-upload-list__item.is-success:hover .vue-upload-list__item-status-label,
+.vue-upload-list__item:hover .vue-progress__text {
+	display: none;
+}
+.vue-upload-list__item-name {
+	color: #48576a;
+	display: block;
+	margin-right: 40px;
+	padding-left: 4px;
+}
+.vue-upload-list__item-name [class^=vue-icon] {
+	color: #97a8be;
+	margin-right: 7px;
+	height: 100%;
+	line-height: inherit;
+}
+.vue-upload-list__item-status-label {
+	position: absolute;
+	right: 5px;
+	top: 0;
+	line-height: inherit;
+	display: none;
+}
+.vue-upload-list__item-delete {
+	position: absolute;
+	right: 10px;
+	top: 0;
+	font-size: 12px;
+	color: #48576a;
+	display: none;
+}
+.vue-upload-list__item-delete:hover {
+	color: #409eff;
+}
+.vue-upload-list--picture-card {
+	margin: 0;
+	display: inline;
+	vertical-align: top;
+}
+.vue-upload-list--picture-card .vue-upload-list__item {
+	overflow: hidden;
+	background-color: #fff;
+	border: 1px solid #c0ccda;
+	border-radius: 6px;
+	width: 148px;
+	height: 148px;
+	margin: 0 8px 8px 0;
+	display: inline-block;
+}
+.vue-upload-list--picture-card .vue-upload-list__item .vue-icon-check,
+.vue-upload-list--picture-card .vue-upload-list__item .vue-icon-success {
+	color: #fff;
+}
+.vue-upload-list--picture-card .vue-upload-list__item .vue-icon-close,
+.vue-upload-list--picture-card .vue-upload-list__item-name,
+.vue-upload-list--picture-card .vue-upload-list__item:hover .vue-upload-list__item-status-label {
+	display: none;
+}
+.vue-upload-list--picture-card .vue-upload-list__item:hover .vue-progress__text {
+	display: block;
+}
+.vue-upload-list--picture-card .vue-upload-list__item-thumbnail {
+	width: 100%;
+	height: 100%;
+}
+.vue-upload-list--picture-card .vue-upload-list__item-status-label {
+	position: absolute;
+	right: -15px;
+	top: -6px;
+	width: 40px;
+	height: 24px;
+	background: #67c23a;
+	text-align: center;
+	transform: rotate3d(0,0,1,45deg);
+	box-shadow: 0 0 1pc 1px rgba(0,0,0,.2);
+}
+.vue-upload-list--picture-card .vue-upload-list__item-status-label i {
+	font-size: 12px;
+	margin-top: 11px;
+	transform: rotate3d(0,0,1,-45deg) scale3d(.8,.8,.8);
+}
+.vue-upload-list--picture-card .vue-upload-list__item-actions {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	cursor: default;
+	text-align: center;
+	color: #fff;
+	opacity: 0;
+	font-size: 20px;
+	background-color: rgba(0,0,0,.5);
+}
+.vue-upload-cover:after,
+.vue-upload-list--picture-card .vue-upload-list__item-actions:after {
+	display: inline-block;
+	content: '';
+	height: 100%;
+	vertical-align: middle;
+}
+.vue-upload-list--picture-card .vue-upload-list__item-actions span {
+	display: none;
+	cursor: pointer;
+}
+.vue-upload-list--picture-card .vue-upload-list__item-actions span+span {
+	margin-left: 15px;
+}
+.vue-upload-list--picture-card .vue-upload-list__item-actions .vue-upload-list__item-delete {
+	position: static;
+	font-size: inherit;
+	color: inherit;
+}
+.vue-upload-list--picture-card .vue-upload-list__item-actions:hover {
+	opacity: 1;
+}
+.vue-upload-list--picture-card .vue-upload-list__item-actions:hover span {
+	display: inline-block;
+}
+.vue-upload-list--picture-card .vue-progress {
+	top: 50%;
+	left: 50%;
+	transform: translate3d(-50%,-50%,0);
+	bottom: auto;
+	width: 126px;
+}
+.vue-upload-list--picture-card .vue-progress .vue-progress__text {
+	top: 50%;
+}
+.vue-upload-list--picture .vue-upload-list__item {
+	overflow: hidden;
+	background-color: #fff;
+	border: 1px solid #c0ccda;
+	border-radius: 6px;
+	margin-top: 10px;
+	padding: 10px 10px 10px 90px;
+	height: 92px;
+}
+.vue-upload-list--picture .vue-upload-list__item .vue-icon-check,
+.vue-upload-list--picture .vue-upload-list__item .vue-icon-success {
+	color: #fff;
+}
+.vue-upload-list--picture .vue-upload-list__item:hover .vue-upload-list__item-status-label {
+	background: 0 0;
+	box-shadow: none;
+	top: -2px;
+	right: -12px;
+}
+.vue-upload-list--picture .vue-upload-list__item:hover .vue-progress__text {
+	display: block;
+}
+.vue-upload-list--picture .vue-upload-list__item.is-success .vue-upload-list__item-name {
+	line-height: 70px;
+	margin-top: 0;
+}
+.vue-upload-list--picture .vue-upload-list__item.is-success .vue-upload-list__item-name i {
+	display: none;
+}
+.vue-upload-list--picture .vue-upload-list__item-thumbnail {
+	vertical-align: middle;
+	display: inline-block;
+	width: 70px;
+	height: 70px;
+	float: left;
+	position: relative;
+	z-index: 1;
+	margin-left: -80px;
+}
+.vue-upload-list--picture .vue-upload-list__item-name {
+	display: block;
+	margin-top: 20px;
+}
+.vue-upload-list--picture .vue-upload-list__item-name i {
+	font-size: 70px;
+	line-height: 1;
+	position: absolute;
+	left: 9px;
+	top: 10px;
+}
+.vue-upload-list--picture .vue-upload-list__item-status-label {
+	position: absolute;
+	right: -17px;
+	top: -7px;
+	width: 46px;
+	height: 26px;
+	background: #67c23a;
+	text-align: center;
+	transform: rotate3d(0,0,1,45deg);
+	box-shadow: 0 1px 1px #ccc;
+}
+.vue-upload-list--picture .vue-upload-list__item-status-label i {
+	font-size: 12px;
+	margin-top: 12px;
+	transform: rotate3d(0,0,1,-45deg) scale3d(.8,.8,.8);
+}
+.vue-upload-list--picture .vue-progress {
+	position: relative;
+	top: -7px;
+}
+.vue-upload.is-disabled,
+.vue-upload.is-disabled .vue-upload-dragger {
+	cursor: not-allowed;
+}

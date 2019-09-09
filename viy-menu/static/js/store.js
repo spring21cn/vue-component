@@ -50,7 +50,10 @@
     },
     height: function(state) {
         return state.app.height;
-    }
+    },
+    menuData: function(state) {
+      return state.permission.menuData;
+  },
   };
   
   //app.js
@@ -118,7 +121,7 @@
   /**
    * 处理vue.config.menu配置项传回的菜单JSON数据
    */
-  function processMenuData() {
+  function getMenuDataFromConfig() {
     return new Promise (function(resolve, reject) {
       var data = Vue.config.menu.data;
       if(!data) {
@@ -131,27 +134,35 @@
         var res = data(username);
         if(typeof res.then == 'function') {
           res.then(function(data) {
-            resolve(dataToRoute(data));
+            resolve(processMenuData(data));
             return;
           }).catch(function(error) {
             console.error('vue.config.menu.data error! \r\n\r\n' + error);
           })
         } else {
-          resolve(dataToRoute(res));
+          resolve(processMenuData(res));
           return;
         }
       } else {
-        resolve(dataToRoute(data));
+        resolve(processMenuData(data));
         return;
       }
     })
   }
-  
   /**
-   * 将菜单数组转化为路由
-   * @param data 处理后的菜单数组 
+   * 处理从config获取到的菜单数据
    */
-  function dataToRoute (menuData, hasParent) {
+  function processMenuData(data) {
+    MenuStore.dispatch('SetMenuData', dataToMenuData(data))
+    return dataToRoute(data);
+  }
+
+  /**
+   * 将菜单数组转化为展示菜单用的数据
+   * @param {*} menuData 
+   * @param {*} hasParent 
+   */
+  function dataToMenuData (menuData, hasParent) {
     var res = [];
 
     menuData.forEach(function(data) {
@@ -176,43 +187,23 @@
       }
 
       if (data.children) {
+        route.redirect = data.redirect || 'noredirect';
         data.url = '';
       }
 
-      if(data.url) {
-        var dummyParent = {
-          path: route.path,
-          component: Layout,
-          children: []
-        }
-        if(route.meta.type === 'link') {
-          dummyParent.children.push({
-            path: data.url,
-            meta: route.meta,
-          })
-          res.push(dummyParent);
-          return true;
-        } else {
-          if (route.meta.type !== 'iframe') {
-            route.component = VueLoader(data.url);
-          } else {
-            route.meta.url = data.url;
-          }
-          if (!hasParent && !data.children) {
-            dummyParent.path += 'Parent'
-            dummyParent.children.push(route);
-            res.push(dummyParent);
-            return true;
-          }
-        }
-      } else if (hasParent && data.children) {
-        route.component = {template: '<router-view></router-view>', name: route.name }
-      } else {
-        route.component = Layout;
+      if(route.meta.type === 'link') {
+        route.path = data.url;
+      } else if (route.meta.type === 'iframe') {
+        route.meta.url = data.url;
       }
-
+      if (!hasParent && !data.children) {
+        res.push({
+          children: [route]
+        });
+        return true;
+      }
       if (data.children) {
-        route.children = dataToRoute(data.children, true);
+        route.children = dataToMenuData(data.children, true);
       }
 
       res.push(route);
@@ -220,16 +211,67 @@
     return res;
   }
 
-  
+  /**
+   * 将菜单数组转化为路由
+   * @param data 处理后的菜单数组 
+   */
+  function dataToRoute (menuData, parentPath) {
+    var res = [];
+
+    menuData.forEach(function(data) {
+      var route = {};
+      route.path = !parentPath ? '/' + data.code :  parentPath + '/' + data.code;
+      route.name = data.code;
+      route.hidden = data.hidden;
+      route.alwaysShow = data.alwaysShow;
+      route.redirect = data.redirect;
+      route.props = data.props;
+      route.meta = {
+        features: data.features,
+        title: data.title,
+        target: data.target,
+        icon: data.icon,
+        id: data.id,
+        iconColor: data.iconColor,
+        noCache: data.noCache,
+        breadcrumb: data.breadcrumb,
+        type: data.type
+      }
+
+      if (data.children) {
+        data.url = '';
+      }
+
+      if(data.url) {
+        if (!route.meta.type) {
+          route.component = VueLoader(data.url);
+        } else if (route.meta.type === 'iframe') {
+          route.meta.url = data.url;
+        }
+        res.push(route);
+      }
+
+      if (data.children) {
+        res = res.concat(dataToRoute(data.children, route.path));
+      }
+
+    })
+    return res;
+  }
+
   var permission = {
     state: {
       routers: constantRouterMap,
-      addRouters: []
+      addRouters: [],
+      menuData: []
     },
     mutations: {
       SET_ROUTERS: function(state, routers) {
         state.addRouters = routers;
         state.routers = constantRouterMap.concat(routers);
+      },
+      SET_MENUDATA: function(state, data) {
+        state.menuData = data;
       }
     },
     actions: {
@@ -237,18 +279,29 @@
         var commit = state.commit;
   
         return new Promise(function (resolve) {
-          processMenuData().then(function(asyncRouterMap) {
-            asyncRouterMap.push({
+          getMenuDataFromConfig().then(function(asyncRouterMap) {
+
+            var layoutRouter = [{
+              path: '/layoutRouter',
+              component: Layout,
+              children: asyncRouterMap
+            }]
+
+            layoutRouter.push({
               path: '*',
               redirect: '/404', 
               hidden: true 
             })
   
-            commit('SET_ROUTERS', asyncRouterMap);
+            commit('SET_ROUTERS', layoutRouter);
             resolve();
           });
         });
-      }
+      },
+      SetMenuData: function(state, data) {
+        var commit = state.commit;
+        commit('SET_MENUDATA', data);
+      },
     }
   };
   
@@ -257,7 +310,9 @@
     state: {
       visitedViews: [],
       cachedViews: [],
-      init: false
+      init: false,
+      closeTag: {},
+      addTag: {},
     },
     mutations: {
       ADD_VISITED_VIEW: function(state, view) {
@@ -332,6 +387,12 @@
       INIT_TAGSVIEW: function(state) {
         state.init = true;
       },
+      CLOSE_TAG: function(state, closeTag) {
+        state.closeTag = closeTag;
+      },
+      ADD_TAG: function(state, addTag) {
+        state.addTag = addTag;
+      }
     },
     actions: {
       addView: function(context, view) {
@@ -447,6 +508,21 @@
       initTagsView: function(context) {
         var commit = context.commit;
         commit('INIT_TAGSVIEW');
+      },
+      closeTag: function(context, name) {
+        var commit = context.commit;
+        var closeTag = {
+          name: name,
+          timeStamp: new Date().getTime()
+        }
+        commit('CLOSE_TAG', closeTag);
+      },
+      addTag: function(context, addTag) {
+        var commit = context.commit;
+        if (typeof addTag === 'object') {
+          addTag.timeStamp = new Date().getTime()
+        }
+        commit('ADD_TAG', addTag);
       }
       
     }

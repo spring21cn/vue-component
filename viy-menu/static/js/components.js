@@ -16,7 +16,8 @@
     data: function() {
       return {
         levelList: null,
-        dashboardTitle: ''
+        dashboardTitle: '',
+        dashboardPath: '',
       };
     },
     watch: {
@@ -35,29 +36,72 @@
           return;
         }
         var dashboard;
-        MenuStore.state.permission.routers.forEach(function(r) { 
-          if (r.children && r.children.length == 1 && r.children[0].path.toLocaleLowerCase() == '/dashboard') {
-            dashboard = r;
+        MenuStore.state.permission.routers.forEach(function(route) { 
+          if (route.name && route.name == homePageCode) {
+            dashboard = route;
             return false;
           }
+          if (route.children && route.children.length > 0) {
+            route.children.forEach(function(routeChildren) {
+              if (routeChildren.name == homePageCode) {
+                dashboard = routeChildren;
+                return false;
+              }
+            })
+            if (dashboard) {
+              return false;
+            }
+          } 
         })
-        this.dashboardTitle = dashboard && dashboard.children[0].meta ? dashboard.children[0].meta.title : 'dashboard';
+        this.dashboardTitle = dashboard && dashboard.meta ? dashboard.meta.title : 'dashboard';
+        this.dashboardPath = dashboard ? dashboard.path : '/dashboard';
       },
       getBreadcrumb: function() {
         var params = this.$route.params;
-  
-        var matched = this.$route.matched.filter(function (item) {
-          if (item.name) {
-            var toPath = pathToRegexp.compile(item.path);
-            item.path = toPath(params);
-            return true;
+        var self = this;
+
+        var menuLevel = this.$route.path.split('/');
+        var matched = [];
+        menuLevel.forEach(function(value) {
+          if(!value) return;
+          var parentLevelMenuData = (matched[matched.length - 1] && matched[matched.length - 1].children) || self.menuData;
+          if(!parentLevelMenuData) return false;
+          var match = VueUtil.arrayFind(parentLevelMenuData, function(data) {
+            if(!data.name && data.children && data.children.length > 0) {
+              return data.children[0].name === value;
+            }
+            return data.name === value;
+          })
+          if(match) {
+            if(!match.name) {
+              matched.push(match.children[0]);
+            } else {
+              matched.push(match);
+            }
           }
-        });
+        })
+
+        if(matched.length == 0 && (this.$route.meta && this.$route.meta.dynamic)) {
+          matched.push(this.$route);
+        }
+        // var matched = this.$route.matched.filter(function (item) {
+        //   self
+        //   if (item.name) {
+        //     var toPath = pathToRegexp.compile(item.path);
+        //     item.path = toPath(params);
+        //     return true;
+        //   }
+        // });
         var first = matched[0];
-        if (first && first.name.trim().toLocaleLowerCase() !== 'Dashboard'.toLocaleLowerCase()) {
-          matched = (Vue.config.menu.breadcrumbFromDashboard === false ? [] : [{ path: '/dashboard', meta: { title: this.dashboardTitle } }]).concat(matched);
+        if (first && first.name.trim().toLocaleLowerCase() !== homePageCode) {
+          matched = (Vue.config.menu.breadcrumbFromDashboard === false ? [] : [{ path: this.dashboardPath, meta: { title: this.dashboardTitle } }]).concat(matched);
         }
         this.levelList = matched;
+      }
+    },
+    computed: {
+      menuData: function() {
+        return MenuStore.getters.menuData;
       }
     }
   };
@@ -225,7 +269,7 @@
     +         '@click.middle.native="closeSelectedTag(tag)" '
     +         '@contextmenu.prevent.native="openMenu(tag,$event)">'
     +         ' {{ generateTitle(tag.title) }} '
-    +         '<span class="vue-icon-close" :style="{display: closeBtnDisplay}" @click.prevent.stop="closeSelectedTag(tag)" />'
+    +         '<span class="vue-icon-close" :style="{display: closeBtnDisplay(tag)}" @click.prevent.stop="closeSelectedTag(tag)" />'
     +       '      </router-link>'
     +     '</scroll-pane>'
     +     '<ul v-show="visible" :style="{left:left+\'px\',top:top+\'px\'}" class="contextmenu">'
@@ -240,19 +284,19 @@
         visible: false,
         top: 0,
         left: 0,
-        selectedTag: {}
+        selectedTag: {},
+        addedTag: [],
       };
     },
     computed: {
       visitedViews: function() {
         return MenuStore.state.tagsView.visitedViews;
       },
-      closeBtnDisplay: function() {
-        var homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
-        if (Array.isArray(this.visitedViews) && this.visitedViews.length == 1 && this.visitedViews[0].name == homePageCode) {
-          return 'none'
-        }
-        return 'inline-block'
+      closeTag: function() {
+        return MenuStore.state.tagsView.closeTag;
+      },
+      addTag: function() {
+        return MenuStore.state.tagsView.addTag;
       }
     },
     watch: {
@@ -266,6 +310,12 @@
         } else {
           document.body.removeEventListener('click', this.closeMenu);
         }
+      },
+      closeTag: function (closeTag) {
+        this.closeSelectedTagByName(closeTag.name);
+      },
+      addTag: function (addTag) {
+        this.dynamicAddTag(addTag);
       }
     },
     mounted: function() {
@@ -273,6 +323,12 @@
       MenuStore.dispatch('initTagsView');
     },
     methods: {
+      closeBtnDisplay: function(tag) {
+        if ((Vue.config.menu.homePageCloseable === false && tag.name == homePageCode) || (Array.isArray(this.visitedViews) && this.visitedViews.length == 1 && this.visitedViews[0].name == homePageCode)) {
+          return 'none'
+        }
+        return 'inline-block'
+      },
       generateTitle: MenuUtils.generateTitle,
       isActive: function(route) {
         return route.path === this.$route.path;
@@ -286,8 +342,8 @@
       },
       moveToCurrentTag: function() {
         var self = this;
-        var tags = this.$refs.tag;
         this.$nextTick(function () {
+          var tags = this.$refs.tag;
           for (var index = 0; index < tags.length; index++) {
             var tag = tags[index];
             if (tag.to.path === self.$route.path) {
@@ -315,6 +371,39 @@
             });
           });
         });
+      },
+      dynamicAddTag: function (addTag) {
+
+        if (this.addedTag.indexOf(addTag.code) === -1) {
+          this.addedTag.push(addTag.code);
+          this.$router.addRoutes([{
+            path: '/dynamicAddRouter',
+            component: Layout,
+            children: [{
+              path: '/'+ addTag.code,
+              name: addTag.code,
+              component: addTag.type === undefined ? VueLoader(addTag.url) : undefined,
+              meta: {
+                dynamic: true,
+                noCache: addTag.noCache,
+                title: addTag.title,
+                type: addTag.type,
+                url: addTag.type === undefined ? undefined : addTag.url,
+                breadcrumb: addTag.breadcrumb
+              }
+            }]
+          }]);
+        }
+
+        this.$router.push('/'+ addTag.code);
+      },
+      closeSelectedTagByName: function(name) {
+        var view = VueUtil.arrayFind(this.visitedViews, function(view) {
+          return view.name == name
+        });
+        if(view) {
+          this.closeSelectedTag(view);
+        }
       },
       closeSelectedTag: function(view) {
         var self = this;
@@ -655,28 +744,9 @@
   };
   Vue.component(MenuItem.name, MenuItem);
 
-  var Sidebar = {
-    name: 'Sidebar',
-    // template: '  <component :is="needScroll" :height="menuHeight">'
-    // + '    <div v-if="$slots.logo" class="sidebar-logo"><slot v-if="!isCollapse || !$slots.miniLogo" name="logo"></slot><slot v-else="isCollapse" name="mini-logo"></slot></div>'
-    // + '    <vue-menu '
-    // + '      mode="vertical" '
-    // + '      :show-timeout="200" '
-    // + '      :collapse="isCollapse" '
-    // + '      :default-active="$route.path" '
-    // + '      theme="dark"'
-    // + '    >'
-    // + '      <sidebar-item v-for="route in permission_routers" :key="route.path" :item="route" :base-path="route.path"/>'
-    // + '    </vue-menu>'
-    // + '  </component>',
-    template: '  <div class="sidebar-container">'
-    + '    <div ref="logoContainer" v-if="$slots.logo" class="sidebar-logo">'
-    + '        <slot v-if="!isCollapse || !$slots.miniLogo" name="logo"></slot>'
-    + '        <slot v-else name="miniLogo"></slot>'
-    + '    </div>'
-    + '    <component :is="needScroll" :height="menuHeight">   '
-    + '       '
-    + '       '
+  var MainMenu = {
+    name: 'MainMenu',
+    template:  '    <component :is="needScroll" :height="menuHeight">   '
     + '    <vue-menu '
     + '      mode="vertical" '
     + '      :show-timeout="200" '
@@ -684,17 +754,12 @@
     + '      :default-active="$route.path" '
     + '      theme="dark"'
     + '    >'
-    + '      <sidebar-item v-for="route in permission_routers" :key="route.path" :item="route" :base-path="route.path"/>'
+    + '      <sidebar-item v-for="item in menuData" :key="item.path" :item="item" :base-path="item.path"/>'
     + '    </vue-menu>'
-    + '  </component></div>',
-    data: function() {
-      return {
-        logoHeight: 0
-      }
-    },
+    + '  </component>',
     computed: {
-      'permission_routers': function() {
-        return MenuStore.getters.permission_routers;
+      menuData: function() {
+        return MenuStore.getters.menuData;
       },
       sidebar: function() {
         return MenuStore.getters.sidebar;
@@ -705,14 +770,18 @@
       needScroll: function() {
         return this.isCollapse ? 'div' : 'vueScrollbar';
       },
-  
-      menuHeight: function() {
-        return MenuStore.getters.height - this.logoHeight;
-      }
     },
-    mounted: function() {
-      this.logoHeight = this.$refs.logoContainer ? this.$refs.logoContainer.offsetHeight : 0;
-    }
+    props: {
+      menuHeight: Number
+    },
+  }
+  Vue.component(MainMenu.name, MainMenu);
+
+  var Sidebar = {
+    name: 'Sidebar',
+    template: '  <div class="sidebar-container">'
+       + ' <slot></slot>'
+    + ' </div>',
   };
   Vue.component(Sidebar.name, Sidebar);
 });

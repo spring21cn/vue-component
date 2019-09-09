@@ -39,6 +39,50 @@ body {
 .demo-block {
 	border: 1px solid #eaeefb;
 }
+
+.demo-image__lazy {
+    height: 400px;
+    overflow-y: auto;
+}
+.demo-image__lazy .vue-image {
+    display: block;
+    min-height: 200px;
+    margin-bottom: 10px;
+}
+.demo-image .block, .demo-image__error .block, .demo-image__placeholder .block {
+    padding: 30px 0;
+    text-align: center;
+    border-right: 1px solid #eff2f6;
+    display: inline-block;
+    width: 20%;
+    box-sizing: border-box;
+    vertical-align: top;
+}
+.demo-image__error .vue-image, .demo-image__placeholder .vue-image {
+    width: 300px;
+    height: 200px;
+}
+.demo-image__error .block, .demo-image__placeholder .block {
+    width: 49%;
+}
+.demo-image .demonstration, .demo-image__error .demonstration, .demo-image__placeholder .demonstration {
+    display: block;
+    color: #8492a6;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+.demo-image__error .image-slot, .demo-image__placeholder .image-slot {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background: #f5f7fa;
+    color: #909399;
+    font-size: 30px;
+}
+
+
 .border-radius4,
 .grid-content {
 	border-radius: 4px;
@@ -104,7 +148,7 @@ body {
   padding-top: 30px;
 }
 .icon-list li span {
-	display: inline-block;
+	display: block;
 	line-height: normal;
 	color: #99a9bf;
 }
@@ -879,3 +923,4 @@ pre {
 		height: 6px;
 	}
 }
+

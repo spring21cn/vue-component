@@ -5,6 +5,9 @@
     module.exports = factory();
   } else {
     root.MenuUtils = factory();
+    root.viewsPath = Vue.config.menu && Vue.config.menu.viewsPath || 'views'
+    root.homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
+    root.layoutPageCode = Vue.config.menu && Vue.config.menu.layoutPageCode || 'layout'
 }
 }(this, function () {
   function generateTitle(title) {

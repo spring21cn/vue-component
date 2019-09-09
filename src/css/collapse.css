@@ -1,0 +1,40 @@
+.vue-collapse {
+	border: 1px solid #dfe6ec;
+	border-radius: 0;
+}
+.vue-collapse-item:last-child {
+	margin-bottom: -1px;
+}
+.vue-collapse-item.is-active>.vue-collapse-item__header .vue-collapse-item__header__arrow {
+	transform: rotate3d(0,0,1,90deg);
+}
+.vue-collapse-item__header {
+	height: 43px;
+	line-height: 43px;
+	padding-left: 15px;
+	background-color: #fff;
+	color: #48576a;
+	border-bottom: 1px solid #dfe6ec;
+	font-size: 13px;
+}
+.vue-collapse-item__header.header-expand {
+	cursor: pointer;
+}
+.vue-collapse-item__header__arrow {
+	margin-right: 8px;
+	transition: transform .3s;
+	cursor: pointer;
+}
+.vue-collapse-item__wrap {
+	will-change: height;
+	width: 100%;
+	background-color: #fbfdff;
+	overflow: hidden;
+	border-bottom: 1px solid #dfe6ec;
+}
+.vue-collapse-item__content {
+	padding: 10px 15px;
+	font-size: 13px;
+	color: #1f2d3d;
+	line-height: 1.769230769230769;
+}

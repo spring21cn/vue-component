@@ -8,6 +8,7 @@ Vue.config.menu = {
   breadcrumbFromDashboard: 面包屑导航是否默认从首页开始。默认true
   layoutPageCode: 画面外框HTML的code，会在views目录下寻找对应的文件名作为画面外框组件
   homePageCode: 画面首页HTML的code，会在views目录下寻找对应的文件名作为画面首页
+  homePageCloseable: 默认true，画面首页的tab页，是否可以关闭。
 }
 
 关于菜单路由配置方式：实现Vue.config.menu.data方法
@@ -17,7 +18,7 @@ Vue.config.menu = {
 code           唯一code，将会被作为url，会与父菜单叠加
 title          设置该路由在侧边栏和面包屑中展示的名字
 icon           设置该菜单的图标
-type           菜单类型分为 link超链接，iframe，不填则为vue动态加载模式
+type           菜单类型分为 link超链接，iframe，不填则为默认值vue，vue三段文件动态加载模式
 target         如设置为blank，会在新的浏览器tab打开、设置window以窗口模式打开
 features       target = window时生效设定窗口属性，参考标准HTML Window Features
 url            需要加载的文件地址，如果type为link或iframe则为跳转的地址
@@ -66,20 +67,6 @@ Vue.config.menu = VueUtil.merge({
         title: 'title.demo01',
         icon: 'vue-icon-desktop',
         url: 'views/demo/demo01.html',
-        params: {
-          name: 'ddd'
-        },
-        props: {
-          name: 'demo11111'
-        }
-      },{
-        code: 'demo011',
-        title: 'title.demo011',
-        icon: 'vue-icon-desktop',
-        url: 'views/demo/demo01.html',
-        props: {
-          name: 'demo011'
-        }
       }, {
         code: 'demo02',
         title: 'title.demo02',
@@ -87,17 +74,59 @@ Vue.config.menu = VueUtil.merge({
         url: 'views/demo/demo02.html'
       }],
     }, {
+      code: 'more',
+      title: 'title.more',
+      icon: 'vue-icon-lock',
+      children: [{
+        code: 'demo03',
+        title: 'title.demo03',
+        icon: 'vue-icon-desktop',
+        url: 'views/demo/demo03.html',
+      },{
+        code: 'demo04',
+        title: 'title.demo04',
+        icon: 'vue-icon-desktop',
+        url: 'views/demo/demo04.html',
+      }, {
+        code: 'more2',
+        title: 'title.more',
+        icon: 'vue-icon-lock',
+        children: [{
+          code: 'demo05',
+          title: 'title.demo05',
+          icon: 'vue-icon-desktop',
+          url: 'views/demo/demo05.html'
+        }, {
+          code: 'demo06',
+          title: 'title.demo06',
+          icon: 'vue-icon-desktop',
+          url: 'views/demo/demo06.html'
+        }, {
+          code: 'externalLink2',
+          title: 'title.externalLink',
+          type: 'link',
+          icon: 'vue-icon-share',
+          url: 'https://www.baidu.com'
+        },{
+          code: 'iframe2',
+          title: 'title.iframePage',
+          type: 'iframe',
+          icon: 'vue-icon-share',
+          url: 'https://www.baidu.com'
+        }],
+      },],
+    }, {
       code: 'externalLink',
       title: 'title.externalLink',
       type: 'link',
       icon: 'vue-icon-share',
-      url: 'http://www.baidu.com'
+      url: 'https://www.baidu.com'
     }, {
       code: 'iframe',
       title: 'title.iframePage',
       type: 'iframe',
       icon: 'vue-icon-share',
-      url: 'http://www.baidu.com'
+      url: 'https://www.baidu.com'
     }
     ];
 
@@ -116,7 +145,7 @@ Vue.config.menu = VueUtil.merge({
     // )
 
     //mock
-    location.href = 'index.html'
+    location.href = 'login.html'
   },
 
   /**

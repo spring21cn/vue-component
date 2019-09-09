@@ -3,14 +3,20 @@
     <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside"></div>
     <div class="main-container">
         <sidebar>
-          <router-link slot="logo" to="/">
-            <img  src="https://cn.vuejs.org/images/logo.png">
-          </router-link>
+          <div ref="logoContainer" class="sidebar-logo">
+            <router-link to="/">
+              <img  src="static/img/logo.png">
+            </router-link>
+          </div>
+          <main-menu :menu-height="menuHeight"></main-menu>
         </sidebar>
       <div class="navbar">
         <hamburger></hamburger>
         <breadcrumb></breadcrumb>
         <div class="right-menu">
+          <div class="right-menu-item">
+            <i class="right-menu-icon vue-icon-user"></i>
+          </div>
             <screenfull class="right-menu-item"></screenfull>
             <lang-select :languages="languages" class="right-menu-item"></lang-select>
             <avatar>
@@ -39,6 +45,7 @@ module.exports = {
   name: 'Layout',
   data: function() {
     return {
+      logoHeight: 0,
       languages: [{
         code: 'zh',
         name: '中文'
@@ -65,6 +72,9 @@ module.exports = {
         withoutAnimation: this.sidebar.withoutAnimation,
         mobile: this.device === 'mobile'
       };
+    },
+    menuHeight: function() {
+      return MenuStore.getters.height - this.logoHeight;
     }
   },
   watch: {
@@ -83,6 +93,7 @@ module.exports = {
       MenuStore.dispatch('toggleDevice', 'mobile');
       MenuStore.dispatch('closeSideBar', { withoutAnimation: true });
     }
+    this.logoHeight = this.$refs.logoContainer ? this.$refs.logoContainer.offsetHeight : 0;
   },
 
   methods: {

@@ -1,0 +1,100 @@
+.vue-form--inline .vue-form-item,
+.vue-form--inline .vue-form-item__content {
+	display: inline-block;
+	vertical-align: top;
+}
+.vue-form--label-left .vue-form-item__label {
+	text-align: left;
+}
+.vue-form--label-top .vue-form-item__label {
+	float: none;
+	display: inline-block;
+	padding: 0 0 10px;
+}
+.vue-form--inline .vue-form-item {
+	margin-right: 10px;
+}
+.vue-form--inline .vue-form-item__label {
+	float: none;
+	display: inline-block;
+}
+.vue-form--inline.vue-form--label-top .vue-form-item__content {
+	display: block;
+}
+.vue-form-item:after,
+.vue-form-item:before,
+.vue-form-item__content:after,
+.vue-form-item__content:before {
+	display: table;
+	content: '';
+}
+.vue-form-item:after,
+.vue-form-item__content:after {
+	clear: both;
+}
+.vue-form-item {
+	margin-bottom: 10px;
+}
+.vue-form-item.is-error {
+	margin-bottom: 22px;
+}
+.vue-form-item.is-notify {
+	margin-bottom: 10px;
+}
+.vue-form-item .vue-form-item {
+	margin-bottom: 0;
+}
+.vue-form-item .vue-form-item .vue-form-item__content {
+	margin-left: 0!important;
+}
+.vue-form-item.is-error .vue-input-group__append .vue-input__inner,
+.vue-form-item.is-error .vue-input-group__prepend .vue-input__inner,
+.vue-form-item.is-error .vue-input__inner {
+	border-color: transparent;
+}
+.vue-form-item.is-error .vue-input__inner,
+.vue-form-item.is-error .vue-textarea__inner {
+	border-color: #fb5555;
+}
+.vue-form-item.is-required .vue-form-item__label:before {
+	content: '*';
+	color: #fb5555;
+	margin-right: 4px;
+}
+.vue-form-item__label {
+	text-align: right;
+	vertical-align: middle;
+	float: left;
+	font-size: 14px;
+	color: #48576a;
+	line-height: 1;
+	padding: 11px 12px 11px 0;
+}
+.vue-form-item__content {
+	line-height: 36px;
+	position: relative;
+	font-size: 14px;
+}
+.vue-form-item__error {
+	color: #fb5555;
+	font-size: 12px;
+	line-height: 0;
+	position: absolute;
+	top: 100%;
+	left: 0;
+	margin-top: 10px;
+}
+.vue-form-item .vue-progress,
+.vue-form-item .vue-rate {
+	padding-top: 8px;
+}
+@media (max-width: 768px) {
+	.vue-form-item__label.is-responsive {
+		float:none;
+		display: inline-block;
+		padding: 0 0 10px;
+	}
+	.vue-form--inline .vue-form-item__content {
+		display: block;
+	}
+}

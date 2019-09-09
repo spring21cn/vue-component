@@ -75,6 +75,9 @@ VueUtil.setLocale("ja", locales.ja);
     module.exports = factory();
   } else {
     root.MenuUtils = factory();
+    root.viewsPath = Vue.config.menu && Vue.config.menu.viewsPath || 'views'
+    root.homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
+    root.layoutPageCode = Vue.config.menu && Vue.config.menu.layoutPageCode || 'layout'
 }
 }(this, function () {
   function generateTitle(title) {
@@ -193,7 +196,10 @@ VueUtil.setLocale("ja", locales.ja);
     },
     height: function(state) {
         return state.app.height;
-    }
+    },
+    menuData: function(state) {
+      return state.permission.menuData;
+  },
   };
   
   //app.js
@@ -261,7 +267,7 @@ VueUtil.setLocale("ja", locales.ja);
   /**
    * 处理vue.config.menu配置项传回的菜单JSON数据
    */
-  function processMenuData() {
+  function getMenuDataFromConfig() {
     return new Promise (function(resolve, reject) {
       var data = Vue.config.menu.data;
       if(!data) {
@@ -274,27 +280,35 @@ VueUtil.setLocale("ja", locales.ja);
         var res = data(username);
         if(typeof res.then == 'function') {
           res.then(function(data) {
-            resolve(dataToRoute(data));
+            resolve(processMenuData(data));
             return;
           }).catch(function(error) {
             console.error('vue.config.menu.data error! \r\n\r\n' + error);
           })
         } else {
-          resolve(dataToRoute(res));
+          resolve(processMenuData(res));
           return;
         }
       } else {
-        resolve(dataToRoute(data));
+        resolve(processMenuData(data));
         return;
       }
     })
   }
-  
   /**
-   * 将菜单数组转化为路由
-   * @param data 处理后的菜单数组 
+   * 处理从config获取到的菜单数据
    */
-  function dataToRoute (menuData, hasParent) {
+  function processMenuData(data) {
+    MenuStore.dispatch('SetMenuData', dataToMenuData(data))
+    return dataToRoute(data);
+  }
+
+  /**
+   * 将菜单数组转化为展示菜单用的数据
+   * @param {*} menuData 
+   * @param {*} hasParent 
+   */
+  function dataToMenuData (menuData, hasParent) {
     var res = [];
 
     menuData.forEach(function(data) {
@@ -319,43 +333,23 @@ VueUtil.setLocale("ja", locales.ja);
       }
 
       if (data.children) {
+        route.redirect = data.redirect || 'noredirect';
         data.url = '';
       }
 
-      if(data.url) {
-        var dummyParent = {
-          path: route.path,
-          component: Layout,
-          children: []
-        }
-        if(route.meta.type === 'link') {
-          dummyParent.children.push({
-            path: data.url,
-            meta: route.meta,
-          })
-          res.push(dummyParent);
-          return true;
-        } else {
-          if (route.meta.type !== 'iframe') {
-            route.component = VueLoader(data.url);
-          } else {
-            route.meta.url = data.url;
-          }
-          if (!hasParent && !data.children) {
-            dummyParent.path += 'Parent'
-            dummyParent.children.push(route);
-            res.push(dummyParent);
-            return true;
-          }
-        }
-      } else if (hasParent && data.children) {
-        route.component = {template: '<router-view></router-view>', name: route.name }
-      } else {
-        route.component = Layout;
+      if(route.meta.type === 'link') {
+        route.path = data.url;
+      } else if (route.meta.type === 'iframe') {
+        route.meta.url = data.url;
       }
-
+      if (!hasParent && !data.children) {
+        res.push({
+          children: [route]
+        });
+        return true;
+      }
       if (data.children) {
-        route.children = dataToRoute(data.children, true);
+        route.children = dataToMenuData(data.children, true);
       }
 
       res.push(route);
@@ -363,16 +357,67 @@ VueUtil.setLocale("ja", locales.ja);
     return res;
   }
 
-  
+  /**
+   * 将菜单数组转化为路由
+   * @param data 处理后的菜单数组 
+   */
+  function dataToRoute (menuData, parentPath) {
+    var res = [];
+
+    menuData.forEach(function(data) {
+      var route = {};
+      route.path = !parentPath ? '/' + data.code :  parentPath + '/' + data.code;
+      route.name = data.code;
+      route.hidden = data.hidden;
+      route.alwaysShow = data.alwaysShow;
+      route.redirect = data.redirect;
+      route.props = data.props;
+      route.meta = {
+        features: data.features,
+        title: data.title,
+        target: data.target,
+        icon: data.icon,
+        id: data.id,
+        iconColor: data.iconColor,
+        noCache: data.noCache,
+        breadcrumb: data.breadcrumb,
+        type: data.type
+      }
+
+      if (data.children) {
+        data.url = '';
+      }
+
+      if(data.url) {
+        if (!route.meta.type) {
+          route.component = VueLoader(data.url);
+        } else if (route.meta.type === 'iframe') {
+          route.meta.url = data.url;
+        }
+        res.push(route);
+      }
+
+      if (data.children) {
+        res = res.concat(dataToRoute(data.children, route.path));
+      }
+
+    })
+    return res;
+  }
+
   var permission = {
     state: {
       routers: constantRouterMap,
-      addRouters: []
+      addRouters: [],
+      menuData: []
     },
     mutations: {
       SET_ROUTERS: function(state, routers) {
         state.addRouters = routers;
         state.routers = constantRouterMap.concat(routers);
+      },
+      SET_MENUDATA: function(state, data) {
+        state.menuData = data;
       }
     },
     actions: {
@@ -380,18 +425,29 @@ VueUtil.setLocale("ja", locales.ja);
         var commit = state.commit;
   
         return new Promise(function (resolve) {
-          processMenuData().then(function(asyncRouterMap) {
-            asyncRouterMap.push({
+          getMenuDataFromConfig().then(function(asyncRouterMap) {
+
+            var layoutRouter = [{
+              path: '/layoutRouter',
+              component: Layout,
+              children: asyncRouterMap
+            }]
+
+            layoutRouter.push({
               path: '*',
               redirect: '/404', 
               hidden: true 
             })
   
-            commit('SET_ROUTERS', asyncRouterMap);
+            commit('SET_ROUTERS', layoutRouter);
             resolve();
           });
         });
-      }
+      },
+      SetMenuData: function(state, data) {
+        var commit = state.commit;
+        commit('SET_MENUDATA', data);
+      },
     }
   };
   
@@ -400,7 +456,9 @@ VueUtil.setLocale("ja", locales.ja);
     state: {
       visitedViews: [],
       cachedViews: [],
-      init: false
+      init: false,
+      closeTag: {},
+      addTag: {},
     },
     mutations: {
       ADD_VISITED_VIEW: function(state, view) {
@@ -475,6 +533,12 @@ VueUtil.setLocale("ja", locales.ja);
       INIT_TAGSVIEW: function(state) {
         state.init = true;
       },
+      CLOSE_TAG: function(state, closeTag) {
+        state.closeTag = closeTag;
+      },
+      ADD_TAG: function(state, addTag) {
+        state.addTag = addTag;
+      }
     },
     actions: {
       addView: function(context, view) {
@@ -590,6 +654,21 @@ VueUtil.setLocale("ja", locales.ja);
       initTagsView: function(context) {
         var commit = context.commit;
         commit('INIT_TAGSVIEW');
+      },
+      closeTag: function(context, name) {
+        var commit = context.commit;
+        var closeTag = {
+          name: name,
+          timeStamp: new Date().getTime()
+        }
+        commit('CLOSE_TAG', closeTag);
+      },
+      addTag: function(context, addTag) {
+        var commit = context.commit;
+        if (typeof addTag === 'object') {
+          addTag.timeStamp = new Date().getTime()
+        }
+        commit('ADD_TAG', addTag);
       }
       
     }
@@ -692,7 +771,8 @@ VueUtil.setLocale("ja", locales.ja);
     data: function() {
       return {
         levelList: null,
-        dashboardTitle: ''
+        dashboardTitle: '',
+        dashboardPath: '',
       };
     },
     watch: {
@@ -711,29 +791,72 @@ VueUtil.setLocale("ja", locales.ja);
           return;
         }
         var dashboard;
-        MenuStore.state.permission.routers.forEach(function(r) { 
-          if (r.children && r.children.length == 1 && r.children[0].path.toLocaleLowerCase() == '/dashboard') {
-            dashboard = r;
+        MenuStore.state.permission.routers.forEach(function(route) { 
+          if (route.name && route.name == homePageCode) {
+            dashboard = route;
             return false;
           }
+          if (route.children && route.children.length > 0) {
+            route.children.forEach(function(routeChildren) {
+              if (routeChildren.name == homePageCode) {
+                dashboard = routeChildren;
+                return false;
+              }
+            })
+            if (dashboard) {
+              return false;
+            }
+          } 
         })
-        this.dashboardTitle = dashboard && dashboard.children[0].meta ? dashboard.children[0].meta.title : 'dashboard';
+        this.dashboardTitle = dashboard && dashboard.meta ? dashboard.meta.title : 'dashboard';
+        this.dashboardPath = dashboard ? dashboard.path : '/dashboard';
       },
       getBreadcrumb: function() {
         var params = this.$route.params;
-  
-        var matched = this.$route.matched.filter(function (item) {
-          if (item.name) {
-            var toPath = pathToRegexp.compile(item.path);
-            item.path = toPath(params);
-            return true;
+        var self = this;
+
+        var menuLevel = this.$route.path.split('/');
+        var matched = [];
+        menuLevel.forEach(function(value) {
+          if(!value) return;
+          var parentLevelMenuData = (matched[matched.length - 1] && matched[matched.length - 1].children) || self.menuData;
+          if(!parentLevelMenuData) return false;
+          var match = VueUtil.arrayFind(parentLevelMenuData, function(data) {
+            if(!data.name && data.children && data.children.length > 0) {
+              return data.children[0].name === value;
+            }
+            return data.name === value;
+          })
+          if(match) {
+            if(!match.name) {
+              matched.push(match.children[0]);
+            } else {
+              matched.push(match);
+            }
           }
-        });
+        })
+
+        if(matched.length == 0 && (this.$route.meta && this.$route.meta.dynamic)) {
+          matched.push(this.$route);
+        }
+        // var matched = this.$route.matched.filter(function (item) {
+        //   self
+        //   if (item.name) {
+        //     var toPath = pathToRegexp.compile(item.path);
+        //     item.path = toPath(params);
+        //     return true;
+        //   }
+        // });
         var first = matched[0];
-        if (first && first.name.trim().toLocaleLowerCase() !== 'Dashboard'.toLocaleLowerCase()) {
-          matched = (Vue.config.menu.breadcrumbFromDashboard === false ? [] : [{ path: '/dashboard', meta: { title: this.dashboardTitle } }]).concat(matched);
+        if (first && first.name.trim().toLocaleLowerCase() !== homePageCode) {
+          matched = (Vue.config.menu.breadcrumbFromDashboard === false ? [] : [{ path: this.dashboardPath, meta: { title: this.dashboardTitle } }]).concat(matched);
         }
         this.levelList = matched;
+      }
+    },
+    computed: {
+      menuData: function() {
+        return MenuStore.getters.menuData;
       }
     }
   };
@@ -901,7 +1024,7 @@ VueUtil.setLocale("ja", locales.ja);
     +         '@click.middle.native="closeSelectedTag(tag)" '
     +         '@contextmenu.prevent.native="openMenu(tag,$event)">'
     +         ' {{ generateTitle(tag.title) }} '
-    +         '<span class="vue-icon-close" :style="{display: closeBtnDisplay}" @click.prevent.stop="closeSelectedTag(tag)" />'
+    +         '<span class="vue-icon-close" :style="{display: closeBtnDisplay(tag)}" @click.prevent.stop="closeSelectedTag(tag)" />'
     +       '      </router-link>'
     +     '</scroll-pane>'
     +     '<ul v-show="visible" :style="{left:left+\'px\',top:top+\'px\'}" class="contextmenu">'
@@ -916,19 +1039,19 @@ VueUtil.setLocale("ja", locales.ja);
         visible: false,
         top: 0,
         left: 0,
-        selectedTag: {}
+        selectedTag: {},
+        addedTag: [],
       };
     },
     computed: {
       visitedViews: function() {
         return MenuStore.state.tagsView.visitedViews;
       },
-      closeBtnDisplay: function() {
-        var homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
-        if (Array.isArray(this.visitedViews) && this.visitedViews.length == 1 && this.visitedViews[0].name == homePageCode) {
-          return 'none'
-        }
-        return 'inline-block'
+      closeTag: function() {
+        return MenuStore.state.tagsView.closeTag;
+      },
+      addTag: function() {
+        return MenuStore.state.tagsView.addTag;
       }
     },
     watch: {
@@ -942,6 +1065,12 @@ VueUtil.setLocale("ja", locales.ja);
         } else {
           document.body.removeEventListener('click', this.closeMenu);
         }
+      },
+      closeTag: function (closeTag) {
+        this.closeSelectedTagByName(closeTag.name);
+      },
+      addTag: function (addTag) {
+        this.dynamicAddTag(addTag);
       }
     },
     mounted: function() {
@@ -949,6 +1078,12 @@ VueUtil.setLocale("ja", locales.ja);
       MenuStore.dispatch('initTagsView');
     },
     methods: {
+      closeBtnDisplay: function(tag) {
+        if ((Vue.config.menu.homePageCloseable === false && tag.name == homePageCode) || (Array.isArray(this.visitedViews) && this.visitedViews.length == 1 && this.visitedViews[0].name == homePageCode)) {
+          return 'none'
+        }
+        return 'inline-block'
+      },
       generateTitle: MenuUtils.generateTitle,
       isActive: function(route) {
         return route.path === this.$route.path;
@@ -962,8 +1097,8 @@ VueUtil.setLocale("ja", locales.ja);
       },
       moveToCurrentTag: function() {
         var self = this;
-        var tags = this.$refs.tag;
         this.$nextTick(function () {
+          var tags = this.$refs.tag;
           for (var index = 0; index < tags.length; index++) {
             var tag = tags[index];
             if (tag.to.path === self.$route.path) {
@@ -991,6 +1126,38 @@ VueUtil.setLocale("ja", locales.ja);
             });
           });
         });
+      },
+      dynamicAddTag: function (addTag) {
+
+        if (this.addedTag.indexOf(addTag.code) === -1) {
+          this.addedTag.push(addTag.code);
+          this.$router.addRoutes([{
+            path: '/dynamicAddRouter',
+            component: Layout,
+            children: [{
+              path: '/'+ addTag.code,
+              name: addTag.code,
+              component: addTag.type === undefined ? VueLoader(addTag.url) : undefined,
+              meta: {
+                dynamic: true,
+                title: addTag.title,
+                type: addTag.type,
+                url: addTag.type === undefined ? undefined : addTag.url,
+                breadcrumb: addTag.breadcrumb
+              }
+            }]
+          }]);
+        }
+
+        this.$router.push('/'+ addTag.code);
+      },
+      closeSelectedTagByName: function(name) {
+        var view = VueUtil.arrayFind(this.visitedViews, function(view) {
+          return view.name == name
+        });
+        if(view) {
+          this.closeSelectedTag(view);
+        }
       },
       closeSelectedTag: function(view) {
         var self = this;
@@ -1331,28 +1498,9 @@ VueUtil.setLocale("ja", locales.ja);
   };
   Vue.component(MenuItem.name, MenuItem);
 
-  var Sidebar = {
-    name: 'Sidebar',
-    // template: '  <component :is="needScroll" :height="menuHeight">'
-    // + '    <div v-if="$slots.logo" class="sidebar-logo"><slot v-if="!isCollapse || !$slots.miniLogo" name="logo"></slot><slot v-else="isCollapse" name="mini-logo"></slot></div>'
-    // + '    <vue-menu '
-    // + '      mode="vertical" '
-    // + '      :show-timeout="200" '
-    // + '      :collapse="isCollapse" '
-    // + '      :default-active="$route.path" '
-    // + '      theme="dark"'
-    // + '    >'
-    // + '      <sidebar-item v-for="route in permission_routers" :key="route.path" :item="route" :base-path="route.path"/>'
-    // + '    </vue-menu>'
-    // + '  </component>',
-    template: '  <div class="sidebar-container">'
-    + '    <div ref="logoContainer" v-if="$slots.logo" class="sidebar-logo">'
-    + '        <slot v-if="!isCollapse || !$slots.miniLogo" name="logo"></slot>'
-    + '        <slot v-else name="miniLogo"></slot>'
-    + '    </div>'
-    + '    <component :is="needScroll" :height="menuHeight">   '
-    + '       '
-    + '       '
+  var MainMenu = {
+    name: 'MainMenu',
+    template:  '    <component :is="needScroll" :height="menuHeight">   '
     + '    <vue-menu '
     + '      mode="vertical" '
     + '      :show-timeout="200" '
@@ -1360,17 +1508,12 @@ VueUtil.setLocale("ja", locales.ja);
     + '      :default-active="$route.path" '
     + '      theme="dark"'
     + '    >'
-    + '      <sidebar-item v-for="route in permission_routers" :key="route.path" :item="route" :base-path="route.path"/>'
+    + '      <sidebar-item v-for="item in menuData" :key="item.path" :item="item" :base-path="item.path"/>'
     + '    </vue-menu>'
-    + '  </component></div>',
-    data: function() {
-      return {
-        logoHeight: 0
-      }
-    },
+    + '  </component>',
     computed: {
-      'permission_routers': function() {
-        return MenuStore.getters.permission_routers;
+      menuData: function() {
+        return MenuStore.getters.menuData;
       },
       sidebar: function() {
         return MenuStore.getters.sidebar;
@@ -1381,20 +1524,21 @@ VueUtil.setLocale("ja", locales.ja);
       needScroll: function() {
         return this.isCollapse ? 'div' : 'vueScrollbar';
       },
-  
-      menuHeight: function() {
-        return MenuStore.getters.height - this.logoHeight;
-      }
     },
-    mounted: function() {
-      this.logoHeight = this.$refs.logoContainer ? this.$refs.logoContainer.offsetHeight : 0;
-    }
+    props: {
+      menuHeight: Number
+    },
+  }
+  Vue.component(MainMenu.name, MainMenu);
+
+  var Sidebar = {
+    name: 'Sidebar',
+    template: '  <div class="sidebar-container">'
+       + ' <slot></slot>'
+    + ' </div>',
   };
   Vue.component(Sidebar.name, Sidebar);
 });
-var viewsPath = Vue.config.menu && Vue.config.menu.viewsPath || 'views'
-var homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
-var layoutPageCode = Vue.config.menu && Vue.config.menu.layoutPageCode || 'layout'
 
 var Layout = { template: '<layout></layout>', components: { layout: VueLoader(viewsPath+'/' + layoutPageCode + '.html') } };
 var Error404 = VueLoader(viewsPath+'/errorPage/404.html');

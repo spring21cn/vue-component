@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='UTF-8'>
+    <title>Excel 测试</title>
+    <style type="text/css">
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .info {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            border-collapse: collapse;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        table td,
+        table th {
+            border: 1px solid #cad9ea;
+            color: #666;
+            height: 30px;
+        }
+
+        table thead th {
+            background-color: #CCE8EB;
+            width: 100px;
+        }
+
+        table tr:nth-child(odd) {
+            background: #fff;
+        }
+
+        table tr:nth-child(even) {
+            background: #F5FAFA;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="info">
+        <h1>Excel导出插件9列数据导出性能测试</h1>
+        <b>电脑配置及系统状况：</b><br>
+        CPU: Intel(R) Core(TM) i5-6300HQ CPU @ 2.30GHz<br>
+        内存: 8GB 2133MHZ
+    </div>
+    <table cellpadding="0" cellspacing="0" style="width:300px">
+        <colgroup>
+            <col width="100">
+            <col width="100">
+            <col width="100">
+        </colgroup>
+        <thead>
+            <tr>
+                <th>数据量(行)</th>
+                <th>Chrome(秒)</th>
+                <th>IE(秒)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>300</td>
+                <td>0.157</td>
+                <td>0.107</td>
+            </tr>
+            <tr>
+                <td>3000</td>
+                <td>0.439</td>
+                <td>0.648</td>
+            </tr>
+            <tr>
+                <td>10000</td>
+                <td>1.000</td>
+                <td>2.130</td>
+            </tr>
+            <tr>
+                <td>30000</td>
+                <td>2.456</td>
+                <td>6.645</td>
+            </tr>
+            <tr>
+                <td>100000</td>
+                <td>7.405</td>
+                <td>25.549</td>
+            </tr>
+            <tr>
+                <td>300000</td>
+                <td>24.774</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>500000</td>
+                <td>41.720</td>
+                <td>-</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+
+</html>

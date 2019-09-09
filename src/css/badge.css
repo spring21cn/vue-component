@@ -1,0 +1,33 @@
+.vue-badge {
+	position: relative;
+	vertical-align: middle;
+	display: inline-block;
+}
+.vue-badge__content {
+	background-color: #fb5555;
+	border-radius: 10px;
+	color: #fff;
+	font-size: 12px;
+	height: 18px;
+	line-height: 18px;
+	padding: 0 6px;
+	text-align: center;
+	white-space: nowrap;
+	display: inline-block;
+}
+.vue-badge__content.is-dot {
+	width: 8px;
+	height: 8px;
+	padding: 0;
+	right: 0;
+	border-radius: 50%;
+}
+.vue-badge__content.is-fixed {
+	top: 0;
+	right: 10px;
+	position: absolute;
+	transform: translate3d(100%, -50%, 0);
+}
+.vue-badge__content.is-fixed.is-dot {
+	right: 5px;
+}

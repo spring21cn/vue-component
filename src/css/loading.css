@@ -1,0 +1,45 @@
+.vue-loading-mask {
+	position: absolute;
+	z-index: 10000;
+	background-color: rgba(255,255,255,.9);
+	margin: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	transition: opacity .3s;
+}
+.vue-loading-mask.is-fullscreen {
+	position: fixed;
+}
+.vue-loading-mask.is-fullscreen .vue-loading-spinner .circular {
+	width: 50px;
+	height: 50px;
+}
+.vue-loading-spinner {
+	top: 50%;
+	transform: translate3d(0, -50%, 0);
+	width: 100%;
+	text-align: center;
+	position: absolute;
+}
+.vue-loading-spinner .vue-loading-text {
+	color: #409eff;
+	margin: 3px 0;
+	font-size: 14px;
+}
+.vue-loading-spinner .circular {
+	width: 42px;
+	height: 42px;
+	animation: loading-rotate 1s linear infinite;
+}
+.vue-loading-spinner .path {
+	stroke-dasharray: 90,150;
+	stroke-width: 2;
+	stroke: #409eff;
+}
+@keyframes loading-rotate {
+	to {
+		transform: rotate(1turn);
+	}
+}

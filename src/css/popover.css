@@ -1,0 +1,110 @@
+.vue-popover {
+	position: absolute;
+	background: #fff;
+	min-width: 150px;
+	border-radius: 2px;
+	border: 1px solid #d1dbe5;
+	padding: 10px;
+	z-index: 2000;
+	font-size: 12px;
+	box-shadow: 0 2px 4px 0 rgba(0,0,0,.12),0 0 6px 0 rgba(0,0,0,.04);
+}
+.vue-popover .popper__arrow,
+.vue-popover .popper__arrow::after {
+	position: absolute;
+	display: block;
+	width: 0;
+	height: 0;
+	border-color: transparent;
+	border-style: solid;
+}
+.vue-popover .popper__arrow {
+	border-width: 6px;
+}
+.vue-popover .popper__arrow::after {
+	content: '';
+	border-width: 6px;
+}
+.vue-popover[x-placement^=top] {
+	margin-bottom: 12px;
+}
+.vue-popover[x-placement^=top].no-arrow {
+	margin-bottom: 5px;
+}
+.vue-popover[x-placement^=top] .popper__arrow {
+	bottom: -6px;
+	left: 50%;
+	margin-right: 3px;
+	border-top-color: #d1dbe5;
+	border-bottom-width: 0;
+}
+.vue-popover[x-placement^=top] .popper__arrow::after {
+	bottom: 1px;
+	margin-left: -6px;
+	border-top-color: #fff;
+	border-bottom-width: 0;
+}
+.vue-popover[x-placement^=bottom] {
+	margin-top: 12px;
+}
+.vue-popover[x-placement^=bottom].no-arrow {
+	margin-top: 5px;
+}
+.vue-popover[x-placement^=bottom] .popper__arrow {
+	top: -6px;
+	left: 50%;
+	margin-right: 3px;
+	border-top-width: 0;
+	border-bottom-color: #d1dbe5;
+}
+.vue-popover[x-placement^=bottom] .popper__arrow::after {
+	top: 1px;
+	margin-left: -6px;
+	border-top-width: 0;
+	border-bottom-color: #fff;
+}
+.vue-popover[x-placement^=right] {
+	margin-left: 12px;
+}
+.vue-popover[x-placement^=right].no-arrow {
+	margin-left: 5px;
+}
+.vue-popover[x-placement^=right] .popper__arrow {
+	top: 50%;
+	left: -6px;
+	margin-bottom: 3px;
+	border-right-color: #d1dbe5;
+	border-left-width: 0;
+}
+.vue-popover[x-placement^=right] .popper__arrow::after {
+	bottom: -6px;
+	left: 1px;
+	border-right-color: #fff;
+	border-left-width: 0;
+}
+.vue-popover[x-placement^=left] {
+	margin-right: 12px;
+}
+.vue-popover[x-placement^=left].no-arrow {
+	margin-right: 5px;
+}
+.vue-popover[x-placement^=left] .popper__arrow {
+	top: 50%;
+	right: -6px;
+	margin-bottom: 3px;
+	border-right-width: 0;
+	border-left-color: #d1dbe5;
+}
+.vue-popover[x-placement^=left] .popper__arrow::after {
+	right: 1px;
+	bottom: -6px;
+	margin-left: -6px;
+	border-right-width: 0;
+	border-left-color: #fff;
+}
+.vue-popover__title {
+	color: #1f2d3d;
+	font-size: 13px;
+	line-height: 1;
+	margin-bottom: 9px;
+}

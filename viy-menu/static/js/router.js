@@ -1,6 +1,3 @@
-var viewsPath = Vue.config.menu && Vue.config.menu.viewsPath || 'views'
-var homePageCode = Vue.config.menu && Vue.config.menu.homePageCode || 'dashboard'
-var layoutPageCode = Vue.config.menu && Vue.config.menu.layoutPageCode || 'layout'
 
 var Layout = { template: '<layout></layout>', components: { layout: VueLoader(viewsPath+'/' + layoutPageCode + '.html') } };
 var Error404 = VueLoader(viewsPath+'/errorPage/404.html');

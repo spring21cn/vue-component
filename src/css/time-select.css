@@ -1,0 +1,31 @@
+.time-select {
+  margin: 5px 0;
+  min-width: 0;
+}
+
+.time-select .vue-picker-panel__content {
+  max-height: 200px;
+  margin: 0;
+}
+
+.time-select-item {
+  padding: 8px 10px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.time-select-item.selected:not(.disabled) {
+  color: #409EFF;
+  font-weight: bold;
+}
+
+.time-select-item.disabled {
+  color: #E4E7ED;
+  cursor: not-allowed;
+}
+
+.time-select-item:hover {
+  background-color: #F5F7FA;
+  font-weight: bold;
+  cursor: pointer;
+}

@@ -1,0 +1,175 @@
+.vue-steps {
+	font-size: 0;
+}
+.vue-steps>:last-child .vue-step__line {
+	display: none;
+}
+.vue-steps.is-vertical>:last-child .vue-step__line {
+	display: inherit;
+}
+.vue-step.is-horizontal,
+.vue-step.is-vertical .vue-step__head,
+.vue-step.is-vertical .vue-step__main,
+.vue-step__line {
+	display: inline-block;
+}
+.vue-steps.is-horizontal {
+	white-space: nowrap;
+}
+.vue-steps.is-horizontal.is-center {
+	text-align: center;
+}
+.vue-step {
+	position: relative;
+	vertical-align: top;
+}
+.vue-step.is-vertical .vue-step__main {
+	padding-left: 10px;
+}
+.vue-step__line {
+	position: absolute;
+	border-color: inherit;
+	background-color: #bfcbd9;
+}
+.vue-step__line.is-vertical {
+	width: 2px;
+	top: 28px;
+	bottom: 0;
+	left: 13px;
+}
+.vue-step__line.is-horizontal {
+	top: 13px;
+	height: 2px;
+	left: 28px;
+	right: 0;
+}
+.vue-step__line.is-icon.is-horizontal {
+	right: 4px;
+}
+.vue-step__line-inner {
+	display: block;
+	border-width: 1px;
+	border-style: solid;
+	border-color: inherit;
+	transition: .3s;
+	width: 0;
+	height: 0;
+}
+.vue-step__icon {
+	display: block;
+	position: relative;
+	top: 50%;
+	transform: translate3d(0, -50%, 0);
+}
+.vue-step__icon>* {
+	line-height: inherit;
+	vertical-align: middle;
+}
+.vue-step__head {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background-color: transparent;
+	line-height: 28px;
+	font-size: 28px;
+	vertical-align: top;
+	transition: .3s;
+	text-align: center;
+}
+.vue-step__head.is-finish {
+	color: #409eff;
+	border-color: #409eff;
+}
+.vue-step__head.is-error {
+	color: #fb5555;
+	border-color: #fb5555;
+}
+.vue-step__head.is-success {
+	color: #67c23a;
+	border-color: #67c23a;
+}
+.vue-step__head.is-process,
+.vue-step__head.is-wait {
+	color: #bfcbd9;
+	border-color: #bfcbd9;
+}
+.vue-step__head.is-text {
+	font-size: 14px;
+	border-width: 2px;
+	border-style: solid;
+}
+.vue-step__head.is-text.is-finish {
+	color: #fff;
+	background-color: #409eff;
+	border-color: #409eff;
+}
+.vue-step__head.is-text.is-error {
+	color: #fff;
+	background-color: #fb5555;
+	border-color: #fb5555;
+}
+.vue-step__head.is-text.is-success {
+	color: #fff;
+	background-color: #67c23a;
+	border-color: #67c23a;
+}
+.vue-step__head.is-text.is-wait {
+	color: #bfcbd9;
+	background-color: #fff;
+	border-color: #bfcbd9;
+}
+.vue-step__head.is-text.is-process {
+	color: #fff;
+	background-color: #bfcbd9;
+	border-color: #bfcbd9;
+}
+.vue-step__main {
+	white-space: normal;
+	padding-right: 10px;
+	text-align: left;
+}
+.vue-step__title {
+	font-size: 14px;
+	line-height: 32px;
+	display: inline-block;
+}
+.vue-step__title.is-finish {
+	font-weight: 700;
+	color: #409eff;
+}
+.vue-step__title.is-error {
+	font-weight: 700;
+	color: #fb5555;
+}
+.vue-step__title.is-success {
+	font-weight: 700;
+	color: #67c23a;
+}
+.vue-step__title.is-wait {
+	font-weight: 400;
+	color: #97a8be;
+}
+.vue-step__title.is-process {
+	font-weight: 700;
+	color: #48576a;
+}
+.vue-step__description {
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 14px;
+}
+.vue-step__description.is-finish {
+	color: #409eff;
+}
+.vue-step__description.is-error {
+	color: #fb5555;
+}
+.vue-step__description.is-success {
+	color: #67c23a;
+}
+.vue-step__description.is-wait {
+	color: #bfcbd9;
+}
+.vue-step__description.is-process {
+	color: #8391a5;
+}

@@ -65,7 +65,7 @@
   }
 
   return {
-    generateTitle: generateTitle,
+    generateTitle: (Vue.config.menu && Vue.config.menu.generateTitle) || generateTitle,
     isExternal: isExternal,
     getToken: getToken,
     setToken: setToken,

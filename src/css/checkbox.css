@@ -142,9 +142,14 @@
 	border-color: #d1dbe5;
 	box-shadow: none;
 }
-.vue-checkbox-button.is-focus .vue-checkbox-button__inner {
-	border-color: #409eff;
+.vue-checkbox-button.is-focus .vue-checkbox-button__inner:before {
+	position: absolute; 
+	display: block; 
+	content: "";
+	top: 0; right: 0; bottom: 0; left: 0;  
+	background: rgba(0, 0, 0, 0.1);
 }
+
 .vue-checkbox-button:first-child .vue-checkbox-button__inner {
 	border-left: 1px solid #bfcbd9;
 	border-radius: 4px 0 0 4px;
@@ -181,7 +186,13 @@
 	margin-left: 10px;
 }
 .vue-checkbox-button__original {
-	display: none;
+	opacity: 0;
+	outline: none;
+	position: absolute;
+	margin: 0;
+	width: 0;
+	height: 0;
+	z-index: -1;
 }
 .vue-checkbox-button--large .vue-checkbox-button__inner {
 	padding: 11px 19px;

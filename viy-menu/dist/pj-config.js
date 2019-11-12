@@ -9,6 +9,7 @@ Vue.config.menu = {
   layoutPageCode: 画面外框HTML的code，会在views目录下寻找对应的文件名作为画面外框组件
   homePageCode: 画面首页HTML的code，会在views目录下寻找对应的文件名作为画面首页
   homePageCloseable: 默认true，画面首页的tab页，是否可以关闭。
+  generateTitle：自定义菜单获取方式。
 }
 
 关于菜单路由配置方式：实现Vue.config.menu.data方法
@@ -102,31 +103,58 @@ Vue.config.menu = VueUtil.merge({
           icon: 'vue-icon-desktop',
           url: 'views/demo/demo06.html'
         }, {
+          code: 'demo07',
+          title: 'title.demo07',
+          icon: 'vue-icon-desktop',
+          url: 'views/demo/demo07.html'
+        }, {
           code: 'externalLink2',
           title: 'title.externalLink',
           type: 'link',
           icon: 'vue-icon-share',
-          url: 'https://www.baidu.com'
+          url: 'https://www.baidu.com/s?wd=2'
         },{
           code: 'iframe2',
           title: 'title.iframePage',
           type: 'iframe',
           icon: 'vue-icon-share',
-          url: 'https://www.baidu.com'
+          url: 'https://www.baidu.com/s?wd=3'
         }],
       },],
     }, {
       code: 'externalLink',
-      title: 'title.externalLink',
-      type: 'link',
-      icon: 'vue-icon-share',
-      url: 'https://www.baidu.com'
+      title: 'title.externalLink', 
+      icon: 'vue-icon-share', 
+      children: [
+        {
+          code: 'iframe3',
+          title: 'title.iframePage22S',
+          type: 'iframe',
+          icon: 'vue-icon-share',
+          url: 'https://www.baidu.com/s?wd=5'
+        },
+        {
+          code: 'iframe4',
+          title: 'title.iframePage4',
+          type: 'iframe',
+          icon: 'vue-icon-share',
+          url: 'https://www.baidu.com/s?wd=6'
+        }
+      ]
     }, {
       code: 'iframe',
       title: 'title.iframePage',
       type: 'iframe',
       icon: 'vue-icon-share',
-      url: 'https://www.baidu.com'
+      alwaysShow:true,
+      url: 'https://www.baidu.com/s?wd=7'
+    }, {
+      code: 'mobiledemo',
+      title: 'mobile demo', 
+      icon: 'vue-icon-share',
+      type: 'link',
+      target: 'blank',   
+      url: location.origin + '/vue-mobile/#'
     }
     ];
 
@@ -163,6 +191,16 @@ Vue.config.menu = VueUtil.merge({
     return new Promise(function(resolve, reject) {
       resolve(userMap['admin']);
     })
+  },
+  generateTitle: function(title) {
+    if (!title) {
+    title = 'noName'
+    }
+    var translatedTitle = Vue.t(title);
+    if (router.currentRoute.meta.title == title && router.currentRoute.query.action =='r') {
+        translatedTitle += '(ReadOnly)'
+    }
+    return translatedTitle;
   }
 }, Vue.config.menu)
 

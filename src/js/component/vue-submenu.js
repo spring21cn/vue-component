@@ -237,24 +237,36 @@
         }, this.hideTimeout);
       },
       updatePopper: function () {
+        var menu = VueUtil.closest(this.$el, '.vue-menu');
         var submenu = this.$el.querySelector('.vue-menu');
+        var verticalMenu = submenu.parentNode;
+        var hoverItem = verticalMenu.parentNode;
 
         if(!this.opened) {
-          submenu.style.top = '';
-          submenu.style.height = '';
-          submenu.style.overflow = '';
+          setTimeout(function() {
+            submenu.style.height = '';
+            submenu.style.overflow = '';
+          }, 0);
           return;
         }
+        
+        if(this.rootMenu.collapse) {
+          submenu.style.position = 'static';
+        }
+
+        verticalMenu.style.left = menu.offsetWidth + 5 + 'px';
+        verticalMenu.style.top = hoverItem.offsetTop - VueUtil.closest(hoverItem, '.vue-menu').scrollTop + 'px';
 
         var rect = submenu.getBoundingClientRect();
+
         if (rect.bottom > window.innerHeight) {
           var over = rect.bottom - window.innerHeight;
           if (over > rect.top) {
-            submenu.style.top = -rect.top + 'px';
+            verticalMenu.style.top = verticalMenu.offsetTop - rect.top + 'px';
             submenu.style.height = window.innerHeight + 'px';
             submenu.style.overflow = 'auto';
           } else {
-            submenu.style.top = -over + 'px';
+            verticalMenu.style.top = verticalMenu.offsetTop - over + 'px';
           }
         }
       }

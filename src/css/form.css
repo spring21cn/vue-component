@@ -41,12 +41,6 @@
 .vue-form-item.is-notify {
 	margin-bottom: 10px;
 }
-.vue-form-item .vue-form-item {
-	margin-bottom: 0;
-}
-.vue-form-item .vue-form-item .vue-form-item__content {
-	margin-left: 0!important;
-}
 .vue-form-item.is-error .vue-input-group__append .vue-input__inner,
 .vue-form-item.is-error .vue-input-group__prepend .vue-input__inner,
 .vue-form-item.is-error .vue-input__inner {

@@ -192,6 +192,10 @@
   color: #409EFF;
 }
 
+.vue-time-panel__btn.disabled {
+  color: #C0C4CC;
+}
+
 
 
 @media (max-width:768px){

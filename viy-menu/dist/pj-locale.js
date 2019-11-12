@@ -9,6 +9,7 @@ var locales = {
       demo04: '测试04',
       demo05: '测试05',
       demo06: '测试06',
+      demo07: '测试07',
       more: '更多',
       externalLink: '外部链接',
       iframePage: 'iframe页面',

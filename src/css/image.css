@@ -85,9 +85,22 @@
 .vue-image-viewer__close {
     top: 40px;
     right: 40px;
-    width: 40px;
-    height: 40px;
-    font-size: 40px
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    color: #fff;
+    border-radius: 50%;
+    background-color: #606266;
+    border-color: #fff;
+}
+
+.vue-image-viewer__close_light {
+    top: 15px;
+    right: 15px;
+    width:60px;
+    height: 60px;
+    color: #ffffff;
+    font-size: 18px
 }
 
 .vue-image-viewer__canvas {
@@ -167,7 +180,34 @@
     background: #000
 }
 
+.mask__dark {
+    width: 100vw;
+    height: 100vh;
+    opacity: .98;
+    overflow: hidden;
+    pointer-events: none;
+}
+
 .vue-image__lazy  {
     display: block;
     min-height: 200px;
+}
+
+.vue-image__round {
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.vue-image-view__titile{
+    color:#fff;
+    font-size: 20px;
+    position: absolute;
+    z-index: 1;
+    top:15px;
+    left:calc(50vw - 50px);
+    width:100px;
+    height: 60px;
+    display:flex;
+    align-items: center;
+    justify-content: center;
 }

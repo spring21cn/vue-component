@@ -19,7 +19,19 @@
       size: String,
       fill: String,
       textColor: String,
-      disabled: Boolean
+      disabled: Boolean,
+      tabindex: {
+        type: Number,
+        default: 0
+      }
+    },
+    methods: {
+      focus: function() {
+        var check = this.$el.querySelector('label:not([style*="display:none"]):not([style*="display: none"]) input[type="checkbox"]:not([disabled=disabled])');
+        if(check) {
+          check.focus();
+        }
+      }
     },
     watch: {
       value: function(value) {

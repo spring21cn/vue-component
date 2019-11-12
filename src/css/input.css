@@ -59,13 +59,13 @@
 .vue-input__icon {
 	position: absolute;
 	width: 36px;
-  height: 100%;
-  right: 0;
+  	height: 100%;
+  	right: 0;
 	top: 0;
 	text-align: center;
 	color: #bfcbd9;
 	line-height: 36px;
-	font-size: 14px;
+	font-size: 16px;
 }
 .vue-input--large .vue-input__icon {
 	line-height: 42px;
@@ -163,7 +163,7 @@
 	border-left: 0;
 }
 .vue-textarea {
-	display: inline-block;
+	display: block;
 	width: 100%;
 	vertical-align: bottom;
 }
@@ -207,7 +207,7 @@
 
 .vue-input__prefix {
   position: absolute;
-  left: 0px;
+  left: 0;
   top: 0;
 }
 
@@ -216,5 +216,26 @@
 }
 
 .vue-input--prefix .vue-input__inner {
-  padding-left: 30px
+  padding-left: 36px;
+}
+
+.vue-input--prefix--mini .vue-input__inner {
+  padding-left: 30px;
+}
+
+.vue-input--prefix--small .vue-input__inner {
+  padding-left: 32px;
+}
+
+.vue-input--prefix--large .vue-input__inner {
+  padding-left: 45px;
+}
+.vue-icon--mini {
+    font-size: 10px !important;
+}
+.vue-icon--small {
+    font-size: 14px !important;
+}
+.vue-icon--large {
+    font-size: 25px !important;
 }

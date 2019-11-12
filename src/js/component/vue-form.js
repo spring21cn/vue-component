@@ -39,7 +39,8 @@
     },
     data: function() {
       return {
-        fields: []
+        fields: [],
+        initModel: {}
       };
     },
     created: function() {
@@ -56,9 +57,7 @@
     },
     methods: {
       initValue: function() {
-        VueUtil.loop(this.fields, function(field) {
-          field.initValue();
-        });
+        this.initModel = VueUtil.cloneDeep(this.model);
       },
       isModify: function() {
         var modifyFLg = false;
@@ -114,6 +113,9 @@
         }
         field.validate('', cb);
       }
+    },
+    mounted: function() {
+      this.initValue();
     }
   };
   Vue.component(VueForm.name, VueForm);

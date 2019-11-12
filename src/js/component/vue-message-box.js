@@ -44,6 +44,15 @@
         self.visible = false;
         self.opened = false;
         if (self.action) self.callback(self.action, self);
+
+        this.$nextTick(function() {
+          self.$destroy();
+          setTimeout(function() {
+            if(self.$el) {
+              document.body.removeChild(self.$el);
+            }
+          }, 200);
+        });
       },
       handleAction: function(action) {
         this.action = action;

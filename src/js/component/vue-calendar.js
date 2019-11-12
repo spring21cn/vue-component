@@ -248,8 +248,8 @@
         this.currentMonth = firstDayOfMonth;
         var start = this.getStartDateOfMonth(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth());
         var end = VueUtil.addDate(start, 6, 'week');
-        this.$emit('changemonth', start, end, firstDayOfMonth);
         this.$nextTick(this.changeEventCardWidth);
+        this.$emit('changemonth', start, end, firstDayOfMonth);
       },
       getCalendar: function() {
         var monthViewStartDate = this.getStartDateOfMonth(this.currentMonth.getFullYear(), this.currentMonth.getMonth());
@@ -265,8 +265,20 @@
                 VueUtil.mergeArray(dayClass, 'disabled');
               }
             }
+
             VueUtil.loop(dateClassAry, function(dateClass) {
-              if (VueUtil.formatDate(dateClass.date) === VueUtil.formatDate(monthViewStartDate)) {
+              var time = monthViewStartDate.getTime();
+              var st;
+              var ed;
+              if(dateClass.date) {
+                st = VueUtil.parseDate(dateClass.date).getTime();
+                ed = st;
+              } else {
+                st = VueUtil.parseDate(dateClass.start).getTime();
+                ed = VueUtil.parseDate(dateClass.end ? dateClass.end : st).getTime();
+              }
+
+              if (time >= st && time <= ed) {
                 VueUtil.mergeArray(dayClass, dateClass.customClass);
               }
             });
@@ -400,14 +412,12 @@
     '      <button  v-if="!fixMonth"                                                                                          '+
     '        type="button"                                                                                                    '+
     '        @click="prevYear"                                                                                                '+
-    '        :aria-label="$t(\'vue.datepicker.prevYear\')"                                                                    '+
     '        class="vue-picker-panel__icon-btn vue-date-picker__prev-btn vue-icon-d-arrow-left">                              '+
     '      </button>                                                                                                          '+
     '      <button   v-if="!fixMonth"                                                                                         '+
     '        type="button"                                                                                                    '+
     '        @click="prevMonth"                                                                                               '+
     '        v-show="currentView === \'date\'"                                                                                '+
-    '        :aria-label="$t(\'vue.datepicker.prevMonth\')"                                                                   '+
     '        class="vue-picker-panel__icon-btn vue-date-picker__prev-btn vue-icon-arrow-left">                                '+
     '      </button>                                                                                                          '+
     '      <span     v-if="!fixMonth"                                                                                           '+
@@ -433,14 +443,12 @@
     '      <button    v-if="!fixMonth"                                                                                         '+
     '        type="button"                                                                                                    '+
     '        @click="nextYear"                                                                                                '+
-    '        :aria-label="$t(\'vue.datepicker.nextYear\')"                                                                    '+
     '        class="vue-picker-panel__icon-btn vue-date-picker__next-btn vue-icon-d-arrow-right">                             '+
     '      </button>                                                                                                          '+
     '      <button      v-if="!fixMonth"                                                                                          '+
     '        type="button"                                                                                                    '+
     '        @click="nextMonth"                                                                                               '+
     '        v-show="currentView === \'date\'"                                                                                '+
-    '        :aria-label="$t(\'vue.datepicker.nextMonth\')"                                                                   '+
     '        class="vue-picker-panel__icon-btn vue-date-picker__next-btn vue-icon-arrow-right">                               '+
     '      </button>                                                                                                          '+
     '    </div>                                                                                                               '+
@@ -450,10 +458,12 @@
     '        @pick="handleDatePick"                                                                                           '+
     '        :selection-mode="selectionMode"                                                                                  '+
     '        :events="events"                                                                                                 '+
+    '        :date-class="dateClass"                                                                                                 '+
     '        :first-day-of-week="firstDayOfWeek"                                                                              '+
     '        :value="value"                                                                                                   '+
     '        :default-value="defaultValue ? new Date(defaultValue) : null"                                                    '+
     '        :date="date"                                                                                                     '+
+    '        ref="dateTable"                                                                                                  '+
     '        :disabled-date="disabledDate">                                                                                   '+
     '      </date-table>                                                                                                      '+
     '      <year-table                                                                                                        '+
@@ -501,6 +511,7 @@
       },
       fixMonth: Boolean,
       events: Array,
+      dateClass: Array,
       disabledDates: Function
     },
     computed: {
@@ -565,12 +576,15 @@
         if (this.selectionMode == 'day') {
           dateEvents = findEventsByDate(date, this.events);
         }
-        this.$emit('dayclick', date, dateEvents);
+        var clickDate = this.$refs.dateTable.lastClick;
+        if (clickDate) {
+          this.$emit('dayclick', date, dateEvents, clickDate.jsEvent, clickDate.date);
+        }
       });
     }
   };
   var VueCalendar = {
-    template: '<full-calendar v-if="full" ref="fullCalendar" :date-class="dateClass" :disabled-dates="disabledDate" :week-class="weekClass" :week-label="weekLabel" :events="events" :event-limit="eventLimit" :show-more="showMore" @dayclick="dayclick" @eventclick="eventclick" @moreclick="moreclick"><slot name="headerLeft" slot="fcHeaderLeft"></slot><slot name="headerRight" slot="fcHeaderRight"></slot></full-calendar><calendar v-else :events="events" :type="type" :fixMonth="fixMonth" :disabled-dates="disabledDate" @dayclick="dayclick" @view-month-change="viewMonthChange" ref="calendar"></calendar>',
+    template: '<full-calendar v-if="full" ref="fullCalendar" :date-class="dateClass" :disabled-dates="disabledDate" @changemonth="changeMonth" :week-class="weekClass" :week-label="weekLabel" :events="events" :event-limit="eventLimit" :show-more="showMore" @dayclick="dayclick" @eventclick="eventclick" @moreclick="moreclick"><slot name="headerLeft" slot="fcHeaderLeft"></slot><slot name="headerRight" slot="fcHeaderRight"></slot></full-calendar><calendar v-else :events="events" :type="type" :fixMonth="fixMonth" :date-class="dateClass" :disabled-dates="disabledDate" @dayclick="dayclick" @view-month-change="viewMonthChange" ref="calendar"></calendar>',
     name: 'VueCalendar',
     components: {
       calendar: DefaultCalendar,
@@ -623,7 +637,12 @@
     },
     methods: {
       toDate: function(date) {
-        this.$refs.calendar.date = new Date(date);
+        if (this.$refs.fullCalendar && this.$refs.fullCalendar.emitChangeMonth) {
+          this.$refs.fullCalendar.emitChangeMonth(date);
+        } else {
+          this.$refs.calendar.date = new Date(date);
+        }
+
       },
       changeToNow: function () {
         if (this.$refs.fullCalendar && this.$refs.fullCalendar.emitChangeMonth) {
@@ -632,11 +651,14 @@
           this.$refs.calendar.changeToNow();
         }
       },
-      dayclick: function(day, events, jsEvent) {
-        this.$emit('dayclick', day, events, jsEvent);
+      dayclick: function(day, events, jsEvent, currentDay) {
+        this.$emit('dayclick', day, events, jsEvent, currentDay);
       },
       viewMonthChange: function(date, events, jsEvent) {
         this.$emit('view-month-change', date, events, jsEvent);
+      },
+      changeMonth: function(start, end, firstDayOfMonth) {
+        this.$emit('change-month', start, end, firstDayOfMonth);
       },
       eventclick: function(event, jsEvent) {
         this.$emit('eventclick', event, jsEvent);
@@ -647,7 +669,9 @@
     },
     watch: {
       value: function(val) {
-        this.$refs.calendar.value = val;
+        if(!this.full) {
+          this.$refs.calendar.value = val;
+        }
       }
     },
     mounted: function() {

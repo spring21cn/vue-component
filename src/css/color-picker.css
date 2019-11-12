@@ -152,6 +152,7 @@
 	border: 1px solid #bfcbd9;
 	border-radius: 4px;
 	font-size: 0;
+	line-height: 0;
 }
 .vue-color-picker__color {
 	position: relative;

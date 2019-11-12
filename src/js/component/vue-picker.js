@@ -255,13 +255,13 @@
     '  <vue-input'+
     '    class="vue-date-editor"'+
     '    :class="\'vue-date-editor--\' + type"'+
-    '    :readonly="isMobile()||!editable || readonly || type === \'dates\' || type === \'week\'"'+
+    '    :readonly="isMobile || !editable || readonly || type === \'dates\' || type === \'week\'"'+
     '    :disabled="pickerDisabled"'+
     '    :size="pickerSize"'+
     '    :name="name"'+
     '    v-bind="firstInputId"'+
     '    v-if="!ranged"'+
-    '    v-clickoutside="handleClose"'+
+    '    v-clickoutside="handleClose" v-scrolling="handleClose"'+
     '    :placeholder="placeholder"'+
     '    @focus="handleFocus"'+
     '    @keydown.native="handleKeydown"'+
@@ -269,8 +269,9 @@
     '    @input="function (value) {return userInput = value;}"'+
     '    @change="handleChange"'+
     '    @mouseenter.native="handleMouseEnter"'+
-   // '    @mouseleave.native="showClose = false"'+
+    '    @mouseleave.native="showClose = false"'+
     '    :validateEvent="false"'+
+    '    :tabindex="tabindex"'+
     '    :icon="showClose ? \'\' + clearIcon : \'\'"'+
     '    :on-icon-click="handleClickIcon"'+
     '    ref="reference">'+
@@ -292,14 +293,15 @@
     '      \'vue-date-editor--\' + type,'+
     '      pickerSize ? \'vue-range-editor--\' + pickerSize  : \'\','+
     '      pickerDisabled ? \'is-disabled\' : \'\','+
-    '      pickerVisible ? \'is-active\' : \'\''+
+    '      pickerVisible ? \'is-active\' : \'\','+
+    '      isMobile ? \'user_un_operate\' : \'\''+
     '    ]"'+
     '    @click="handleRangeClick"'+
     '    @mouseenter="handleMouseEnter"'+
-   // '    @mouseleave="showClose = false"'+
+    '    @mouseleave="showClose = false"'+
     '    @keydown="handleKeydown"'+
     '    ref="reference"'+
-    '    v-clickoutside="handleClose"'+
+    '    v-clickoutside="handleClose" v-scrolling="handleClose"'+
     '    v-else>'+
     '    <i :class="[\'vue-input__icon\', \'vue-range__icon\', triggerClass]"></i>'+
     '    <input'+
@@ -308,12 +310,14 @@
     '      :value="displayValue && displayValue[0]"'+
     '      :disabled="pickerDisabled"'+
     '      v-bind="firstInputId"'+
-    '      :readonly="!editable || readonly"'+
+    '      :readonly="!editable || readonly || isMobile"'+
     '      :name="name && name[0]"'+
     '      @input="handleStartInput"'+
     '      @change="handleStartChange"'+
     '      @focus="handleFocus"'+
-    '      class="vue-range-input">'+
+    '      ref="fromInput"'+
+    '      :tabindex="tabindex"'+
+    '      :class="[\'vue-range-input\',{\'user_un_operate\':isMobile}]">'+
     '    <slot name="range-separator">'+
     '      <span class="vue-range-separator">{{ rangeSeparator }}</span>'+
     '    </slot>'+
@@ -323,12 +327,14 @@
     '      :value="displayValue && displayValue[1]"'+
     '      :disabled="pickerDisabled"'+
     '      v-bind="secondInputId"'+
-    '      :readonly="!editable || readonly"'+
+    '      :readonly="!editable || readonly || isMobile"'+
     '      :name="name && name[1]"'+
     '      @input="handleEndInput"'+
     '      @change="handleEndChange"'+
     '      @focus="handleFocus"'+
-    '      class="vue-range-input">'+
+    '      :tabindex="tabindex"'+
+    '      :class="[\'vue-range-input\',{\'user_un_operate\':isMobile}]">'+
+
     '    <i'+
     '      @click="handleClickIcon"'+
     '      v-if="haveTrigger"'+
@@ -338,7 +344,33 @@
     '  </div>',
     mixins: [VueUtil.component.emitter, NewPopper],
     directives: {
-      Clickoutside: VueUtil.component.clickoutside()
+      Clickoutside: VueUtil.component.clickoutside(function(vnode,mouseup,mousedown){//解决datepicker在移动端弹出框固定在下方的模式下，点击空白地方无法关闭弹出层的问题
+        if (VueUtil.getSystemInfo().device != 'Mobile') {
+          return;
+        }
+        var pel= vnode.context.popperElm.querySelector('.vue-picker-panel');
+        if(mousedown.target.classList=='vue-aside__wrapper'){
+          
+          if(!pel){
+            return true;
+          }
+          return !(pel.contains(mouseup.target)||pel.contains(mousedown.target));
+        }else if(mousedown.target.classList=='vue-input__inner'){
+          if(!vnode.context.popperElm){
+            return false;
+          }
+          if(!pel){
+            return false;
+          }
+          var pel2 =  vnode.context.popperElm.querySelector('.vue-date-picker__header') || vnode.context.popperElm.querySelector('.vue-date-picker__time-header') || vnode.context.popperElm.querySelector('.vue-date-range-picker__time-header');
+          if(pel2)
+            return false;
+          return pel.contains(mouseup.target)||pel.contains(mousedown.target);
+        }
+        return false;
+        
+      }),
+      Scrolling: VueUtil.component.scrolling
     },
     props: {
       size: String,
@@ -386,7 +418,8 @@
       validateEvent: {
         type: Boolean,
         default: true
-      }
+      },
+      tabindex: Number,
     },
     data: function () {
       return {
@@ -395,7 +428,8 @@
         userInput: null,
         valueOnOpen: null,
         // value when picker opens, used to determine whether to emit change
-        unwatchPickerOptions: null
+        unwatchPickerOptions: null,
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false
       };
     },
     watch: {
@@ -437,8 +471,7 @@
         if (!valueEquals(val, oldVal) && !this.pickerVisible && this.validateEvent) {
           this.dispatch('VueFormItem', 'vue.form.change', val);
         }
- 
-        if(val){
+        if(this.isMobile &&val){
           this.showClose = true;        
         }else{
           this.showClose = false;
@@ -583,6 +616,10 @@
           this.$refs.reference.focus();
         } else {
           this.handleFocus();
+          var self = this;
+          this.$nextTick(function() {
+            self.$refs.fromInput && self.$refs.fromInput.focus();
+          });
         }
       },
       blur: function () {
@@ -599,9 +636,6 @@
         } else {
           return value;
         }
-      },
-      isMobile: function () {
-        return VueUtil.getSystemInfo().device == 'Mobile'
       },
       formatToValue: function (date) {
         var isFormattable = isDateObject(date) || Array.isArray(date) && date.every(isDateObject);
@@ -625,7 +659,10 @@
         if (this.readonly || this.pickerDisabled) return;
   
         if (!this.valueIsEmpty && this.clearable) {
-          this.showClose = true;
+          var self = this;
+          setTimeout(function(){
+            self.showClose = true;
+          },10);
         }
       },
       handleChange: function () {
@@ -662,8 +699,8 @@
           this.userInput = [null, event.target.value];
         }
       },
-      handleStartChange: function (event) {
-        var value = this.parseString(this.userInput && this.userInput[0]);
+      handleStartChange: function (callback) {
+        var value = typeof callback === 'function' ? callback(this.userInput) : this.parseString(this.userInput && this.userInput[0]);
   
         if (value) {
           this.userInput = [this.formatToString(value), this.displayValue[1]];
@@ -671,13 +708,16 @@
           this.picker.value = newValue;
   
           if (this.isValidValue(newValue)) {
+            this.picker.rangeState && (this.picker.rangeState.selecting = false);
             this.emitInput(newValue);
             this.userInput = null;
+          } else {
+            this.picker.rangeState && (this.picker.rangeState.selecting = true);
           }
         }
       },
-      handleEndChange: function (event) {
-        var value = this.parseString(this.userInput && this.userInput[1]);
+      handleEndChange: function (callback) {
+        var value = typeof callback === 'function' ? callback(this.userInput) : this.parseString(this.userInput && this.userInput[1]);
   
         if (value) {
           this.userInput = [this.displayValue[0], this.formatToString(value)];
@@ -685,8 +725,12 @@
           this.picker.value = newValue;
   
           if (this.isValidValue(newValue)) {
+            this.picker.rangeState && (this.picker.rangeState.selecting = false);
             this.emitInput(newValue);
             this.userInput = null;
+          } else {
+            this.picker.handleRangePick({minDate: value, maxDate: null});
+            this.picker.rangeState && (this.picker.rangeState.selecting = true);
           }
         }
       },
@@ -724,7 +768,6 @@
       },
       handleFocus: function () {
         var type = this.type;
-  
         if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1 && !this.pickerVisible) {
           this.pickerVisible = true;
         }
@@ -734,7 +777,6 @@
       handleKeydown: function (event) {
         var self = this;
         var keyCode = event.keyCode; // ESC
-  
         if (keyCode === 27) {
           this.pickerVisible = false;
           event.stopPropagation();
@@ -747,16 +789,23 @@
             this.handleChange();
             this.pickerVisible = this.picker.visible = false;
             this.blur();
-            event.stopPropagation();
-          } else {
+
+            // grid内部无法捕获到tab事件
+            if (!(this.$el && this.$el.parentNode.className.indexOf('vue-xtable-cell') > -1)) {
+              event.stopPropagation();
+            }
+          } else if(!event.shiftKey) {
             // user may change focus between two input
             setTimeout(function () {
               if (self.refInput.indexOf(document.activeElement) === -1) {
                 self.pickerVisible = false;
   
                 self.blur();
-  
-                event.stopPropagation();
+
+                // grid内部无法捕获到tab事件
+                if (!(this.$el && this.$el.parentNode.className.indexOf('vue-xtable-cell') > -1)) {
+                  event.stopPropagation();
+                }
               }
             }, 0);
           }
@@ -821,7 +870,9 @@
       },
       mountPicker: function () {
         var self = this;
-  
+        
+        if(Vue.i18n) this.panel.i18n = Vue.i18n;
+
         this.picker = new Vue(this.panel).$mount();
         this.picker.defaultValue = this.defaultValue;
         this.picker.defaultTime = this.defaultTime;

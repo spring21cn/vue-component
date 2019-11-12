@@ -562,7 +562,20 @@
     }
   };
   var PickerDropdown = {
-    template: '<transition @after-leave="destroyPopper"><div class="vue-color-dropdown" v-show="showPopper"><div class="vue-color-dropdown__main-wrapper"><hue-slider ref="hue" :color="color" vertical style="float: right;"></hue-slider><sv-panel ref="sl" :color="color"></sv-panel></div><alpha-slider v-if="showAlpha" ref="alpha" :color="color"></alpha-slider><div class="vue-color-dropdown__btns"><vue-row type="flex" justify="space-between"><vue-col :span="14"><vue-input size="small" class="vue-color-dropdown__value" v-model="currentColor" @blur="formatColor"></vue-input></vue-col><vue-col :span="8"><vue-button type="text" @click="$emit(\'clear\')">{{$t(\'vue.colorpicker.clear\')}}</vue-button><vue-button @click="confirmValue">{{$t(\'vue.colorpicker.confirm\')}}</vue-button></vue-col></vue-row></div></div></transition>',
+    template: '<transition @after-leave="destroyPopper">\
+                <div class="vue-color-dropdown" v-show="showPopper">\
+                  <div class="vue-color-dropdown__main-wrapper">\
+                    <hue-slider ref="hue" :color="color" vertical style="float: right;"></hue-slider>\
+                    <sv-panel ref="sl" :color="color"></sv-panel>\
+                  </div>\
+                  <alpha-slider v-if="showAlpha" ref="alpha" :color="color"></alpha-slider>\
+                  <div class="vue-color-dropdown__btns">\
+                    <vue-row type="flex" justify="space-between">\
+                      <vue-col :span="14"><vue-input size="small" class="vue-color-dropdown__value" v-model="currentColor" @blur="formatColor"></vue-input></vue-col>\
+                      <vue-col :span="10">\
+                        <vue-button type="text" @click="$emit(\'clear\')">{{$t(\'vue.colorpicker.clear\')}}</vue-button>\
+                        <vue-button @click="confirmValue">{{$t(\'vue.colorpicker.confirm\')}}</vue-button>\
+                      </vue-col></vue-row></div></div></transition>',
     mixins: [VuePopper],
     components: {
       SvPanel: SvPanel,
@@ -613,7 +626,7 @@
     }
   };
   var VueColorPicker = {
-    template: '<div class="vue-color-picker" :class="[disabled ? \'is-disabled\' : \'\']" v-clickoutside="hide"> \
+    template: '<div class="vue-color-picker" :class="[disabled ? \'is-disabled\' : \'\']" v-clickoutside="hide" v-scrolling="hide"> \
                 <div class="vue-color-picker__mask" v-if="disabled"></div> \
                 <div class="vue-color-picker__trigger" @click="handleTrigger"> \
                   <slot>\
@@ -628,6 +641,7 @@
                   class="vue-color-picker__panel" v-model="showPicker" @pick="confirmValue" @clear="clearValue" :color="color" \
                   :show-alpha="showAlpha">\
                 </picker-dropdown> \
+                <div @touchmove.prevent v-if="isMobile && showPicker" class="color_dropdown_mask_view" @click="showPicker=false"></div> \
               </div>',
     name: 'VueColorPicker',
     props: {
@@ -637,7 +651,8 @@
       disabled: Boolean
     },
     directives: {
-      Clickoutside: VueUtil.component.clickoutside()
+      Clickoutside: VueUtil.component.clickoutside(),
+      Scrolling: VueUtil.component.scrolling
     },
     computed: {
       displayedColor: function() {
@@ -719,7 +734,8 @@
       return {
         color: color,
         showPicker: false,
-        showPanelColor: false
+        showPanelColor: false,
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
       };
     },
     components: {

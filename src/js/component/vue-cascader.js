@@ -8,6 +8,22 @@
   }
 })(this, function(Vue, VuePopper, VueUtil) {
   'use strict';
+  var getSibling = function (el, distance) {
+    var parentNode = el.parentNode;
+  
+    if (parentNode) {
+      var siblings = parentNode.querySelectorAll('.vue-cascader-menu__item:not(.is-disabled)');
+      var index = Array.prototype.indexOf.call(siblings, el);
+      return siblings[index + distance] || null;
+    }
+  
+    return null;
+  };
+  
+  var isLeaf = function(el) {
+    return el.className.indexOf('vue-cascader-menu__item--extensible') === -1;
+  };
+
   var VueCascaderMenu = {
     name: 'VueCascaderMenu',
     data: function() {
@@ -100,6 +116,90 @@
         } else {
           this.$emit('activeItemChange', this.activeValue);
         }
+      },
+      focusNode: function (el) {
+        if (!el) return;
+        
+        
+        var focus = el.parentNode.parentNode.querySelectorAll('.is-focus');
+        VueUtil.each(focus, function(node) {
+          node.classList.remove('is-focus');
+        });
+    
+        var rectElem = el.getBoundingClientRect(), rectContainer=el.parentNode.getBoundingClientRect();
+        if (rectElem.bottom > rectContainer.bottom) el.scrollIntoView(false);
+        if (rectElem.top < rectContainer.top) el.scrollIntoView();
+    
+        if(isLeaf(el)) {
+          if(el.parentNode.querySelector('.is-active')) {
+            this.activeValue.pop();
+          }
+          el.classList.add('is-focus');
+        } else {
+          el.click();
+        }
+      },
+      handleNavigate: function(position) {
+
+        if(this.options.length > 0 && this.options[0].__IS__FLAT__OPTIONS) {
+          var target = this.$el.querySelector('.is-active,.is-focus');
+          if (!target) {
+            this.focusNode(this.$el.querySelector('.vue-cascader-menu__item'));
+            return;
+          }
+          switch (position) {
+
+            case 'up':
+              var up = getSibling(target, -1);
+              this.focusNode(up);
+              break;
+            case 'down':
+              var down = getSibling(target, 1);
+              this.focusNode(down);
+              break;
+            default:
+              return;  
+          }
+          return;
+        }
+
+        if (this.activeValue.length == 0) {
+          this.$el.querySelector('.vue-cascader-menu__item').click();
+          return;
+        }
+
+        var target = this.$el.querySelectorAll('.is-active,.is-focus');
+        target = target[target.length - 1];
+
+        switch (position) {
+
+          case 'up':
+            var up = getSibling(target, -1);
+            this.focusNode(up);
+            break;
+          case 'down':
+            var down = getSibling(target, 1);
+            this.focusNode(down);
+            break;
+          case 'left':
+            var left = this.$el.querySelectorAll('.is-active,.is-focus');
+            left = left[left.length -2];
+            this.focusNode(left);
+            break;
+          case 'right':
+            var lastMenu = this.$el.querySelectorAll('.vue-cascader-menu');
+            lastMenu = lastMenu[lastMenu.length -1];
+            var right = lastMenu.querySelector('.vue-cascader-menu__item:not(.is-disabled)');
+            this.focusNode(right);
+            break;
+          default:
+            return;  
+        }
+      },
+      handleSelect: function() {
+        var select = this.$el.querySelectorAll('.is-active,.is-focus');
+        select = select[select.length -1];
+        select && select.click();
       }
     },
     render: function(createElement) {
@@ -126,6 +226,15 @@
               events.on[triggerEvent] = function() {
                 self.activeItem(item, menuIndex);
               };
+              if(expandTrigger == 'hover') {
+                events.on.click = function(event) {
+                  if(self.changeOnSelect && !event.x == 0 && !event.y == 0) {
+                    self.select(item, menuIndex);
+                  } else {
+                    self.activeItem(item, menuIndex);
+                  }
+                };
+              }
             } else {
               events.on.click = function() {
                 self.select(item, menuIndex);
@@ -167,6 +276,10 @@
         }],
         class: ['vue-cascader-menus', popperClass]
       }, [menus])]);
+    },
+    created: function() {
+      this.$on('navigate', this.handleNavigate);
+      this.$on('select', this.handleSelect);
     }
   };
   var popperMixin = {
@@ -183,10 +296,38 @@
     beforeDestroy: VuePopper.beforeDestroy
   };
   var VueCascader = {
-    template: '<span :class="[\'vue-cascader\', {\'is-opened\': menuVisible, \'is-disabled\': disabled},size ? \'vue-cascader--\' + size : \'\']" @click="handleClick" @mouseenter="inputHover = true" @mouseleave="inputHover = false" ref="reference" v-clickoutside="handleClickoutside"><vue-input :text-align="textAlign" ref="input" :autofocus="autofocus" :tabindex="tabindex" :readonly="!filterable" :placeholder="currentLabels.length ? \'\' : placeholderLang" v-model="inputValue" @change="debouncedInputChange" :validate-event="false" :size="size" :disabled="disabled"><template slot="icon"><i key="1" v-if="clearable && inputHover && currentLabels.length" class="vue-input__icon vue-icon-error vue-cascader__clearIcon" @click="clearValue"></i><i key="2" v-else :class="[\'vue-input__icon vue-icon-arrow-up\', {\'is-reverse\': menuVisible}]"></i></template></vue-input><span class="vue-cascader__label" v-show="inputValue === \'\'"><template v-if="showAllLevels"><template v-for="(label, index) in currentLabels">{{label}}<span v-if="index < currentLabels.length - 1"> / </span></template></template><template v-else>{{currentLabels[currentLabels.length - 1]}}</template></span></span>',
+    template:'' +
+'<span \
+:class="[\'vue-cascader\', {\'is-opened\': menuVisible, \'is-disabled\': disabled},size ? \'vue-cascader--\' + size : \'\']" \
+@click="handleClick" @mouseenter="inputHover = true" @mouseleave="inputHover = false" ref="reference" \
+v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
+<vue-input :text-align="textAlign" ref="input" :autofocus="autofocus" :tabindex="tabindex" :readonly="!filterable" \
+  :placeholder="currentLabels.length ? \'\' : placeholderLang" v-model="inputValue" @input="debouncedInputChange" \
+  :validate-event="false" :size="size" :disabled="disabled" @keydown.native.down.prevent="navigateOptions(\'down\')" \
+  @keydown.native.up.prevent="navigateOptions(\'up\')" @keydown.native.left.prevent="navigateOptions(\'left\')" \
+  @keydown.native.right.prevent="navigateOptions(\'right\')" @keydown.native.enter.prevent="selectOption" \
+  @keydown.native.esc.prevent="menuVisible = false" @keydown.native.tab="menuVisible = false"> \
+  <template slot="icon"> \
+    <i key="1" v-if="clearable && inputHover && currentLabels.length" \
+      class="vue-input__icon vue-icon-error vue-cascader__clearIcon" @click="clearValue"> \
+    </i> \
+    <i key="2" v-else :class="[\'vue-input__icon vue-icon-arrow-up\', {\'is-reverse\': menuVisible}]"> \
+    </i> \
+  </template> \
+</vue-input> \
+<span class="vue-cascader__label" v-show="inputValue === \'\'"> \
+  <template v-if="showAllLevels"> \
+    <template v-for="(label, index) in currentLabels">{{label}}<span v-if="index < currentLabels.length - 1"> / \
+      </span> \
+    </template> \
+  </template> \
+  <template v-else>{{currentLabels[currentLabels.length - 1]}}</template> \
+</span> \
+</span>',
     name: 'VueCascader',
     directives: {
-      Clickoutside: VueUtil.component.clickoutside()
+      Clickoutside: VueUtil.component.clickoutside(),
+      Scrolling: VueUtil.component.scrolling
     },
     mixins: [popperMixin, VueUtil.component.emitter],
     props: {
@@ -344,8 +485,9 @@
       },
       handleInputChange: function(value) {
         var self = this;
-        if (!self.menuVisible)
-          return;
+        if (!self.menuVisible) {
+          self.menuVisible = true;
+        }
         var flatOptions = self.flatOptions;
         if (!value) {
           self.menu.options = self.options;
@@ -374,7 +516,9 @@
             disabled: true
           }];
         }
-        self.menu.options = filteredFlatOptions;
+        this.$nextTick(function() {
+          self.menu.options = filteredFlatOptions;
+        });
       },
       renderFilteredOptionLabel: function(inputValue, optionsStack) {
         var self = this;
@@ -403,14 +547,14 @@
         var self = this;
         var flatOptions = [];
         VueUtil.loop(options, function(option) {
-          var optionsStack = VueUtil.mergeArray(ancestor, option);
+          var optionsStack = ancestor.concat(option);
           if (!option[self.childrenKey]) {
             flatOptions.push(optionsStack);
           } else {
             if (self.changeOnSelect) {
               flatOptions.push(optionsStack);
             }
-            VueUtil.mergeArray(flatOptions, self.flattenOptions(option[self.childrenKey], optionsStack));
+            flatOptions = flatOptions.concat(self.flattenOptions(option[self.childrenKey], optionsStack));
           }
         });
         return flatOptions;
@@ -433,7 +577,21 @@
       },
       debouncedInputChange: VueUtil.debounce(function(value) {
         this.handleInputChange(value);
-      })
+      }),
+      navigateOptions: function(position) {
+        if(!this.menuVisible) {
+          this.menuVisible = true;
+          return;
+        }
+        this.menu.$emit('navigate', position);
+      },
+      selectOption: function(a) {
+        if(!this.menuVisible) {
+          this.menuVisible = true;
+          return;
+        }
+        this.menu.$emit('select');
+      }
     },
     mounted: function() {
       this.flatOptions = this.flattenOptions(this.options);

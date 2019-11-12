@@ -19,6 +19,10 @@
     box-shadow: 0 0 2px 2px #409eff;
 }
 
+.vue-radio__input.is-focus .vue-radio__inner {
+	box-shadow: 0 0 2px 2px #409eff;
+}
+
 .vue-radio+.vue-radio {
 	margin-left: 15px;
 }
@@ -83,14 +87,14 @@
 }
 .vue-radio__original {
 	opacity: 0;
-    outline: none;
-    position: absolute;
-    z-index: -1;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
+	outline: none;
+	position: absolute;
+	z-index: -1;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: 0;
 }
 .vue-radio__label {
 	font-size: 14px;
@@ -110,7 +114,18 @@
 .vue-radio-button__inner {
 	position: relative;
 	display: inline-block;
+	outline: none;
 }
+
+.vue-radio-button.is-focus:not(.is-disabled) .vue-radio-button__inner:before,
+.vue-radio-button:focus:not(.is-disabled) .vue-radio-button__inner:before {
+	position: absolute; 
+	display: block; 
+	content: "";
+	top: 0; right: 0; bottom: 0; left: 0;  
+	background: rgba(0, 0, 0, 0.1);
+}
+
 .vue-radio-button:first-child .vue-radio-button__inner {
 	border-left: 1px solid #bfcbd9;
 	border-radius: 4px 0 0 4px;
@@ -147,7 +162,13 @@
 	margin-left: 10px;
 }
 .vue-radio-button__original {
-	display: none;
+	opacity: 0;
+	outline: none;
+	position: absolute;
+	margin: 0;
+	width: 0;
+	height: 0;
+	z-index: -1;
 }
 .vue-radio-button__original:checked+.vue-radio-button__inner {
 	color: #fff;

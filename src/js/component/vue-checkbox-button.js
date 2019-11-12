@@ -9,13 +9,13 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCheckboxButton = {
-    template: '<label :class="[\'vue-checkbox-button\', size ? \'vue-checkbox-button--\' + size : \'\', {\'is-disabled\': isDisabled}, {\'is-checked\': isChecked}, {\'is-focus\': focus}]"><input v-if="trueLabel || falseLabel" class="vue-checkbox-button__original" type="checkbox" :name="name" :disabled="isDisabled" :true-value="trueLabel" :false-value="falseLabel" v-model="model" @change="handleChange" @focus="focus = true" @blur="focus = false"><input v-else class="vue-checkbox-button__original" type="checkbox" :name="name" :disabled="disabled" :value="label" v-model="model" @change="handleChange" @focus="focus = true" @blur="focus = false"><span class="vue-checkbox-button__inner" v-if="$slots.default || label" :style="isChecked ? activeStyle : null"><slot>{{label}}</slot></span></label>',
+    template: '<label :class="[\'vue-checkbox-button\', size ? \'vue-checkbox-button--\' + size : \'\', {\'is-disabled\': isDisabled}, {\'is-checked\': isChecked}, {\'is-focus\': isFocus}]"><input v-if="trueLabel || falseLabel" class="vue-checkbox-button__original" type="checkbox" :name="name" :disabled="isDisabled" :true-value="trueLabel" :false-value="falseLabel" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><input v-else class="vue-checkbox-button__original" type="checkbox" :name="name" :disabled="isDisabled" :value="label" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><span class="vue-checkbox-button__inner" v-if="$slots.default || label" :style="isChecked ? activeStyle : null"><slot>{{label}}</slot></span></label>',
     name: 'VueCheckboxButton',
     mixins: [VueUtil.component.emitter],
     data: function() {
       return {
         selfModel: false,
-        focus: false
+        isFocus: false
       };
     },
     props: {
@@ -25,7 +25,11 @@
       checked: Boolean,
       name: String,
       trueLabel: [String, Number],
-      falseLabel: [String, Number]
+      falseLabel: [String, Number],
+      tabindex: {
+        type: Number,
+        default: 0
+      }
     },
     computed: {
       model: {
@@ -65,8 +69,17 @@
         }
         return false;
       },
+      isLimitDisabled: function isLimitDisabled() {
+        var max = this._checkboxGroup.max;
+        var min = this._checkboxGroup.min;
+        return !!(max || min) && this.model.length >= max && !this.isChecked || this.model.length <= min && this.isChecked;
+      },
       isDisabled: function() {
-        return this.disabled || this._checkboxGroup.disabled;
+
+        return this._checkboxGroup
+          ? this._checkboxGroup.disabled || this.disabled || this.isLimitDisabled
+          : this.disabled;
+
       },
       store: function() {
         return this._checkboxGroup ? this._checkboxGroup.value : this.value;
@@ -81,6 +94,9 @@
       },
       size: function() {
         return this._checkboxGroup.size;
+      },
+      tabIndex: function() {
+        return this._checkboxGroup ? this._checkboxGroup.tabindex : this.tabindex;
       }
     },
     methods: {
@@ -100,6 +116,9 @@
             self.dispatch('VueCheckboxGroup', 'change', [self._checkboxGroup.value]);
           });
         }
+      },
+      focus: function() {
+        this.$el.querySelector('input').focus();
       }
     },
     created: function() {

@@ -11,6 +11,9 @@ var locales = {
         logOut: '退出登录',
         dashboard: '首页',
         screenfull: '全屏',
+      },
+      menuSearch: {
+        placeholder: '搜索...'
       }
     },
     title: {
@@ -29,6 +32,9 @@ var locales = {
         logOut: 'Log Out',
         dashboard: 'Dashboard',
         screenfull: 'Full Screen',
+      },
+      menuSearch: {
+        placeholder: 'Search...'
       }
     },
     title: {
@@ -47,6 +53,9 @@ var locales = {
         logOut: 'ログアウト',
         dashboard: 'ダッシュボード',
         screenfull: 'フルスクリーン',
+      },
+      menuSearch: {
+        placeholder: '検索...'
       }
     },
     title: {

@@ -9,7 +9,7 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueNotification = {
-    template: '<transition :name="isLeft ? \'notify-left\' : isTop ? \'notify-top\' : isBottom ? \'notify-bottom\' : isCenter? \'notify-center\' : \'notify-right\'" @after-leave="doDestroy"><div :class="[\'vue-notification\', {\'vue-notification-translateX\':centerX, \'vue-notification-translateY\':centerY},customClass]" v-show="visible" :style="{top: top ? top + \'px\' : \'auto\', bottom: bottom ? bottom + \'px\' : \'auto\', left: left ? left + \'px\' : \'auto\', right: right ? right + \'px\' : \'auto\'}"><i :class="[\'vue-notification__icon\', typeClass, iconClass]" v-if="type || iconClass"></i><div class="vue-notification__group"><h2 class="vue-notification__title" v-text="title" v-if="showTitle"></h2><div class="vue-notification__content" v-if="showMessage" :style="{\'margin-top\':showTitle?\'10px\':\'\'}"><slot>{{message}}</slot></div><div class="vue-notification__closeBtn vue-icon-close" @click="close" v-if="duration===0 || showClose"></div></div></div></transition>',
+    template: '<transition :name="isLeft ? \'notify-left\' : isTop ? \'notify-top\' : isBottom ? \'notify-bottom\' : isCenter? \'notify-center\' : \'notify-right\'" @after-leave="doDestroy"><div :class="[\'vue-notification\', {\'vue-notification-translateX\':centerX, \'vue-notification-translateY\':centerY, \'vue-notification-center\':centerX&&centerY},customClass]" v-show="visible" :style="{top: top ? top + \'px\' : \'auto\', bottom: bottom ? bottom + \'px\' : \'auto\', left: left ? left + \'px\' : \'auto\', right: right ? right + \'px\' : \'auto\'}"><i :class="[\'vue-notification__icon\', typeClass, iconClass]" v-if="type || iconClass"></i><div :class="[\'vue-notification__group\', {\'content_margin\':centerX&&centerY&&(type || iconClass)}]"><h2 class="vue-notification__title" v-text="title" v-if="showTitle"></h2><div class="vue-notification__content" v-if="showMessage" :style="{\'margin-top\':showTitle?\'10px\':\'\'}"><slot>{{message}}</slot></div><div class="vue-notification__closeBtn vue-icon-close" @click="close" v-if="duration===0 || showClose"></div></div></div></transition>',
     data: function() {
       return {
         visible: false,
@@ -27,7 +27,7 @@
         right: null,
         centerX: false,
         centerY: false,
-        position: 'top-right',
+        position: VueUtil.getSystemInfo().device == 'Mobile'? 'center-center':'top-right',
         isLeft: false,
         isTop: false,
         isBottom: false,

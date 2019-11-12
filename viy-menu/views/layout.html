@@ -3,16 +3,17 @@
     <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside"></div>
     <div class="main-container">
         <sidebar>
-          <div ref="logoContainer" class="sidebar-logo">
+          <div class="sidebar-logo">
             <router-link to="/">
               <img  src="static/img/logo.png">
             </router-link>
           </div>
-          <main-menu :menu-height="menuHeight"></main-menu>
+          <menu-search size="small"></menu-search>
+          <main-menu ref="menu" :menu-height="menuHeight" unique-opened></main-menu>
         </sidebar>
       <div class="navbar">
         <hamburger></hamburger>
-        <breadcrumb></breadcrumb>
+        <breadcrumb v-if="device!=='mobile'"></breadcrumb>
         <div class="right-menu">
           <div class="right-menu-item">
             <i class="right-menu-icon vue-icon-user"></i>
@@ -30,7 +31,7 @@
             </avatar>
         </div>
       </div>
-      <tags-view></tags-view>
+      <tags-view @open="open" @close="close"></tags-view>
       <app-main></app-main>
     </div>
   </div>
@@ -45,7 +46,7 @@ module.exports = {
   name: 'Layout',
   data: function() {
     return {
-      logoHeight: 0,
+      menuOffSetTop: 0,
       languages: [{
         code: 'zh',
         name: '中文'
@@ -74,7 +75,7 @@ module.exports = {
       };
     },
     menuHeight: function() {
-      return MenuStore.getters.height - this.logoHeight;
+      return MenuStore.getters.height - this.menuOffSetTop;
     }
   },
   watch: {
@@ -93,10 +94,16 @@ module.exports = {
       MenuStore.dispatch('toggleDevice', 'mobile');
       MenuStore.dispatch('closeSideBar', { withoutAnimation: true });
     }
-    this.logoHeight = this.$refs.logoContainer ? this.$refs.logoContainer.offsetHeight : 0;
+    this.menuOffSetTop = this.$refs.menu ? this.$refs.menu.$el.getBoundingClientRect().top : 0;
   },
 
   methods: {
+    open: function(item) {
+      console.log('open', item);
+    },
+    close: function(item) {
+      console.log('close', item);
+    },
     handleClickOutside: function() {
       MenuStore.dispatch('closeSideBar', { withoutAnimation: false });
     },

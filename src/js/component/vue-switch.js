@@ -9,12 +9,34 @@
 })(this, function(Vue) {
   'use strict';
   var VueSwitch = {
-    template: '<label :class="[\'vue-switch\', {\'is-disabled\': disabled, \'vue-switch--wide\': hasText}]"><div class="vue-switch__mask" v-show="disabled"></div><input class="vue-switch__input" type="checkbox" @change="handleChange" v-model="_value" :name="name" :disabled="disabled"><span class="vue-switch__core" ref="core" :style="{\'width\': coreWidth + \'px\'}"><span class="vue-switch__button" :style="buttonStyle"></span></span><transition name="label-fade"><div class="vue-switch__label vue-switch__label--left" v-show="value" :style="{\'width\': coreWidth + \'px\'}"><i :class="[onIconClass]" v-if="onIconClass"></i><span v-if="!onIconClass && onText">{{onText}}</span></div></transition><transition name="label-fade"><div class="vue-switch__label vue-switch__label--right" v-show="!value" :style="{\'width\': coreWidth + \'px\'}"><i :class="[offIconClass]" v-if="offIconClass"></i><span v-if="!offIconClass && offText">{{offText}}</span></div></transition></label>',
+    template: '<label :tabindex="disabled ? -1 : tabindex" @keydown.space.stop.prevent="toggleCheck" :class="[\'vue-switch\', {\'is-disabled\': disabled, \'vue-switch--wide\': hasText}]">\
+      <div class="vue-switch__mask" v-show="disabled"></div>\
+      <input ref="check" class="vue-switch__input" type="checkbox" @change="handleChange" v-model="_value" :name="name" :disabled="disabled">\
+      <span class="vue-switch__core" ref="core" :style="{\'width\': coreWidth + \'px\'}">\
+        <span class="vue-switch__button" :style="buttonStyle"></span>\
+      </span>\
+      <transition name="label-fade"><div class="vue-switch__label vue-switch__label--left" v-show="_value" :style="{\'width\': coreWidth + \'px\'}">\
+        <i :class="[onIconClass]" v-if="onIconClass"></i><span v-if="!onIconClass && onText">{{onText}}</span></div>\
+      </transition>\
+      <transition name="label-fade"><div class="vue-switch__label vue-switch__label--right" v-show="!_value" :style="{\'width\': coreWidth + \'px\'}">\
+      <i :class="[offIconClass]" v-if="offIconClass"></i>\
+      <span v-if="!offIconClass && offText">{{offText}}</span>\
+      </div>\
+      </transition>\
+    </label>',
     name: 'VueSwitch',
     props: {
       value: {
-        type: Boolean,
+        type: [Boolean, String, Number],
         default: true
+      },
+      onValue: {
+        type: [Boolean, String, Number],
+        default: true
+      },
+      offValue: {
+        type: [Boolean, String, Number],
+        default: false
       },
       disabled: Boolean,
       width: {
@@ -48,6 +70,10 @@
       name: {
         type: String,
         default: ''
+      },
+      tabindex: {
+        type: Number,
+        default: 0
       }
     },
     data: function() {
@@ -64,10 +90,10 @@
       },
       _value: {
         get: function() {
-          return this.value;
+          return this.value === this.onValue;
         },
         set: function(val) {
-          this.$emit('input', val);
+          this.$emit('input', val ? this.onValue : this.offValue);
         }
       }
     },
@@ -85,13 +111,16 @@
     },
     methods: {
       handleChange: function(event) {
-        this.$emit('change', event.currentTarget.checked);
+        this.$emit('change', event.currentTarget.checked ? this.onValue : this.offValue);
+      },
+      toggleCheck: function() {
+        this.$refs.check.click();
       },
       handleButtonTransform: function() {
-        this.buttonStyle.transform = this.value ? 'translate(' + (this.coreWidth - 20) + 'px, 2px)' : 'translate(2px, 2px)';
+        this.buttonStyle.transform = this._value ? 'translate(' + (this.coreWidth - 20) + 'px, 2px)' : 'translate(2px, 2px)';
       },
       setBackgroundColor: function() {
-        var newColor = this.value ? this.onColor : this.offColor;
+        var newColor = this._value ? this.onColor : this.offColor;
         this.$refs.core.style.borderColor = newColor;
         this.$refs.core.style.backgroundColor = newColor;
       }

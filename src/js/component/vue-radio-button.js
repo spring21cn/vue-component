@@ -9,12 +9,21 @@
 })(this, function(Vue) {
   'use strict';
   var VueRadioButton = {
-    template: '<label :class="[\'vue-radio-button\', size ? \'vue-radio-button--\' + size : \'\', {\'is-active\': value === label}, {\'is-disabled\': isDisabled}]"><input class="vue-radio-button__original" :value="label" type="radio" v-model="value" :name="name" :disabled="isDisabled"><span class="vue-radio-button__inner" :style="value === label ? activeStyle : null"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
+    template: '<label role="radio" :class="[\'vue-radio-button\', size ? \'vue-radio-button--\' + size : \'\', {\'is-active\': value === label}, {\'is-disabled\': isDisabled}, {\'is-focus\': isFocus}]" :tabindex="tabIndex"><input class="vue-radio-button__original" :value="label" type="radio" v-model="value" :name="name" :tabindex="-1" @focus="isFocus = true" @blur="isFocus = false" :disabled="isDisabled"><span class="vue-radio-button__inner" :style="value === label ? activeStyle : null"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
     name: 'VueRadioButton',
+    data: function() {
+      return {
+        isFocus: false
+      };
+    },
     props: {
       label: {},
       disabled: Boolean,
-      name: String
+      name: String,
+      tabindex: {
+        type: Number,
+        default: 0
+      }
     },
     computed: {
       value: {
@@ -49,6 +58,9 @@
       },
       isDisabled: function() {
         return this.disabled || this._radioGroup.disabled;
+      },
+      tabIndex: function() {
+        return (this.isDisabled || (this._radioGroup && this.value !== this.label)) ? -1 : this.isGroup ? this._radioGroup.tabindex : this.tabindex;
       }
     }
   };

@@ -8,6 +8,8 @@
   }
 })(this, function(Vue, VuePopper, VueUtil) {
   'use strict';
+  
+  
   var VueTooltip = {
     name: 'VueTooltip',
     mixins: [VuePopper],
@@ -31,12 +33,16 @@
     },
     beforeCreate: function() {
       var self = this;
-      self.popperVM = new Vue({
+
+      var opt = {
         data: {node: ''},
         render: function(createElement) {
           return this.node;
         }
-      }).$mount();
+      };
+
+      if(Vue.i18n) opt.i18n = Vue.i18n;
+      self.popperVM = new Vue(opt).$mount();
     },
     beforeDestroy: function() {
       this.popperVM.$destroy();
@@ -80,8 +86,41 @@
       if (!vnode) return vnode;
       var data = vnode.data = vnode.data || {};
       var on = vnode.data.on = vnode.data.on || {};
-      on.mouseenter = self.addEventHandle(on.mouseenter, function() {self.setExpectedState(true); self.handleShowPopper();});
-      on.mouseleave = self.addEventHandle(on.mouseleave, function() {self.setExpectedState(false); self.debounceClose();});
+
+
+      if(!data.bindToolTipEvent) {
+
+        data.bindToolTipEvent = 'binded';
+        
+        on.mouseover = self.addEventHandle(on.mouseover, function (e) {
+
+          if (e.currentTarget === e.target) {
+            self.setExpectedState(true);
+            self.handleShowPopper();
+          }
+
+          var b = e.currentTarget.getBoundingClientRect();
+          var clientX = Math.floor(e.clientX);
+          var clientY = Math.floor(e.clientY);
+          
+          var offset = 2;
+          var top = Math.floor(b.top) - offset;
+          var bottom = Math.floor(b.bottom) + offset;
+          var left = Math.floor(b.left) - offset;
+          var right = Math.floor(b.right) + offset;
+
+
+          if (top <= clientY && bottom >= clientY && left <= clientX && right >= clientX) {
+            self.setExpectedState(true);
+            self.handleShowPopper();
+          }
+        });
+        on.mouseleave = self.addEventHandle(on.mouseleave, function (e) {
+          self.setExpectedState(false);
+          self.debounceClose();
+        });
+      }
+
       data.staticClass = self.concatClass(data.staticClass, 'vue-tooltip');
       return vnode;
     },

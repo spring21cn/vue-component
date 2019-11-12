@@ -14,7 +14,8 @@
       return {
         defaultSlotLen: 0,
         activedIndex: null,
-        keyList: []
+        keyList: [],
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
       };
     },
     props: {
@@ -98,7 +99,7 @@
         delta.total = 0;
         delta.marginTop = 0;
         delta.marginBottom = 0;
-        delta.size = 20;
+        delta.size = this.isMobile?13:20;
         delta.remain = Math.floor(this.height * 1 / delta.size);
         delta.end = delta.remain;
         delta.keeps = delta.remain;
@@ -132,11 +133,11 @@
         list = createElement('div', {
           'class': ['vue-list'],
           'style': {
-            'height': this.height * 1 + 'px'
+            'height': this.isMobile? '100%' : this.height * 1 + 'px'
           }
         }, [createElement('vue-scrollbar', {
             props: {
-              height: this.height * 1
+              height: this.isMobile? '100%' :this.height * 1
             },
             'on': {
               'scrollY': this.handleScroll
@@ -150,7 +151,7 @@
         list = createElement('div', {
           'class': ['vue-list'],
           'style': {
-            'height': this.height * 1 + 'px',
+            'height':  this.isMobile? '100%' : this.height * 1 + 'px',
             'overflow': 'auto'
           },
           'on': {
@@ -159,7 +160,8 @@
         }, [createElement('div', {
             'style': {
               'margin-top': delta.marginTop + 'px',
-              'margin-bottom':  delta.marginBottom + 'px'
+              'margin-bottom': delta.marginBottom + 'px',
+              'height':this.isMobile? '100%' : this.height * 1 + 'px', 
             }
           }, showList)
         ]);

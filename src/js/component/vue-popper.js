@@ -566,7 +566,7 @@
     }
     var center = reference[side] + (reference[len] / 2) - (arrowSize / 2);
     var sideValue = center - popper[side];
-    sideValue = Math.max(Math.min(popper[len] - arrowSize, sideValue), 0);
+    sideValue = Math.max(Math.min(popper[len] - arrowSize - 3, sideValue), 0);
     arrowStyle[side] = sideValue;
     arrowStyle[altSide] = '';
     data.offsets.arrow = arrowStyle;
@@ -597,7 +597,8 @@
             gpuAcceleration: false
           };
         }
-      }
+      },
+      appendToDirectParent: Boolean  //append to referenceElm's direct parentNode
     },
     data: function() {
       return {
@@ -638,11 +639,14 @@
         if (self.visibleArrow) self.appendArrow(popper);
         if (VueUtil.isElement(self.append)) {
           self.appendElement = self.append;
-        } else {
+        } else if(self.appendToDirectParent) {
+          self.appendElement = self.referenceElm.parentNode;
+        }else {
           self.appendElement = self.referenceElm.parentNode;
           self.findeAbsoluteParent(self.referenceElm);
         }
         self.appendElement.appendChild(self.popperElm);
+        self.popperElm.style.visibility = 'hidden';
         if (self.popperJS && self.popperJS.destroy) self.popperJS.destroy();
         options.placement = self.currentPlacement;
         options.offset = self.offset;
@@ -651,13 +655,17 @@
         self.popperJS.onCreate(function() {
           self.$emit('created', self);
           self.resetTransformOrigin();
-          self.$nextTick(self.updatePopper);
+          self.$nextTick(function() {
+            self.updatePopper();
+            self.popperElm.style.visibility = '';
+          });
         });
         if (VueUtil.isFunction(options.onUpdate)) {
           self.popperJS.onUpdate(options.onUpdate);
         }
         self.popperJS._popper.style.zIndex = VueUtil.nextZIndex();
         !VueUtil.isIE && VueUtil.on(self.popperElm, 'click', self.stop);
+        self.popperJS._popper.editor = self;
       },
       updatePopper: function() {
         this.popperJS ? this.popperJS.update() : this.createPopper();

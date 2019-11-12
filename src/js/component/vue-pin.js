@@ -9,7 +9,7 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VuePin = {
-    template: '<div><div :style="styles"><slot></slot></div></div>',
+    template: '<div class="vue-pin" :class="pinClass"><div :style="styles"><slot></slot></div></div>',
     name: 'VuePin',
     props: {
       offsetTop: {
@@ -34,6 +34,11 @@
           type = 'bottom';
         }
         return type;
+      },
+      pinClass: function() {
+        return {
+          'vue-pin-pined': this.pin,
+        };
       }
     },
     mounted: function() {

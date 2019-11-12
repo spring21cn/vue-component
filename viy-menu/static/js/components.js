@@ -297,6 +297,11 @@
       },
       addTag: function() {
         return MenuStore.state.tagsView.addTag;
+      },
+      visitedViewsCode: function() {
+        return MenuStore.state.tagsView.visitedViews.map(function(item) {
+            return item.name
+        })
       }
     },
     watch: {
@@ -307,8 +312,10 @@
       visible: function(value) {
         if (value) {
           document.body.addEventListener('click', this.closeMenu);
+          window.addEventListener('blur', this.closeMenu);
         } else {
           document.body.removeEventListener('click', this.closeMenu);
+          window.removeEventListener('blur', this.closeMenu);
         }
       },
       closeTag: function (closeTag) {
@@ -316,6 +323,13 @@
       },
       addTag: function (addTag) {
         this.dynamicAddTag(addTag);
+      },
+      visitedViewsCode: function(val, old) {
+        if(val.length > old.length) {
+          this.$emit('open', VueUtil.difference(val, old))
+        } else {
+          this.$emit('close', VueUtil.difference(old, val))
+        }
       }
     },
     mounted: function() {
@@ -373,7 +387,7 @@
         });
       },
       dynamicAddTag: function (addTag) {
-
+        var self = this;
         if (this.addedTag.indexOf(addTag.code) === -1) {
           this.addedTag.push(addTag.code);
           this.$router.addRoutes([{
@@ -394,13 +408,25 @@
             }]
           }]);
         }
+        this.$nextTick(function() {
+          var view = self.getViewByName(addTag.code);
+          if (view) {
+            view.params = addTag.params;
+            view.meta.url = addTag.url;
+          }
+        })
 
-        this.$router.push('/'+ addTag.code);
+        this.$router.push({name: addTag.code, params: addTag.params});
       },
-      closeSelectedTagByName: function(name) {
+      getViewByName: function(name) {
         var view = VueUtil.arrayFind(this.visitedViews, function(view) {
           return view.name == name
         });
+
+        return view;
+      },
+      closeSelectedTagByName: function(name) {
+        var view = this.getViewByName(name);
         if(view) {
           this.closeSelectedTag(view);
         }
@@ -420,6 +446,7 @@
             }
           }
         });
+        this.closeMenu();
       },
       closeOthersTags: function() {
         var self = this;
@@ -492,7 +519,7 @@
     +       '<keep-alive :include="cachedViews">'
     +         '<router-view :key="key"></router-view>'
     +       '</keep-alive>'
-    +       '<iframe v-for="view in iframeViews" :id="\'app-main-iframe-\' + view.name" class="app-main-iframe" :src="iframeUrl(view)" v-show="$router.currentRoute.name === view.name"></iframe>'
+    +       '<iframe v-for="view in iframeViews" allowfullscreen :id="\'app-main-iframe-\' + view.name" class="app-main-iframe" :src="iframeUrl(view)" :class="{\'app-main-iframe-hidden\':$router.currentRoute.name !== view.name}"></iframe>'
     // +     '</transition>'
     + '  </section>',
     computed: {
@@ -522,14 +549,15 @@
     },
     methods: {
       iframeUrl: function(view) {
-        var params = view.params;
+        var paramsAndQuery = VueUtil.merge(view.params, view.query);
+
         var query = "";
 
-        for (var key in params) {
+        for (var key in paramsAndQuery) {
             if (query != "") {
               query += "&";
             }
-            query += key + "=" + encodeURIComponent(params[key]);
+            query += key + "=" + encodeURIComponent(paramsAndQuery[key]);
         }
 
         if(query) query = "?" + query; 
@@ -541,7 +569,7 @@
 
   var SidebarItem = {
     name: 'SidebarItem',
-    template: '<div v-if="!item.hidden&&item.children" class="menu-wrapper">'
+    template: '<div v-if="!item.hidden&&item.children&&checkQuery(item)" class="menu-wrapper">'
     +     '<template v-if="hasOneShowingChild(item.children,item) && (!onlyOneChild.children||onlyOneChild.noShowingChildren)&&!item.alwaysShow">'
     +       '<app-link :to="resolvePath(onlyOneChild.path)" :link-route="onlyOneChild">'
     +         '<vue-menu-item :index="resolvePath(onlyOneChild.path)" :class="{\'submenu-title-noDropdown\':!isNest}">'
@@ -555,7 +583,7 @@
     +           '<i  v-if="item.meta" :class="item.meta.icon"></i> '
     +           '<span  v-if="item.meta" slot="title">{{generateTitle(item.meta.title)}}</span>'
     +       '</template>'
-    +       '<template v-for="child in item.children" v-if="!child.hidden">'
+    +       '<template v-for="child in item.children" v-if="!child.hidden&&checkQuery(child)">'
     +         '<sidebar-item '
     +           'v-if="child.children&&child.children.length>0" '
     +           ':is-nest="true" '
@@ -596,7 +624,10 @@
     computed: {
       device: function() {
         return MenuStore.state.app.device;
-      }
+      },
+      query: function() {
+        return MenuStore.state.app.sidebar.query;
+      },
     },
     mounted: function() {
       this.fixBugIniOS();
@@ -651,6 +682,31 @@
           };
         }
       },
+      checkQuery: function(item) {
+        var self = this;
+        var query = this.query;
+        var result = false;
+
+        if(query === '') {
+          return true;
+        } else {
+          if(item.children) {
+            item.children.forEach(function(item) {
+              if (self.checkQuery(item)) {
+                result = true;
+                return false;
+              }
+            })
+          } else {
+            var lowerQuery = query.toLocaleLowerCase();
+
+            result = (item.name.toLocaleLowerCase().indexOf(lowerQuery) > -1
+            || self.$t(item.meta.title).toLocaleLowerCase().indexOf(lowerQuery) > -1)
+          }
+
+          return result;
+        }
+      }, 
   
       generateTitle: MenuUtils.generateTitle
     }
@@ -751,6 +807,7 @@
     + '      mode="vertical" '
     + '      :show-timeout="200" '
     + '      :collapse="isCollapse" '
+    + '      v-bind="$attrs" '
     + '      :default-active="$route.path" '
     + '      theme="dark"'
     + '    >'
@@ -784,4 +841,53 @@
     + ' </div>',
   };
   Vue.component(Sidebar.name, Sidebar);
+
+  var menuSearch = {
+    name: 'menu-search',
+    template: '<div class="menu-search-container" :class="{\'sidebar-open\': sidebar.opened}"> \
+      <vue-input v-model="query" v-if="sidebar.opened" ref="input" :size="size" :placeholder="$t(\'menu.menuSearch.placeholder\')" \
+      :icon="icon" @input="inputHandler" @mouseover.native="enter" @mouseout.native="out" :on-icon-click="handleIconClick"\
+      ></vue-input> \
+      <div class="search-icon" v-else-if="!hideIcon" @click="miniIconClick">\
+        <i class="vue-icon-search"></i>\
+      </div> \
+    </div>',
+    props: {
+      hideIcon: Boolean,
+      size: String,
+    },
+    data: function() {
+      return {
+        query: '',
+        icon: 'vue-icon-search',
+      }
+    },
+    computed: {
+      sidebar: function() {
+        return MenuStore.getters.sidebar;
+      }
+    },
+    methods: {
+      miniIconClick: function() {
+        MenuStore.dispatch('toggleSideBar');
+        this.$nextTick(function() {
+          this.$refs.input.focus();
+        })
+      },
+      enter: function() {
+        this.icon = 'vue-icon-close'
+      },
+      out: function() {
+        this.icon = 'vue-icon-search'
+      },
+      handleIconClick: function() {
+        this.query = '';
+        this.inputHandler('');
+      },
+      inputHandler: VueUtil._debounce(function(val) {
+        MenuStore.dispatch('queryChange', val);
+      }, 200)
+    },
+  };
+  Vue.component(menuSearch.name, menuSearch);
 });

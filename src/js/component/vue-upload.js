@@ -8,6 +8,12 @@
   }
 })(this, function(Vue, VueUtil) {
   'use strict';
+
+  function handleDragOutside(e) {
+    e = e || event;
+    e.preventDefault();
+  }
+
   function noop() {}
   var UploadDragger = {
     template: '<div :class="[\'vue-upload-dragger\', {\'is-dragover\': dragover}]" @drop.prevent="onDrop" @dragover.prevent="onDragover" @dragleave.prevent="dragover = false"><slot></slot></div>',
@@ -35,7 +41,36 @@
     }
   };
   var UploadList = {
-    template: '<transition-group tag="ul" :class="[\'vue-upload-list\', \'vue-upload-list--\' + listType, {\'is-disabled\': disabled}]" name="vue-list"><li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file.uid"><img class="vue-upload-list__item-thumbnail" v-if="file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1" :src="file.url" :alt="file.name"><a class="vue-upload-list__item-name" @click="handleClick(file)"><i class="vue-icon-document"></i>{{file.name}}</a><label class="vue-upload-list__item-status-label"><i :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i></label><i class="vue-icon-close" v-if="!disabled" @click="$emit(\'remove\', file)"></i><vue-progress v-if="file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" :stroke-width="listType === \'picture-card\' ? 6 : 2" :percentage="parsePercentage(file.percentage)"></vue-progress><span class="vue-upload-list__item-actions" v-if="listType === \'picture-card\'"><span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click="handlePreview(file)"><i class="vue-icon-view"></i></span><span v-if="!disabled" class="vue-upload-list__item-delete" @click="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span></span></li></transition-group>',
+    template: '<transition-group tag="ul" :class="[\'vue-upload-list\', \'vue-upload-list--\' + listType, {\'is-disabled\': disabled}]" name="vue-list">\
+                <li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file.uid">\
+                  <img class="vue-upload-list__item-thumbnail" v-if="!isMobile && file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1"\
+                   :src="file.url" :alt="file.name"/>\
+                  <a v-if="!isMobile" class="vue-upload-list__item-name" @click="handleClick(file, index, files)">\
+                   <i class="vue-icon-document"></i>{{file.name}}</a>\
+                  <label v-if="!isMobile" class="vue-upload-list__item-status-label">\
+                    <i :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
+                  </label>\
+                  <i class="vue-icon-close" v-if="!isMobile && !disabled" @click="$emit(\'remove\', file)"></i>\
+                  <vue-progress v-if="!isMobile && file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" :stroke-width="listType === \'picture-card\' ? 6 : 2" \
+                  :percentage="parsePercentage(file.percentage)"></vue-progress>\
+                  <span class="vue-upload-list__item-actions" v-if="!isMobile && listType === \'picture-card\'">\
+                    <span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click="handlePreview(file,index,files)">\
+                      <i class="vue-icon-view"></i>\
+                    </span>\
+                    <span v-if="!disabled" class="vue-upload-list__item-delete" @click="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span>\
+                  </span>\
+                  <div v-if="isMobile" style="position:relative;overflow:hidden;width:100%;height:100%;">\
+                    <img class="vue-upload-list__item-thumbnail" v-if="file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1" \
+                        :src="file.url" :alt="listType === \'picture-card\'?file.name:\'load failed\'" @click="handlePreview(file,index,files)" />\
+                    <a class="vue-upload-list__item-name" @click="handleClick(file,index,files)"><i class="vue-icon-document"></i>{{file.name}}</a>\
+                    <label class="vue-upload-list__item-status-label">\
+                      <i :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
+                    </label>\
+                    <vue-progress v-if="file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" \
+                    :stroke-width="listType === \'picture-card\' ? 6 : 2" :percentage="parsePercentage(file.percentage)"></vue-progress>\
+                  </div>\
+                  <i v-if="isMobile && !disabled" class="vue-icon-error" @click="$emit(\'remove\', file)"></i>\
+                </li></transition-group>',
     props: {
       files: {
         type: Array,
@@ -47,13 +82,18 @@
       handlePreview: Function,
       listType: String
     },
+    data: function() {
+      return {
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile'  && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
+      };
+    },
     methods: {
       parsePercentage: function(val) {
         return parseInt(val, 10);
       },
-      handleClick: function(file) {
-        this.handlePreview && this.handlePreview(file);
-      }
+      handleClick: function(file,index,files) {
+        this.handlePreview && this.handlePreview(file,index,files);
+      },
     }
   };
   var Upload = {
@@ -123,7 +163,15 @@
           });
         }
       },
-      disabled: Boolean
+      disabled: Boolean,
+      clickable: {
+        type: Boolean,
+        default: true,
+      },
+      tabindex: {
+        type: Number,
+        default: 0,
+      }
     },
     data: function() {
       return {
@@ -223,7 +271,7 @@
         }
       },
       handleClick: function() {
-        if (!this.disabled) {
+        if (!this.disabled && this.clickable) {
           this.$refs.input.value = null;
           this.$refs.input.click();
         }
@@ -241,10 +289,21 @@
       var data = {
         class: {
           'vue-upload': true,
-          'is-disabled': disabled
+          'is-disabled': disabled,
+          'clickable': this.clickable
         },
         on: {
-          click: handleClick
+          click: handleClick,
+          keydown: function($event) {
+            if (!$event.type.indexOf('key') && Vue.prototype._k($event.keyCode, 'space', 32, $event.key, [' ', 'Spacebar']))
+                return null;
+            $event.stopPropagation();
+            $event.preventDefault();
+            return handleClick($event);
+        }
+        },
+        attrs: {
+          'tabindex': (this.disabled || (this.listType !== 'picture-card' && !drag)) ? -1 : this.tabindex
         }
       };
       data.class['vue-upload--' + listType] = true;
@@ -283,7 +342,11 @@
       },
       drag: Boolean,
       listType: String,
-      disabled: Boolean
+      disabled: Boolean,
+      clickable: {
+        type: Boolean,
+        default: true
+      }
     },
     data: function() {
       return {
@@ -298,7 +361,7 @@
         return str.indexOf('image') !== -1;
       },
       handleClick: function() {
-        if (!this.disabled) {
+        if (!this.disabled && clickable) {
           this.$refs.input.click();
         }
       },
@@ -465,7 +528,11 @@
         default: 'text'
       },
       httpRequest: Function,
-      disabled: Boolean
+      disabled: Boolean,
+      clickable: {
+        type: Boolean,
+        default: true
+      }
     },
     data: function() {
       return {
@@ -624,6 +691,7 @@
           autoUpload: this.autoUpload,
           listType: this.listType,
           disabled: this.disabled,
+          clickable: this.clickable,
           'on-start': this.handleStart,
           'on-progress': this.handleProgress,
           'on-success': this.handleSuccess,
@@ -638,6 +706,14 @@
       var uploadComponent = (VueUtil.isDef(FormData)) ? createElement('upload', uploadData, [trigger]) : createElement('iframeUpload', uploadData, [trigger]);
       return createElement('div', null, ['picture-card' === this.listType ? uploadList : '', this.$slots.trigger ? [uploadComponent, this.$slots.default] : uploadComponent, this.$slots.tip, 'picture-card' !== this.listType ? uploadList : '']);
     },
+    mounted: function () {
+      VueUtil.on(window, 'dragover', handleDragOutside, false);
+      VueUtil.on(window, 'drop', handleDragOutside, false);
+    },
+    beforeDestroy: function() {
+      VueUtil.off(window, 'dragover', handleDragOutside);
+      VueUtil.off(window, 'drop', handleDragOutside);
+    }
   };
   Vue.component(VueUpload.name, VueUpload);
 });

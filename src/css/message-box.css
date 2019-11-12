@@ -1,8 +1,7 @@
 .vue-message-box {
 	position: fixed;
 	top: 27%;
-	left: 50%;
-	transform: translate3d(-50%, 0, 0);
+	left: calc(50% - 210px);
 	background-color: #fff;
 	width: 420px;
 	border-radius: 3px;

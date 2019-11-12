@@ -28,7 +28,7 @@
       return _class;
     };
     var dragEl = new Class({
-      initialize: function(el, cancelObj, resizeObj, offsetLeft, offsetTop) {
+      initialize: function(el, cancelObj, resizeObj, offsetLeft, offsetTop, moveOut) {
         this._dragobj = el;
         this._body = cancelObj;
         this._resize = resizeObj;
@@ -40,6 +40,7 @@
         this._Css = null;
         this.offsetLeft = offsetLeft;
         this.offsetTop = offsetTop;
+        this.moveOut = moveOut;
         this.Minwidth = parseInt(VueUtil.getStyle(el, 'minWidth'));
         this.Minheight = parseInt(VueUtil.getStyle(el, 'minHeight'));
         VueUtil.addTouchStart(this._dragobj, BindAsEventListener(this, this.Start, true));
@@ -77,16 +78,19 @@
         this._x = isdrag ? (clientX - this._dragobj.offsetLeft + this.offsetLeft) : (this._dragobj.offsetLeft || 0);
         this._y = isdrag ? (clientY - this._dragobj.offsetTop + this.offsetTop) : (this._dragobj.offsetTop || 0);
 
-        var transform = document.defaultView.getComputedStyle(this._dragobj).transform; 
-        if(transform && transform != 'none' && transform.split(',').length > 3) {
-          this.translate3dX = parseFloat(transform.split(',')[4]);
-        } else {
-          this.translate3dX = 0;
+        //不允许拖拽出容器
+        if(!this.moveOut) {
+          var transform = document.defaultView.getComputedStyle(this._dragobj).transform; 
+          if(transform && transform != 'none' && transform.split(',').length > 3) {
+            this.translate3dX = parseFloat(transform.split(',')[4]);
+          } else {
+            this.translate3dX = 0;
+          }
+  
+          this.elWidth = this._dragobj.offsetWidth;
+          this.elHeight = this._dragobj.offsetHeight;
         }
-
-        this.elWidth = this._dragobj.offsetWidth;
-        this.elHeight = this._dragobj.offsetHeight;
-
+        //END不允许拖拽出容器
         if (document.all) {
           VueUtil.on(this._dragobj, 'losecapture', this._fS);
           this._dragobj.setCapture();
@@ -108,23 +112,26 @@
         getSelection ? getSelection().removeAllRanges() : document.selection.empty();
         var i_x = clientX - this._x;
         var i_y = clientY - this._y;
-
-        if(i_y < 0) {
-          i_y = 0;
-        } 
         
-        if(i_x + this.elWidth + this.translate3dX > document.documentElement.clientWidth) {
-          i_x = document.documentElement.clientWidth - this.elWidth - this.translate3dX;
-        }
+        //不允许拖拽出容器
+        if(!this.moveOut) {
+          if(i_y < 0) {
+            i_y = 0;
+          } 
+          
+          if(i_x + this.elWidth + this.translate3dX > document.documentElement.clientWidth) {
+            i_x = document.documentElement.clientWidth - this.elWidth - this.translate3dX;
+          }
 
-        if(i_y + this.elHeight > document.documentElement.clientHeight) {
-          i_y = document.documentElement.clientHeight - this.elHeight;
-        }
+          if(i_y + this.elHeight > document.documentElement.clientHeight) {
+            i_y = document.documentElement.clientHeight - this.elHeight;
+          }
 
-        if(i_x + this.translate3dX < 0) {
-          i_x = 0 - this.translate3dX;
+          if(i_x + this.translate3dX < 0) {
+            i_x = 0 - this.translate3dX;
+          }
         }
-
+        //END不允许拖拽出容器
         this._dragobj.style[this._Css.x] = (this._isdrag ? i_x : Math.max(i_x, this.Minwidth)) + 'px';
         this._dragobj.style[this._Css.y] = (this._isdrag ? i_y : Math.max(i_y, this.Minheight)) + 'px';
         if (!this._isdrag) {
@@ -172,6 +179,8 @@
           VueUtil.merge(resizeObj.style, resizeStyle);
           el.appendChild(resizeObj);
         }
+        var moveOut = el.getAttribute('move-out') !== null;
+
         Vue.nextTick(function() {
           var positionStyle = VueUtil.getStyle(el, 'position');
           var offsetLeft = el.offsetLeft;
@@ -185,7 +194,7 @@
             VueUtil.setStyle(el, 'position', 'relative');
             VueUtil.setStyle(el, 'zIndex', VueUtil.nextZIndex());
           }
-          new dragEl(el, cancelObj, resizeObj, offsetLeft, offsetTop);
+          new dragEl(el, cancelObj, resizeObj, offsetLeft, offsetTop, moveOut);
         });
       }
     });

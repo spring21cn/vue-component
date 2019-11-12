@@ -56,3 +56,11 @@
 	margin: 0 -10px;
 	background-color: #fff;
 }
+
+.vue-dropdown+.vue-dropdown {
+	margin-left: 10px;
+}
+
+.vue-button+.vue-dropdown {
+	margin-left: 10px;
+}

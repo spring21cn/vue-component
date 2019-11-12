@@ -53,7 +53,7 @@
     },
     menuData: function(state) {
       return state.permission.menuData;
-  },
+    },
   };
   
   //app.js
@@ -61,7 +61,8 @@
     state: {
       sidebar: {
         opened: !+VueUtil.getCookie('sidebarStatus'),
-        withoutAnimation: false
+        withoutAnimation: false,
+        query: '',
       },
       device: 'desktop',
       language: VueUtil.getCookie('language') || 'zh',
@@ -81,6 +82,9 @@
         VueUtil.setCookie('sidebarStatus', 1);
         state.sidebar.opened = false;
         state.sidebar.withoutAnimation = withoutAnimation;
+      },
+      QUERY_CHANGE: function(state, query) {
+        state.sidebar.query = query;
       },
       TOGGLE_DEVICE: function(state, device) {
         state.device = device;
@@ -102,6 +106,10 @@
         var commit = state.commit;
         var withoutAnimation = value.withoutAnimation;
         commit('CLOSE_SIDEBAR', withoutAnimation);
+      },
+      queryChange: function(state, value) {
+        var commit = state.commit;
+        commit('QUERY_CHANGE', value);
       },
       toggleDevice: function(state, device) {
         var commit = state.commit;
@@ -188,16 +196,20 @@
 
       if (data.children) {
         route.redirect = data.redirect || 'noredirect';
-        data.url = '';
       }
 
       if(route.meta.type === 'link') {
-        route.path = data.url;
+        route.meta.url = data.url;
+
+        if (!data.children) {
+          route.path = data.url;
+        }
       } else if (route.meta.type === 'iframe') {
         route.meta.url = data.url;
       }
       if (!hasParent && !data.children) {
         res.push({
+          hidden: route.hidden,
           children: [route]
         });
         return true;

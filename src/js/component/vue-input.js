@@ -90,17 +90,17 @@
     template: 
     '<div :class="[type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', size ? \'vue-input--\' + size : \'\', {\'is-disabled\': disabled, '+
     '     \'vue-input-group\': $slots.prepend || $slots.append, \'vue-input-group--append\': $slots.append, \'vue-input-group--prepend\': $slots.prepend,'+
-    '     \'is-readonly\': readonly, \'vue-input--prefix\': $slots.prefix || prefixIcon, '+
-    '     }]" >'+
+    '     \'is-readonly\': readonly, \'vue-input--prefix\': $slots.prefix || prefixIcon'+
+    '     }, size&& ($slots.prefix || prefixIcon) ? \'vue-input--prefix--\' + size : \'\']" >'+
 
     '    <template v-if="type !== \'textarea\'">'+
     '        <div class="vue-input-group__prepend" v-if="$slots.prepend">'+
     '            <slot name="prepend"></slot>'+
     '        </div>'+
     '        <slot name="icon">'+
-    '            <i :class="[\'vue-input__icon\', icon, onIconClick ? \'is-clickable\' : \'\']" v-if="icon" @click="handleIconClick" ref="icon"></i>'+
+    '            <i :class="[\'vue-input__icon\', icon, size ? \'vue-icon--\' + size : \'\', onIconClick ? \'is-clickable\' : \'\']" v-if="icon" @click="handleIconClick" ref="icon"></i>'+
     '        </slot>'+
-    '        <input :style="inputStyle" v-if="type !== \'textarea\'" class="vue-input__inner" :type="type==\'number\'?\'input\':type" :name="name" '+
+    '        <input :style="inputStyle" v-if="type !== \'textarea\'" class="vue-input__inner" :pattern="isMobile && keyBoardType==\'onlynumber\' ? \'[0-9]*\' : null" :type="isMobile && keyBoardType ? keyBoardType==\'onlynumber\'?\'number\':keyBoardType : type==\'number\' ? \'input\' : type" :name="name" '+
     '               :placeholder="placeholder" :disabled="disabled" :readonly="readonly" :maxlength="maxlength" '+
     '               :minlength="minlength" :autocomplete="autoComplete" :autofocus="autofocus" :tabindex="tabindex" '+
     '               :min="min" :max="max" :form="form" :value="currentValue" ref="input" @input="handleInput" '+
@@ -111,7 +111,7 @@
     '          <slot name="prefix"></slot> '+
     '          <i class="vue-input__icon" '+
     '             v-if="prefixIcon" '+
-    '             :class="prefixIcon"> '+
+    '             :class="[prefixIcon,size ? \'vue-icon--\' + size : \'\']"> '+
     '          </i> '+
     '        </span> '+
 
@@ -131,53 +131,55 @@
     data: function() {
       return {
         currentValue: this.value,
-        textareaCalcStyle: {}
+        textareaCalcStyle: {},
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
       };
     },
     props: {
-      prefixIcon: String,
-      value: [String, Number],
-      placeholder: String,
-      size: String,
-      resize: String,
-      readonly: Boolean,
-      autofocus: Boolean,
-      icon: String,
-      tabindex: Number,
-      disabled: Boolean,
-      noime: Boolean,
       type: {
         type: String,
         default: 'text'
       },
-      name: String,
-      autosize: {
-        type: [Boolean, Object],
-        default: false
-      },
+      value: [String, Number],
+      maxlength: Number,
+      minlength: Number,
+      placeholder: String,
+      disabled: Boolean,
+      size: String,
+      prefixIcon: String,
+      icon: String,
       rows: {
         type: Number,
         default: 2
+      },
+      cleave: {
+        type: Object,
+        default: function() {return null;}
+      },
+      autosize: {
+        type: [Boolean, Object],
+        default: false
       },
       autoComplete: {
         type: String,
         default: 'off'
       },
-      form: String,
-      maxlength: Number,
-      minlength: Number,
+      name: String,
+      readonly: Boolean,
       max: {},
       min: {},
-      cleave: {
-        type: Object,
-        default: function() {return null;}
-      },
+      resize: String,
+      autofocus: Boolean,
+      textAlign: String,
+      form: String,
+      onIconClick: Function,
+      tabindex: Number, //tabindex 的最大值不应超过 32767。如果没有指定，它的默认值为 0。
+      noime: Boolean,
       validateEvent: {
         type: Boolean,
         default: true
       },
-      onIconClick: Function,
-      textAlign: String
+      keyBoardType:String
     },
     computed: {
       textareaStyle: function () {

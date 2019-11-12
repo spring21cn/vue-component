@@ -61,11 +61,10 @@
     'iOS': ua.indexOf('like Mac OS X') !== -1,
     'Chrome OS': ua.indexOf('CrOS') !== -1,
     'WebOS': ua.indexOf('hpwOS') !== -1,
-    'Mobile': ua.indexOf('Mobi') !== -1 || ua.indexOf('iPh') !== -1 || ua.indexOf('480') !== -1,
-    'Tablet': ua.indexOf('Tablet') !== -1 || ua.indexOf('Pad') !== -1 || ua.indexOf('Nexus 7') !== -1
+    'Mobile': ua.indexOf('Android') !== -1 || ua.indexOf('Adr') !== -1 ||  ua.indexOf('Mobile') !== -1 || ua.indexOf('Ios') !== -1 || ua.indexOf('like Mac OS X') !== -1 || ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1 || ua.indexOf('iPod') !== -1  || ua.indexOf('Tablet') !== -1 
   };
   if (match['Mobile']) {
-    match['Mobile'] = !(ua.indexOf('iPad') !== -1);
+    // match['Mobile'] = !(ua.indexOf('iPad') !== -1);
   } else if (win.showModalDialog && win.chrome) {
     match['360'] = true;
   }
@@ -73,9 +72,12 @@
     engine: ['WebKit', 'Trident', 'Gecko', 'Presto'],
     browser: ['Safari', 'Chrome', 'Edge', 'IE', 'Firefox', 'Firefox Focus', 'Chromium', 'Opera', 'Vivaldi', 'Yandex', 'Kindle', '360', 'UC', 'QQBrowser', 'QQ', 'Baidu', 'Maxthon', 'Sogou', 'LBBROWSER', '2345Explorer', 'TheWorld', 'XiaoMi', 'Quark', 'Qiyu', 'Wechat', 'Taobao', 'Alipay', 'Weibo', 'Douban', 'Suning', 'iQiYi'],
     os: ['Windows', 'Linux', 'Mac OS', 'Android', 'Ubuntu', 'FreeBSD', 'Debian', 'iOS', 'Windows Phone', 'BlackBerry', 'MeeGo', 'Symbian', 'Chrome OS', 'WebOS'],
-    device: ['Mobile', 'Tablet']
+    device: ['Mobile']
   };
   self.device = 'PC';
+  if(window.isForceMobile){
+    self.device = 'Mobile';
+  }
   self.language = (function() {
     var g = (nav.browserLanguage || nav.language);
     var arr = g.split('-');
@@ -238,3 +240,7 @@
     language: self.language,
   };
 });
+
+
+
+

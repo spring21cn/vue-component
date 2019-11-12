@@ -40,6 +40,11 @@
   display: block;
 }
 
+.app-main-iframe-hidden {
+  position: absolute;
+  top: -100000px;
+}
+
 /* navbar */
 .navbar {
   height: 50px;

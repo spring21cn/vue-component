@@ -412,10 +412,10 @@
       }
     });
     states.fixedColumns.sort(function(a, b) {
-      return a.fixedIndex > b.fixedIndex;
+      return a.fixedIndex - b.fixedIndex;
     });
     states.rightFixedColumns.sort(function(a, b) {
-      return a.fixedIndex < b.fixedIndex;
+      return b.fixedIndex - a.fixedIndex;
     });
     if (states.fixedColumns.length > 0 && columns[0] && columns[0].type === 'selection' && !columns[0].fixed) {
       columns[0].fixed = true;
@@ -1394,6 +1394,7 @@
           return;
         }
         if (!filterPanel) {
+          if(Vue.i18n) VueTableFilterPanel.i18n = Vue.i18n;
           filterPanel = new Vue(VueTableFilterPanel);
           this.filterPanels[column.id] = filterPanel;
           filterPanel.table = this.$parent;
@@ -1754,7 +1755,10 @@
         column.fixed = false;
         this.$parent.doLayout();
       },
-      leftPin: function(columns) {
+      leftPin: function(columns, columnItem, oldColumns) {
+        var removedTag = VueUtil.difference(oldColumns, columns);
+        if(removedTag.length) this.removePin(removedTag[0]);
+
         if (columns.length <= 0) {
           var layoutFLg = false;
           VueUtil.loop(this.tableColumns, function(column) {
@@ -1779,7 +1783,10 @@
         });
         this.$parent.doLayout();
       },
-      rightPin: function(columns) {
+      rightPin: function(columns, columnItem, oldColumns) {
+        var removedTag = VueUtil.difference(oldColumns, columns);
+        if(removedTag.length) this.removePin(removedTag[0]);
+
         if (columns.length <= 0) {
           var layoutFLg = false;
           VueUtil.loop(this.tableColumns, function(column) {

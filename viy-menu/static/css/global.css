@@ -43,6 +43,28 @@
 .hideSidebar .sidebar-container {
   width: 36px;
 }
+
+.menu-search-container.sidebar-open {
+  padding: 3px;
+}
+
+.menu-search-container .search-icon{
+  height: 45px;
+  line-height: 45px;
+  cursor: pointer;
+  padding-left: 11px;
+}
+
+.menu-search-container .search-icon:hover{
+  background-color: #48576a;
+}
+
+.menu-search-container .search-icon>i{
+  font-size:14px;
+  color: #bfcbd9;
+  vertical-align: middle;
+}
+
 .hideSidebar .main-container {
   margin-left: 36px;
 }
@@ -137,12 +159,6 @@ html {
 
 #app {
   height: 100%;
-}
-
-*,
-*:before,
-*:after {
-  box-sizing: inherit;
 }
 
 a:focus,

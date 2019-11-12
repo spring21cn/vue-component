@@ -29,13 +29,44 @@
         scrollable: false,
         navStyle: {
           transform: ''
-        }
+        },
+        isMobile:VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
+        mScreenWidth: document.documentElement.clientWidth,
+        lastClickIndex:-1,
+        mIsHandelTabAdd:false
       };
     },
     methods: {
       routeToItem: function(item) {
         var route = item.name;
         this.$router && this.$router.push(route);
+      },
+      scrollLeft: function(index) {
+        var tabsList      = this.$refs.tabs;
+        var currentOffset = this.getCurrentScrollOffset();
+        var newOffset     = 0;
+        newOffset = tabsList[index+1] ? currentOffset - tabsList[index+1].offsetWidth : currentOffset - tabsList[index].offsetWidth;
+        if(newOffset<0)
+          newOffset = 0;
+        this.setOffset(newOffset);
+      }, 
+      scrollRight: function(index) {
+        var scrollWidth   = this.$refs.nav.scrollWidth;
+        var navWidth      = this.$refs.nav.offsetWidth;
+        var tabsList      = this.$refs.tabs;
+        var currentOffset = this.getCurrentScrollOffset();
+
+        var newOffset = 0;
+        if(currentOffset == 0){
+          newOffset = tabsList[index-1] ? tabsList[index-1].offsetWidth : tabsList[index].offsetWidth;
+        }else{
+          newOffset = currentOffset+tabsList[index].offsetWidth;
+        }
+        if(scrollWidth>navWidth && newOffset > (scrollWidth-navWidth))
+          newOffset = scrollWidth - navWidth;
+        if(navWidth<= this.mScreenWidth && scrollWidth <= navWidth)
+          newOffset = this.mScreenWidth - navWidth;
+        this.setOffset(newOffset);
       },
       scrollPrev: function() {
         var currentOffset = this.getCurrentScrollOffset();
@@ -54,7 +85,7 @@
         this.setOffset(newOffset);
       },
       scrollToActiveTab: function() {
-        if (!this.scrollable) return;
+        if (!this.scrollable || this.isMobile) return;
         var nav = this.$refs.nav;
         var activeTab = this.$el.querySelector('.is-active');
         var navScroll = this.$refs.navScroll;
@@ -114,6 +145,10 @@
       }
     },
     updated: function() {
+      if(this.isMobile){
+        this.mIsHandelTabAdd  = true;
+        return;
+      }
       this.$nextTick(this.update);
     },
     render: function(createElement) {
@@ -128,6 +163,7 @@
       var scrollPrev = this.scrollPrev;
       var router = this.router;
       var routeToItem = this.routeToItem;
+      var self = this;
       var scrollBtn = scrollable ? [createElement('span', {
         'class': ['vue-tabs__nav-prev', scrollable.prev ? '' : 'is-disabled'],
         on: {
@@ -138,12 +174,12 @@
       }, [])]), createElement('span', {
         'class': ['vue-tabs__nav-next', scrollable.next ? '' : 'is-disabled'],
         on: {
-          'click': scrollNext
+          'click': scrollNext     
         }
       }, [createElement('i', {
         'class': 'vue-icon-arrow-right'
       }, [])])] : null;
-      var tabs = this._l(panes, function(pane, index) {
+        var tabs = this._l(panes, function(pane, index) {
         var tabName = pane.name || pane.index || index;
         var closable = pane.isClosable || editable;
         pane.index = '' + index;
@@ -163,6 +199,21 @@
             'click': function click(ev) {
               router && routeToItem(pane);
               onTabClick(pane, tabName, ev);
+              if(self.isMobile){
+                var scrollWidth = self.$refs.nav.scrollWidth;
+                if(scrollWidth<=self.mScreenWidth)
+                  return;
+                if(event.clientX > 3*self.mScreenWidth/5 && (self.lastClickIndex == -1 || self.lastClickIndex < index)){
+                  //tab向右滑动
+                  self.scrollRight(index); 
+                  // scrollNext();
+                }
+                else if(event.clientX < 2*self.mScreenWidth/5 && (self.lastClickIndex == -1 || self.lastClickIndex > index)){
+                  //向左滑动
+                  self.scrollLeft(index);
+                }
+                self.lastClickIndex = index;
+              }
             }
           }
         }, [tabLabelContent, btnClose]);
@@ -204,12 +255,21 @@
       value: {},
       editable: Boolean,
       tabBottom: Boolean,
-      router: Boolean
+      router: Boolean,
+      noHide: {
+        type: Boolean,
+        default: false,
+      }
     },
     data: function() {
       return {
         currentName: this.value,
-        panes: []
+        panes: [],
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
+        mTouchStartX:0,
+        mTouchEndX:0,
+        mTouchStartY:0,
+        mTouchEndY:0
       };
     },
     watch: {
@@ -252,6 +312,12 @@
           return slot.data;
         }).indexOf(item.$vnode);
         this.panes.splice(index, 0, item);
+        if(this.isMobile && this.$refs.nav && this.$refs.nav.mIsHandelTabAdd){
+          var self = this;
+          this.$nextTick(function() {
+              self.$refs.nav.scrollRight(this.panes.length-1); //右滑
+          });
+        }
       },
       removePanes: function(item) {
         var panes = this.panes;
@@ -259,7 +325,48 @@
         if (index !== -1) {
           panes.splice(index, 1);
         }
-      }
+      },
+      touchStart:function(event) {
+        this.mTouchStartX = event.changedTouches[0].clientX;
+        this.mTouchStartY = event.changedTouches[0].clientY;
+      },
+      touchEnd:function(event) {
+        this.mTouchEndX = event.changedTouches[0].clientX;
+        this.mTouchEndY = event.changedTouches[0].clientY;
+        var moveRangeX = this.mTouchStartX - this.mTouchEndX;
+        var moveRangeY = this.mTouchStartY - this.mTouchEndY;
+        var activePane = null;
+        var self = this;
+        if(moveRangeX>100 && Math.abs(moveRangeY)<50){
+          for(var i=0;i<this.panes.length;i++){
+            var pane = this.panes[i];
+            if(pane.active){
+              activePane = this.panes[i+1];
+              break;
+            }
+          }
+        }else if(moveRangeX<-50 && Math.abs(moveRangeY)<50){
+          for(var j=this.panes.length-1;j>=0;j--){
+            var pane2 = this.panes[j];
+            if(pane2.active){
+              activePane = this.panes[j-1];
+              break;
+            }
+          }
+        }
+
+        if(activePane){
+          this.handleTabClick(activePane,activePane.name,event);
+          if (self.$refs.nav) {
+            self.$nextTick(function() {
+              if(moveRangeX>0)
+                self.$refs.nav.scrollRight(activePane.index); //右滑
+              else
+              self.$refs.nav.scrollLeft(activePane.index); //左滑
+            });
+          }
+        }
+      },
     },
     render: function(createElement) {
       var type = this.type;
@@ -272,6 +379,7 @@
       var addable = this.addable;
       var tabBottom = this.tabBottom;
       var router = this.router;
+      var self = this;
       var newButton = editable || addable ? createElement('vue-button', {
         'class': 'vue-tabs__new-tab',
         attrs: {
@@ -284,12 +392,12 @@
       }, []) : null;
       var navData = {
         props: {
+          panes: panes,
           currentName: currentName,
+          editable: editable,
           onTabClick: handleTabClick,
           onTabRemove: handleTabRemove,
-          editable: editable,
           type: type,
-          panes: panes,
           router: router
         },
         ref: 'nav'
@@ -298,7 +406,11 @@
         'class': 'vue-tabs__header'
       }, [newButton, createElement('tab-nav', navData, [])]);
       var panels = createElement('div', {
-        'class': 'vue-tabs__content'
+        'class': 'vue-tabs__content',
+        on: {
+          'touchstart': self.touchStart,
+          'touchend': self.touchEnd,
+        }
       }, [this.$slots.default]);
       return createElement('div', {
         'class': {

@@ -1,0 +1,46 @@
+<template>
+  <div>
+    <h1>demo07</h1>
+    <div class="panel">
+      name: <vue-input :disabled="disabled" v-model="name"></vue-input>
+      age: <vue-input :disabled="disabled" v-model="age"></vue-input>
+    </div>
+  </div>
+</template>
+<script>
+module.exports = {
+  name: "demo07",
+  data: function() {
+    return {
+      name: '',
+      age: '',
+      disabled: false
+    }
+  },
+  beforeRouteEnter (to, from, next) {
+    if (to.params.userId) {
+      next(function(vm) {
+        vm.disabled = true;
+        var user = vm.getUserData(to.params.userId);
+        vm.name = user.name;
+        vm.age = user.age;
+      })
+    } else {
+      next();
+    }
+  },
+  methods: {
+    getUserData: function() {
+      return {name: 'User', age: '33'}
+    }
+  }
+};
+</script>
+
+<style scoped>
+
+.panel {
+  padding: 10px 30px;
+  background-color: aliceblue;
+}
+</style>

@@ -5,7 +5,7 @@
   } else {
     context.VueSortable = definition(context.Vue, context.Sortable, context.VueUtil);
     delete context.VueSortable;
-    delete context.Sortable;
+    // delete context.Sortable;
   }
 })(this, function(Vue, Sortable, VueUtil) {
   'use strict';

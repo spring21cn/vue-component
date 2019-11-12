@@ -11,6 +11,10 @@
       <vue-form-item label="Activity form">
         <vue-input v-model="form.type"></vue-input>
       </vue-form-item>
+      <vue-form-item label="Activity form">
+        <vue-button type="primary" @click="viewUser">View User</vue-button>
+        <vue-button type="primary" @click="addUser">ADD User</vue-button>
+      </vue-form-item>
       <vue-form-item>
           <vue-button type="primary" @click="submitForm">Submit</vue-button>
         </vue-form-item>
@@ -31,8 +35,15 @@ module.exports = {
   },
   methods: {
     submitForm: function() {
-      this.$router.push({name: 'demo06', params: {form: this.form}});
+      this.$router.push({name: 'demo06', params: {form: VueUtil.cloneDeep(this.form)}});
+    },
+    viewUser: function() {
+      this.$router.push({name: 'demo07', params: {userId: '123'}, query: {action: 'r'}});
+    },
+    addUser: function() {
+      this.$router.push({name: 'demo07'});
     }
+
   }
 };
 </script>

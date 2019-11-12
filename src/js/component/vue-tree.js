@@ -688,7 +688,7 @@
     }
   };
   var VueTreeNode = {
-    template: '<div @click.stop="handleClick" v-show="node.visible" :class="[\'vue-tree-node\', {\'is-expanded\': childNodeRendered && expanded,\'is-current\': tree.store.currentNode === node,\'is-hidden\': !node.visible}]"><div class="vue-tree-node__content" :style="{\'padding-left\': (node.level - 1) * tree.indent + \'px\'}"><span @click.stop="handleExpandIconClick" :class="[\'vue-tree-node__expand-icon\', {\'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded}]"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
+    template: '<div @click.stop="handleClick" @dblclick.stop="handleDblclick" v-show="node.visible" :class="[\'vue-tree-node\', {\'is-expanded\': childNodeRendered && expanded,\'is-current\': tree.store.currentNode === node,\'is-hidden\': !node.visible}]"><div class="vue-tree-node__content" :style="{\'padding-left\': (node.level - 1) * tree.indent + \'px\'}"><span @click.stop="handleExpandIconClick" :class="[\'vue-tree-node__expand-icon\', {\'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded}]"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
     name: 'VueTreeNode',
     mixins: [VueUtil.component.emitter],
     props: {
@@ -758,7 +758,7 @@
       },
       handleSelectChange: function(checked, indeterminate) {
         if (this.oldChecked !== checked && this.oldIndeterminate !== indeterminate) {
-          this.tree.$emit('check-change', this.node.data, checked, indeterminate);
+          this.tree.$emit('check-change', this.node.data, checked, indeterminate, this.node, this);
         }
         this.oldChecked = checked;
         this.indeterminate = indeterminate;
@@ -772,6 +772,9 @@
           this.handleExpandIconClick();
         }
         this.tree.$emit('node-click', this.node.data, this.node, this);
+      },
+      handleDblclick: function() {
+        this.tree.$emit('node-dblclick', this.node.data, this.node, this);
       },
       handleExpandIconClick: function() {
         if (this.node.isLeaf)

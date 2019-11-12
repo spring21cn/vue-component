@@ -24,7 +24,11 @@
       size: String,
       fill: String,
       textColor: String,
-      disabled: Boolean
+      disabled: Boolean,
+      tabindex: {
+        type: Number,
+        default: 0
+      }
     },
     watch: {
       value: function(value) {
@@ -36,11 +40,11 @@
       handleKeydown: function handleKeydown(e) {
         // 左右上下按键 可以在radio组内切换不同选项
         var target = e.target;
-        var className = target.nodeName === 'INPUT' ? '[type=radio]' : '[role=radio]';
+        var className = target.nodeName === 'INPUT' ? '[type=radio]' : '[role=radio]:not(.is-disabled)';
         var radios = this.$el.querySelectorAll(className);
         var length = radios.length;
         var index = [].indexOf.call(radios, target);
-        var roleRadios = this.$el.querySelectorAll('[role=radio]');
+        var roleRadios = this.$el.querySelectorAll('[role=radio]:not(.is-disabled)');
     
         switch (e.keyCode) {
           case keyCode.LEFT:
@@ -76,17 +80,27 @@
           default:
             break;
         }
+      },
+      handleTabindex: function() {
+        var radios = this.$el.querySelectorAll('[type=radio]');
+        var firstLabel = this.$el.querySelectorAll('[role=radio]')[0];
+
+        if (![].some.call(radios, function (radio) {
+          return radio.checked;
+        }) && firstLabel) {
+          firstLabel.tabIndex = this.tabindex;
+        }
+      },
+      focus: function() {
+        var radio = this.$el.querySelector('label:not([style*="display:none"]):not([style*="display: none"]):not([tabindex="-1"]) input[type="radio"]:not([disabled=disabled])');
+        if(radio) {
+          radio.focus();
+        }
       }
     },
     mounted: function() {
-      var radios = this.$el.querySelectorAll('[type=radio]');
-      var firstLabel = this.$el.querySelectorAll('[role=radio]')[0];
-
-      if (![].some.call(radios, function (radio) {
-        return radio.checked;
-      }) && firstLabel) {
-        firstLabel.tabIndex = 0;
-      }
+      this.handleTabindex();
+      this.$on('radioChange', this.handleTabindex);
     }
   };
   Vue.component(VueRadioGroup.name, VueRadioGroup);

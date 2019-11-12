@@ -9,7 +9,7 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueTabPane = {
-    template: '<div class="vue-tab-pane" v-show="active"><keep-alive><router-view v-if="router && active && $route.meta.keepAlive"></router-view></keep-alive><router-view v-if="router && active && !$route.meta.keepAlive"></router-view><slot v-if="!router"></slot></div>',
+    template: '<div class="vue-tab-pane" v-show="noHide || active" :style="paneStyle" ><keep-alive><router-view v-if="router && active && $route.meta.keepAlive"></router-view></keep-alive><router-view v-if="router && active && !$route.meta.keepAlive"></router-view><slot v-if="!router"></slot></div>',
     name: 'VueTabPane',
     props: {
       label: String,
@@ -32,6 +32,20 @@
       },
       router: function() {
         return this.$parent.router;
+      },
+      noHide: function() {
+        return this.$parent.noHide;
+      },
+      paneStyle: function() {
+        if (this.noHide && !this.active) {
+          return {
+            position: 'absolute',
+            top: '-100000px',
+            visibility: 'hidden'
+          };
+        }
+
+        return {};
       }
     },
     mounted: function() {

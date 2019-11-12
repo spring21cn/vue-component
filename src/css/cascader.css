@@ -87,6 +87,9 @@
 .vue-cascader-menu__item:hover {
 	background-color: #e4e8f1;
 }
+.vue-cascader-menu__item.is-focus {
+	background-color: #e4e8f1;
+}
 .vue-cascader-menu__item.selected {
 	color: #fff;
 	background-color: #409eff;

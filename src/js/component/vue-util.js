@@ -11,10 +11,19 @@
   }
 })(this, function(Vue, SystemInfo, DateUtil) {
   'use strict';
-  var version = '1.1.4';
+  var version = '';//replace by package.json
   var _toString = Object.prototype.toString;
   var _map = Array.prototype.map;
   var _filter = Array.prototype.filter;
+  var isNull = function(v) {
+    return v === null;
+  };
+  var isUndefined = function(v) {
+    return typeof v === 'undefined';
+  };
+  var isRegExp = function(v) {
+    return '[object RegExp]' === Object.prototype.toString.call(v);
+  };
   var isDef = function(v) {
     return v !== undefined && v !== null;
   };
@@ -100,6 +109,10 @@
   var formatDate = function(date, format) {
     date = toDate(date);
     if (!isDef(date)) return null;
+
+    if(format == 'timestamp'){
+      return date.getTime();
+    }
     return DateUtil.format(date, format || 'yyyy-MM-dd');
   };
   var range = function a(n) {
@@ -166,9 +179,17 @@
     // var str = formatDate(string, format);
     // if (!isDef(str)) str = string;
     var str;
+
+    if (typeof string === 'number' && format === 'timestamp') {
+      return new Date(string);
+    }
+
     if(typeof string != 'string') {
       str = formatDate(string, format);
+    } else if(!format && string.indexOf('GMT') > -1) {
+      return new Date(string);
     }
+
     if (!isDef(str)) str = string;
     return DateUtil.parse(str, format || 'yyyy-MM-dd');
   };
@@ -427,6 +448,18 @@
     });
     return result;
   };
+  var destructuring = function (destination, sources) {
+    if (destination && sources) {
+      var rest = VueUtil.assign.apply(this, [{}].concat(VueUtil.slice(arguments, 1)));
+      var restKeys = Object.keys(rest);
+      VueUtil.loop(Object.keys(destination), function (key) {
+        if (restKeys.indexOf(key) > -1) {
+          destination[key] = rest[key];
+        }
+      });
+    }
+    return destination;
+  };
   var merge = function(target) {
     loop(arguments, function(source, index) {
       if (index === 0) return;
@@ -455,6 +488,18 @@
     });
     return target;
   };
+
+  function arrayIndexOfVal (obj, val) {
+    if (obj.indexOf) {
+      return obj.indexOf(val);
+    }
+    for (var index = 0, len = obj.length; index < len; index++) {
+      if (val === obj[index]) {
+        return index;
+      }
+    }
+  }
+
   var arrayFindIndex = function (arr, pred) {
     for (var i = 0; i !== arr.length; ++i) {
       if (pred(arr[i])) {
@@ -470,6 +515,206 @@
     return idx !== -1 ? arr[idx] : undefined;
   }; // coerce truthy value to array
   
+  function findTreeItem (parent, obj, iterate, context, path, node, parseChildren, opts) {
+    if (obj) {
+      var item, index, len, paths, nodes, match;
+      for (index = 0, len = obj.length; index < len; index++) {
+        item = obj[index];
+        paths = path.concat(['' + index]);
+        nodes = node.concat([item]);
+        if (iterate.call(context, item, index, obj, paths, parent, nodes)) {
+          return { index: index, item: item, path: paths, items: obj, parent: parent, nodes: nodes };
+        }
+        if (parseChildren && item) {
+          match = findTreeItem(item, item[parseChildren], iterate, context, paths.concat([parseChildren]), nodes, parseChildren, opts);
+          if (match) {
+            return match;
+          }
+        }
+      }
+    }
+  }
+
+  function eachTreeItem (parent, obj, iterate, context, path, node, parseChildren, opts) {
+    var paths, nodes;
+    VueUtil.forEach(obj, function (item, index) {
+      paths = path.concat(['' + index]);
+      nodes = node.concat([item]);
+      iterate.call(context, item, index, obj, paths, parent, nodes);
+      if (item && parseChildren) {
+        paths.push(parseChildren);
+        eachTreeItem(item, item[parseChildren], iterate, context, paths, nodes, parseChildren, opts);
+      }
+    });
+  }
+
+  function helperCreateTreeFunc (handle) {
+    return function (obj, iterate, options, context) {
+      var opts = options || {};
+      var optChildren = opts.children || 'children';
+      return handle(null, obj, iterate, context, [], [], optChildren, opts);
+    };
+  }
+
+  function mapTreeItem (parent, obj, iterate, context, path, node, parseChildren, opts) {
+    var paths, nodes, rest;
+    var mapChildren = opts.mapChildren || parseChildren;
+    return VueUtil.map(obj, function (item, index) {
+      paths = path.concat(['' + index]);
+      nodes = node.concat([item]);
+      rest = iterate.call(context, item, index, obj, paths, parent, nodes);
+      if (rest && item && parseChildren && item[parseChildren]) {
+        rest[mapChildren] = mapTreeItem(item, item[parseChildren], iterate, context, paths, nodes, parseChildren, opts);
+      }
+      return rest;
+    });
+  }
+
+  function searchTreeItem (parentAllow, parent, obj, iterate, context, path, node, parseChildren, opts) {
+    var paths, nodes, rest, isAllow, hasChild;
+    var rests = [];
+    var hasOriginal = opts.original;
+    var mapChildren = opts.mapChildren || parseChildren;
+    VueUtil.forEach(obj, function (item, index) {
+      paths = path.concat(['' + index]);
+      nodes = node.concat([item]);
+      isAllow = parentAllow || iterate.call(context, item, index, obj, paths, parent, nodes);
+      hasChild = parseChildren && item[parseChildren];
+      if (isAllow || hasChild) {
+        rest = hasOriginal ? item : VueUtil.assign({}, item);
+      }
+      if (isAllow || hasChild) {
+        rest[mapChildren] = searchTreeItem(isAllow, item, item[parseChildren], iterate, context, paths, nodes, parseChildren, opts);
+        if (isAllow || rest[mapChildren].length) {
+          rests.push(rest);
+        }
+      } else if (isAllow) {
+        rests.push(rest);
+      }
+    });
+    return rests;
+  }
+
+  function unTreeList (result, array, opts) {
+    var children;
+    var optChildren = opts.children;
+    var optData = opts.data;
+    VueUtil.forEach(array, function (item) {
+      children = item[optChildren];
+      if (optData) {
+        item = item[optData];
+      }
+      result.push(item);
+      if (children) {
+        unTreeList(result, children, opts);
+      }
+    });
+    return result;
+  }
+
+  function toTreeArray (array, options) {
+    return unTreeList([], array, VueUtil.assign({},  {
+      parentKey: 'parentId',
+      key: 'id',
+      children: 'children'
+    }, options));
+  }
+
+  
+function strictTree (array, optChildren) {
+  VueUtil.each(array, function (item) {
+    if (item.children && !item.children.length) {
+      VueUtil.remove(item, optChildren);
+    }
+  });
+}
+
+/**
+  * 将一个带层级的数据列表转成树结构
+  *
+  * @param {Array} array 数组
+  * @param {Object} options {strict: false, parentKey: 'parentId', key: 'id', children: 'children', data: 'data'}
+  * @return {Array}
+  */
+function toArrayTree (array, options) {
+  var opts = VueUtil.assign({}, {
+    parentKey: 'parentId',
+    key: 'id',
+    children: 'children'
+  }, options);
+
+  var optStrict = opts.strict;
+  var optKey = opts.key;
+  var optParentKey = opts.parentKey;
+  var optChildren = opts.children;
+  var optSortKey = opts.sortKey;
+  var optReverse = opts.reverse;
+  var optData = opts.data;
+  var result = [];
+  var treeMap = {};
+  var idList, id, treeData, parentId;
+
+  if (optSortKey) {
+    array = VueUtil.sortBy(VueUtil.clone(array), optSortKey);
+    if (optReverse) {
+      array = array.reverse();
+    }
+  }
+
+  idList = VueUtil.map(array, function (item) {
+    return item[optKey];
+  });
+
+  VueUtil.each(array, function (item) {
+    id = item[optKey];
+
+    if (optData) {
+      treeData = {};
+      treeData[optData] = item;
+    } else {
+      treeData = item;
+    }
+
+    parentId = item[optParentKey];
+    treeMap[id] = treeMap[id] || [];
+    treeMap[parentId] = treeMap[parentId] || [];
+    treeMap[parentId].push(treeData);
+    treeData[optKey] = id;
+    treeData[optParentKey] = parentId;
+    treeData[optChildren] = treeMap[id];
+
+    if (!optStrict || (optStrict && !parentId)) {
+      if (!VueUtil.includes(idList, parentId)) {
+        result.push(treeData);
+      }
+    }
+  });
+
+  if (optStrict) {
+    strictTree(array, optChildren);
+  }
+
+  return result;
+}
+
+  var findTree = helperCreateTreeFunc(findTreeItem);
+  var eachTree = helperCreateTreeFunc(eachTreeItem);
+  var mapTree = helperCreateTreeFunc(mapTreeItem);
+  var searchTree = helperCreateTreeFunc(function (parent, obj, iterate, context, path, nodes, parseChildren, opts) {
+    return searchTreeItem(0, parent, obj, iterate, context, path, nodes, parseChildren, opts);
+  });
+  
+  function filterTree (obj, iterate, options, context) {
+    var result = [];
+    if (obj && iterate) {
+      eachTree(obj, function (item, index, items, path, parent, nodes) {
+        if (iterate.call(context, item, index, items, path, parent, nodes)) {
+          result.push(item);
+        }
+      }, options);
+    }
+    return result;
+  }
   
   var coerceTruthyValueToArray = function (val) {
     if (Array.isArray(val)) {
@@ -647,7 +892,9 @@
         }
       };
       if (getStyle(el, 'position') === 'static') {
-        setStyle(el, 'position', 'relative');
+        // 对应win10 ie11 遮罩层无法正常遮罩的问题
+        el != document.body && setStyle(el, 'position', 'relative');
+        // setStyle(el, 'position', 'relative');
       }
       var resizeTrigger = el.__resizeTrigger__ = document.createElement('div');
       resizeTrigger.className = 'resize-triggers';
@@ -787,10 +1034,18 @@
     return SystemInfo;
   };
   var setLang = function(lang) {
-    if (isString(lang)) Vue.config.lang = lang;
+    if (Vue.i18n) {
+      if (isString(lang)) Vue.i18n.locale = lang;
+    } else {
+      if (isString(lang)) Vue.config.lang = lang;
+    }
   };
   var setLocale = function(lang, langObjs) {
-    Vue.locale(lang, merge({}, Vue.locale(lang), langObjs));
+    if(Vue.i18n) {
+      Vue.i18n.setLocaleMessage(lang, merge({}, Vue.i18n.getLocaleMessage(lang), langObjs));
+    } else {
+      Vue.locale && Vue.locale(lang, merge({}, Vue.locale(lang), langObjs));
+    }
   };
   var popupManager = {
     instances: {},
@@ -1009,7 +1264,7 @@
       return createElement('transition', data, children);
     }
   };
-  var clickoutside = function() {
+  var clickoutside = function(fn) {
     var startClick;
     var nodes = document.__clickoutsideNodes__;
     var CTX = '__clickoutsideContext__';
@@ -1030,7 +1285,15 @@
             node === mouseup.target ||
             (vnode.context.popperElm &&
             (vnode.context.popperElm.contains(mouseup.target) ||
-            vnode.context.popperElm.contains(mousedown.target)))) return;
+            vnode.context.popperElm.contains(mousedown.target)))) {
+              var validFn = node[CTX].fn;
+              if(typeof validFn =='function'){
+                if(!validFn(vnode,mouseup,mousedown)) return ;
+              }else{
+                return;
+              }
+              
+            }
             
           if (isDef(binding.expression) && isFunction(vnode.context[binding.expression])) {
             vnode.context[binding.expression]();
@@ -1051,6 +1314,7 @@
         el[CTX] = {
           id: createUuid(),
           vnode: vnode,
+          fn:fn,
           binding: binding
         };
         nodes.push(el);
@@ -1071,6 +1335,49 @@
       }
     };
   };
+
+  var scrollingMethods = [];
+  document.addEventListener('scroll', lodash.debounce(function(e) {
+
+    if (VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs) return;
+    var className = e.target.className || '';
+    if(className.indexOf('contract-trigger') > -1 || className.indexOf('expand-trigger') > -1) return;
+
+    scrollingMethods.forEach(function(obj) {
+
+      if (e.target !== obj.el && e.target.contains(obj.el)) {
+        if(typeof obj.method == 'function') {
+          var method = obj.method;
+          method();
+        }
+      }
+        
+    });
+  },200, {
+    'leading': true,
+    'trailing': true
+  }),true);
+
+  var scrolling = {
+    bind: function(el, binding) {
+      var bindingObj = {
+        el: el,
+      };
+      el.__scrollingNodes__ = bindingObj;
+      bindingObj.method = binding.value;
+      if(scrollingMethods.indexOf(bindingObj) == -1) {
+        scrollingMethods.push(bindingObj);
+      }
+    },
+    unbind: function(el) {
+      var bindingObj = el.__scrollingNodes__;
+      var index = scrollingMethods.indexOf(bindingObj);
+      if(index > -1) {
+        scrollingMethods.splice(index, 1);
+      }
+    }
+  };
+
   var repeatClick = {
     bind: function bind(el, binding, vnode) {
       var interval = null;
@@ -1329,7 +1636,7 @@
       }
     },
   };
-  function bindEvent(el, binding) {
+  function bindEvent(el, binding, vnode) {
     var key = binding.arg;
     var handler = binding.value || 'click';
     
@@ -1360,7 +1667,36 @@
             };
           }
         }
-        callback && callback(e, el);
+
+        if(!callback || callback === noop) return;
+        
+        // 获取最顶层aside,dialog
+        var topContainer = Array.prototype.filter.call(document.querySelectorAll('.vue-dialog, .vue-aside'), function(container) {
+          return isElementTopLayer(container);
+        });
+
+        // 判断当前元素是不是在顶层容器里
+        if (topContainer.length > 0 && !(topContainer[topContainer.length - 1].contains(el) )) {
+          var parentAside = getParentAside(el.__vue__);
+          if((!parentAside) || (!parentAside.$el.contains(topContainer[topContainer.length - 1]))){
+            return;
+          }
+        }
+        
+        var currentElm = el;
+        while(!currentElm.__vue__ && currentElm.parentElement) {
+          currentElm = currentElm.parentElement;
+        }
+
+        if(!currentElm.__vue__ || currentElm.__vue__._inactive) {
+          return;
+        }
+        
+        if (callback.prototype) {
+          callback.call(vnode.context, e, el);
+        } else {
+          callback(e, el);
+        }
     };
   
     document.addEventListener('keydown', el._keyHandler);
@@ -1371,10 +1707,20 @@
     document.removeEventListener('keydown', el._keyHandler);
     document.removeEventListener('keyup', el._keyHandler);
   }
+
+  function getParentAside(vm){
+    if((!vm.$parent) || (!vm.$parent.$options.name)){
+     return null;
+    }else if(vm.$parent.$options.name === 'VueAside' || vm.$parent.$options.name === 'VueDialog'){
+        return vm.$parent;
+    }else {
+        return getParentAside(vm.$parent);
+    }
+  }
   
   Vue.directive('hotkey', {
-    bind: function (el, binding) {
-      bindEvent.call(this, el, binding);
+    bind: function (el, binding, vnode) {
+      bindEvent.call(this, el, binding, vnode);
     },
     componentUpdated: function (el, binding) {
       if (binding.value !== binding.oldValue) {
@@ -1384,8 +1730,115 @@
     },
     unbind: unbindEvent
   });
+
+  var clipboard = (function() {
+    var doc = window.document;
+    var $elem = doc.createElement('textarea');
+  
+    function handleText(content) {
+      var styles = $elem.style;
+      $elem.id = '$VueCopy';
+      styles.width = '48px';
+      styles.height = '24px';
+      styles.position = 'fixed';
+      styles.zIndex = '0';
+      styles.left = '-500px';
+      styles.top = '-500px';
+      $elem.value = content === null || content === undefined ? '' : '' + content;
+  
+      if (!$elem.parentNode) {
+        doc.body.appendChild($elem);
+      }
+    }
+  
+    function copyText() {
+      $elem.focus();
+      $elem.select();
+      $elem.setSelectionRange(0, $elem.value.length);
+      return doc.execCommand('copy');
+    }
+    /**
+     * 复制内容到剪贴板
+     *
+     * @param {String} content Text 内容
+     */
+  
+  
+    function clipboard(content) {
+      var result = false;
+  
+      try {
+        handleText(content);
+        result = copyText();
+      } catch (e) {}
+  
+      return result;
+    }
+
+    clipboard.copy = clipboard;
+    return clipboard;
+  })();
+
+  function pluckProperty (name) {
+    return function (obj, key) {
+      return key === name;
+    };
+  }
+
+  var remove = function (obj, iterate, context) {
+    if (obj) {
+      if (!isNull(iterate)) {
+        var removeKeys = [];
+        var rest = [];
+        if (!isFunction(iterate)) {
+          iterate = pluckProperty(iterate);
+        }
+        VueUtil.each(obj, function (item, index, rest) {
+          if (iterate.call(context, item, index, rest)) {
+            removeKeys.push(index);
+          }
+        });
+        if (isArray(obj)) {
+          VueUtil.eachRight(removeKeys, function (item, key) {
+            rest.push(obj[item]);
+            obj.splice(item, 1);
+          });
+        } else {
+          rest = {};
+          VueUtil.each(removeKeys, function (key) {
+            rest[key] = obj[key];
+            delete obj[key];
+          });
+        }
+        return rest;
+      }
+      return {};
+    }
+    return obj;
+  };
+
+  var ElementPrototype = window.Element.prototype;
+  if (typeof ElementPrototype.matches !== 'function') {
+    ElementPrototype.matches = ElementPrototype.msMatchesSelector || ElementPrototype.mozMatchesSelector || ElementPrototype.webkitMatchesSelector;
+  }
+
+  var closest = function (element, selector) {
+
+    while (element && element.nodeType === 1) {
+      if (element.matches(selector)) {
+        return element;
+      }
+      element = element.parentNode;
+    }
+
+    return null;
+  };
+  
   
   var VueUtil = {
+    isNull: isNull,
+    isUndefined: isUndefined,
+    isRegExp: isRegExp,
     isDef: isDef,
     isString: isString,
     isNumber: isNumber,
@@ -1438,10 +1891,19 @@
     filter: filter,
     trim: trim,
     deepCopy: deepCopy,
+    destructuring: destructuring,
     merge: merge,
     mergeArray: mergeArray,
+    arrayIndexOfVal:arrayIndexOfVal,
     arrayFindIndex: arrayFindIndex,
     arrayFind: arrayFind,
+    findTree: findTree,
+    eachTree: eachTree,
+    filterTree: filterTree,
+    searchTree: searchTree,
+    mapTree: mapTree,
+    toTreeArray: toTreeArray,
+    toArrayTree: toArrayTree,
     coerceTruthyValueToArray: coerceTruthyValueToArray,
     createUuid: createUuid,
     on: on,
@@ -1481,20 +1943,26 @@
     isIE: SystemInfo.browser.toLowerCase() === 'ie',
     isFirefox: SystemInfo.browser.toLowerCase() === 'firefox',
     isChrome: SystemInfo.browser.toLowerCase() === 'chrome',
+    isEdge: SystemInfo.browser.toLowerCase() === 'edge',
+    isSafari: SystemInfo.browser.toLowerCase() === 'safari',
+    remove: remove,
+    closest: closest,
     component: {
       menumixin: menumixin,
       emitter: emitter,
       collapseTransition: collapseTransition,
       clickoutside: clickoutside,
+      scrolling: scrolling,
       repeatClick: repeatClick,
       popupManager: popupManager,
       getScrollParent: getScrollParent
     },
     hotkeyHandlers: hotkeyHandlers,
+    clipboard: clipboard,
   };
 
   Object.keys(lodash).forEach(function(funcName) {
-    if(VueUtil[funcName] === undefined) {
+    if(typeof lodash[funcName] == 'function' && VueUtil[funcName] === undefined) {
       VueUtil[funcName] = lodash[funcName];
     }
   });

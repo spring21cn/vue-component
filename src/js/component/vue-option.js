@@ -9,7 +9,7 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueOption = {
-    template: '<li @mouseenter="hoverItem" @click.stop="selectOptionClick" v-show="visible" :class="[\'vue-select-dropdown__item\', {\'selected\': itemSelected, \'is-disabled\': disabled || groupDisabled || limitReached, \'hover\': itemHover}]"><slot><span>{{parent.getFormatedLabel(this)}}</span></slot></li>',
+    template: '<li @mouseenter="hoverItem" @click.stop="selectOptionClick" v-show="visible" :class="[\'vue-select-dropdown__item\', {\'selected\': itemSelected, \'is-disabled\': disabled || groupDisabled || limitReached, \'hover\': itemHover}]"><slot><span>{{parent.getFormatedLabel(self)}}</span></slot></li>',
     name: 'VueOption',
     mixins: [VueUtil.component.emitter],
     props: {
@@ -23,6 +23,7 @@
     },
     data: function() {
       return {
+        self: this,
         index: -1,
         groupDisabled: false,
         visible: true,

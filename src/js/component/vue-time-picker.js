@@ -35,8 +35,6 @@
 
   var TimeSpinner = {
     template: 
-    //'  <div>    <div class="vue-aside__wrapper" v-if="isMobile()"></div>'+
-   // ' <div style="position: fixed;width: 100%;background-color: #ffffff;bottom: 0;"> '+
     '  <div class="vue-time-spinner" :class="{ \'has-seconds\': showSeconds }">'+
     '    <template v-if="!arrowControl">'+
     '      <vue-scrollbar'+
@@ -187,7 +185,8 @@
     data: function () {
       return {
         selectableRange: [],
-        currentScrollbar: null
+        currentScrollbar: null,
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
       };
     },
     mounted: function () {
@@ -223,7 +222,7 @@
       handleClick: function (type, _ref) {
         var value = _ref.value,
             disabled = _ref.disabled;
-  
+
         if (!disabled) {
           this.modifyDateField(type, value);
           this.emitSelectRange(type);
@@ -331,7 +330,7 @@
   };
   var TimePanel = {
     template: '  <transition name="vue-zoom-in-top" @after-leave="$emit(\'destroyPopper\')">'+
-    '     <div v-if="!isMobile()&&visible" '+
+    '     <div v-if="!isMobile && visible" '+
     '      v-show="visible"'+
     '      class="vue-time-panel vue-popper"'+
     '      :class="popperClass">'+
@@ -364,7 +363,7 @@
 
     '   <div v-else tabindex="-1" ref="timePanelDiv" style="width:100%;outline:none;" >'+
 
-    '     <div style="z-index:1000;" v-if="isMobile()&&visible"  class="vue-aside__wrapper" ></div>'+
+    '     <div v-if="isMobile && visible"  class="vue-aside__wrapper" ></div>'+
     '     <div'+
     '      v-show="visible"'+
     '      class="vue-time-panel vue-popper"'+
@@ -466,7 +465,8 @@
         selectionRange: [0, 2],
         disabled: false,
         arrowControl: false,
-        needInitAdjust: true
+        needInitAdjust: true,
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
       };
     },
     computed: {
@@ -483,9 +483,6 @@
       }
     },
     methods: {
-      isMobile:function() {
-        return VueUtil.getSystemInfo().device == 'Mobile';
-      },
       handleCancel: function () {
         this.$emit('pick', this.oldValue, false);
       },
@@ -560,6 +557,7 @@
     template: '  <transition'+
     '    name="vue-zoom-in-top"'+
     '    @after-leave="$emit(\'destroyPopper\')">'+
+    '    <div :class="{\'user_un_operate\':isMobile}"><div v-if="isMobile && visible"  class="vue-aside__wrapper" ></div>'+
     '    <div'+
     '      v-show="visible"'+
     '      class="vue-time-range-picker vue-picker-panel vue-popper"'+
@@ -605,9 +603,10 @@
     '          @click="handleCancel()">{{ $t(\'vue.datepicker.cancel\') }}</button>'+
     '        <button'+
     '          type="button"'+
-    '          class="vue-time-panel__btn confirm"'+
+    '          :class="[\'vue-time-panel__btn\',btnDisabled ? \'disabled\': \'confirm\']"'+
     '          @click="handleConfirm()"'+
     '          :disabled="btnDisabled">{{ $t(\'vue.datepicker.confirm\') }}</button>'+
+    '      </div>'+
     '      </div>'+
     '    </div>'+
     '  </transition>',
@@ -645,7 +644,8 @@
         format: 'HH:mm:ss',
         visible: false,
         selectionRange: [0, 2],
-        arrowControl: false
+        arrowControl: false,
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
       };
     },
     watch: {

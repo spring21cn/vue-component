@@ -10,7 +10,7 @@
 })(this, function(Vue, VueUtil,ImageViewer) {
   'use strict';
   var template = ' \
-    <div :class="{\'vue-image\':true,\'vue-image__lazy\':lazy}"> \
+    <div :class="{\'vue-image\':true,\'vue-image__lazy\':lazy,\'vue-image__round\':round}"> \
       <span v-if="showText" class="vue-image__label"\
         v-bind="$attrs" v-on="$listeners" \
         @click="clickHandler" :class="{\'vue-image__preview\': preview }">{{imgLabel}}</span>\
@@ -29,21 +29,12 @@
         :src="src" \
         :style="imageStyle" \
         :class="{ \'vue-image__inner--center\': alignCenter, \'vue-image__preview\': preview }"> \
-      <image-viewer :z-index="zIndex" v-if="preview && showViewer" :on-close="closeViewer" :url-list="previewSrcList"/> \
-    </div>'
+      <vue-image-viewer :z-index="zIndex" v-if="preview && showViewer" :on-close="closeViewer" :url-list="previewSrcList"/> \
+    </div>';
     
   var isServer = Vue.prototype.$isServer;
-  var SPECIAL_CHARS_REGEXP = /([\:\-\_]+(.))/g;
-  var MOZ_HACK_REGEXP = /^moz([A-Z])/;
-  var ieVersion = isServer ? 0 : Number(document.documentMode);
   var Locale  = {};
   var on = VueUtil.on,off=VueUtil.off;
-/* istanbul ignore next */
-  var camelCase = function(name) {
-    return name.replace(SPECIAL_CHARS_REGEXP, function(_, separator, letter, offset) {
-      return offset ? letter.toUpperCase() : letter;
-    }).replace(MOZ_HACK_REGEXP, 'Moz$1');
-  };
   var getStyle = VueUtil.getStyle,
   isScroll = function(el, vertical){
     if (isServer) return;
@@ -97,7 +88,7 @@
 
   var isSupportObjectFit = function(){
       return document.documentElement.style.objectFit !== undefined;
-  }
+  };
 
   var ObjectFit = {
     NONE: 'none',
@@ -120,7 +111,7 @@
     },
 
     props: {
-	  download:Boolean,
+      download:Boolean,
       src: String,
       fit: String,
       lazy: Boolean,
@@ -133,7 +124,8 @@
         type: Number,
         default: 2000
       },
-      imgLabel: String
+      imgLabel: String,
+      round: Boolean
     },
 
     data:function() {
@@ -213,6 +205,7 @@
         img.src = self.src;
       },
       handleLoad: function(e, img) {
+        this.error = false;
         this.imageWidth = img.width;
         this.imageHeight = img.height;
         this.loading = false;
@@ -288,17 +281,17 @@
             return {};
         }
       },
-	  clickDownload: function(){
+  clickDownload: function(){
 		var src = this.src,
-		    imgLabel = this.imgLabel;
+      imgLabel = this.imgLabel;
 		if(typeof src == 'undefined' || src == '') return;
 		
 		var a = document.createElement('a');
         var event = new MouseEvent('click');
         a.download = imgLabel;
         a.href = src;
-        a.dispatchEvent(event)    
-	  },
+        a.dispatchEvent(event);    
+    },
       clickHandler: function() {
 		if(this.download){
 			this.clickDownload();

@@ -10,7 +10,7 @@
 })(this, function(Vue, VueUtil, VueValidator) {
   'use strict';
   var VueFormItem = {
-    template: '<div :class="[\'vue-form-item\', {\'is-notify\': form.notifyMessage || form.customMessageMethod,\'is-error\': validateState === \'error\',\'is-validating\': validateState === \'validating\',\'is-required\': isRequired || required}]"><label :for="prop" :class="[\'vue-form-item__label\', {\'is-responsive\': form.labelResponsive}]" :style="labelStyle" v-if="label" ref="label">{{label + form.labelSuffix}}</label><div class="vue-form-item__content" :style="contentStyle" ref="content"><slot></slot><div class="vue-form-item__error" v-if="validateState === \'error\' && showMessage && form.showMessage && !form.notifyMessage && !form.customMessageMethod">{{validateMessage}}</div></div></div>',
+    template: '<div :class="[\'vue-form-item\', {\'is-notify\': form.notifyMessage || form.customMessageMethod,\'is-error\': validateState === \'error\',\'is-validating\': validateState === \'validating\',\'is-required\': isRequired || required}]"><label :for="prop" :class="[\'vue-form-item__label\', {\'is-responsive\': resetIsResponsive()}]" :style="labelStyle" v-if="label" ref="label">{{label + form.labelSuffix}}</label><div class="vue-form-item__content" :style="contentStyle" ref="content"><slot></slot><div class="vue-form-item__error" v-if="validateState === \'error\' && showMessage && form.showMessage && !form.notifyMessage && !form.customMessageMethod">{{validateMessage}}</div></div></div>',
     name: 'VueFormItem',
     mixins: [VueUtil.component.emitter],
     props: {
@@ -88,6 +88,28 @@
           }
           return this.getPropByPath(model, path).v;
         }
+      },
+      isRequired: function() {
+        var self = this;
+        var res = false;
+        var rules = self.getRules();
+        VueUtil.loop(rules, function(rule) {
+          if (rule.required) {
+            res = true;
+            return false;
+          }
+        });
+        return res;
+      },
+      initialValue: function() {
+        var model = this.form.initModel;
+        var path = this.prop;
+        if (path.indexOf(':') !== -1) {
+          path = path.replace(/:/, '.');
+        }
+        var prop = this.getPropByPath(model, path);
+
+        return prop.o[prop.k];
       }
     },
     data: function() {
@@ -96,8 +118,8 @@
         validateMessage: '',
         validateDisabled: false,
         validator: {},
-        isRequired: false,
-        initialValue: null
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
+        screenWidth:document.body.clientWidth
       };
     },
     methods: {
@@ -126,8 +148,29 @@
       },
       resetLabelWidth: function() {
         var labelStyleWidth = this.labelStyleWidth();
+        if(this.isMobile && this.$refs.label){
+            var oldLabelWidth = labelStyleWidth ? Number.parseFloat(labelStyleWidth.split('px')[0]) : undefined;
+            if(oldLabelWidth)
+              this.$refs.label.style.width = '';
+            var textWidth = this.$refs.label.offsetWidth;
+            var widthScale = textWidth / this.screenWidth;
+            if(!oldLabelWidth && widthScale <=0.3)
+              labelStyleWidth = '30%';
+            if((!oldLabelWidth && widthScale > 0.3) || (oldLabelWidth && textWidth > oldLabelWidth)){
+              this.$refs.label.style.padding = '10px 10px 0 10px';
+              this.$refs.content.style.marginLeft = '';
+              return;
+            }
+        }
         this.$refs.label && (this.$refs.label.style.width = labelStyleWidth);
         this.$refs.content && (this.$refs.content.style.marginLeft = labelStyleWidth);
+      },
+      resetIsResponsive:function(){
+        var isResponsiveCss = this.form.labelResponsive;
+        if(this.isMobile){
+          isResponsiveCss = false;
+        }
+        return isResponsiveCss;
       },
       validate: function(trigger, callback) {
         var self = this;
@@ -144,6 +187,8 @@
         callback = callback || noop;
         var rules = self.getFilteredRule(trigger);
         if (!rules || rules.length === 0) {
+          self.validateState = '';
+          self.validateMessage = '';
           callback();
           return true;
         }
@@ -172,7 +217,11 @@
         }
         var prop = this.getPropByPath(model, path);
         this.validateDisabled = true;
-        if (Array.isArray(value)) {
+        var self = this;
+        setTimeout(function() {
+          self.validateDisabled = false;
+        }, 100);
+        if (Array.isArray(value) && this.initialValue) {
           prop.o[prop.k] = [].concat(this.initialValue);
         } else {
           prop.o[prop.k] = this.initialValue;
@@ -191,9 +240,6 @@
         }
         var prop = this.getPropByPath(model, path);
         return (prop.o[prop.k] !== this.initialValue);
-      },
-      initValue: function() {
-        this.initialValue = this.fieldValue;
       },
       getRules: function() {
         var formRules = this.form.rules;
@@ -222,15 +268,8 @@
       var self = this;
       if (self.prop) {
         self.dispatch('VueForm', 'vue.form.addField', [self]);
-        self.initValue();
         var rules = self.getRules();
         if (rules.length) {
-          VueUtil.loop(rules, function(rule) {
-            if (rule.required) {
-              self.isRequired = true;
-              return false;
-            }
-          });
           self.$on('vue.form.blur', self.onFieldBlur);
           self.$on('vue.form.change', self.onFieldChange);
         }

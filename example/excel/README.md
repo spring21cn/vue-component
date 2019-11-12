@@ -37,8 +37,8 @@
 
 ```html
 <!--先加载viy-->
-<script src="http://10.191.6.26:8080/viy/js/vue-all.min.js"></script>
-<script src="http://10.191.6.26:8080/viy/js/vue-component-all.min.js"></script>
+<script src="https://spring21cn.github.io/vue-component/js/vue-all.min.js"></script>
+<script src="https://spring21cn.github.io/vue-component/js/vue-component-all.min.js"></script>
 
 <!--再加载插件-->
 <script src="../excel.min.js"></script>

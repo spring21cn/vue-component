@@ -1,0 +1,127 @@
+<template>
+  <div :class="classObj" class="app-wrapper">
+    <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside"></div>
+    <div class="main-container">
+        <sidebar>
+          <div class="sidebar-logo">
+            <router-link to="/">
+              <img  src="static/img/logo.png">
+            </router-link>
+          </div>
+          <menu-search size="small"></menu-search>
+          <main-menu ref="menu" :menu-height="menuHeight" unique-opened></main-menu>
+        </sidebar>
+      <div class="navbar">
+        <hamburger></hamburger>
+        <breadcrumb v-if="device!=='mobile'"></breadcrumb>
+        <div class="right-menu">
+          <div class="right-menu-item">
+            <i class="right-menu-icon vue-icon-user"></i>
+          </div>
+            <screenfull class="right-menu-item"></screenfull>
+            <lang-select :languages="languages" class="right-menu-item"></lang-select>
+            <avatar>
+              <template slot="dropdown">
+                  <router-link to="/">
+                    <vue-dropdown-item>
+                      {{ $t('menu.navbar.dashboard') }}
+                    </vue-dropdown-item>
+                  </router-link>
+              </template>
+            </avatar>
+        </div>
+      </div>
+      <tags-view @open="open" @close="close"></tags-view>
+      <app-main></app-main>
+    </div>
+  </div>
+</template>
+
+<script>
+var body = document.body;
+var WIDTH = 1024;
+var RATIO = 3;
+
+module.exports = {
+  name: 'Layout',
+  data: function() {
+    return {
+      menuOffSetTop: 0,
+      languages: [{
+        code: 'zh',
+        name: '中文'
+      }, {
+        code: 'ja',
+        name: '日语'
+      }, {
+        code: 'en',
+        name: 'English'
+      }]
+    };
+  },
+  computed: {
+    sidebar: function() {
+      return MenuStore.state.app.sidebar;
+    },
+    device: function() {
+      return MenuStore.state.app.device;
+    },
+    classObj: function() {
+      return {
+        hideSidebar: !this.sidebar.opened,
+        openSidebar: this.sidebar.opened,
+        withoutAnimation: this.sidebar.withoutAnimation,
+        mobile: this.device === 'mobile'
+      };
+    },
+    menuHeight: function() {
+      return MenuStore.getters.height - this.menuOffSetTop;
+    }
+  },
+  watch: {
+    $route: function(route) {
+      if (this.device === 'mobile' && this.sidebar.opened) {
+        MenuStore.dispatch('closeSideBar', { withoutAnimation: false });
+      }
+    }
+  },
+  beforeMount: function() {
+    window.addEventListener('resize', this.resizeHandler);
+  },
+  mounted: function() {
+    var isMobile = this.isMobile();
+    if (isMobile) {
+      MenuStore.dispatch('toggleDevice', 'mobile');
+      MenuStore.dispatch('closeSideBar', { withoutAnimation: true });
+    }
+    this.menuOffSetTop = this.$refs.menu ? this.$refs.menu.$el.getBoundingClientRect().top : 0;
+  },
+
+  methods: {
+    open: function(item) {
+      console.log('open', item);
+    },
+    close: function(item) {
+      console.log('close', item);
+    },
+    handleClickOutside: function() {
+      MenuStore.dispatch('closeSideBar', { withoutAnimation: false });
+    },
+    isMobile: function() {
+      var rect = body.getBoundingClientRect();
+      return rect.width - RATIO < WIDTH;
+    },
+    resizeHandler: function() {
+      if (!document.hidden) {
+        var isMobile = this.isMobile();
+        MenuStore.dispatch('toggleDevice', isMobile ? 'mobile' : 'desktop');
+        MenuStore.dispatch('setHeight', window.innerHeight);
+
+        if (isMobile) {
+          MenuStore.dispatch('closeSideBar', { withoutAnimation: true });
+        }
+      }
+    }
+  }
+};
+</script>

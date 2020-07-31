@@ -1,0 +1,32 @@
+.vue-rate {
+	height: 20px;
+	line-height: 1;
+}
+.vue-rate__item {
+	font-size: 0;
+	vertical-align: middle;
+}
+.vue-rate__icon {
+	font-size: 18px;
+	margin-right: 6px;
+	color: #bfcbd9;
+}
+.vue-rate__decimal,
+.vue-rate__icon .path2 {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+.vue-rate__decimal {
+	display: inline-block;
+	overflow: hidden;
+}
+.vue-rate__text {
+	font-size: 14px;
+	vertical-align: middle;
+}
+.vue-rate__icon,
+.vue-rate__item {
+	position: relative;
+	display: inline-block;
+}

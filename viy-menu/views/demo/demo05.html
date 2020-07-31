@@ -1,0 +1,53 @@
+<template>
+  <div>
+    <h1>demo05</h1>
+    <vue-form label-position="right" label-width="150px" :model="form">
+      <vue-form-item label="Name">
+        <vue-input v-model="form.name"></vue-input>
+      </vue-form-item>
+      <vue-form-item label="Activity zone">
+        <vue-input v-model="form.region"></vue-input>
+      </vue-form-item>
+      <vue-form-item label="Activity form">
+        <vue-input v-model="form.type"></vue-input>
+      </vue-form-item>
+      <vue-form-item label="Activity form">
+        <vue-button type="primary" @click="viewUser">View User</vue-button>
+        <vue-button type="primary" @click="addUser">ADD User</vue-button>
+      </vue-form-item>
+      <vue-form-item>
+          <vue-button type="primary" @click="submitForm">Submit</vue-button>
+        </vue-form-item>
+    </vue-form>
+  </div>
+</template>
+<script>
+module.exports = {
+  name: "demo05",
+  data: function() {
+    return {
+      form: {
+        name: '',
+        region: '',
+        type: ''
+      }
+    }
+  },
+  methods: {
+    submitForm: function() {
+      this.$router.push({name: 'demo06', params: {form: VueUtil.cloneDeep(this.form)}});
+    },
+    viewUser: function() {
+      this.$router.push({name: 'demo07', params: {userId: '123'}, query: {action: 'r'}});
+    },
+    addUser: function() {
+      this.$router.push({name: 'demo07'});
+    }
+
+  }
+};
+</script>
+
+<style scoped>
+
+</style>

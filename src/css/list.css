@@ -1,0 +1,11 @@
+.vue-list {
+	border-radius: 3px;
+	border: 1px solid #ddd;
+}
+.vue-list-item:hover {
+	background: #eef1f6;
+}
+.vue-list-item.is-active {
+	background: #ebf5ff;
+	color: #409eff;
+}

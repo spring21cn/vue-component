@@ -1,0 +1,258 @@
+.main-container {
+  min-height: 100%;
+  transition: margin-left 0.28s;
+  margin-left: 180px;
+  position: relative;
+}
+.sidebar-container {
+  transition: width 0.28s;
+  width: 180px;
+  height: 100%;
+  position: fixed;
+  font-size: 0px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1001;
+  background-color: #324157;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+   -khtml-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+
+.sidebar-container .is-horizontal {
+  display: none;
+}
+.sidebar-container a {
+  display: inline-block;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sidebar-container .vue-menu {
+  border: none;
+  width: 100%;
+  border-radius: 0;
+}
+.sidebar-container .is-active > .vue-submenu__title {
+  color: #f4f4f5;
+}
+.hideSidebar .sidebar-container {
+  width: 36px;
+}
+
+.menu-search-container.sidebar-open {
+  padding: 3px;
+}
+
+.menu-search-container .search-icon{
+  height: 45px;
+  line-height: 45px;
+  cursor: pointer;
+  padding-left: 11px;
+}
+
+.menu-search-container .search-icon:hover{
+  background-color: #48576a;
+}
+
+.menu-search-container .search-icon>i{
+  font-size:14px;
+  color: #bfcbd9;
+  vertical-align: middle;
+}
+
+.hideSidebar .main-container {
+  margin-left: 36px;
+}
+
+.sidebar-logo {
+  font-size: 16px;
+  padding: 7px 7px 0 7px;
+}
+
+.hideSidebar .sidebar-logo {
+  width: 36px;
+  overflow: hidden;
+  padding-left: 2px;
+}
+
+.sidebar-logo img {
+  height: 30px;
+  transition: height .2s;
+}
+
+.hideSidebar .sidebar-logo img {
+  height: 23px;
+}
+
+/* .hideSidebar .submenu-title-noDropdown {
+  padding-left: 10px;
+  position: relative;
+} */
+.hideSidebar .submenu-title-noDropdown .vue-tooltip {
+  padding: 0 10px !important;
+}
+
+.hideSidebar .sidebar-container>div>.vue-menu>.menu-wrapper>.vue-submenu>.vue-submenu__title {
+  padding-left: 10px !important;
+}
+.hideSidebar .sidebar-container>div>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>.vue-submenu__icon-arrow {
+  display: none;
+}
+.hideSidebar .sidebar-container>div>.vue-menu> .menu-wrapper>.vue-submenu>.vue-submenu__title>span {
+  height: 0;
+  width: 0;
+  overflow: hidden;
+  visibility: hidden;
+  display: inline-block;
+}
+
+.openSidebar .sidebar-container .vue-scrollbar__thumb {
+  background-color: lightgray;
+  opacity: .3;
+}
+
+.sidebar-container .nest-menu .vue-submenu > .vue-submenu__title,
+.sidebar-container .vue-submenu .vue-menu-item {
+  min-width: 180px;
+  background-color: #1f2d3d;
+}
+.sidebar-container .vue-menu .nest-menu .vue-submenu > .vue-submenu__title:hover,
+.sidebar-container .vue-menu .vue-submenu .vue-menu .vue-menu-item:hover {
+  background-color: #001528;
+}
+.vue-menu--collapse .vue-menu .vue-submenu {
+  min-width: 180px;
+}
+.mobile .main-container {
+  margin-left: 0px;
+}
+.mobile .sidebar-container {
+  transition: transform 0.28s;
+  width: 180px;
+}
+.mobile.hideSidebar .sidebar-container {
+  transition-duration: 0.3s;
+  transform: translate3d(-180px, 0, 0);
+}
+.withoutAnimation .main-container,
+.withoutAnimation .sidebar-container {
+  transition: none;
+}
+
+body {
+  height: 100%;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+#app {
+  height: 100%;
+}
+
+a:focus,
+a:active {
+  outline: none;
+}
+
+a,
+a:focus,
+a:hover {
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+
+div:focus {
+  outline: none;
+}
+
+.app-container {
+  padding: 20px;
+}
+
+/* nprogress */
+/* Make clicks pass-through */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: #29d;
+
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 2px;
+}
+
+/* Fancy blur effect */
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px #29d, 0 0 5px #29d;
+  opacity: 1.0;
+
+  -webkit-transform: rotate(3deg) translate(0px, -4px);
+      -ms-transform: rotate(3deg) translate(0px, -4px);
+          transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* Remove these to get rid of the spinner */
+#nprogress .spinner {
+  display: block;
+  position: fixed;
+  z-index: 1031;
+  top: 15px;
+  right: 15px;
+}
+
+#nprogress .spinner-icon {
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+
+  border: solid 2px transparent;
+  border-top-color: #29d;
+  border-left-color: #29d;
+  border-radius: 50%;
+
+  -webkit-animation: nprogress-spinner 400ms linear infinite;
+          animation: nprogress-spinner 400ms linear infinite;
+}
+
+.nprogress-custom-parent {
+  overflow: hidden;
+  position: relative;
+}
+
+.nprogress-custom-parent #nprogress .spinner,
+.nprogress-custom-parent #nprogress .bar {
+  position: absolute;
+}
+
+@-webkit-keyframes nprogress-spinner {
+  0%   { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+@keyframes nprogress-spinner {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

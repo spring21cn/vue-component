@@ -1,0 +1,122 @@
+.vue-message-box {
+	position: fixed;
+	top: 27%;
+	left: calc(50% - 210px);
+	background-color: #fff;
+	width: 420px;
+	border-radius: 3px;
+	box-shadow: 0 2px 4px 0 rgba(0,0,0,.12),0 0 6px 0 rgba(0,0,0,.04);
+	font-size: 16px;
+	overflow: hidden;
+	backface-visibility: hidden;
+}
+.vue-message-box__wrapper {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: 0;
+	overflow: hidden;
+	background-color: rgba(0,0,0,.3);
+}
+.vue-message-box__wrapper::after {
+	content: '';
+	display: inline-block;
+	height: 100%;
+	width: 0;
+	vertical-align: middle;
+}
+.vue-message-box__header {
+	position: relative;
+	padding: 20px 20px 0;
+}
+.vue-message-box__content {
+	padding: 30px 20px;
+	color: #48576a;
+	font-size: 14px;
+	position: relative;
+}
+.vue-message-box__close {
+	display: inline-block;
+	position: absolute;
+	top: 19px;
+	right: 20px;
+	color: #999;
+	cursor: pointer;
+	line-height: 20px;
+	text-align: center;
+}
+.vue-message-box__close:hover {
+	color: #409eff;
+}
+.vue-message-box__errormsg {
+	color: #fb5555;
+	font-size: 12px;
+	min-height: 18px;
+	margin-top: 2px;
+}
+.vue-message-box__title {
+	padding-left: 0;
+	margin-bottom: 0;
+	font-size: 16px;
+	font-weight: 700;
+	height: 18px;
+	color: #333;
+}
+.vue-message-box__message {
+	margin: 0;
+}
+.vue-message-box__message p {
+	margin: 0;
+	line-height: 1.4;
+}
+.vue-message-box__btns {
+	padding: 10px 20px 15px;
+	text-align: right;
+}
+.vue-message-box__btns-reverse {
+	flex-direction: row-reverse;
+}
+.vue-message-box__status {
+	position: absolute;
+	top: 50%;
+	transform: translate3d(0, -50%, 0);
+	font-size: 36px!important;
+}
+.vue-message-box__status.vue-icon-success {
+	color: #67c23a;
+}
+.vue-message-box__status.vue-icon-information {
+	color: #6fb3e0;
+}
+.vue-message-box__status.vue-icon-warning {
+	color: #eb9e05;
+}
+.vue-message-box__status.vue-icon-error {
+	color: #fb5555;
+}
+.msgbox-fade-enter-active {
+	animation: msgbox-fade-in .3s
+}
+.msgbox-fade-leave-active {
+	animation: msgbox-fade-out .3s
+}
+@keyframes msgbox-fade-in {
+	0% {
+		top: 0;
+	}
+	to {
+		top: 1;
+	}
+}
+@keyframes msgbox-fade-out {
+	0% {
+		top: 1;
+		opacity:1;
+	}
+	to {
+		top: 0;
+		opacity:0;
+	}
+}

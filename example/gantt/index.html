@@ -1,0 +1,297 @@
+﻿<!DOCTYPE html>
+<html charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <title>Vue gantt demo</title>
+    <link rel="stylesheet" href="../../dist/component.min.css">
+    <script src="../../dist/vue-all.min.js"></script>
+    <script src="../../dist/vue-component-all.min.js"></script>
+    <script src="./data.js"></script>
+    <script src="../../js/vue-gantt.min.js"></script>
+    <style>
+      html {
+        font-family: sans-serif;
+      }
+      .tooltip {
+          position: absolute;
+          font-size: 14px;
+          border-radius: 4px;
+          background-color: rgba(50, 50, 50, 0.7);
+          color: rgb(255, 255, 255);
+          width: 162px;
+          height: 63px;
+      }
+      .tooltip>.vue-row {
+          padding: 8px 8px 0 8px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div style="width:100%;height:100%">
+      <div id="app">
+        <vue-form >
+          <vue-row>
+            <vue-col :span="6">
+              <vue-form-item label-width="85px" label="水平缩放">
+                <vue-slider v-model="slide1" @change="changeScale"></vue-slider>
+              </vue-form-item>
+            </vue-col>
+            <vue-col :span="6">
+              <vue-form-item label-width="85px" label="垂直缩放">
+                <vue-slider v-model="slide2" @change="changeHeight"></vue-slider>
+              </vue-form-item>
+            </vue-col>
+            <vue-col :push="1" :span="6">
+              <a href="./single.html">单行模式</a>
+            </vue-col>
+          </vue-row>
+        </vue-form>
+        <vue-gantt @chart-task-click="handleClick" @chart-task-mouseenter="handleMouseEnter" @chart-task-mousemove="handleMouseEnter" @chart-task-mouseout="handleMouseOut" :tasks="tasks" :options="options" ref="gantt"></vue-gantt>
+        <div class="tooltip" :style="bubblePosition">
+            <vue-row>Name: {{this.tooltip.name}}</vue-row>
+            <vue-row>Date: {{this.tooltip.date}}</vue-row>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function getDate(hours) {
+        return dayjs().add(hours, 'hour').startOf('day').valueOf();
+      }
+
+      const options = {
+        maxHeight: 400,
+        times: { //x缩放
+          timeZoom: 21
+        },
+        // row: { 行高 y缩放
+        //   height: 5,
+        // },
+
+        chart: {
+			grid:{
+				horizontal: {gap: 4}
+			},
+          progress: {
+		},
+		text: {
+		align: 'center'
+		}
+        },
+        position: {
+          position: 'start',
+          time: 0
+        },
+        calendar: {
+            day: {
+              height: 33,
+              format: {
+                  long: function(date) {
+                      var week = {
+                        1: '星期一',
+                        2: '星期二',
+                        3: '星期三',
+                        4: '星期四',
+                        5: '星期五',
+                        6: '星期六',
+                        0: '星期日'
+                      };
+                      return dayjs(date).format('DD') + '('+ week[dayjs(date).format('d') || 0] + ')';
+                  },
+                  medium: function(date) {
+                    var week = {
+                        1: '一',
+                        2: '二',
+                        3: '三',
+                        4: '四',
+                        5: '五',
+                        6: '六',
+                        0: '日'
+                      };
+                      return dayjs(date).format('DD') + '('+ week[dayjs(date).format('d') || 0] + ')';
+                  },
+                  short: function(date) {
+                      return dayjs(date).format('DD');
+                  }
+              }
+            },
+            month: {
+              height: 33,
+              display: 'always',
+              format: {
+                short: function(date) {
+                  return dayjs(date).format('MM');
+                },
+                medium: function(date) {
+                  return dayjs(date).format("YYYY-MM");
+                },
+                long: function(date) {
+                  return dayjs(date).format("YYYY-MM");
+                }
+              }
+            },
+          },
+        taskList: {
+          columns: [
+            {
+              id: 1,
+              label: "#",
+              value: "id",
+              width: 40,
+              style: {
+                "task-list-header-label": {
+                  "text-align": "center",
+                  width: "100%"
+                },
+                "task-list-item-value-container": {
+                  "text-align": "center",
+                  width: "100%"
+                }
+              }
+            },
+            {
+              id: 2,
+              label: "机种",
+              value: "machine",
+              width: 120,
+              style: {
+                "task-list-header-label": {
+                  "text-align": "center",
+                  width: "100%"
+                }
+              }
+            },
+            {
+              id: 3,
+              label: "号机",
+              value: "code",
+              width: 120,
+              style: {
+                "task-list-header-label": {
+                  "text-align": "center",
+                  width: "100%"
+                }
+              }
+            },
+            {
+              id: 4,
+              label: "是否欠品",
+              value: "shortage",
+              width: 50,
+              style: {
+                "task-list-header-label": {
+                  "text-align": "center",
+                  width: "100%"
+                },
+                'task-list-item-value-container': {
+                  'text-align': 'center',
+                  width: '100%'
+                }
+              }
+            },
+            {
+              id: 5,
+              label: "进度",
+              value: "progress",
+              width: 50,
+              style: {
+                "task-list-header-label": {
+                  "text-align": "center",
+                  width: "100%"
+                },
+                'task-list-item-value-container': {
+                  'text-align': 'center',
+                  width: '100%'
+                }
+              }
+            }
+          ]
+        }
+      };
+
+      var app = new Vue({
+        components: {
+          "vue-gantt": vueGantt
+        },
+        data: {
+          tasks: tasks,
+          options: options,
+          localScale: 0,
+          localHeight: 0,
+          slide1: 90,
+          slide2: 24,
+          tooltip: {
+            name: '',
+            date: ''
+          },
+          bubblePosition: {
+              display: 'none',
+              top: 0,
+              left:0
+            },
+        },
+        methods: {
+          handleClick: function(data) {
+            this.$notify({title: 'click', message: JSON.stringify(data.detail)});
+          },
+          //鼠标指针进入事件
+          handleMouseEnter: VueUtil.throttle(function(data) {
+              //实绩的情况才有鼠标气泡事件
+              if(data.detail.clickType == "2" || data.detail.clickType == "4") {
+                  this.bubblePosition.left =  data.event.clientX + 'px';
+                  this.bubblePosition.top = data.event.clientY - 70 + 'px';
+                  this.bubblePosition.display = 'block'
+                  this.tooltip.name = data.detail.label;
+                  this.tooltip.date = dayjs(data.detail.start).format('YYYY-MM-DD');
+              }
+          },100), 
+
+          //鼠标指针移开事件
+          handleMouseOut: VueUtil.throttle(function(data) {
+              this.bubblePosition.display = 'none'
+          },140), 
+          changeScale: function(val) {
+            this.scale = 3 + (val/5);
+          },
+          changeHeight: function(val) {
+            this.height = val;
+          }
+        },
+        mounted: function() {
+          this.localScale = this.$refs.gantt.state.options.times.timeZoom;
+          this.localHeight = this.$refs.gantt.state.options.row.height;
+          this.$nextTick(function() {
+            this.$refs.gantt.scrollTo(0,0);
+          })
+        },
+        computed: {
+          scale: {
+            get: function get() {
+              return this.localScale;
+            },
+            set: function set(value) {
+              this.localScale = Number(value);
+              this.$refs.gantt.$emit("times-timeZoom-change", Number(value));
+            }
+          },
+          height: {
+            get: function get() {
+              return this.localHeight;
+            },
+            set: function set(value) {
+              this.localHeight = Number(value);
+              this.$refs.gantt.$emit("row-height-change", Number(value));
+            }
+          },
+        }
+      })
+
+        app.$mount("#app");
+    </script>
+  </body>
+</html>

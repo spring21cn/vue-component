@@ -1,0 +1,100 @@
+.vue-switch__core,
+.vue-switch__label {
+	width: 46px;
+	height: 22px;
+	cursor: pointer;
+}
+.vue-switch {
+	display: inline-block;
+	position: relative;
+	font-size: 14px;
+	line-height: 22px;
+	height: 22px;
+	vertical-align: middle;
+	outline: 0;
+}
+.vue-switch:not(.is-disabled):focus {
+	box-shadow: 0 0 1px 1px #409eff;
+	border-radius: 12px;
+}
+
+.vue-switch__label,
+.vue-switch__label * {
+	position: absolute;
+	font-size: 14px;
+	display: inline-block;
+}
+.vue-switch .label-fade-enter,
+.vue-switch .label-fade-leave-active {
+	opacity: 0;
+}
+.vue-switch.is-disabled .vue-switch__core {
+	border-color: #e4e8f1!important;
+	background: #e4e8f1!important;
+}
+.vue-switch.is-disabled .vue-switch__core span {
+	background-color: #fbfdff!important;
+}
+.vue-switch.is-disabled .vue-switch__core~.vue-switch__label * {
+	color: #fbfdff!important;
+}
+.vue-switch.is-disabled .vue-switch__input:checked+.vue-switch__core {
+	border-color: #e4e8f1;
+	background-color: #e4e8f1;
+}
+.vue-switch.is-disabled .vue-switch__core,
+.vue-switch.is-disabled .vue-switch__label {
+	cursor: not-allowed;
+}
+.vue-switch__label {
+	transition: .3s;
+	z-index: 10;
+	left: 0;
+	top: 0;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+}
+.vue-switch__label * {
+	line-height: 1;
+	top: 4px;
+	color: #fff;
+}
+.vue-switch__label--left i {
+	left: 6px;
+}
+.vue-switch__label--right i {
+	right: 6px;
+}
+.vue-switch__input {
+	display: none;
+}
+.vue-switch__input:checked+.vue-switch__core {
+	border-color: #409eff;
+	background-color: #409eff;
+}
+.vue-switch__core {
+	margin: 0;
+	display: inline-block;
+	position: relative;
+	border: 1px solid #bfcbd9;
+	outline: 0;
+	border-radius: 12px;
+	background: #bfcbd9;
+}
+.vue-switch__core .vue-switch__button {
+	top: 0;
+	left: 0;
+	position: absolute;
+	border-radius: 100%;
+	transition: transform .3s;
+	width: 16px;
+	height: 16px;
+	z-index: 20;
+	background-color: #fff;
+}
+.vue-switch--wide .vue-switch__label.vue-switch__label--left span {
+	left: 10px;
+}
+.vue-switch--wide .vue-switch__label.vue-switch__label--right span {
+	right: 10px;
+}

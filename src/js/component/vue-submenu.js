@@ -91,7 +91,7 @@
         [h(
           'div',
           {
-            'class': ['vue-submenu__title', 'vue-menu-level-'+this.level],
+            'class': 'vue-submenu__title',
             ref: 'submenu-title',
             on: {
               'click': this.handleClick
@@ -121,10 +121,7 @@
         type: Number,
         default: 300
       },
-      disabled: Boolean,
-      indentSize: {
-        type: Number
-      }
+      disabled: Boolean
     },
     data: function() {
       return {
@@ -250,16 +247,6 @@
             submenu.style.height = '';
             submenu.style.overflow = '';
           }, 0);
-          return;
-        }
-
-        if (this.mode === 'horizontal') {
-          verticalMenu.style.left = menu.offsetWidth + 5 + 'px';
-          verticalMenu.style.top = 0;
-          
-          if (this.level > 1) {
-            verticalMenu.style.position = 'absolute';
-          }
           return;
         }
         

@@ -9,14 +9,9 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCheckboxGroup = {
-    template: '<div class="vue-checkbox-group" :class="{\'check-style\': checkStyle, \'is-split\': realSplit}"><slot></slot></div>',
+    template: '<div class="vue-checkbox-group"><slot></slot></div>',
     name: 'VueCheckboxGroup',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueFormItem: {
-        default: ''
-      },
-    },
     props: {
       value: {},
       min: Number,
@@ -28,11 +23,6 @@
       tabindex: {
         type: Number,
         default: 0
-      },
-      checkStyle: Boolean,
-      split: {
-        type: Boolean,
-        default: null,
       }
     },
     methods: {
@@ -46,14 +36,6 @@
     watch: {
       value: function(value) {
         this.dispatch('VueFormItem', 'vue.form.change', [value]);
-      }
-    },
-    computed: {
-      finalSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
-      realSplit: function() {
-        return this.split == undefined ? this.checkStyle : this.split;
       }
     }
   };

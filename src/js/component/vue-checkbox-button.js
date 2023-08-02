@@ -12,11 +12,6 @@
     template: '<label :class="[\'vue-checkbox-button\', size ? \'vue-checkbox-button--\' + size : \'\', {\'is-disabled\': isDisabled}, {\'is-checked\': isChecked}, {\'is-focus\': isFocus}]"><input v-if="trueLabel || falseLabel" class="vue-checkbox-button__original" type="checkbox" :name="name" :disabled="isDisabled" :true-value="trueLabel" :false-value="falseLabel" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><input v-else class="vue-checkbox-button__original" type="checkbox" :name="name" :disabled="isDisabled" :value="label" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><span class="vue-checkbox-button__inner" v-if="$slots.default || label" :style="isChecked ? activeStyle : null"><slot>{{label}}</slot></span></label>',
     name: 'VueCheckboxButton',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     data: function() {
       return {
         selfModel: false,
@@ -82,26 +77,23 @@
       isDisabled: function() {
 
         return this._checkboxGroup
-          ? this._checkboxGroup.disabled || this.disabled || (this.vueForm || {}).disabled || this.isLimitDisabled
-          : this.disabled || (this.vueForm || {}).disabled;
+          ? this._checkboxGroup.disabled || this.disabled || this.isLimitDisabled
+          : this.disabled;
 
       },
       store: function() {
         return this._checkboxGroup ? this._checkboxGroup.value : this.value;
       },
-      checkStyle: function() {
-        return this._checkboxGroup.checkStyle;
-      },
       activeStyle: function() {
         return {
           backgroundColor: this._checkboxGroup.fill || '',
-          borderColor: (this.checkStyle ? this._checkboxGroup.textColor : this._checkboxGroup.fill) || '',
+          borderColor: this._checkboxGroup.fill || '',
           color: this._checkboxGroup.textColor || '',
-          'box-shadow': this.checkStyle? '' : '-1px 0 0 0 ' + this._checkboxGroup.fill
+          'box-shadow': '-1px 0 0 0 ' + this._checkboxGroup.fill
         };
       },
       size: function() {
-        return this._checkboxGroup.finalSize;
+        return this._checkboxGroup.size;
       },
       tabIndex: function() {
         return this._checkboxGroup ? this._checkboxGroup.tabindex : this.tabindex;

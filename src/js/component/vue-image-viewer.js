@@ -10,7 +10,7 @@
   var isServer = Vue.prototype.$isServer;
   var template= '\
     <transition name="viewer-fade"> \
-      <div class="vue-image-viewer__wrapper" :class="{preview: showPreview}" :style="{ \'z-index\': zIndex }" > \
+      <div class="vue-image-viewer__wrapper" :style="{ \'z-index\': zIndex }" > \
         <div :class="[\'vue-image-viewer__mask\',{\'mask__dark\':isMobile}]"></div> \
         <span v-if="isMobile && !isSingle" class="vue-image-view__titile">{{imgIndex+1+\' / \'+ imgsLength}}</span>\
         <!-- CLOSE --> \
@@ -31,24 +31,13 @@
         <!-- ACTIONS --> \
         <div class="vue-image-viewer__btn vue-image-viewer__actions"> \
           <div class="vue-image-viewer__actions__inner"> \
-            <slot name="leftActions"></slot>\
             <i class="vue-icon-zoom-out" @click="handleActions(\'zoomOut\')"></i> \
             <i class="vue-icon-zoom-in" @click="handleActions(\'zoomIn\')"></i> \
-            <i v-if="!isMobile && showActionsDivider" class="vue-image-viewer__actions__divider"></i> \
+            <i class="vue-image-viewer__actions__divider"></i> \
             <i v-if="!isMobile" :class="mode.icon" @click="toggleMode"></i> \
-            <i v-if="showDownload" class="vue-icon-download2" @click="download"></i>\
-            <i v-if="!isMobile && showActionsDivider" class="vue-image-viewer__actions__divider"></i> \
+            <i v-if="!isMobile" class="vue-image-viewer__actions__divider"></i> \
             <i class="vue-icon-rotate-left" @click="handleActions(\'anticlocelise\')"></i> \
             <i class="vue-icon-rotate-right" @click="handleActions(\'clocelise\')"></i> \
-            <slot name="rightActions"></slot>\
-          </div> \
-        </div> \
-        <!-- PREVIEW --> \
-        <div v-if="showPreview" class="vue-image-viewer__btn vue-image-viewer__preview"> \
-          <div class="vue-image-viewer__preview__inner"> \
-          <vue-scrollbar :do-scroll="false" @mousewheel.native.stop.prevent="handleScroll" ref="scrollContainer" :vertical="false" class="vue-image-viewer__preview__scroll" >\
-            <img v-for="(url, i) in realPreviewList" class="vue-image-viewer__preview__img" :class="{active: i === imgIndex}" :key="url" :src="url" @click="imgIndex = i"></img>\
-          </vue-scrollbar>\
           </div> \
         </div> \
         <!-- CANVAS --> \
@@ -121,29 +110,6 @@
       onClose: {
         type: Function,
         default: function(){ return {};}
-      },
-      appendToBody: {
-        type: Boolean,
-        default: true
-      },
-      showPreview: {
-        type: Boolean,
-        default: false
-      },
-      showActionsDivider: {
-        type: Boolean,
-        default: true
-      },
-      showDownload: {
-        type: Boolean,
-        default: false
-      },
-      getFileName: {
-        type: Function,
-      },
-      previewList: {
-        type: Array,
-        default: null
       }
     },
   
@@ -199,9 +165,6 @@
           style.maxWidth = style.maxHeight = '100%';
         }
         return style;
-      },
-      realPreviewList: function() {
-        return this.previewList || this.urlList;
       }
     },
     watch: {
@@ -209,7 +172,6 @@
         handler: function(val) {
           this.reset();
           this.onSwitch(val);
-          this.resetPreviewScroll();
         }
       },
       currentImg: function(val) {
@@ -396,54 +358,10 @@
             break;
         }
         transform.enableTransition = enableTransition;
-      },
-      handleScroll: function(e) {
-        var eventDelta = e.wheelDelta || -e.deltaY * 40;
-        var $scrollWrapper = this.$refs.scrollContainer.$refs.wrap;
-        $scrollWrapper.scrollLeft = $scrollWrapper.scrollLeft - eventDelta / 4;
-      },
-      resetPreviewScroll: function() {
-        if (this.showPreview) {
-          this.$nextTick(function() {
-            var activeImage = this.$el.querySelector('.vue-image-viewer__preview__img.active');
-            activeImage && activeImage.scrollIntoView();
-          });
-        }
-      },
-      download: function() {
-        function defaultGetFileName(path) {
-          path = path || '';
-          return path.split('\\').pop().split('/').pop().split('?').shift();
-        }
-        var filenameFunc = this.getFileName || defaultGetFileName;
-        VueUtil.saveAs(this.currentImg, filenameFunc(this.currentImg));
       }
     },
     mounted: function() {
       this.deviceSupportInstall();
-
-      if (this.appendToBody) {
-        document.body.appendChild(this.$el);
-      }
-
-      var self = this;
-      if (this.showPreview) {
-        var activeImage = this.$el.querySelector('.vue-image-viewer__preview__img.active');
-        if (activeImage) {
-          activeImage.onload = function() {
-            setTimeout(function() {
-              self.resetPreviewScroll();
-            }, 400);
-          };
-        }
-      }
-
-    },
-    destroyed: function() {
-      // if appendToBody is true, remove DOM node after destroy
-      if (this.appendToBody && this.$el && this.$el.parentNode) {
-        this.$el.parentNode.removeChild(this.$el);
-      }
     }
   };
   Vue.component(ImageViewer.name, ImageViewer);

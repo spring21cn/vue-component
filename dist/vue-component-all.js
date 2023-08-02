@@ -16,7 +16,7 @@
     'Presto': ua.indexOf('Presto') !== -1,
     'WebKit': ua.indexOf('AppleWebKit') !== -1,
     'Gecko': ua.indexOf('Gecko/') !== -1,
-    'Safari': ua.indexOf('Safari') !== -1 || ua.indexOf('iPhone') !== -1 || (ua.indexOf('Macintosh') !== -1 && ua.indexOf('Mobile') !== -1),
+    'Safari': ua.indexOf('Safari') !== -1 || ua.indexOf('iPhone') !== -1,
     'Chrome': ua.indexOf('Chrome') !== -1 || ua.indexOf('CriOS') !== -1,
     'IE': ua.indexOf('MSIE') !== -1 || ua.indexOf('Trident') !== -1,
     'Edge': ua.indexOf('Edge') !== -1,
@@ -49,7 +49,7 @@
     'iQiYi': ua.indexOf('IqiyiApp') !== -1,
     'Windows': ua.indexOf('Windows') !== -1,
     'Linux': ua.indexOf('Linux') !== -1 || ua.indexOf('X11') !== -1,
-    'Mac OS': ua.indexOf('Macintosh') !== -1 && navigator.maxTouchPoints && navigator.maxTouchPoints == 0,
+    'Mac OS': ua.indexOf('Macintosh') !== -1,
     'Android': ua.indexOf('Android') !== -1 || ua.indexOf('Adr') !== -1,
     'Ubuntu': ua.indexOf('Ubuntu') !== -1,
     'FreeBSD': ua.indexOf('FreeBSD') !== -1,
@@ -58,10 +58,10 @@
     'BlackBerry': ua.indexOf('BlackBerry') !== -1 || ua.indexOf('RIM') !== -1,
     'MeeGo': ua.indexOf('MeeGo') !== -1,
     'Symbian': ua.indexOf('Symbian') !== -1,
-    'iOS': ua.indexOf('like Mac OS X') !== -1 || (ua.indexOf('Macintosh') !== -1 && navigator.maxTouchPoints && navigator.maxTouchPoints > 0),
+    'iOS': ua.indexOf('like Mac OS X') !== -1,
     'Chrome OS': ua.indexOf('CrOS') !== -1,
     'WebOS': ua.indexOf('hpwOS') !== -1,
-    'Mobile': ua.indexOf('Android') !== -1 || ua.indexOf('Adr') !== -1 ||  ua.indexOf('Mobile') !== -1 || ua.indexOf('Ios') !== -1 || ua.indexOf('like Mac OS X') !== -1 || ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1 || ua.indexOf('iPod') !== -1  || (ua.indexOf('Trident') === -1 && ua.indexOf('Tablet') !== -1) || (ua.match(/Mac/) && navigator.maxTouchPoints && navigator.maxTouchPoints > 2)
+    'Mobile': ua.indexOf('Android') !== -1 || ua.indexOf('Adr') !== -1 ||  ua.indexOf('Mobile') !== -1 || ua.indexOf('Ios') !== -1 || ua.indexOf('like Mac OS X') !== -1 || ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1 || ua.indexOf('iPod') !== -1  || ua.indexOf('Tablet') !== -1 
   };
   if (match['Mobile']) {
     // match['Mobile'] = !(ua.indexOf('iPad') !== -1);
@@ -113,7 +113,7 @@
       return ua.replace(/^.*Android ([\d.]+);.*$/, '$1');
     },
     'iOS': function() {
-      return ua.indexOf('Macintosh') > -1 ? ua.replace(/^.*Version\/([\d.]+).*$/, '$1') : ua.replace(/^.*OS ([\d_]+) like.*$/, '$1').replace(/_/g, '.');
+      return ua.replace(/^.*OS ([\d_]+) like.*$/, '$1').replace(/_/g, '.');
     },
     'Debian': function() {
       return ua.replace(/^.*Debian\/([\d.]+).*$/, '$1');
@@ -235,8 +235,8 @@
     device: self.device,
     os: self.os,
     osVersion: self.osVersion,
-    browser: self.browser || '',
-    version: self.version || '',
+    browser: self.browser,
+    version: self.version,
     language: self.language,
   };
 });
@@ -517,7 +517,7 @@
 /**
  * @license
  * Lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash category="math" include="pad,padEnd,padStart,parseInt,trim,trimEnd,trimStart,clone,cloneDeep,debounce,throttle,countBy,filter,eachRight,find,findLast,includes,groupBy,map,reduce,orderBy,sortBy,some,every,compact,concat,difference,differenceBy,differenceWith,dropWhile,findIndex,findLastIndex,indexOf,intersection,intersectionBy,intersectionWith,join,last,head,pull,pullAll,pullAt,reverse,slice,tail,initial,take,takeRight,takeWhile,union,unionBy,unionWith,uniq,uniqBy,uniqWith,without,xor,xorBy,xorWith,set,isEqual,isEqualWith,mapValues,assign,forEach,isEmpty,uniqueId,pick,pickBy" exports="global"`
+ * Build: `lodash category="math" include="pad,padEnd,padStart,parseInt,trim,trimEnd,trimStart,clone,cloneDeep,debounce,throttle,countBy,filter,eachRight,find,findLast,includes,groupBy,map,reduce,orderBy,sortBy,some,every,compact,concat,difference,differenceBy,differenceWith,dropWhile,findIndex,findLastIndex,indexOf,intersection,intersectionBy,intersectionWith,join,last,head,pull,pullAll,pullAt,reverse,slice,tail,initial,take,takeRight,takeWhile,union,unionBy,unionWith,uniq,uniqBy,uniqWith,without,xor,xorBy,xorWith,set,isEqual,isEqualWith,mapValues,assign,forEach,isEmpty,uniqueId,pick,pickBy"`
  * Copyright JS Foundation and other contributors <https://js.foundation/>
  * Released under MIT license <https://lodash.com/license>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -8769,1083 +8769,33 @@
 
   /*--------------------------------------------------------------------------*/
 
-  // Export to the global object.
-  root.lodash = lodash;
+  // Some AMD build optimizers, like r.js, check for condition patterns like:
+  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {
+    // Expose Lodash on the global object to prevent errors when Lodash is
+    // loaded by a script tag in the presence of an AMD loader.
+    // See http://requirejs.org/docs/errors.html#mismatch for more details.
+    // Use `_.noConflict` to remove Lodash from the global object.
+    root.lodash = lodash;
+
+    // Define as an anonymous module so, through path mapping, it can be
+    // referenced as the "underscore" module.
+    define(function() {
+      return lodash;
+    });
+  }
+  // Check for `exports` after `define` in case a build optimizer adds it.
+  else if (freeModule) {
+    // Export for Node.js.
+    (freeModule.exports = lodash).lodash = lodash;
+    // Export for CommonJS support.
+    freeExports.lodash = lodash;
+  }
+  else {
+    // Export to the global object.
+    root.lodash = lodash;
+  }
 }.call(this));
 
-/*!
- * Compressor.js v1.1.1
- * https://fengyuanchen.github.io/compressorjs
- */
-(function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.ImgCompressor = factory());
-})(this, (function () { 'use strict';
-
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-
-      if (enumerableOnly) {
-        symbols = symbols.filter(function (sym) {
-          return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-        });
-      }
-
-      keys.push.apply(keys, symbols);
-    }
-
-    return keys;
-  }
-
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i] != null ? arguments[i] : {};
-
-      if (i % 2) {
-        ownKeys(Object(source), true).forEach(function (key) {
-          _defineProperty(target, key, source[key]);
-        });
-      } else if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-      } else {
-        ownKeys(Object(source)).forEach(function (key) {
-          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-      }
-    }
-
-    return target;
-  }
-
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError('Cannot call a class as a function');
-    }
-  }
-
-  function _defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ('value' in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
-
-  function _createClass(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    return Constructor;
-  }
-
-  function _defineProperty(obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-
-    return obj;
-  }
-
-  function _extends() {
-    _extends = Object.assign || function (target) {
-      for (var i = 1; i < arguments.length; i++) {
-        var source = arguments[i];
-
-        for (var key in source) {
-          if (Object.prototype.hasOwnProperty.call(source, key)) {
-            target[key] = source[key];
-          }
-        }
-      }
-
-      return target;
-    };
-
-    return _extends.apply(this, arguments);
-  }
-
-  var canvasToBlob = {exports: {}};
-
-  /*
-   * JavaScript Canvas to Blob
-   * https://github.com/blueimp/JavaScript-Canvas-to-Blob
-   *
-   * Copyright 2012, Sebastian Tschan
-   * https://blueimp.net
-   *
-   * Licensed under the MIT license:
-   * https://opensource.org/licenses/MIT
-   *
-   * Based on stackoverflow user Stoive's code snippet:
-   * http://stackoverflow.com/q/4998908
-   */
-
-  (function (module) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-    (function (window) {
-
-      var CanvasPrototype = window.HTMLCanvasElement && window.HTMLCanvasElement.prototype;
-
-      var hasBlobConstructor = window.Blob && function () {
-        try {
-          return Boolean(new Blob());
-        } catch (e) {
-          return false;
-        }
-      }();
-
-      var hasArrayBufferViewSupport = hasBlobConstructor && window.Uint8Array && function () {
-        try {
-          return new Blob([new Uint8Array(100)]).size === 100;
-        } catch (e) {
-          return false;
-        }
-      }();
-
-      var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-      var dataURIPattern = /^data:((.*?)(;charset=.*?)?)(;base64)?,/;
-
-      var dataURLtoBlob = (hasBlobConstructor || BlobBuilder) && window.atob && window.ArrayBuffer && window.Uint8Array && function (dataURI) {
-        var matches, mediaType, isBase64, dataString, byteString, arrayBuffer, intArray, i, bb; // Parse the dataURI components as per RFC 2397
-
-        matches = dataURI.match(dataURIPattern);
-
-        if (!matches) {
-          throw new Error('invalid data URI');
-        } // Default to text/plain;charset=US-ASCII
-
-
-        mediaType = matches[2] ? matches[1] : 'text/plain' + (matches[3] || ';charset=US-ASCII');
-        isBase64 = !!matches[4];
-        dataString = dataURI.slice(matches[0].length);
-
-        if (isBase64) {
-          // Convert base64 to raw binary data held in a string:
-          byteString = atob(dataString);
-        } else {
-          // Convert base64/URLEncoded data component to raw binary:
-          byteString = decodeURIComponent(dataString);
-        } // Write the bytes of the string to an ArrayBuffer:
-
-
-        arrayBuffer = new ArrayBuffer(byteString.length);
-        intArray = new Uint8Array(arrayBuffer);
-
-        for (i = 0; i < byteString.length; i += 1) {
-          intArray[i] = byteString.charCodeAt(i);
-        } // Write the ArrayBuffer (or ArrayBufferView) to a blob:
-
-
-        if (hasBlobConstructor) {
-          return new Blob([hasArrayBufferViewSupport ? intArray : arrayBuffer], {
-            type: mediaType
-          });
-        }
-
-        bb = new BlobBuilder();
-        bb.append(arrayBuffer);
-        return bb.getBlob(mediaType);
-      };
-
-      if (window.HTMLCanvasElement && !CanvasPrototype.toBlob) {
-        if (CanvasPrototype.mozGetAsFile) {
-          CanvasPrototype.toBlob = function (callback, type, quality) {
-            var self = this;
-            setTimeout(function () {
-              if (quality && CanvasPrototype.toDataURL && dataURLtoBlob) {
-                callback(dataURLtoBlob(self.toDataURL(type, quality)));
-              } else {
-                callback(self.mozGetAsFile('blob', type));
-              }
-            });
-          };
-        } else if (CanvasPrototype.toDataURL && dataURLtoBlob) {
-          if (CanvasPrototype.msToBlob) {
-            CanvasPrototype.toBlob = function (callback, type, quality) {
-              var self = this;
-              setTimeout(function () {
-                if ((type && type !== 'image/png' || quality) && CanvasPrototype.toDataURL && dataURLtoBlob) {
-                  callback(dataURLtoBlob(self.toDataURL(type, quality)));
-                } else {
-                  callback(self.msToBlob(type));
-                }
-              });
-            };
-          } else {
-            CanvasPrototype.toBlob = function (callback, type, quality) {
-              var self = this;
-              setTimeout(function () {
-                callback(dataURLtoBlob(self.toDataURL(type, quality)));
-              });
-            };
-          }
-        }
-      }
-
-      if (module.exports) {
-        module.exports = dataURLtoBlob;
-      } else {
-        window.dataURLtoBlob = dataURLtoBlob;
-      }
-    })(window);
-  })(canvasToBlob);
-
-  var toBlob = canvasToBlob.exports;
-
-  var isBlob = function isBlob(value) {
-    if (typeof Blob === 'undefined') {
-      return false;
-    }
-
-    return value instanceof Blob || Object.prototype.toString.call(value) === '[object Blob]';
-  };
-
-  var DEFAULTS = {
-    /**
-     * Indicates if output the original image instead of the compressed one
-     * when the size of the compressed image is greater than the original one's
-     * @type {boolean}
-     */
-    strict: true,
-
-    /**
-     * Indicates if read the image's Exif Orientation information,
-     * and then rotate or flip the image automatically.
-     * @type {boolean}
-     */
-    checkOrientation: true,
-
-    /**
-     * The max width of the output image.
-     * @type {number}
-     */
-    maxWidth: Infinity,
-
-    /**
-     * The max height of the output image.
-     * @type {number}
-     */
-    maxHeight: Infinity,
-
-    /**
-     * The min width of the output image.
-     * @type {number}
-     */
-    minWidth: 0,
-
-    /**
-     * The min height of the output image.
-     * @type {number}
-     */
-    minHeight: 0,
-
-    /**
-     * The width of the output image.
-     * If not specified, the natural width of the source image will be used.
-     * @type {number}
-     */
-    width: undefined,
-
-    /**
-     * The height of the output image.
-     * If not specified, the natural height of the source image will be used.
-     * @type {number}
-     */
-    height: undefined,
-
-    /**
-     * Sets how the size of the image should be resized to the container
-     * specified by the `width` and `height` options.
-     * @type {string}
-     */
-    resize: 'none',
-
-    /**
-     * The quality of the output image.
-     * It must be a number between `0` and `1`,
-     * and only available for `image/jpeg` and `image/webp` images.
-     * Check out {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob canvas.toBlob}.
-     * @type {number}
-     */
-    quality: 0.8,
-
-    /**
-     * The mime type of the output image.
-     * By default, the original mime type of the source image file will be used.
-     * @type {string}
-     */
-    mimeType: 'auto',
-
-    /**
-     * Files whose file type is included in this list,
-     * and whose file size exceeds the `convertSize` value will be converted to JPEGs.
-     * @type {string｜Array}
-     */
-    convertTypes: ['image/png'],
-
-    /**
-     * PNG files over this size (5 MB by default) will be converted to JPEGs.
-     * To disable this, just set the value to `Infinity`.
-     * @type {number}
-     */
-    convertSize: 5000000,
-
-    /**
-     * The hook function to execute before draw the image into the canvas for compression.
-     * @type {Function}
-     * @param {CanvasRenderingContext2D} context - The 2d rendering context of the canvas.
-     * @param {HTMLCanvasElement} canvas - The canvas for compression.
-     * @example
-     * function (context, canvas) {
-     *   context.fillStyle = '#fff';
-     * }
-     */
-    beforeDraw: null,
-
-    /**
-     * The hook function to execute after drew the image into the canvas for compression.
-     * @type {Function}
-     * @param {CanvasRenderingContext2D} context - The 2d rendering context of the canvas.
-     * @param {HTMLCanvasElement} canvas - The canvas for compression.
-     * @example
-     * function (context, canvas) {
-     *   context.filter = 'grayscale(100%)';
-     * }
-     */
-    drew: null,
-
-    /**
-     * The hook function to execute when success to compress the image.
-     * @type {Function}
-     * @param {File} file - The compressed image File object.
-     * @example
-     * function (file) {
-     *   console.log(file);
-     * }
-     */
-    success: null,
-
-    /**
-     * The hook function to execute when fail to compress the image.
-     * @type {Function}
-     * @param {Error} err - An Error object.
-     * @example
-     * function (err) {
-     *   console.log(err.message);
-     * }
-     */
-    error: null
-  };
-
-  var IS_BROWSER = typeof window !== 'undefined' && typeof window.document !== 'undefined';
-  var WINDOW = IS_BROWSER ? window : {};
-
-  /**
-   * Check if the given value is a positive number.
-   * @param {*} value - The value to check.
-   * @returns {boolean} Returns `true` if the given value is a positive number, else `false`.
-   */
-
-  var isPositiveNumber = function isPositiveNumber(value) {
-    return value > 0 && value < Infinity;
-  };
-  var slice = Array.prototype.slice;
-  /**
-   * Convert array-like or iterable object to an array.
-   * @param {*} value - The value to convert.
-   * @returns {Array} Returns a new array.
-   */
-
-  function toArray(value) {
-    return Array.from ? Array.from(value) : slice.call(value);
-  }
-  var REGEXP_IMAGE_TYPE = /^image\/.+$/;
-  /**
-   * Check if the given value is a mime type of image.
-   * @param {*} value - The value to check.
-   * @returns {boolean} Returns `true` if the given is a mime type of image, else `false`.
-   */
-
-  function isImageType(value) {
-    return REGEXP_IMAGE_TYPE.test(value);
-  }
-  /**
-   * Convert image type to extension.
-   * @param {string} value - The image type to convert.
-   * @returns {boolean} Returns the image extension.
-   */
-
-  function imageTypeToExtension(value) {
-    var extension = isImageType(value) ? value.substr(6) : '';
-
-    if (extension === 'jpeg') {
-      extension = 'jpg';
-    }
-
-    return '.'.concat(extension);
-  }
-  var fromCharCode = String.fromCharCode;
-  /**
-   * Get string from char code in data view.
-   * @param {DataView} dataView - The data view for read.
-   * @param {number} start - The start index.
-   * @param {number} length - The read length.
-   * @returns {string} The read result.
-   */
-
-  function getStringFromCharCode(dataView, start, length) {
-    var str = '';
-    var i;
-    length += start;
-
-    for (i = start; i < length; i += 1) {
-      str += fromCharCode(dataView.getUint8(i));
-    }
-
-    return str;
-  }
-  var btoa = WINDOW.btoa;
-  /**
-   * Transform array buffer to Data URL.
-   * @param {ArrayBuffer} arrayBuffer - The array buffer to transform.
-   * @param {string} mimeType - The mime type of the Data URL.
-   * @returns {string} The result Data URL.
-   */
-
-  function arrayBufferToDataURL(arrayBuffer, mimeType) {
-    var chunks = [];
-    var chunkSize = 8192;
-    var uint8 = new Uint8Array(arrayBuffer);
-
-    while (uint8.length > 0) {
-      // XXX: Babel's `toConsumableArray` helper will throw error in IE or Safari 9
-      // eslint-disable-next-line prefer-spread
-      chunks.push(fromCharCode.apply(null, toArray(uint8.subarray(0, chunkSize))));
-      uint8 = uint8.subarray(chunkSize);
-    }
-
-    return 'data:'.concat(mimeType, ';base64,').concat(btoa(chunks.join('')));
-  }
-  /**
-   * Get orientation value from given array buffer.
-   * @param {ArrayBuffer} arrayBuffer - The array buffer to read.
-   * @returns {number} The read orientation value.
-   */
-
-  function resetAndGetOrientation(arrayBuffer) {
-    var dataView = new DataView(arrayBuffer);
-    var orientation; // Ignores range error when the image does not have correct Exif information
-
-    try {
-      var littleEndian;
-      var app1Start;
-      var ifdStart; // Only handle JPEG image (start by 0xFFD8)
-
-      if (dataView.getUint8(0) === 0xFF && dataView.getUint8(1) === 0xD8) {
-        var length = dataView.byteLength;
-        var offset = 2;
-
-        while (offset + 1 < length) {
-          if (dataView.getUint8(offset) === 0xFF && dataView.getUint8(offset + 1) === 0xE1) {
-            app1Start = offset;
-            break;
-          }
-
-          offset += 1;
-        }
-      }
-
-      if (app1Start) {
-        var exifIDCode = app1Start + 4;
-        var tiffOffset = app1Start + 10;
-
-        if (getStringFromCharCode(dataView, exifIDCode, 4) === 'Exif') {
-          var endianness = dataView.getUint16(tiffOffset);
-          littleEndian = endianness === 0x4949;
-
-          if (littleEndian || endianness === 0x4D4D
-          /* bigEndian */
-          ) {
-            if (dataView.getUint16(tiffOffset + 2, littleEndian) === 0x002A) {
-              var firstIFDOffset = dataView.getUint32(tiffOffset + 4, littleEndian);
-
-              if (firstIFDOffset >= 0x00000008) {
-                ifdStart = tiffOffset + firstIFDOffset;
-              }
-            }
-          }
-        }
-      }
-
-      if (ifdStart) {
-        var _length = dataView.getUint16(ifdStart, littleEndian);
-
-        var _offset;
-
-        var i;
-
-        for (i = 0; i < _length; i += 1) {
-          _offset = ifdStart + i * 12 + 2;
-
-          if (dataView.getUint16(_offset, littleEndian) === 0x0112
-          /* Orientation */
-          ) {
-            // 8 is the offset of the current tag's value
-            _offset += 8; // Get the original orientation value
-
-            orientation = dataView.getUint16(_offset, littleEndian); // Override the orientation with its default value
-
-            dataView.setUint16(_offset, 1, littleEndian);
-            break;
-          }
-        }
-      }
-    } catch (e) {
-      orientation = 1;
-    }
-
-    return orientation;
-  }
-  /**
-   * Parse Exif Orientation value.
-   * @param {number} orientation - The orientation to parse.
-   * @returns {Object} The parsed result.
-   */
-
-  function parseOrientation(orientation) {
-    var rotate = 0;
-    var scaleX = 1;
-    var scaleY = 1;
-
-    switch (orientation) {
-      // Flip horizontal
-      case 2:
-        scaleX = -1;
-        break;
-      // Rotate left 180°
-
-      case 3:
-        rotate = -180;
-        break;
-      // Flip vertical
-
-      case 4:
-        scaleY = -1;
-        break;
-      // Flip vertical and rotate right 90°
-
-      case 5:
-        rotate = 90;
-        scaleY = -1;
-        break;
-      // Rotate right 90°
-
-      case 6:
-        rotate = 90;
-        break;
-      // Flip horizontal and rotate right 90°
-
-      case 7:
-        rotate = 90;
-        scaleX = -1;
-        break;
-      // Rotate left 90°
-
-      case 8:
-        rotate = -90;
-        break;
-    }
-
-    return {
-      rotate: rotate,
-      scaleX: scaleX,
-      scaleY: scaleY
-    };
-  }
-  var REGEXP_DECIMALS = /\.\d*(?:0|9){12}\d*$/;
-  /**
-   * Normalize decimal number.
-   * Check out {@link https://0.30000000000000004.com/}
-   * @param {number} value - The value to normalize.
-   * @param {number} [times=100000000000] - The times for normalizing.
-   * @returns {number} Returns the normalized number.
-   */
-
-  function normalizeDecimalNumber(value) {
-    var times = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 100000000000;
-    return REGEXP_DECIMALS.test(value) ? Math.round(value * times) / times : value;
-  }
-  /**
-   * Get the max sizes in a rectangle under the given aspect ratio.
-   * @param {Object} data - The original sizes.
-   * @param {string} [type='contain'] - The adjust type.
-   * @returns {Object} The result sizes.
-   */
-
-  function getAdjustedSizes(_ref) {
-    var aspectRatio = _ref.aspectRatio,
-        height = _ref.height,
-        width = _ref.width;
-    var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'none';
-    var isValidWidth = isPositiveNumber(width);
-    var isValidHeight = isPositiveNumber(height);
-
-    if (isValidWidth && isValidHeight) {
-      var adjustedWidth = height * aspectRatio;
-
-      if ((type === 'contain' || type === 'none') && adjustedWidth > width || type === 'cover' && adjustedWidth < width) {
-        height = width / aspectRatio;
-      } else {
-        width = height * aspectRatio;
-      }
-    } else if (isValidWidth) {
-      height = width / aspectRatio;
-    } else if (isValidHeight) {
-      width = height * aspectRatio;
-    }
-
-    return {
-      width: width,
-      height: height
-    };
-  }
-
-  var ArrayBuffer$1 = WINDOW.ArrayBuffer,
-      FileReader = WINDOW.FileReader;
-  var URL = WINDOW.URL || WINDOW.webkitURL;
-  var REGEXP_EXTENSION = /\.\w+$/;
-  var AnotherCompressor = WINDOW.Compressor;
-  /**
-   * Creates a new image compressor.
-   * @class
-   */
-
-  var Compressor = /*#__PURE__*/function () {
-    /**
-     * The constructor of Compressor.
-     * @param {File|Blob} file - The target image file for compressing.
-     * @param {Object} [options] - The options for compressing.
-     */
-    function Compressor(file, options) {
-      _classCallCheck(this, Compressor);
-
-      this.file = file;
-      this.image = new Image();
-      this.options = _objectSpread2(_objectSpread2({}, DEFAULTS), options);
-      this.aborted = false;
-      this.result = null;
-      this.init();
-    }
-
-    _createClass(Compressor, [{
-      key: 'init',
-      value: function init() {
-        var _this = this;
-
-        var file = this.file,
-            options = this.options;
-
-        if (!isBlob(file)) {
-          this.fail(new Error('The first argument must be a File or Blob object.'));
-          return;
-        }
-
-        var mimeType = file.type;
-
-        if (!isImageType(mimeType)) {
-          this.fail(new Error('The first argument must be an image File or Blob object.'));
-          return;
-        }
-
-        if (!URL || !FileReader) {
-          this.fail(new Error('The current browser does not support image compression.'));
-          return;
-        }
-
-        if (!ArrayBuffer$1) {
-          options.checkOrientation = false;
-        }
-
-        if (URL && !options.checkOrientation) {
-          this.load({
-            url: URL.createObjectURL(file)
-          });
-        } else {
-          var reader = new FileReader();
-          var checkOrientation = options.checkOrientation && mimeType === 'image/jpeg';
-          this.reader = reader;
-
-          reader.onload = function (_ref) {
-            var target = _ref.target;
-            var result = target.result;
-            var data = {};
-
-            if (checkOrientation) {
-              // Reset the orientation value to its default value 1
-              // as some iOS browsers will render image with its orientation
-              var orientation = resetAndGetOrientation(result);
-
-              if (orientation > 1 || !URL) {
-                // Generate a new URL which has the default orientation value
-                data.url = arrayBufferToDataURL(result, mimeType);
-
-                if (orientation > 1) {
-                  _extends(data, parseOrientation(orientation));
-                }
-              } else {
-                data.url = URL.createObjectURL(file);
-              }
-            } else {
-              data.url = result;
-            }
-
-            _this.load(data);
-          };
-
-          reader.onabort = function () {
-            _this.fail(new Error('Aborted to read the image with FileReader.'));
-          };
-
-          reader.onerror = function () {
-            _this.fail(new Error('Failed to read the image with FileReader.'));
-          };
-
-          reader.onloadend = function () {
-            _this.reader = null;
-          };
-
-          if (checkOrientation) {
-            reader.readAsArrayBuffer(file);
-          } else {
-            reader.readAsDataURL(file);
-          }
-        }
-      }
-    }, {
-      key: 'load',
-      value: function load(data) {
-        var _this2 = this;
-
-        var file = this.file,
-            image = this.image;
-
-        image.onload = function () {
-          _this2.draw(_objectSpread2(_objectSpread2({}, data), {}, {
-            naturalWidth: image.naturalWidth,
-            naturalHeight: image.naturalHeight
-          }));
-        };
-
-        image.onabort = function () {
-          _this2.fail(new Error('Aborted to load the image.'));
-        };
-
-        image.onerror = function () {
-          _this2.fail(new Error('Failed to load the image.'));
-        }; // Match all browsers that use WebKit as the layout engine in iOS devices,
-        // such as Safari for iOS, Chrome for iOS, and in-app browsers.
-
-
-        if (WINDOW.navigator && /(?:iPad|iPhone|iPod).*?AppleWebKit/i.test(WINDOW.navigator.userAgent)) {
-          // Fix the `The operation is insecure` error (#57)
-          image.crossOrigin = 'anonymous';
-        }
-
-        image.alt = file.name;
-        image.src = data.url;
-      }
-    }, {
-      key: 'draw',
-      value: function draw(_ref2) {
-        var _this3 = this;
-
-        var naturalWidth = _ref2.naturalWidth,
-            naturalHeight = _ref2.naturalHeight,
-            _ref2$rotate = _ref2.rotate,
-            rotate = _ref2$rotate === void 0 ? 0 : _ref2$rotate,
-            _ref2$scaleX = _ref2.scaleX,
-            scaleX = _ref2$scaleX === void 0 ? 1 : _ref2$scaleX,
-            _ref2$scaleY = _ref2.scaleY,
-            scaleY = _ref2$scaleY === void 0 ? 1 : _ref2$scaleY;
-        var file = this.file,
-            image = this.image,
-            options = this.options;
-        var canvas = document.createElement('canvas');
-        var context = canvas.getContext('2d');
-        var is90DegreesRotated = Math.abs(rotate) % 180 === 90;
-        var resizable = (options.resize === 'contain' || options.resize === 'cover') && isPositiveNumber(options.width) && isPositiveNumber(options.height);
-        var maxWidth = Math.max(options.maxWidth, 0) || Infinity;
-        var maxHeight = Math.max(options.maxHeight, 0) || Infinity;
-        var minWidth = Math.max(options.minWidth, 0) || 0;
-        var minHeight = Math.max(options.minHeight, 0) || 0;
-        var aspectRatio = naturalWidth / naturalHeight;
-        var width = options.width,
-            height = options.height;
-
-        if (is90DegreesRotated) {
-          var _ref3 = [maxHeight, maxWidth];
-          maxWidth = _ref3[0];
-          maxHeight = _ref3[1];
-          var _ref4 = [minHeight, minWidth];
-          minWidth = _ref4[0];
-          minHeight = _ref4[1];
-          var _ref5 = [height, width];
-          width = _ref5[0];
-          height = _ref5[1];
-        }
-
-        if (resizable) {
-          aspectRatio = width / height;
-        }
-
-        var _getAdjustedSizes = getAdjustedSizes({
-          aspectRatio: aspectRatio,
-          width: maxWidth,
-          height: maxHeight
-        }, 'contain');
-
-        maxWidth = _getAdjustedSizes.width;
-        maxHeight = _getAdjustedSizes.height;
-
-        var _getAdjustedSizes2 = getAdjustedSizes({
-          aspectRatio: aspectRatio,
-          width: minWidth,
-          height: minHeight
-        }, 'cover');
-
-        minWidth = _getAdjustedSizes2.width;
-        minHeight = _getAdjustedSizes2.height;
-
-        if (resizable) {
-          var _getAdjustedSizes3 = getAdjustedSizes({
-            aspectRatio: aspectRatio,
-            width: width,
-            height: height
-          }, options.resize);
-
-          width = _getAdjustedSizes3.width;
-          height = _getAdjustedSizes3.height;
-        } else {
-          var _getAdjustedSizes4 = getAdjustedSizes({
-            aspectRatio: aspectRatio,
-            width: width,
-            height: height
-          });
-
-          var _getAdjustedSizes4$wi = _getAdjustedSizes4.width;
-          width = _getAdjustedSizes4$wi === void 0 ? naturalWidth : _getAdjustedSizes4$wi;
-          var _getAdjustedSizes4$he = _getAdjustedSizes4.height;
-          height = _getAdjustedSizes4$he === void 0 ? naturalHeight : _getAdjustedSizes4$he;
-        }
-
-        width = Math.floor(normalizeDecimalNumber(Math.min(Math.max(width, minWidth), maxWidth)));
-        height = Math.floor(normalizeDecimalNumber(Math.min(Math.max(height, minHeight), maxHeight)));
-        var destX = -width / 2;
-        var destY = -height / 2;
-        var destWidth = width;
-        var destHeight = height;
-        var params = [];
-
-        if (resizable) {
-          var srcX = 0;
-          var srcY = 0;
-          var srcWidth = naturalWidth;
-          var srcHeight = naturalHeight;
-
-          var _getAdjustedSizes5 = getAdjustedSizes({
-            aspectRatio: aspectRatio,
-            width: naturalWidth,
-            height: naturalHeight
-          }, {
-            contain: 'cover',
-            cover: 'contain'
-          }[options.resize]);
-
-          srcWidth = _getAdjustedSizes5.width;
-          srcHeight = _getAdjustedSizes5.height;
-          srcX = (naturalWidth - srcWidth) / 2;
-          srcY = (naturalHeight - srcHeight) / 2;
-          params.push(srcX, srcY, srcWidth, srcHeight);
-        }
-
-        params.push(destX, destY, destWidth, destHeight);
-
-        if (is90DegreesRotated) {
-          var _ref6 = [height, width];
-          width = _ref6[0];
-          height = _ref6[1];
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        if (!isImageType(options.mimeType)) {
-          options.mimeType = file.type;
-        }
-
-        var fillStyle = 'transparent'; // Converts PNG files over the `convertSize` to JPEGs.
-
-        if (file.size > options.convertSize && options.convertTypes.indexOf(options.mimeType) >= 0) {
-          options.mimeType = 'image/jpeg';
-        }
-
-        if (options.mimeType === 'image/jpeg') {
-          fillStyle = '#fff';
-        } // Override the default fill color (#000, black)
-
-
-        context.fillStyle = fillStyle;
-        context.fillRect(0, 0, width, height);
-
-        if (options.beforeDraw) {
-          options.beforeDraw.call(this, context, canvas);
-        }
-
-        if (this.aborted) {
-          return;
-        }
-
-        context.save();
-        context.translate(width / 2, height / 2);
-        context.rotate(rotate * Math.PI / 180);
-        context.scale(scaleX, scaleY);
-        context.drawImage.apply(context, [image].concat(params));
-        context.restore();
-
-        if (options.drew) {
-          options.drew.call(this, context, canvas);
-        }
-
-        if (this.aborted) {
-          return;
-        }
-
-        var done = function done(result) {
-          if (!_this3.aborted) {
-            _this3.done({
-              naturalWidth: naturalWidth,
-              naturalHeight: naturalHeight,
-              result: result
-            });
-          }
-        };
-
-        if (canvas.toBlob) {
-          canvas.toBlob(done, options.mimeType, options.quality);
-        } else {
-          done(toBlob(canvas.toDataURL(options.mimeType, options.quality)));
-        }
-      }
-    }, {
-      key: 'done',
-      value: function done(_ref7) {
-        var naturalWidth = _ref7.naturalWidth,
-            naturalHeight = _ref7.naturalHeight,
-            result = _ref7.result;
-        var file = this.file,
-            image = this.image,
-            options = this.options;
-
-        if (URL && !options.checkOrientation) {
-          URL.revokeObjectURL(image.src);
-        }
-
-        if (result) {
-          // Returns original file if the result is greater than it and without size related options
-          if (options.strict && result.size > file.size && options.mimeType === file.type && !(options.width > naturalWidth || options.height > naturalHeight || options.minWidth > naturalWidth || options.minHeight > naturalHeight || options.maxWidth < naturalWidth || options.maxHeight < naturalHeight)) {
-            result = file;
-          } else {
-            var date = new Date();
-            result.lastModified = date.getTime();
-            result.lastModifiedDate = date;
-            result.name = file.name; // Convert the extension to match its type
-
-            if (result.name && result.type !== file.type) {
-              result.name = result.name.replace(REGEXP_EXTENSION, imageTypeToExtension(result.type));
-            }
-          }
-        } else {
-          // Returns original file if the result is null in some cases.
-          result = file;
-        }
-
-        this.result = result;
-
-        if (options.success) {
-          options.success.call(this, result);
-        }
-      }
-    }, {
-      key: 'fail',
-      value: function fail(err) {
-        var options = this.options;
-
-        if (options.error) {
-          options.error.call(this, err);
-        } else {
-          throw err;
-        }
-      }
-    }, {
-      key: 'abort',
-      value: function abort() {
-        if (!this.aborted) {
-          this.aborted = true;
-
-          if (this.reader) {
-            this.reader.abort();
-          } else if (!this.image.complete) {
-            this.image.onload = null;
-            this.image.onabort();
-          } else {
-            this.fail(new Error('The compression process has been aborted.'));
-          }
-        }
-      }
-      /**
-       * Get the no conflict compressor class.
-       * @returns {Compressor} The compressor class.
-       */
-
-    }], [{
-      key: 'noConflict',
-      value: function noConflict() {
-        window.Compressor = AnotherCompressor;
-        return Compressor;
-      }
-      /**
-       * Change the default options.
-       * @param {Object} options - The new default options.
-       */
-
-    }, {
-      key: 'setDefaults',
-      value: function setDefaults(options) {
-        _extends(DEFAULTS, options);
-      }
-    }]);
-
-    return Compressor;
-  }();
-
-  return Compressor;
-
-}));
 (function(context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
@@ -9859,7 +8809,7 @@
   }
 })(this, function(Vue, SystemInfo, DateUtil) {
   'use strict';
-  var version = '1.6.31';
+  var version = '1.6.8';
   var _toString = Object.prototype.toString;
   var _map = Array.prototype.map;
   var _filter = Array.prototype.filter;
@@ -9954,35 +8904,6 @@
     var decimals = parts[1] ? dsep + parts[1] : '';
     return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + tsep) + decimals;
   };
-
-  function DoFn(D) {
-    return D;
-  }
-  var dateI18n = {};
-
-  function getDateI18n() {
-    var lang = Vue.config.lang;
-    if (dateI18n.hasOwnProperty(lang)) {
-      return dateI18n[lang];
-    } else {
-      var i18n = {
-        dayNamesShort: Vue.t('vue.dateformat.dayNamesShort').split('_'),
-        dayNames: Vue.t('vue.dateformat.dayNames').split('_'),
-        monthNamesShort: Vue.t('vue.dateformat.monthNamesShort').split('_'),
-        monthNames: Vue.t('vue.dateformat.monthNames').split('_'),
-        amPm: Vue.t('vue.dateformat.amPm').split('_'),
-        DoFn: window.DoFn || DoFn,
-      };
-
-      // 当取到星期长度不为7，证明多语言中没取到，返回undefined，按照英文显示
-      if (i18n.dayNames.length != 7) {
-        i18n = undefined;
-      }
-      dateI18n[lang] = i18n;
-      return i18n;
-    }
-  }
-  
   var formatDate = function(date, format) {
     date = toDate(date);
     if (!isDef(date)) return null;
@@ -9990,7 +8911,7 @@
     if(format == 'timestamp'){
       return date.getTime();
     }
-    return DateUtil.format(date, format || 'yyyy-MM-dd', getDateI18n());
+    return DateUtil.format(date, format || 'yyyy-MM-dd');
   };
   var range = function a(n) {
     // see https://stackoverflow.com/questions/3746725/create-a-javascript-array-containing-1-n
@@ -10065,12 +8986,10 @@
       str = formatDate(string, format);
     } else if(!format && string.indexOf('GMT') > -1) {
       return new Date(string);
-    } else if (!format && /\d{4}-\d{2}-\d{2}T/.test(string)) {
-      return new Date(string);
     }
 
     if (!isDef(str)) str = string;
-    return DateUtil.parse(str, format || 'yyyy-MM-dd', getDateI18n());
+    return DateUtil.parse(str, format || 'yyyy-MM-dd');
   };
   var getDayCountOfMonth = function(year, month) {
     isDef(year) && (year = year*1);
@@ -10156,10 +9075,11 @@
   };
   var getWeekNumber = function(date) {
     date = toDate(date);
+    if (!isDate(date)) return null;
     date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-    var week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    date.setTime((date.getTime() + (6 - date.getDay()) * 86400000));
+    var firstDate = new Date(date.getFullYear(), 0, 1);
+    return Math.ceil(((date.getTime() - firstDate.getTime()) / 86400000) / 7);
   };
 
   var getRangeHours = function (ranges) {
@@ -11035,23 +9955,10 @@ function toArrayTree (array, options) {
         }
         return parent;
       },
-      level: function() {
-        var parent = this.$parent;
-        var level = 1;
-      
-        while (parent && parent.$options.name !== 'VueMenu') {
-          if (parent.$options.name === 'VueSubmenu') {
-            level++;
-          }
-          parent = parent.$parent;
-        }
-
-        return level;
-      },
       paddingStyle: function() {
         if (this.rootMenu.mode !== 'vertical') return {};
-        var paddingSize = this.parentMenu.indentSizeVal || 20;
-        var padding = paddingSize;
+        var padding = 20;
+        var parent = this.$parent;
 
         if (this.rootMenu.collapse) {
           return {
@@ -11059,13 +9966,19 @@ function toArrayTree (array, options) {
             paddingRight: '20px'
           };
         } else {
+          while (parent && parent.$options.name !== 'VueMenu') {
+            if (parent.$options.name === 'VueSubmenu') {
+              padding += 20;
+            }
+            parent = parent.$parent;
+          }
+
           return {
-            paddingLeft: this.rootMenu.indentMethod? this.rootMenu.indentMethod(this.level) + 'px' : padding * this.level + 'px'
+            paddingLeft: padding + 'px'
           };
         }
-      },
-      indentSizeVal: function() {
-        return this.indentSize || this.parentMenu.indentSizeVal;
+
+        
       }
     }
   };
@@ -11074,9 +9987,6 @@ function toArrayTree (array, options) {
     render: function(createElement, obj) {
       var vueComponent = obj.parent;
       var children = obj.children;
-      if (obj.props && obj.props.disabled === true) {
-        return createElement('transition',{}, children);
-      }
       var data = {
         on: {
           'beforeEnter': function(el) {
@@ -11184,20 +10094,16 @@ function toArrayTree (array, options) {
             }
             
           if (isDef(binding.expression) && isFunction(vnode.context[binding.expression])) {
-            vnode.context[binding.expression](mouseup,mousedown);
+            vnode.context[binding.expression]();
           } else {
             isFunction(binding.value) && binding.value();
           }
         });
       };
-
-      var isMobile = VueUtil.getSystemInfo().device == 'Mobile';
-      var startEvent = isMobile ? 'touchstart' : 'mousedown';
-      var endEvent = isMobile ? 'touchend' : 'mouseup';
-      on(document, startEvent, function(e) {
+      on(document, 'mousedown', function(e) {
         startClick = e;
       });
-      on(document, endEvent, function(e) {
+      on(document, 'mouseup', function(e) {
         clickOutSideFn(e, startClick);
       });
     }
@@ -11231,14 +10137,11 @@ function toArrayTree (array, options) {
   var scrollingMethods = [];
   document.addEventListener('scroll', lodash.debounce(function(e) {
 
+    if (VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs) return;
     var className = e.target.className || '';
     if(className.indexOf('contract-trigger') > -1 || className.indexOf('expand-trigger') > -1) return;
 
     scrollingMethods.forEach(function(obj) {
-      if (!obj.force) {
-        if (VueUtil.getSystemInfo().device == 'Mobile' && (VueUtil.getSystemInfo().isLoadMobileJs || VueUtil.disableScrollDirective) ) return;
-      }
-
 
       if (e.target !== obj.el && e.target.contains(obj.el)) {
         if(typeof obj.method == 'function') {
@@ -11260,7 +10163,6 @@ function toArrayTree (array, options) {
       };
       el.__scrollingNodes__ = bindingObj;
       bindingObj.method = binding.value;
-      bindingObj.force = binding.modifiers.force;
       if(scrollingMethods.indexOf(bindingObj) == -1) {
         scrollingMethods.push(bindingObj);
       }
@@ -11271,8 +10173,6 @@ function toArrayTree (array, options) {
       if(index > -1) {
         scrollingMethods.splice(index, 1);
       }
-      el.__scrollingNodes__ = null;
-      bindingObj = null;
     }
   };
 
@@ -11470,7 +10370,7 @@ function toArrayTree (array, options) {
   
   var noop = function noop() {};
   
-  var getKeyMap = function getKeyMap(key, bind, original) {
+  var getKeyMap = function getKeyMap(key, bind) {
       var result = {};
       var keyup = bind.keyup;
       var keydown = bind.keydown;
@@ -11484,7 +10384,6 @@ function toArrayTree (array, options) {
             break;
   
           default:
-            result.keyName = keyName;
             result.keyCode = keyCode(keyName);
         }
       });
@@ -11492,13 +10391,7 @@ function toArrayTree (array, options) {
         keydown: keydown || (keyup ? noop : bind),
         keyup: keyup || noop
       };
-
-      if(original) {
-        original.push(result);
-        return original;
-      } else {
-        return [result];
-      }
+      return result;
   };
 
   function isElementTopLayer(el) {
@@ -11522,14 +10415,7 @@ function toArrayTree (array, options) {
         }, 0);
       }
     },
-    focusClick: function (e, el) {
-      if(isElementTopLayer(el)) {
-        hotkeyHandlers.focus(e, el); // 点击动作执行前，先focus到对应的位置
-        setTimeout(function() {
-          el.click();
-        }, 0);
-      }
-    },
+
     focus: function (e, el) {
       if(isElementTopLayer(el)) {
         setTimeout(function() {
@@ -11557,16 +10443,11 @@ function toArrayTree (array, options) {
     }
     if(!handler) return;
 
-    el._keymap = getKeyMap(key, handler, el._keymap);
-    if (el._binded) return;
-
-    el._binded = true;
+    el._keymap = getKeyMap(key, handler);
     var allow = binding.modifiers.allow || false;
 
     el._keyHandler = function (e) {
-        var hotkey = VueUtil.find(el._keymap, function(hotkey) {
-          return hotkey.keyCode === e.keyCode;
-        }) || {};
+        var hotkey = el._keymap;
         var callback = hotkey.keyCode === e.keyCode &&
           !!hotkey.ctrl === e.ctrlKey &&
           !!hotkey.alt === e.altKey &&
@@ -11587,21 +10468,15 @@ function toArrayTree (array, options) {
 
         if(!callback || callback === noop) return;
         
-        // 获取最顶层容器，如aside,dialog等等
-        var topContainer = Array.prototype.filter.call(document.querySelectorAll('.vue-dialog, .vue-aside, .vue-message-box'), function(container) {
+        // 获取最顶层aside,dialog
+        var topContainer = Array.prototype.filter.call(document.querySelectorAll('.vue-dialog, .vue-aside'), function(container) {
           return isElementTopLayer(container);
         });
 
-        // 如果存在顶层容器，且当前元素不在最顶层的容器里，结束
+        // 判断当前元素是不是在顶层容器里
         if (topContainer.length > 0 && !(topContainer[topContainer.length - 1].contains(el) )) {
-          var vm = el.__vue__;
-          //VueDropdownItem下拉展开后，下次展开会append到aside外层的div，所以找到对应的父VueDropdown，判断它的el是不是在顶层aside下,如果不是，就跳过
-          if(vm && vm.$options && vm.$options.name == 'VueDropdownItem') { 
-            var parentVueDropdown = getParentComp(vm, 'VueDropdown');
-            if (parentVueDropdown && !(topContainer[topContainer.length - 1].contains(parentVueDropdown.$el) )) {
-              return;
-            }
-          } else {
+          var parentAside = getParentAside(el.__vue__);
+          if((!parentAside) || (!parentAside.$el.contains(topContainer[topContainer.length - 1]))){
             return;
           }
         }
@@ -11614,15 +10489,7 @@ function toArrayTree (array, options) {
         if(!currentElm.__vue__ || currentElm.__vue__._inactive) {
           return;
         }
-
-        var parent = getNearestParent(el.__vue__, function(parent){
-          return VueUtil.isFunction(parent.beforeHotkeyHandler);
-        });
-
-        if (parent && parent.beforeHotkeyHandler(hotkey) === false) {
-          return;
-        }
-
+        
         if (callback.prototype) {
           callback.call(vnode.context, e, el);
         } else {
@@ -11637,31 +10504,18 @@ function toArrayTree (array, options) {
   function unbindEvent(el) {
     document.removeEventListener('keydown', el._keyHandler);
     document.removeEventListener('keyup', el._keyHandler);
-    el._binded = undefined;
-    el._keyHandler = undefined;
-    el._keymap = undefined;
   }
 
-  function getParentComp(vm, names){
-
-    if(!vm) {
-      return;
-    }
-
-    if (!names) names = [];
-    if (typeof names == 'string') {
-      names = [names];
-    }
-
+  function getParentAside(vm){
     if((!vm.$parent) || (!vm.$parent.$options.name)){
      return null;
-    }else if(names.indexOf(vm.$parent.$options.name) > -1){
+    }else if(vm.$parent.$options.name === 'VueAside' || vm.$parent.$options.name === 'VueDialog'){
         return vm.$parent;
     }else {
-        return getParentComp(vm.$parent, names);
+        return getParentAside(vm.$parent);
     }
   }
-
+  
   Vue.directive('hotkey', {
     bind: function (el, binding, vnode) {
       bindEvent.call(this, el, binding, vnode);
@@ -11767,9 +10621,7 @@ function toArrayTree (array, options) {
   }
 
   var closest = function (element, selector) {
-    if (element.closest) {
-      return element.closest(selector);
-    }
+
     while (element && element.nodeType === 1) {
       if (element.matches(selector)) {
         return element;
@@ -11779,212 +10631,8 @@ function toArrayTree (array, options) {
 
     return null;
   };
-
-  // 多列排序方法 github.com/Teun/thenBy.js
-  var firstBy = (function () {
-    function identity(v) { return v; }
-
-    function ignoreCase(v) { return typeof (v) === 'string' ? v.toLowerCase() : v; }
-
-    function makeCompareFunction(f, opt) {
-      opt = typeof (opt) === 'number' ? { direction: opt } : opt || {};
-      if (typeof (f) != 'function') {
-        var prop = f;
-        // make unary function
-        f = function (v1) { var value = VueUtil.get(v1, prop); return value ? value : ''; };
-      }
-      if (f.length === 1) {
-        // f is a unary function mapping a single item to its sort score
-        var uf = f;
-        var preprocess = opt.ignoreCase ? ignoreCase : identity;
-        var cmp = opt.cmp || function (v1, v2) { return v1 < v2 ? -1 : v1 > v2 ? 1 : 0; };
-        f = function (v1, v2) { return cmp(preprocess(uf(v1)), preprocess(uf(v2))); };
-      }
-      if (opt.direction === -1) return function (v1, v2) { return -f(v1, v2); };
-      return f;
-    }
-    function tb(func, opt) {
-      var x = (typeof (this) == 'function' && !this.firstBy) ? this : false;
-      var y = makeCompareFunction(func, opt);
-      var f = x ? function (a, b) {
-        return x(a, b) || y(a, b);
-      }
-        : y;
-      f.thenBy = tb;
-      return f;
-    }
-    tb.firstBy = tb;
-    return tb;
-  })();
-
-  function sortByKeys(sortAry, data) {
-    if (!sortAry || sortAry.length === 0) {
-      return data;
-    }
-    var sortFunc = firstBy(sortAry[0].prop || sortAry[0].property, sortAry[0].order === 'desc' ? -1 : undefined);
-    for (var index = 1; index < sortAry.length; index++) {
-      sortFunc = sortFunc.thenBy(sortAry[index].prop || sortAry[index].property, sortAry[index].order === 'desc' ? -1 : undefined);
-    }
-    data = data.sort(sortFunc);
-    return data;
-  }
-
-  function getNearestParent(vm, func) {
-    if (!vm) return;
-    var parent = vm.$parent || vm.$root;
-    while (parent) {
-      if(func(parent)){
-        return parent;
-      }
-      parent = parent.$parent;
-    }
-  }
-
-  function compressImage(file, option) {
-    return new Promise(function(res, rej) {
-
-      var opts = {
-        strict: false,
-        checkOrientation: false,
-        success: function(result) {
-          if (file.uid) {
-            result.uid = file.uid;
-          }
-          res(result);
-        },
-        err: rej
-      };
-      new ImgCompressor(file, VueUtil.merge(opts, option));
-    });
-  }
-
-function containItem(containers, item) {
-  for (var i = 0; i < containers.length; i++) {
-    var container = containers[i];
-    if (container.contains(item)) {
-      return true;
-    }
-  }
-  return false;
-}
-function trapFocus(element, options) {
-  var KEYCODE_TAB = 9;
-
-  element.addEventListener('keydown', function(e) {
-    var isTabPressed = (e.key === 'Tab' || e.keyCode === KEYCODE_TAB);
-
-    if (!isTabPressed) { 
-      return; 
-    }
-
-    var focusableEls = element.querySelectorAll('a[href]:not([disabled]), button:not([disabled]), textarea:not([disabled]), input[type="text"]:not([disabled]), input[type="radio"]:not([disabled]), input[type="checkbox"]:not([disabled]), select:not([disabled])');
-    var offsetPanels = Array.prototype.slice.call(element.querySelectorAll('.vue-tab-pane-no-hide'));
-    
-    options = (options && typeof options === 'object') ? options : {};
-
-    focusableEls = Array.prototype.slice.call(focusableEls).filter(options.filterFunc || function (item) {
-      return item.offsetParent !== null && !containItem(offsetPanels, item);
-    });
-
-    options.filter && (focusableEls = focusableEls.filter(options.filter));
-
-    var firstFocusableEl = options.first ? element.querySelector(options.first) : focusableEls[0];
-    var lastFocusableEl = options.last ? element.querySelector(options.last) : focusableEls[focusableEls.length - 1];
-
-    if ( e.shiftKey ) /* shift + tab */ {
-      if (document.activeElement === firstFocusableEl) {
-        lastFocusableEl.focus();
-          e.preventDefault();
-        }
-      } else /* tab */ {
-      if (document.activeElement === lastFocusableEl) {
-        firstFocusableEl.focus();
-          e.preventDefault();
-        }
-      }
-  });
-}
-
-function numberWithCommas(x) {
-  var parts = x.toString().split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
-}
-
-function download (url, name, opts) {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', url);
-  xhr.responseType = 'blob';
-  xhr.onload = function () {
-    saveAs(xhr.response, name, opts);
-  };
-  xhr.onerror = function () {
-    console.error('could not download file');
-  };
-  xhr.send();
-}
-
-function click (node) {
-  try {
-    node.dispatchEvent(new MouseEvent('click'));
-  } catch (e) {
-    var evt = document.createEvent('MouseEvents');
-    evt.initMouseEvent('click', true, true, window, 0, 0, 0, 80,
-                          20, false, false, false, false, 0, null);
-    node.dispatchEvent(evt);
-  }
-}
-function saveAs (blob, name, opts) {
-
-  var URL = window.URL || window.webkitURL;
-  // Namespace is used to prevent conflict w/ Chrome Poper Blocker extension (Issue #561)
-  var a = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
-  name = name || blob.name || 'download';
-
-  a.download = name;
-  a.rel = 'noopener'; // tabnabbing
-
-  // TODO: detect chrome extensions & packaged apps
-  // a.target = '_blank'
-
-  if (typeof blob === 'string') {
-    // Support regular links
-    a.href = blob;
-    if (a.origin !== location.origin && opts && opts.corsEnabled === false) {
-      click(a, a.target = '_blank');
-    } else if (a.origin !== location.origin || !('download' in HTMLAnchorElement.prototype)) {
-      download(blob, name, opts);
-    } else {
-      click(a);
-    }
-  } else {
-    if (navigator.msSaveOrOpenBlob) {
-      navigator.msSaveOrOpenBlob(blob, name);
-      return;
-    }
-    // Support blobs
-    a.href = URL.createObjectURL(blob);
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4E4); // 40s
-    setTimeout(function () { a.click(); }, 0);
-  }
-}
-
-function getUrlVars(search) {
-    var vars = {};
-    search = search || window.location.search;
-    var hashes = search.slice(search.indexOf('?') + 1).split('&');
-    for(var i = 0; i < hashes.length; i++)
-    {
-        var hash = hashes[i].split('=');
-        var key = hash[0];
-        var value = hash[1];
-        if (key) {
-          vars[key] = value ? decodeURIComponent(value) : value;
-        }
-    }
-    return vars;
-}
-
+  
+  
   var VueUtil = {
     isNull: isNull,
     isUndefined: isUndefined,
@@ -12086,7 +10734,6 @@ function getUrlVars(search) {
     getSystemInfo: getSystemInfo,
     setLang: setLang,
     setLocale: setLocale,
-    getParentComp:getParentComp,
     config: config,
     nextZIndex: popupManager.nextZIndex,
     setZIndex: popupManager.setZindex,
@@ -12110,14 +10757,6 @@ function getUrlVars(search) {
     },
     hotkeyHandlers: hotkeyHandlers,
     clipboard: clipboard,
-    sortByKeys:sortByKeys,
-    firstBy: firstBy,
-    getNearestParent: getNearestParent,
-    compressImage: compressImage,
-    trapFocus:trapFocus,
-    numberWithCommas:numberWithCommas,
-    saveAs:saveAs,
-    getUrlVars:getUrlVars,
   };
 
   Object.keys(lodash).forEach(function(funcName) {
@@ -16215,23 +14854,11 @@ function getUrlVars(search) {
     closeOnPressEscape: {
       type: Boolean,
       default: true
-    },
-    trapFocus: {
-      type: [Boolean, Object]
-    },
-    focusTriggerOnClose: {
-      type: Boolean,
-      default: false
     }
   };
   VuePopup.beforeMount = function() {
     this._popupId = 'popup-' + idSeed++;
     PopupManager.register(this._popupId, this);
-  };
-  VuePopup.mounted = function() {
-    if (this.trapFocus === true || (this.trapFocus && this.trapFocus.enable === true)) {
-      VueUtil.trapFocus(this.$el, this.trapFocus);
-    }
   };
   VuePopup.beforeDestroy = function() {
     PopupManager.deregister(this._popupId);
@@ -16239,8 +14866,7 @@ function getUrlVars(search) {
   };
   VuePopup.data = function() {
     return {
-      opened: false,
-      triggerElm: null,
+      opened: false
     };
   };
   VuePopup.watch = {
@@ -16254,12 +14880,11 @@ function getUrlVars(search) {
       };
       var self = this;
       if (val) {
-        this.triggerElm = document.activeElement;
         if (!self.opened) {
           self.$nextTick(function() {
             var dom = getDOM(self.$el);
             if (VueUtil.getStyle(dom, 'position') === 'static') {
-              VueUtil.setStyle(dom, 'position', VueUtil.getSystemInfo().os === 'iOS' ? 'relative' : 'absolute');
+              VueUtil.setStyle(dom, 'position', 'absolute');
             }
             dom.style.zIndex = PopupManager.nextZIndex();
             if (self.closeOnPressEscape)
@@ -16952,8 +15577,8 @@ function getUrlVars(search) {
       updatePopper: function() {
         this.popperJS ? this.popperJS.update() : this.createPopper();
       },
-      destroyPopper: function(forceDestroy) {
-        if ((this.showPopper && !forceDestroy) || !this.popperJS) return;
+      destroyPopper: function() {
+        if (this.showPopper || !this.popperJS) return;
         this.popperJS.destroy();
         this.popperJS = null;
       },
@@ -16979,7 +15604,7 @@ function getUrlVars(search) {
     },
     beforeDestroy: function() {
       !VueUtil.isIE && VueUtil.off(this.popperElm, 'click', this.stop);
-      this.destroyPopper(true);
+      this.destroyPopper();
     }
   };
   return VuePopper;
@@ -17116,10 +15741,6 @@ function getUrlVars(search) {
       height: Number,
       width: Number,
       noresize: Boolean,
-      doScroll: {
-        type: Boolean,
-        default: true
-      },
       tag: {
         type: String,
         default: 'div'
@@ -17200,7 +15821,6 @@ function getUrlVars(search) {
         return this.isScrollCancel(el.parentElement);
       },
       scrollMouseWheel: function(e) {
-        if (!this.doScroll) return;
         if (this.isScrollCancel(e.target)) return;
         e.stopPropagation();
         e.preventDefault();
@@ -17392,8 +16012,7 @@ function getUrlVars(search) {
       xs: [Number, Object],
       sm: [Number, Object],
       md: [Number, Object],
-      lg: [Number, Object],
-      xl: [Number, Object]
+      lg: [Number, Object]
     },
     computed: {
       gutter: function() {
@@ -17416,7 +16035,7 @@ function getUrlVars(search) {
           classList.push(prop !== 'span' ? 'vue-col-' + prop + '-' + self[prop] : 'vue-col-' + self[prop]);
         }
       });
-      VueUtil.loop(['xs', 'sm', 'md', 'lg', 'xl'], function(size) {
+      VueUtil.loop(['xs', 'sm', 'md', 'lg'], function(size) {
         if (VueUtil.isNumber(self[size])) {
           classList.push('vue-col-' + size + '-' + self[size]);
         } else if (VueUtil.isObject(self[size])) {
@@ -18094,16 +16713,6 @@ function getUrlVars(search) {
   var VueForm = {
     template: '<form :class="[\'vue-form\', labelPosition ? \'vue-form--label-\' + labelPosition : \'\', {\'vue-form--inline\': inline}]"><slot></slot><input style="display:none" /></form>',
     name: 'VueForm',
-    provide: function() {
-      return {
-        vueForm: this
-      };
-    },
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     props: {
       model: Object,
       rules: Object,
@@ -18123,11 +16732,7 @@ function getUrlVars(search) {
         default: true
       },
       notifyMessage: Boolean,
-      customMessageMethod: Function,
-      autoFocusError: [Boolean, String],
-      forceDisable: Boolean,
-      disabled: Boolean,
-      size: String
+      customMessageMethod: Function
     },
     watch: {
       rules: function() {
@@ -18140,11 +16745,6 @@ function getUrlVars(search) {
         initModel: {}
       };
     },
-    computed: {
-      isDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
-      }
-    },
     created: function() {
       this.$on('vue.form.addField', function(field) {
         if (field) {
@@ -18152,7 +16752,7 @@ function getUrlVars(search) {
         }
       });
       this.$on('vue.form.removeField', function(field) {
-        if (field) {
+        if (field.prop) {
           this.fields.splice(this.fields.indexOf(field), 1);
         }
       });
@@ -18160,12 +16760,6 @@ function getUrlVars(search) {
     methods: {
       initValue: function() {
         this.initModel = VueUtil.cloneDeep(this.model);
-
-        VueUtil.loop(this.fields, function(field) {
-          if (field.valuePassed) {
-            field.initPassedValue = VueUtil.cloneDeep(field.value);
-          }
-        });
       },
       isModify: function() {
         var modifyFLg = false;
@@ -18186,18 +16780,14 @@ function getUrlVars(search) {
           var valid = true;
           var count = 0;
           var errorMsgs = [];
-          var errorProps = [];
           VueUtil.loop(self.fields, function(field, index) {
-            field.validate('', function(errors, prop) {
+            field.validate('', function(errors) {
               if (errors) {
                 valid = false;
                 errorMsgs.push(errors);
-                errorProps.push(prop);
               }
               if (VueUtil.isFunction(callback) && ++count === self.fields.length) {
-                callback(valid, {
-                  errorProps: errorProps
-                });
+                callback(valid);
               }
             });
           });
@@ -18212,25 +16802,6 @@ function getUrlVars(search) {
                 })]),
                 duration: 0
               });
-            }
-          }
-
-          var auto = this.autoFocusError;
-          if (errorProps.length > 0) {
-            var firstErrorField = VueUtil.find(self.fields, function(field) {
-              return field.prop === errorProps[0];
-            });
-            var query = typeof auto === 'string' ? auto : 'input:not([disabled]):not([tabindex=\'-1\']),select:not([disabled]):not([tabindex=\'-1\']),textarea:not([disabled]):not([tabindex=\'-1\']),button:not([disabled]):not([tabindex=\'-1\']),[tabindex]:not([tabindex=\'-1\'])';
-
-            if (firstErrorField && firstErrorField.$el) {
-              var firstInput = firstErrorField.$el.querySelector(query);
-              if (!firstInput) return;
-
-              if (auto) {
-                firstInput.focus();
-              } else {
-                firstInput.scrollIntoView && firstInput.scrollIntoView();
-              }
             }
           }
         });
@@ -18264,12 +16835,10 @@ function getUrlVars(search) {
 })(this, function(Vue, VueUtil, VueValidator) {
   'use strict';
   var VueFormItem = {
-    template: '<div :class="[\'vue-form-item\', sizeClass ? \'vue-form-item--\' + sizeClass : \'\', {\'is-notify\': form.notifyMessage || form.customMessageMethod,\'is-error\': validateState === \'error\',\'is-validating\': validateState === \'validating\',\'is-required\': isRequired || required}]"><label :for="prop" :class="[\'vue-form-item__label\', {\'is-responsive\': resetIsResponsive()}]" :style="labelStyle" v-if="label" ref="label">{{label + form.labelSuffix}}</label><div class="vue-form-item__content" :style="contentStyle" ref="content"><slot></slot><div class="vue-form-item__error" v-if="validateState === \'error\' && showMessage && form.showMessage && !form.notifyMessage && !form.customMessageMethod">{{validateMessage}}</div></div></div>',
+    template: '<div :class="[\'vue-form-item\', {\'is-notify\': form.notifyMessage || form.customMessageMethod,\'is-error\': validateState === \'error\',\'is-validating\': validateState === \'validating\',\'is-required\': isRequired || required}]"><label :for="prop" :class="[\'vue-form-item__label\', {\'is-responsive\': resetIsResponsive()}]" :style="labelStyle" v-if="label" ref="label">{{label + form.labelSuffix}}</label><div class="vue-form-item__content" :style="contentStyle" ref="content"><slot></slot><div class="vue-form-item__error" v-if="validateState === \'error\' && showMessage && form.showMessage && !form.notifyMessage && !form.customMessageMethod">{{validateMessage}}</div></div></div>',
     name: 'VueFormItem',
     mixins: [VueUtil.component.emitter],
     props: {
-      value: {},
-      valuePassed: Boolean,
       label: String,
       labelWidth: String,
       prop: String,
@@ -18280,16 +16849,8 @@ function getUrlVars(search) {
       showMessage: {
         type: Boolean,
         default: true
-      },
-      size: String,
-      onRulesChanged: [String, Function],
+      }
     },
-    provide: function() {
-      return {
-        vueFormItem: this
-      };
-    },
-    inject: ['vueForm'],
     watch: {
       error: function(value) {
         this.validateMessage = value;
@@ -18297,20 +16858,6 @@ function getUrlVars(search) {
       },
       validateStatus: function(value) {
         this.validateState = value;
-      },
-      rulesUniqueKey: function() {
-        var self = this;
-        var globalConfig = (this.$VIY || {});
-        var action = this.onRulesChanged || globalConfig.onRulesChanged;
-        setTimeout(function() {
-          if (action === 'validate') {
-            self.validate();
-          } else if (action === 'resetError') {
-            self.resetError();
-          } else if (VueUtil.isFunction(action)) {
-            action(self);
-          }
-        }, 0);
       },
       label: {
         immediate: true,
@@ -18356,7 +16903,6 @@ function getUrlVars(search) {
       fieldValue: {
         cache: false,
         get: function() {
-          if(this.valuePassed) return this.value;
           var model = this.form.model;
           if (!model || !this.prop) {
             return;
@@ -18371,7 +16917,7 @@ function getUrlVars(search) {
       isRequired: function() {
         var self = this;
         var res = false;
-        var rules = self.mergedRules;
+        var rules = self.getRules();
         VueUtil.loop(rules, function(rule) {
           if (rule.required) {
             res = true;
@@ -18389,25 +16935,6 @@ function getUrlVars(search) {
         var prop = this.getPropByPath(model, path);
 
         return prop.o[prop.k];
-      },
-      vueFormItemSize: function() {
-        return this.size || this.vueForm.size;
-      },
-      sizeClass: function() {
-        return this.vueFormItemSize || (this.$VIY || {}).size;
-      },
-      mergedRules: function() {
-        var formRules = this.form.rules;
-        var selfRuels = this.rules;
-        formRules = formRules ? formRules[this.prop] : [];
-        var mergedRules = VueUtil.mergeArray([], (selfRuels || formRules || []));
-
-        return VueUtil.filter(mergedRules, function(rule) {
-          return rule.enabled == null || (VueUtil.isBoolean(rule.enabled) ? rule.enabled : rule.enabled());
-        });
-      },
-      rulesUniqueKey: function() {
-        return this.mergedRules.length + this.mergedRules.join(',');
       }
     },
     data: function() {
@@ -18417,8 +16944,7 @@ function getUrlVars(search) {
         validateDisabled: false,
         validator: {},
         isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
-        screenWidth:window.screen.width,
-        initPassedValue: undefined
+        screenWidth:document.body.clientWidth
       };
     },
     methods: {
@@ -18447,7 +16973,7 @@ function getUrlVars(search) {
       },
       resetLabelWidth: function() {
         var labelStyleWidth = this.labelStyleWidth();
-        if(this.form.labelPosition !== 'top' && this.isMobile && this.$refs.label){
+        if(this.isMobile && this.$refs.label){
             var oldLabelWidth = labelStyleWidth ? Number.parseFloat(labelStyleWidth.split('px')[0]) : undefined;
             if(oldLabelWidth)
               this.$refs.label.style.width = '';
@@ -18502,7 +17028,7 @@ function getUrlVars(search) {
         }, function(errors, fields) {
           self.validateState = !errors ? 'success' : 'error';
           self.validateMessage = errors ? errors[0].message : '';
-          callback(self.validateMessage, self.prop);
+          callback(self.validateMessage);
         });
       },
       resetField: function() {
@@ -18511,21 +17037,10 @@ function getUrlVars(search) {
         var model = this.form.model;
         var value = this.fieldValue;
         var path = this.prop;
-
-        if (!path) {
-          return;
-        }
-
         if (path.indexOf(':') !== -1) {
           path = path.replace(/:/, '.');
         }
-
-        var prop;
-        try {
-          prop = this.getPropByPath(model, path);
-        } catch (error) {
-          return;
-        }
+        var prop = this.getPropByPath(model, path);
         this.validateDisabled = true;
         var self = this;
         setTimeout(function() {
@@ -18539,16 +17054,11 @@ function getUrlVars(search) {
 
         this.broadcast('VueTimeSelect', 'fieldReset', this.initialValue);
       },
-      resetError: function() {
+      isModify: function() {
         this.validateState = '';
         this.validateMessage = '';
-      },
-      isModify: function() {
-        if (this.valuePassed) {
-          return this.initPassedValue !== this.value;
-        }
-
         var model = this.form.model;
+        var value = this.fieldValue;
         var path = this.prop;
         if (path.indexOf(':') !== -1) {
           path = path.replace(/:/, '.');
@@ -18556,8 +17066,14 @@ function getUrlVars(search) {
         var prop = this.getPropByPath(model, path);
         return (prop.o[prop.k] !== this.initialValue);
       },
+      getRules: function() {
+        var formRules = this.form.rules;
+        var selfRuels = this.rules;
+        formRules = formRules ? formRules[this.prop] : [];
+        return VueUtil.mergeArray([], (selfRuels || formRules || []));
+      },
       getFilteredRule: function(trigger) {
-        var rules = this.mergedRules;
+        var rules = this.getRules();
         return VueUtil.filter(rules, function(rule) {
           return !rule.trigger || rule.trigger.indexOf(trigger) !== -1;
         });
@@ -18575,19 +17091,17 @@ function getUrlVars(search) {
     },
     mounted: function() {
       var self = this;
-      if (this.valuePassed) {
-        this.initPassedValue = VueUtil.cloneDeep(this.value);
-      }
-      if (self.prop || self.valuePassed) {
+      if (self.prop) {
         self.dispatch('VueForm', 'vue.form.addField', [self]);
-        self.$on('vue.form.blur', self.onFieldBlur);
-        self.$on('vue.form.change', self.onFieldChange);
+        var rules = self.getRules();
+        if (rules.length) {
+          self.$on('vue.form.blur', self.onFieldBlur);
+          self.$on('vue.form.change', self.onFieldChange);
+        }
       }
     },
     beforeDestroy: function() {
-      if (this.prop || this.valuePassed) {
-        this.dispatch('VueForm', 'vue.form.removeField', [this]);
-      }
+      this.dispatch('VueForm', 'vue.form.removeField', [this]);
       VueUtil.removeResizeListener(this.form.$el, this.resetLabelWidth);
     }
   };
@@ -20125,20 +18639,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
   var VueInput = {
     template: 
-    '<div :class="[type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', finalSize ? \'vue-input--\' + finalSize : \'\', {\'is-disabled\': inputDisabled, '+
+    '<div :class="[type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', size ? \'vue-input--\' + size : \'\', {\'is-disabled\': disabled, '+
     '     \'vue-input-group\': $slots.prepend || $slots.append, \'vue-input-group--append\': $slots.append, \'vue-input-group--prepend\': $slots.prepend,'+
     '     \'is-readonly\': readonly, \'vue-input--prefix\': $slots.prefix || prefixIcon'+
-    '     }, finalSize&& ($slots.prefix || prefixIcon) ? \'vue-input--prefix--\' + finalSize : \'\']" >'+
+    '     }, size&& ($slots.prefix || prefixIcon) ? \'vue-input--prefix--\' + size : \'\']" >'+
 
     '    <template v-if="type !== \'textarea\'">'+
     '        <div class="vue-input-group__prepend" v-if="$slots.prepend">'+
     '            <slot name="prepend"></slot>'+
     '        </div>'+
     '        <slot name="icon">'+
-    '            <i :class="[\'vue-input__icon\', icon, finalSize ? \'vue-icon--\' + finalSize : \'\', onIconClick ? \'is-clickable\' : \'\']" v-if="icon" @click="handleIconClick" ref="icon"></i>'+
+    '            <i :class="[\'vue-input__icon\', icon, size ? \'vue-icon--\' + size : \'\', onIconClick ? \'is-clickable\' : \'\']" v-if="icon" @click="handleIconClick" ref="icon"></i>'+
     '        </slot>'+
     '        <input :style="inputStyle" v-if="type !== \'textarea\'" class="vue-input__inner" :pattern="isMobile && keyBoardType==\'onlynumber\' ? \'[0-9]*\' : null" :type="isMobile && keyBoardType ? keyBoardType==\'onlynumber\'?\'number\':keyBoardType : type==\'number\' ? \'input\' : type" :name="name" '+
-    '               :placeholder="placeholder" :disabled="inputDisabled" :readonly="readonly" :maxlength="maxlength" '+
+    '               :placeholder="placeholder" :disabled="disabled" :readonly="readonly" :maxlength="maxlength" '+
     '               :minlength="minlength" :autocomplete="autoComplete" :autofocus="autofocus" :tabindex="tabindex" '+
     '               :min="min" :max="max" :form="form" :value="currentValue" ref="input" @input="handleInput" '+
     '               @focus="handleFocus" @blur="handleBlur" @change="handleChange" @compositionstart="handleComposition" '+
@@ -20148,7 +18662,7 @@ return /******/ (function(modules) { // webpackBootstrap
     '          <slot name="prefix"></slot> '+
     '          <i class="vue-input__icon" '+
     '             v-if="prefixIcon" '+
-    '             :class="[prefixIcon,finalSize ? \'vue-icon--\' + finalSize : \'\']"> '+
+    '             :class="[prefixIcon,size ? \'vue-icon--\' + size : \'\']"> '+
     '          </i> '+
     '        </span> '+
 
@@ -20158,29 +18672,18 @@ return /******/ (function(modules) { // webpackBootstrap
     '        </div>'+
     '    </template>'+
     '    <textarea v-else class="vue-textarea__inner" :value="currentValue" @input="handleInput" ref="textarea" '+
-    '             :name="name" :placeholder="placeholder" :disabled="inputDisabled" :style="textareaStyle" :readonly="readonly" '+
+    '             :name="name" :placeholder="placeholder" :disabled="disabled" :style="textareaStyle" :readonly="readonly" '+
     '             :rows="rows" :form="form" :autofocus="autofocus" :tabindex="tabindex" :maxlength="maxlength" :minlength="minlength" '+
     '             @focus="handleFocus" @blur="handleBlur" @change="handleChange" @compositionstart="handleComposition" @compositionupdate="handleComposition" '+
     '             @compositionend="handleComposition"></textarea>'+
     '</div>',
     name: 'VueInput',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueForm: {
-        default: ''
-      },
-      vueFormItem: {
-        default: ''
-      },
-    },
     data: function() {
       return {
         currentValue: this.value,
         textareaCalcStyle: {},
         isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
-        isComposing: false, //for IE, event.isComposing is not working in IE, record composing state with isComposing
-        focusValue: '',
-        inputFlag: false,
       };
     },
     props: {
@@ -20235,9 +18738,6 @@ return /******/ (function(modules) { // webpackBootstrap
           resize: this.resize
         });
       },
-      finalSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
       validating: function() {
         return this.$parent.validateState === 'validating';
       },
@@ -20247,10 +18747,7 @@ return /******/ (function(modules) { // webpackBootstrap
           style.textAlign = this.textAlign;
         }
         return style;
-      },
-      inputDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
-      },
+      }
     },
     watch: {
       'value': function(val) {
@@ -20266,17 +18763,9 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       },
       handleChange: function(event) {
-        if (!VueUtil.isIE && !(VueUtil.getSystemInfo().os === 'iOS')) {
-          this.$emit('change', event.target.value);
-        }
+        this.$emit('change', event.target.value);
       },
       handleBlur: function(event) {
-
-        if (this.inputFlag && (VueUtil.isIE || (VueUtil.getSystemInfo().os === 'iOS')) && this.focusValue != event.target.value) {
-          this.$emit('change', event.target.value);
-        }
-        this.inputFlag = false;
-        
         this.$emit('blur', event);
         if (this.validateEvent) {
           this.dispatch('VueFormItem', 'vue.form.blur', [this.currentValue]);
@@ -20292,7 +18781,7 @@ return /******/ (function(modules) { // webpackBootstrap
     
         if (!autosize) {
           this.textareaCalcStyle = {
-            minHeight: '33px'
+            minHeight: calcTextareaHeight(this.$refs.textarea).minHeight
           };
           return;
         }
@@ -20303,28 +18792,22 @@ return /******/ (function(modules) { // webpackBootstrap
       },
       handleFocus: function(event) {
         this.$emit('focus', event);
-
-        this.focusValue = event.target.value;
-        this.inputFlag = false;
-
       },
       handleComposition: function(event) {
-        if (!VueUtil.isDef(event.isComposing) && event.type === 'compositionstart') {
-          this.isComposing = true;// for IE
-        }
-        
-        if (!VueUtil.isDef(event.isComposing) && event.type === 'compositionend') {
-          this.isComposing = false;// for IE
-          !(VueUtil.getSystemInfo().os === "iOS" && VueUtil.getSystemInfo().osVersion < '10.3') && this.setCurrentValue(event.target.value);
+        if (event.type === 'compositionend') {
+          this.handleInput(event);
         }
       },
       handleInput: function(event) {
-        /* triggered except compositionstart, compositionupdate and compositionend */
-        if((VueUtil.isDef(event.isComposing) && !event.isComposing) || (!this.isComposing /* for IE */ && this.currentValue !== event.target.value /* for IE AND Microsoft Pinyin, input event triggered after compositionend event*/)) {
+        if (this.noime) {
+          if(!event.isComposing) {
+            this.setCurrentValue(event.target.value);
+          } else {
+            this.setCurrentValue(this.currentValue,true);
+          }
+        } else {
           this.setCurrentValue(event.target.value);
         }
-
-        this.inputFlag = true;
       },
       handleIconClick: function(event) {
         if (this.onIconClick) {
@@ -20332,76 +18815,41 @@ return /******/ (function(modules) { // webpackBootstrap
         }
         this.$emit('click', event);
       },
-      setCurrentValue: function(inputValue, watchFlg) {
-        if (!VueUtil.isDef(inputValue)) inputValue = '';
-        var originInputValue = inputValue;
+      setCurrentValue: function(value, watchFlg) {
+        if (!VueUtil.isDef(value)) value = '';
         var self = this;
-        if (inputValue === self.currentValue && !watchFlg)
+        if (value === self.currentValue && !watchFlg)
           return;
         self.$nextTick(function() {
           self.resizeTextarea();
         });
-
-        var rawValue = inputValue;
-        if (self.type !== 'textarea' && self.cleave !== null && self.keyBoardType !== 'onlynumber') {
+        if (self.type !== 'textarea' && self.cleave !== null) {
           var endPos = self.$refs.input.selectionEnd;
-
-          if (watchFlg && self.cleave.numeral &&
-             (self.cleave.numeralDecimalMark && self.cleave.numeralDecimalMark != '.')) {
-            if (typeof inputValue === 'number') inputValue = inputValue + '';
-            inputValue = inputValue.replace('.', self.cleave.numeralDecimalMark);
-          }
-          var inputValueBeforeFormat = self.$refs.input.value;
-          self.$refs.input.value = inputValue;
+          self.$refs.input.value = value;
           var cleaveObj = new Cleave(self.$refs.input, self.cleave);
-          var cleavePps = cleaveObj.properties;
-          var formattedValue;
-          if(cleaveObj.isAndroid){
-            formattedValue = cleaveObj.properties.result;
-          }else {
-            formattedValue = cleaveObj.getFormattedValue();
+          self.currentValue = cleaveObj.getFormattedValue();
+          if (cleaveObj.getFormattedValue().length >= value.length && !watchFlg) { 
+            self.currentValue = value;
           }
-
-          // 旧值比当前输入框上的值多一个分割符，表示刚刚删除掉一个分割符，此时新值应该取输入框上的值
-          // 此时如果取格式化后的值的话，删掉的分割符又会重新出现，造成分割符没法删除的问题
-          if(self.currentValue && self.currentValue.length > inputValueBeforeFormat.length && self.currentValue.replace(inputValueBeforeFormat, '') === self.cleave.delimiter){
-            self.currentValue = inputValueBeforeFormat;
-          }else {
-            self.currentValue = formattedValue;
-          }
-
-          if(cleaveObj.isAndroid){
-            if (cleavePps.rawValueTrimPrefix) {
-              rawValue = Cleave.Util.getPrefixStrippedValue(self.currentValue, cleavePps.prefix, cleavePps.prefixLength, cleavePps.result);
-            }
-
-            if (cleavePps.numeral) {
-              rawValue = cleavePps.numeralFormatter.getRawValue(self.currentValue);
-            } else {
-              rawValue = Cleave.Util.stripDelimiters(self.currentValue, cleavePps.delimiter, cleavePps.delimiters);
-            }
-          }else {
-            rawValue = cleaveObj.getRawValue();
-          }
+          value = cleaveObj.getRawValue();
           cleaveObj.destroy && cleaveObj.destroy();
 
-          var pos = Cleave.Util.getNextCursorPosition(endPos, !watchFlg ? originInputValue : formattedValue, formattedValue, cleaveObj.properties.delimiter, cleaveObj.properties.delimiters);
+          var pos = Cleave.Util.getNextCursorPosition(endPos, self.currentValue, cleaveObj.properties.result, cleaveObj.properties.delimiter, cleaveObj.properties.delimiters);
           if (document.activeElement == self.$refs.input) {
             self.$refs.input.setSelectionRange(pos, pos);
           }
           
         } else {
-          self.currentValue = inputValue;
+          self.currentValue = value;
         }
-
-        if (self.type == 'number' && VueUtil.isNumberStr(rawValue)) {
-          rawValue = parseFloat(rawValue);
+        if (self.type == 'number' && VueUtil.isNumberStr(value)) {
+          value = parseFloat(value);
         }
         if (!watchFlg) {
-          self.$emit('input', rawValue);
+          self.$emit('input', value);
         }
         if (self.validateEvent) {
-          self.dispatch('VueFormItem', 'vue.form.change', [rawValue]);
+          self.dispatch('VueFormItem', 'vue.form.change', [value]);
         }
       }
     },
@@ -20416,1429 +18864,6 @@ return /******/ (function(modules) { // webpackBootstrap
   Vue.component(VueInput.name, VueInput);
 });
 
-(function(context, definition) {
-  'use strict';
-  if (typeof define === 'function' && define.amd) {
-    define(['Vue', 'VueUtil'], definition);
-  } else {
-    context.VueNumberInput = definition(context.Vue, context.VueUtil);
-    delete context.VueNumberInput;
-  }
-})(this, function(Vue, VueUtil) {
-  'use strict';
-
-  var VueNumberInput = {
-    template: 
-'<div \
-  @dragstart.prevent \
-  :class="[ \
-    \'vue-number-input\', \
-    inputNumberSize ? \'vue-number-input--\' + inputNumberSize : \'\', \
-    { \'is-disabled\': inputNumberDisabled }, \
-    { \'is-without-controls\': !controls }, \
-    { \'is-controls-right\': controlsAtRight } \
-  ]"> \
-  <span \
-    class="vue-number-input__decrease" \
-    role="button" \
-    v-if="controls" \
-    v-repeat-click="decrease" \
-    :class="{\'is-disabled\': minDisabled}" \
-    @keydown.enter="decrease"> \
-    <i :class="\'vue-icon-\' + (controlsAtRight ? \'arrow-down\' : \'minus\')"></i> \
-  </span> \
-  <span \
-    class="vue-number-input__increase" \
-    role="button" \
-    v-if="controls" \
-    v-repeat-click="increase" \
-    :class="{\'is-disabled\': maxDisabled}" \
-    @keydown.enter="increase"> \
-    <i :class="\'vue-icon-\' + (controlsAtRight ? \'arrow-up\' : \'plus\')"></i> \
-  </span> \
-  <vue-input \
-    ref="input" \
-    :value="displayValue" \
-    :placeholder="placeholder" \
-    :disabled="inputNumberDisabled" \
-    :size="inputNumberSize" \
-    :max="max" \
-    :min="min" \
-    :name="name" \
-    :label="label" \
-    @keydown.up.native.prevent="increase" \
-    @keydown.down.native.prevent="decrease" \
-    @blur="handleBlur" \
-    @focus="handleFocus" \
-    @input="handleInput" \
-    @change="handleInputChange"> \
-  </vue-input> \
-</div>',
-    name: 'VueNumberInput',
-    directives: {
-      repeatClick: VueUtil.component.repeatClick
-    },
-    inject: {
-      vueForm: {
-        default: ''
-      },
-      vueFormItem: {
-        default: ''
-      },
-    },
-    props: {
-      step: {
-        type: Number,
-        default: 1
-      },
-      stepStrictly: {
-        type: Boolean,
-        default: false
-      },
-      max: {
-        type: Number,
-        default: 99999999999
-      },
-      min: {
-        type: Number,
-        default: -99999999999
-      },
-      value: {},
-      disabled: Boolean,
-      size: String,
-      controls: {
-        type: Boolean,
-        default: true
-      },
-      controlsPosition: {
-        type: String,
-        default: ''
-      },
-      name: String,
-      label: String,
-      placeholder: String,
-      precision: {
-        type: Number,
-        validator: function (val) {
-          return val >= 0 && val === parseInt(val, 10);
-        }
-      },
-      allowEmpty: {
-        type: Boolean,
-        default: true,
-      },
-      useSeparator: {
-        type: Boolean,
-        default: false,
-      },
-      formatter: {
-        type: Function,
-        default: null,
-      },
-    },
-    data: function() {
-      return {
-        currentValue: 0,
-        userInput: null,
-        focusing: false,
-      };
-    },
-    watch: {
-      value: {
-        immediate: true,
-        handler: function handler(value) {
-          var newVal = value === undefined ? value : Number(value);
-  
-          if (newVal !== undefined) {
-            if (isNaN(newVal)) {
-              return;
-            }
-  
-            if (this.stepStrictly) {
-              var stepPrecision = this.getPrecision(this.step);
-              var precisionFactor = Math.pow(10, stepPrecision);
-              newVal = Math.round(newVal / this.step) * precisionFactor * this.step / precisionFactor;
-            }
-  
-            if (this.precision !== undefined) {
-              newVal = this.toPrecision(newVal, this.precision);
-            }
-          } else {
-            if (this.allowEmpty === false) {
-              newVal = this.min !== -Infinity ? this.min : 0;
-            }
-          }
-  
-          if (newVal >= this.max) newVal = this.max;
-          if (newVal <= this.min) newVal = this.min;
-          this.currentValue = newVal;
-          this.userInput = null;
-          this.$emit('input', newVal);
-        }
-      }
-    },
-    computed: {
-      minDisabled: function minDisabled() {
-        return this._decrease(this.value, this.step) < this.min;
-      },
-      maxDisabled: function maxDisabled() {
-        return this._increase(this.value, this.step) > this.max;
-      },
-      numPrecision: function numPrecision() {
-        var value = this.value,
-            step = this.step,
-            getPrecision = this.getPrecision,
-            precision = this.precision;
-        var stepPrecision = getPrecision(step);
-  
-        if (precision !== undefined) {
-          if (stepPrecision > precision) {
-            console.warn('[vue-number-input]precision should not be less than the decimal places of step');
-          }
-  
-          return precision;
-        } else {
-          return Math.max(getPrecision(value), stepPrecision);
-        }
-      },
-      controlsAtRight: function controlsAtRight() {
-        return this.controls && this.controlsPosition === 'right';
-      },
-      inputNumberSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
-      inputNumberDisabled: function inputNumberDisabled() {
-        return this.disabled || !!(this.vueForm || {}).disabled;
-      },
-      displayValue: function displayValue() {
-        if (this.userInput !== null) {
-          return this.userInput;
-        }
-  
-        var currentValue = this.currentValue;
-  
-        if (typeof currentValue === 'number') {
-          if (this.stepStrictly) {
-            var stepPrecision = this.getPrecision(this.step);
-            var precisionFactor = Math.pow(10, stepPrecision);
-            currentValue = Math.round(currentValue / this.step) * precisionFactor * this.step / precisionFactor;
-          }
-  
-          if (this.precision !== undefined) {
-            currentValue = currentValue.toFixed(this.precision);
-          }
-
-          if (this.useSeparator && !this.focusing) {
-            currentValue = VueUtil.numberWithCommas(currentValue);
-          }
-
-          if (this.formatter) {
-            currentValue = this.formatter(currentValue, this.focusing);
-          }
-        }
-  
-        return currentValue;
-      }
-    },
-    methods: {
-      toPrecision: function toPrecision(num, precision) {
-        if (precision === undefined) precision = this.numPrecision;
-        return parseFloat(Math.round(num * Math.pow(10, precision)) / Math.pow(10, precision));
-      },
-      getPrecision: function getPrecision(value) {
-        if (value === undefined) return 0;
-        var valueString = value.toString();
-        var dotPosition = valueString.indexOf('.');
-        var precision = 0;
-  
-        if (dotPosition !== -1) {
-          precision = valueString.length - dotPosition - 1;
-        }
-  
-        return precision;
-      },
-      _increase: function _increase(val, step) {
-        if (typeof val !== 'number' && val !== undefined) return this.currentValue;
-        var precisionFactor = Math.pow(10, this.numPrecision); // Solve the accuracy problem of JS decimal calculation by converting the value to integer.
-  
-        return this.toPrecision((precisionFactor * val + precisionFactor * step) / precisionFactor);
-      },
-      _decrease: function _decrease(val, step) {
-        if (typeof val !== 'number' && val !== undefined) return this.currentValue;
-        var precisionFactor = Math.pow(10, this.numPrecision);
-        return this.toPrecision((precisionFactor * val - precisionFactor * step) / precisionFactor);
-      },
-      increase: function increase() {
-        if (this.inputNumberDisabled || this.maxDisabled) return;
-        var value = this.value || 0;
-  
-        var newVal = this._increase(value, this.step);
-  
-        this.setCurrentValue(newVal);
-      },
-      decrease: function decrease() {
-        if (this.inputNumberDisabled || this.minDisabled) return;
-        var value = this.value || 0;
-  
-        var newVal = this._decrease(value, this.step);
-  
-        this.setCurrentValue(newVal);
-      },
-      handleBlur: function handleBlur(event) {
-        this.focusing = false;
-        this.$emit('blur', event);
-      },
-      handleFocus: function handleFocus(event) {
-        this.focusing = true;
-        this.$emit('focus', event);
-      },
-      setCurrentValue: function setCurrentValue(newVal) {
-        var oldVal = this.currentValue;
-  
-        if (typeof newVal === 'number' && this.precision !== undefined) {
-          newVal = this.toPrecision(newVal, this.precision);
-        }
-  
-        if (newVal >= this.max) newVal = this.max;
-        if (newVal <= this.min) newVal = this.min;
-        if (oldVal === newVal) return;
-        this.userInput = null;
-        this.$emit('input', newVal);
-        this.$emit('change', newVal, oldVal);
-        this.currentValue = newVal;
-      },
-      handleInput: function handleInput(value) {
-        this.userInput = value;
-      },
-      handleInputChange: function handleInputChange(value) {
-        var newVal = value === '' ? undefined : Number(value);
-  
-        if (!isNaN(newVal) || value === '') {
-          this.setCurrentValue(newVal);
-        }
-  
-        this.userInput = null;
-      },
-      // select: function select() {
-      //   this.$refs.input.select();
-      // },
-      focus: function() {
-        this.$refs.input.focus();
-      }
-    },
-    mounted: function mounted() {
-      var innerInput = this.$refs.input.$refs.input;
-      innerInput.setAttribute('role', 'spinbutton');
-      innerInput.setAttribute('aria-valuemax', this.max);
-      innerInput.setAttribute('aria-valuemin', this.min);
-      innerInput.setAttribute('aria-valuenow', this.currentValue);
-      innerInput.setAttribute('aria-disabled', this.inputNumberDisabled);
-    },
-    updated: function updated() {
-      if (!this.$refs || !this.$refs.input) return;
-      var innerInput = this.$refs.input.$refs.input;
-      innerInput.setAttribute('aria-valuenow', this.currentValue);
-    }
-  };
-  Vue.component(VueNumberInput.name, VueNumberInput);
-});
-
-(function(context, definition) {
-    'use strict';
-    if (typeof define === 'function' && define.amd) {
-      define(['Vue'], definition);
-    } else {
-      context.VueCodeInput = definition(context.Vue);
-      delete context.VueCodeInput;
-    }
-  })(this, function(Vue) {
-    'use strict';
-    var VueCodeInput = {
-      name: 'VueCodeInput',
-      mixins: [VueUtil.component.emitter],
-      template: '<div \
-                        ref="inputContainer" \
-                        class="vue-code-input" \
-                        :class="[{ \'end-active\': activeIndex === -1, \'not-select\': !selectRange, \'is-readonly\': readonly, \'is-disabled\': inputDisabled, \'has-icon\': hasIcon() }, sizeClass]" \
-                        :tabindex="inputDisabled ? void 0 : tabindex" \
-                        @keydown="handleKeydown" \
-                        @click="inputContainerClick" \
-                        @dblclick="inputContainerDblclick"\
-                        @mousedown="handleMousedown" \
-                        @paste="handlePaste" \
-                        @copy="handleCopy" \
-                        @cut="handleCut"\
-                        @focus="handleFocus"\
-                        @blur="handleBlur"\
-                        @mouseenter="hovering = true"\
-                        @mouseleave="hovering = false"\
-                    >\
-                        <div ref="inputContent" class="vue-code-input__content" :placeholder="placeholder">\
-                            <span \
-                                v-for="(al, index) in currentValue" :key="index" \
-                                v-html="al === \' \' ? \'&nbsp;\' : al"\
-                                :class="{ active: index === activeIndex }" \
-                                @click="spanClick" \
-                            >\
-                            </span>\
-                        </div>\
-                        <span class="vue-code-input__suffix" v-if="hasIcon()">\
-                            <i class="vue-code-input__icon" v-if="!!icon" :class="[icon, { \'is-clickable\': isIconClickable }]" @click="handleIconClick"/>\
-                            <slot name="suffix"></slot>\
-                            <i v-if="showClear" class="vue-code-input__icon vue-code-input__clear vue-icon-close" @click="clearValue"></i>\
-                        </span>\
-                </div>',
-      props: {
-        value: {
-            type: [String, Number]
-        },
-        placeholder: {
-            type: String
-        },
-        /**
-         * format格式：
-         * {
-         *     uppercase
-         *     numeral
-         *     numeralIntegerScale
-         *     numeralDecimalScale
-         *     numeralPositiveOnly
-         *     numeralDecimalMark
-         *     delimiter
-         *     customFormatter
-         *     blocks
-         * }
-         */
-        format: {
-            type: Object
-        },
-        maxlength: Number,
-        disabled: Boolean,
-        readonly: Boolean,
-        tabindex: {
-            type: Number,
-            default: 0
-        },
-        size: String,
-        icon: String,
-        clearable: Boolean
-      },
-      inject: {
-        vueForm: {
-          default: ''
-        },
-        vueFormItem: {
-          default: ''
-        },
-      },
-      data: function() {
-        return {
-            currentValue: '',
-            rawValue: '',
-            selectRange: false,
-            activeIndex: -1,
-            valueOnFocus: '',
-            scrollLeftOffset: 0,
-            fakeBlur: false, //For IE
-            focused: false,
-            hovering: false
-        };
-      },
-      computed: {
-        finalSize: function() {
-            return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-        },
-        sizeClass: function() {
-            return this.finalSize ? ('vue-code-input--' + this.finalSize) : '';
-        },
-        isIconClickable: function(){
-            return this.$listeners && VueUtil.isFunction(this.$listeners['icon-click']);
-        },
-        showClear: function() {
-            return this.clearable && 
-            !this.inputDisabled && 
-            !this.readonly && 
-            this.currentValue && 
-            (this.focused || this.hovering);
-        },
-        inputDisabled: function() {
-            return this.disabled || (this.vueForm || {}).disabled;
-        },
-      },
-      watch: {
-          value: {
-              immediate: true,
-              handler: function(val){
-                  this.setCurrentValue(val, true);
-              }
-          }
-      },
-      created: function () {
-        document.addEventListener('paste', this.handlePasteBeforeUserClick);
-        this.$once('hook:beforeDestroy', function () {
-            document.removeEventListener('paste', this.handlePasteBeforeUserClick);
-        });
-      },
-      methods: {
-        clearValue: function(){
-            this.setCurrentValue('');
-            this.$emit('clear');
-        },
-        hasIcon: function(){
-            return this.$slots.suffix || this.icon || this.showClear;
-        },
-        getMaxLength: function () {
-            var blocks = this.format && this.format.blocks || [];
-            return blocks.length > 0 ? blocks.reduce(function (previous, current) {
-                return previous + current;
-            }, 0) : (this.maxlength);
-        },
-        formatWithBlocks: function (value) {
-            // TODO 预留属性，先不实现
-            var delimiters = [],
-                delimiterLazyShow = false;
-
-            var result = '',
-                multipleDelimiters = delimiters.length > 0,
-                currentDelimiter,
-                format = this.format || {},
-                delimiter = format.delimiter,
-                blocks = (!VueUtil.isEmpty(format) && !VueUtil.isEmpty(format.blocks)) ? format.blocks : [],
-                blocksLength = blocks.length;
-
-            // no options, normal input
-            if (blocksLength === 0 || !delimiter) {
-                return value;
-            }
-
-            value = this.getRawValueWithBlocks(value);
-            blocks.forEach(function (length, index) {
-                if (value.length > 0) {
-                    var sub = value.slice(0, length),
-                        rest = value.slice(length);
-
-                    if (multipleDelimiters) {
-                        currentDelimiter = delimiters[delimiterLazyShow ? (index - 1) : index] || currentDelimiter;
-                    } else {
-                        currentDelimiter = delimiter;
-                    }
-
-                    if (delimiterLazyShow) {
-                        if (index > 0) {
-                            result += currentDelimiter;
-                        }
-
-                        result += sub;
-                    } else {
-                        result += sub;
-
-                        if (sub.length === length && index < blocksLength - 1) {
-                            result += currentDelimiter;
-                        }
-                    }
-
-                    // update remaining string
-                    value = rest;
-                }
-            });
-
-            return result;
-        },
-        formatValue: function(value){
-            if(!VueUtil.isDef(value) || !this.format){
-                return value;
-            }
-
-            if(VueUtil.isFunction(this.format.customFormatter)){
-                value = this.format.customFormatter(value);
-            }
-
-            if(this.format.numeral){
-                var parts, partInteger, partDecimal = '';
-                var numeralDecimalMark = this.format.numeralDecimalMark || '.';
-                var numeralDecimalScale = this.format.numeralDecimalScale || 2;
-
-                value = value.replace(/[A-Za-z]/g, '')
-                // replace the first decimal mark with reserved placeholder
-                .replace(numeralDecimalMark, 'M')
-
-                // strip non numeric letters except minus and "M"
-                // this is to ensure prefix has been stripped
-                .replace(/[^\dM-]/g, '')
-
-                // replace the leading minus with reserved placeholder
-                .replace(/^\-/, 'N')
-
-                // strip the other minus sign (if present)
-                .replace(/\-/g, '')
-
-                // replace the minus sign (if present)
-                .replace('N', this.format.numeralPositiveOnly ? '' : '-')
-
-                // replace decimal mark
-                .replace('M', numeralDecimalMark);
-
-                partInteger = value;
-                if (value.indexOf(numeralDecimalMark) >= 0) {
-                    parts = value.split(numeralDecimalMark);
-                    partInteger = parts[0];
-                    partDecimal = numeralDecimalMark + parts[1].slice(0, numeralDecimalScale);
-                }
-
-                if (this.format.numeralIntegerScale > 0) {
-                    partInteger = partInteger.slice(0, this.format.numeralIntegerScale + (value.slice(0, 1) === '-' ? 1 : 0));
-                }
-
-                if(this.format.delimiter){
-                    partInteger = partInteger.replace(/(\d)(?=(\d{3})+$)/g, '$1' + this.format.delimiter);
-                }
-
-                value = partInteger.toString() + (numeralDecimalScale > 0 ? partDecimal.toString() : '')
-            } else {
-                value = this.formatWithBlocks(value);
-            }
-
-            if(this.format.uppercase){
-                value = VueUtil.isString(value) ? value.toUpperCase() : value;
-            }
-
-            return value;
-        },
-        getRawValueWithBlocks: function (formattedValue) {
-            var format = this.format || {};
-            var blocks = format.blocks;
-            var delimiter = format.delimiter;
-            if (VueUtil.isEmpty(blocks) || !delimiter ||!formattedValue) {
-                return formattedValue;
-            }
-
-            // var result = '';
-            // blocks.forEach(function (length) {
-            //     if (formattedValue.length > 0) {
-            //         var sub = formattedValue.slice(0, length),
-            //             rest = formattedValue.slice(length);
-
-            //         result += sub;
-
-            //         if (rest.length > 0) {
-            //             rest = rest.replace(delimiter, '');
-            //         }
-
-            //         formattedValue = rest;
-            //     }
-            // });
-
-            return formattedValue.replace(new RegExp(delimiter,'g'), '');
-        },
-        getRawValue: function(formattedValue){
-            if(!VueUtil.isDef(formattedValue) || !this.format){
-                return formattedValue;
-            }
-
-            var rawValue = formattedValue;
-            if(this.format.numeral){
-                rawValue = formattedValue.replace(new RegExp(this.format.delimiter || '', 'g'), '')
-                .replace(this.format.numeralDecimalMark || '.', '.');
-                return rawValue;
-            } else {
-                rawValue = this.getRawValueWithBlocks(rawValue);
-            }
-
-            return rawValue;
-        },
-        getIndexOffset: function(inputValue, formattedValue, oldActiveIndex){
-            if(oldActiveIndex === -1){
-                return 0;
-            }
-
-            if(this.format && this.format.numeral){
-                var numeralDecimalMark = this.format.numeralDecimalMark || '.';
-                var numeralDecimalScale = this.format.numeralDecimalScale || 2;
-
-                var parts, partInteger = inputValue, partDecimal = '';
-                if(inputValue.indexOf(numeralDecimalMark) >= 0){
-                    parts = inputValue.split(numeralDecimalMark);
-                    if(parts.length > 2){
-                        return 0;
-                    }
-                    partInteger = parts[0];
-                    partDecimal = parts[1];
-                }
-
-                if(this.format.numeralIntegerScale > 0 && partInteger.length > this.format.numeralIntegerScale){
-                    return 0;
-                }
-
-                if(partDecimal.length > numeralDecimalScale){
-                    return 0;
-                }
-
-            }
-
-            return formattedValue.length - inputValue.length;
-        },
-        setCurrentValue: function(value, watchFlg){
-            if(watchFlg ? value === this.rawValue : value === this.currentValue){
-                return;
-            }
-
-            var inputValue = VueUtil.isNumber(value) ? value + '' : value;//value could be number
-            var formattedValue = this.formatValue(inputValue);
-            var rawValue = this.getRawValue(formattedValue);
-
-            if(this.format && this.format.numeral && VueUtil.isNumberStr(rawValue)){
-                rawValue = parseFloat(rawValue);
-            }
-
-            // 旧值比当前输入框上的值多一个分割符，表示刚刚删除掉一个分割符，此时新值应该取输入框上的值
-            // 此时如果取格式化后的值的话，删掉的分割符又会重新出现，造成分割符没法删除的问题
-            var oldFormattedValue = this.currentValue;
-            var format = this.format || {};
-            var delimiter = format.delimiter;
-            if (this.currentValue.length > inputValue.length && delimiter && this.currentValue.replace(inputValue, '') === delimiter) {
-                this.currentValue = inputValue;
-            } else {
-                this.currentValue = formattedValue;
-            } 
-
-            this.$nextTick(function(){
-                if(watchFlg || this.activeIndex >= this.currentValue.length){
-                    this.activeIndex = -1;
-                }else {
-                    var indexOffset = 0;
-                    if (oldFormattedValue.length === formattedValue.length && formattedValue.length - inputValue.length === delimiter.length) {
-                        indexOffset = -(delimiter.length - 1);
-                    } else {
-                        indexOffset = this.getIndexOffset(inputValue, formattedValue, this.activeIndex);
-                    }
-                    this.activeIndex += indexOffset;
-
-                    if (this.activeIndex !== -1 && delimiter && this.currentValue.endsWith(delimiter)) {
-                        this.currentValue = this.currentValue.substring(0, this.currentValue.length - delimiter.length);
-                    }
-                }
-            });
-
-            if( (!watchFlg && this.rawValue !== rawValue) || (watchFlg && (this.rawValue !== rawValue || value !== rawValue)) ){
-                this.rawValue = rawValue;
-                this.$emit('input', rawValue);//TODO: defaultValue will also trigger input event
-                this.dispatch('VueFormItem', 'vue.form.change', [rawValue]);
-            }
-        },
-        handleFocus: function(event){
-            if(this.fakeBlur){
-                this.fakeBlur = false;
-                return;
-            }
-
-            this.focused = true;
-            this.updateValueOnFocus();
-            this.$emit('focus', event);
-        },
-        updateValueOnFocus: function(){
-            this.valueOnFocus = this.rawValue;
-        },
-        isValueChangeOnBlur: function(){
-            return this.valueOnFocus !== this.rawValue;
-        },
-        handleBlur: function(event){
-
-            //For IE, when click at inputContent, inputContainer will blur and activeElement is inputContent, don't know why
-            //For IE, when execute setTextRange, inputContainer will blur and activeElement is inputContainer
-            if(document.activeElement === this.$refs.inputContent || document.activeElement === this.$refs.inputContainer){
-                this.fakeBlur = true;
-                return;
-            }
-            
-            this.focused = false;
-            this.$emit('blur', event);
-            this.dispatch('VueFormItem', 'vue.form.blur', [this.rawValue]);
-            if(this.isValueChangeOnBlur()){
-                this.$emit('change', this.rawValue, this.valueOnFocus);
-            }
-        },
-        handleMousedown: function(event){
-            this.selectRange = true;//隐藏光标
-        },
-        // 用户点击 div 之前，@paste 黏贴事件触发不了，但是通过 document.addEventListener('paste', ...) 添加的黏贴事件可以触发
-        handlePasteBeforeUserClick: function(event) {
-            if (document.activeElement === this.$refs.inputContainer && event.target === document.body) {
-                this.handlePaste(event);
-            }
-        },
-        handlePaste: function(event){
-            if(this.inputDisabled || this.readonly){
-                return;
-            }
-
-            var pasteText = event.clipboardData.getData('Text');
-            
-            var selection = window.getSelection();
-            if(selection.isCollapsed){
-                this.modifyTextAtActiveIndex('insert', pasteText);
-            }else {
-                this.modifySelectedText(pasteText);
-            }
-        },
-        handleCopy: function(event){
-            event.preventDefault();
-
-            var selectedText = this.getSelectedText();
-
-            if(selectedText){
-                var clipboardData = event.clipboardData || window.clipboardData;
-                var format = window.clipboardData ? 'Text' : 'text/plain';
-                clipboardData.setData(format, selectedText);
-            }
-        },
-        handleCut: function(event){
-            if(this.inputDisabled || this.readonly){
-                return;
-            }
-
-            var selectedText = this.getSelectedText();
-
-            this.modifySelectedText('');
-
-            event.preventDefault();
-
-            var clipboardData = event.clipboardData;
-
-            clipboardData.setData('text/plain', selectedText);
-        },
-        getSelectedText: function(){
-            var selectionIndex = this.getSelectionIndex();
-            var startIndex = selectionIndex.startIndex;
-            var endIndex = selectionIndex.endIndex;
-            
-            if(startIndex === endIndex){
-                return '';
-            }
-            
-            return this.currentValue.slice(startIndex, endIndex === -1 ?  this.currentValue.length : endIndex);
-        },
-        setTextRange: function(obj){
-            var selection = window.getSelection();
-            selection.removeAllRanges();
-            
-            var startSpanEl = obj.startSpanEl;
-            var endSpanEl = obj.endSpanEl;
-            var startTextNode = startSpanEl.childNodes[0];
-            var endTextNode = endSpanEl.childNodes[0];
-            var startOffset = obj.startOffset ? obj.startOffset : 0;
-            var endOffset = obj.startOffset ? obj.startOffset : 1;
-            
-            var range = document.createRange();//selection.getRangeAt(0);
-            range.setStart(startTextNode, startOffset);
-            range.setEnd(endTextNode, endOffset);
-            selection.addRange(range);
-
-            VueUtil.isIE && this.$refs.inputContainer.focus();
-        },
-        inputContainerDblclick: function(event){
-            if (this.currentValue) {
-                this.selectAll();
-            }
-        },
-        inputContainerClick: function(event){
-            if(window.getSelection().toString().length > 0){
-                var anchorNode = window.getSelection().anchorNode;
-                var focusNode = window.getSelection().focusNode;
-                
-                if(!this.$refs.inputContent.contains(anchorNode) || !this.$refs.inputContent.contains(focusNode)){
-                    this.collapseToActiveText();
-                }
-
-                return;
-            }
-            
-            VueUtil.isIE && this.$refs.inputContainer.focus();//In IE, inputContainer does not focus when click at inputContent
-            this.selectRange = false;
-            if(event.target === this.$refs.inputContainer || event.target === this.$refs.inputContent){
-                var spans = this.$refs.inputContent.children;
-                if( spans.length > 0 && event.pageX < spans[0].getBoundingClientRect().left ){
-                    this.activeIndex = 0;
-                }else {
-                    this.activeIndex = -1;
-                }
-            }
-        },
-        spanClick: function(event){
-            if(window.getSelection().toString().length > 0){
-                return;
-            }
-
-            VueUtil.isIE && this.$refs.inputContainer.focus();//In IE, inputContainer does not focus when click at span
-            this.selectRange = false;
-            var spans = this.$refs.inputContent.children;
-            var activeIndex = [].indexOf.call(spans, event.target);
-            var activeSpanBoundingClientRect = event.target.getBoundingClientRect();
-            var clickX = event.x;
-            var distanceToActiveRightBorder = activeSpanBoundingClientRect.x + activeSpanBoundingClientRect.width - clickX;
-            if(distanceToActiveRightBorder < activeSpanBoundingClientRect.width/2){
-                if(activeIndex < spans.length - 1){
-                    activeIndex++;
-                }else {
-                    activeIndex = -1;
-                }
-            }
-                
-            this.activeIndex = activeIndex;
-        },
-        handleIEvx: function(event){
-            if(!VueUtil.isIE){
-                return;
-            }
-
-            var isCollapsed = window.getSelection().isCollapsed;
-            //ctrl+V
-            if(event.ctrlKey && ( event.key === 'v' || event.key === 'V' )){
-                var pasteText = window.clipboardData.getData('Text');
-                isCollapsed ? this.modifyTextAtActiveIndex('insert', pasteText) : this.modifySelectedText(pasteText);
-                return;
-            }
-
-            //ctrl+X
-            if(event.ctrlKey && ( event.key === 'x' || event.key === 'X' ) && !isCollapsed){
-                var selectedText = this.getSelectedText();
-
-                this.modifySelectedText('');
-
-                event.preventDefault();
-
-                var clipboardData = window.clipboardData;
-
-                clipboardData.setData('Text', selectedText);
-
-                return;
-            }
-        },
-        isInput: function(event, key){
-            key = key || this.eventKeyToRealKey(event.key);
-            return key.length === 1 && ( !event.ctrlKey && !event.altKey );
-        },
-        isBackspace: function(event){
-            return event.keyCode === 8;
-        },
-        isDelete: function(event){
-            return event.keyCode === 46;
-        },
-        //shift+left,right,up,down,home,end
-        isTextSelect: function(event){
-            return event.shiftKey && [37, 39, 38, 40, 36, 35].indexOf(event.keyCode) > -1;
-        },
-        //left,right,up,down,home,end
-        isMouseMove: function(event){
-            return [37, 39, 38, 40, 36, 35].indexOf(event.keyCode) > -1;
-        },
-        isCtrlA: function(event, key){
-            key = key || this.eventKeyToRealKey(event.key);
-            return event.ctrlKey && ( key === 'a' || key === 'A' );
-        },
-        isCtrlC: function(event, key){
-            key = key || this.eventKeyToRealKey(event.key);
-            return event.ctrlKey && ( key === 'c' || key === 'C' ) && !event.altKey && !event.shiftKey;
-        },
-        isCtrlV: function(event, key){
-            key = key || this.eventKeyToRealKey(event.key);
-            return event.ctrlKey && ( key === 'v' || key === 'V' ) && !event.altKey && !event.shiftKey;
-        },
-        isCtrlX: function(event, key){
-            key = key || this.eventKeyToRealKey(event.key);
-            return event.ctrlKey && ( key === 'x' || key === 'X' ) && !event.altKey && !event.shiftKey;
-        },
-        isTab: function(event){
-            return event.keyCode === 9;
-        },
-        isRefresh: function(event, key){
-            key = key || this.eventKeyToRealKey(event.key);
-            return event.keyCode === 116 || ( event.ctrlKey && (key === 'r' || key === 'R') );
-        },
-        handleKeydown: function(event){
-            var key = this.eventKeyToRealKey(event.key);
-
-            if(this.isTab(event) || this.isRefresh(event, key)){
-                return;
-            }
-
-            //readonly and disabled keydown control
-            if( (this.readonly || this.inputDisabled) && ( this.isInput(event, key) || this.isBackspace(event) || this.isDelete(event) ) ){
-                return;
-            }
-
-            if( !( this.isCtrlC(event, key) || this.isCtrlV(event, key) || this.isCtrlX(event, key) ) ){
-                event.preventDefault();
-                event.stopPropagation();
-            }
-
-            if(VueUtil.isIE){
-                this.handleIEvx(event);
-                return;
-            }
-
-            if(!window.getSelection().isCollapsed){
-                //while selection exceed range of inputContent, disable text modify
-                var anchorNode = window.getSelection().anchorNode;
-                var focusNode = window.getSelection().focusNode;
-                if(!this.$refs.inputContent.contains(anchorNode) || !this.$refs.inputContent.contains(focusNode)){
-                    return;
-                }
-
-                this.handleKeydownWithSelection(event);
-            }else {
-                this.handleKeydownWithoutSelection(event);
-            }
-        },
-        eventKeyToRealKey: function(eventKey){
-            if(VueUtil.isIE){
-                var keyMap = {
-                    Spacebar: ' ',
-                    Decimal: '.',
-                    Add: '+',
-                    Subtract: '-',
-                    Multiply: '*',
-                    Divide: '/'
-                };
-                
-                eventKey = keyMap[eventKey] || eventKey;
-            }
-
-            return eventKey;
-        },
-        handleKeydownWithoutSelection: function(event){
-            var key = event.key;
-            key = this.eventKeyToRealKey(key);
-
-            if(this.isInput(event, key)){
-                var inputChar = key;
-                this.modifyTextAtActiveIndex('insert', inputChar);
-                return;
-            }
-            
-            if(this.isCtrlA(event, key)){
-                this.selectAll();
-                return;
-            }
-            
-            if(this.isBackspace(event)){
-                this.modifyTextAtActiveIndex('backspace');
-                return;
-            }
-
-            if(this.isDelete(event)){
-                this.modifyTextAtActiveIndex('delete');
-                return;
-            }
-            
-            if(this.isTextSelect(event)){
-                this.selectTextFromActiveIndex(event);
-                return;
-            }
-            
-            if(this.isMouseMove(event)){
-                this.moveCursorWithoutSelection(event);
-                return;
-            }
-        },
-        moveCursorWithoutSelection: function(event){
-            if(!this.currentValue){
-                return;
-            }
-            
-            var keyCode = event.keyCode;
-            if(this.activeIndex == 0 && ([37, 38, 36].indexOf(keyCode) > -1) ){
-                return;
-            }
-            
-            if(this.activeIndex == -1 && ([39, 40, 35].indexOf(keyCode) > -1) ){
-                return;
-            }
-            
-            //up home
-            if([38, 36].indexOf(keyCode) > -1){
-                this.activeIndex = 0;
-            }
-            
-            //down end
-            if([40, 35].indexOf(keyCode) > -1){
-                this.activeIndex = -1;
-            }
-            
-            //left
-            if(keyCode === 37){
-                if(this.activeIndex === -1){
-                    this.activeIndex = this.$refs.inputContent.children.length - 1;     
-                }else {
-                    this.activeIndex--;
-                }
-            }
-            
-            //right
-            if(keyCode === 39){
-                if(this.activeIndex === this.$refs.inputContent.children.length - 1){
-                    this.activeIndex = -1;
-                }else {
-                    this.activeIndex++;
-                }
-            }
-        },
-        handleKeydownWithSelection: function(event){
-            var keyCode = event.keyCode;
-
-            var key = event.key;
-            key = this.eventKeyToRealKey(key);
-
-            //input or delete
-            if( this.isInput(event, key) || this.isBackspace(event) || this.isDelete(event) ){
-                var inputChar = ( keyCode === 8 || keyCode === 46 ) ? '' : key;
-                this.modifySelectedText(inputChar);
-                return;
-            }
-            
-            if(this.isTextSelect(event)){
-                this.selectTextWithSelection(event);
-                return;
-            }
-            
-            if(this.isMouseMove(event)){
-                this.moveCursorWithSelection(event);
-                return;
-            }
-
-            if(this.isCtrlA(event, key)){
-                this.selectAll();
-                return;
-            }
-        },
-        moveCursorWithSelection: function(event){
-            var keyCode = event.keyCode;
-
-            if([37].indexOf(keyCode) > -1){//left
-                this.activeIndex = this.getSelectionIndex().startIndex;
-            }else if([39].indexOf(keyCode) > -1){//right
-                this.activeIndex = this.getSelectionIndex().endIndex;
-            }else if([38, 36].indexOf(keyCode) > -1){//up home
-                this.activeIndex = 0;
-            }else if([40, 35].indexOf(keyCode) > -1){//down end
-                this.activeIndex = -1;
-            }
-            
-            this.collapseToActiveText();
-        },
-        getSelectionIndex: function(){
-            var selection = window.getSelection();
-            
-            var startIndex;
-            var endIndex;
-            if(selection.isCollapsed){
-                startIndex = endIndex = this.activeIndex;
-            }else {
-                var spans = this.$refs.inputContent.children;
-                
-                var anchorNode = selection.anchorNode;
-                var anchorSpan = this.getSpanWithinInput(anchorNode);
-                var focusNode = selection.focusNode;
-                var focusSpan = this.getSpanWithinInput(focusNode);
-        
-                startIndex = [].indexOf.call(spans, anchorSpan);
-                endIndex = [].indexOf.call(spans, focusSpan);
-                if(endIndex >= 0 && startIndex > endIndex){
-                    var tempIndex = startIndex;
-                    startIndex = endIndex;
-                    endIndex = tempIndex;
-                }
-                endIndex = endIndex + 1;
-                
-                endIndex === spans.length && (endIndex = -1);
-            }
-            
-            return {
-                startIndex: startIndex,
-                endIndex: endIndex
-            };
-        },
-        getSpanWithinInput: function(node){
-            var spans = this.$refs.inputContent.children;
-            if(( this.$refs.inputContainer.nextSibling && this.$refs.inputContainer.nextSibling.contains && this.$refs.inputContainer.nextSibling.contains(node) )
-              || ( this.$refs.inputContainer.nextElementSibling && this.$refs.inputContainer.nextElementSibling.contains && this.$refs.inputContainer.nextElementSibling.contains(node) )
-            ){
-                return spans[spans.length -  1];
-            }
-            
-            if(( this.$refs.inputContainer.previousSibling && this.$refs.inputContainer.previousSibling.contains && this.$refs.inputContainer.previousSibling.contains(node) )
-              || ( this.$refs.inputContainer.previousElementSibling && this.$refs.inputContainer.previousElementSibling.contains && this.$refs.inputContainer.previousElementSibling.contains(node) )
-            ){
-                return spans[0];
-            }
-            
-            return node.nodeName === '#text' ? node.parentNode : node;
-        },
-        selectTextFromActiveIndex: function(event){//TODO: 与getNextRange类似，合并？
-            if(!this.currentValue){
-                return;
-            }
-            
-            var keyCode = event.keyCode;
-            
-            if(this.activeIndex === 0 && [37, 38, 36].indexOf(keyCode) > -1){
-                return;
-            }
-            
-            if(this.activeIndex === -1 && [39, 40, 35].indexOf(keyCode) > -1){
-                return;
-            }
-            
-            var spans = this.$refs.inputContent.children;
-            var startSpanEl;
-            var endSpanEl;
-            
-            //left
-            if(this.activeIndex !== 0 && [37].indexOf(keyCode) > -1){
-                var endIndex = this.activeIndex === -1 ? ( spans.length - 1 ) : ( this.activeIndex - 1 );
-                startSpanEl = spans[endIndex];
-                endSpanEl = spans[endIndex];
-            }
-            
-            //up home
-            if(this.activeIndex !== 0 && [38, 36].indexOf(keyCode) > -1){
-                var endIndex = this.activeIndex === -1 ? ( spans.length - 1 ) : ( this.activeIndex - 1 );
-
-                startSpanEl = spans[0];
-                endSpanEl = spans[endIndex];
-            }
-            
-            //right
-            if(this.activeIndex !== -1 && [39].indexOf(keyCode) > -1){
-                startSpanEl = spans[this.activeIndex];
-                endSpanEl = spans[this.activeIndex];
-            }
-            
-            //down end
-            if(this.activeIndex !== -1 && [40, 35].indexOf(keyCode) > -1){
-                startSpanEl = spans[this.activeIndex];
-                endSpanEl = spans[spans.length - 1];
-            }
-
-            if(startSpanEl){
-                this.selectRange = true;
-                this.setTextRange({
-                    startSpanEl: startSpanEl,
-                    startOffset: 0,
-                    endSpanEl: endSpanEl,
-                    endOffset: 1
-                });
-            }
-        },
-        selectTextWithSelection: function(event){
-            var nextRange = this.getNextRange(event);
-            if(!nextRange){
-                this.collapseToActiveText();
-            }else {
-                this.setTextRange(nextRange);
-            }
-        },
-        getNextRange: function(event){
-            var selectionIndex = this.getSelectionIndex();
-            
-            var rangeDirection = this.activeIndex === selectionIndex.endIndex ? 'rtl' : 'ltr';
-            var startSpanEl;
-            var endSpanEl;
-            
-            var keyCode = event.keyCode;
-            var spans = this.$refs.inputContent.children;
-            
-            //ltr: down end
-            if(rangeDirection === 'ltr' && [40, 35].indexOf(keyCode) != -1){
-                startSpanEl = spans[selectionIndex.startIndex];
-                endSpanEl = spans[spans.length - 1];
-            }
-            
-            //ltr: right
-            if(rangeDirection === 'ltr' && [39].indexOf(keyCode) != -1){
-                startSpanEl = spans[selectionIndex.startIndex];
-                endSpanEl = spans[ selectionIndex.endIndex === -1 ? (spans.length - 1) : selectionIndex.endIndex ];
-            }
-            
-            //ltr: left
-            if(rangeDirection === 'ltr' && [37].indexOf(keyCode) != -1){
-                var endIndex = ( selectionIndex.endIndex === -1 ) ? spans.length - 1 : ( selectionIndex.endIndex - 1 );
-                if( endIndex - selectionIndex.startIndex === 0 ){
-                    return null;
-                }
-                startSpanEl = spans[selectionIndex.startIndex];
-                endSpanEl = spans[endIndex - 1];
-            }
-            
-            //ltr: up home
-            if(rangeDirection === 'ltr' && [38, 36].indexOf(keyCode) != -1){
-                if( selectionIndex.startIndex === 0 ){
-                    return null;
-                }
-                startSpanEl = spans[0];
-                endSpanEl = spans[selectionIndex.startIndex - 1];
-            }
-            
-        
-            //rtl: up home
-            if(rangeDirection === 'rtl' && [38, 36].indexOf(keyCode) != -1){
-                var endIndex = ( selectionIndex.endIndex === -1 ) ? spans.length - 1 : ( selectionIndex.endIndex - 1 );
-                startSpanEl = spans[0];
-                endSpanEl = spans[endIndex];
-            }
-            
-            //rtl: left
-            if(rangeDirection === 'rtl' && [37].indexOf(keyCode) != -1){
-                var endIndex = ( selectionIndex.endIndex === -1 ) ? spans.length - 1 : ( selectionIndex.endIndex - 1 );
-                var startIndex = selectionIndex.startIndex === 0 ? 0 : ( selectionIndex.startIndex - 1 );
-                startSpanEl = spans[startIndex];
-                endSpanEl = spans[endIndex];
-            }
-            
-            //rtl: right
-            if(rangeDirection === 'rtl' && [39].indexOf(keyCode) != -1){
-                var endIndex = ( selectionIndex.endIndex === -1 ) ? spans.length - 1 : ( selectionIndex.endIndex - 1 );
-                if(endIndex - selectionIndex.startIndex === 0){
-                    return null;
-                }
-                startSpanEl = spans[selectionIndex.startIndex + 1];
-                endSpanEl = spans[endIndex];
-            }
-            
-            //rtl: down end
-            if(rangeDirection === 'rtl' && [40, 35].indexOf(keyCode) != -1){
-                if(selectionIndex.endIndex === -1){
-                    return null;
-                }
-                startSpanEl = spans[selectionIndex.endIndex];
-                endSpanEl = spans[spans.length - 1];
-            }
-            
-            return {
-                startSpanEl: startSpanEl,
-                startOffset: 0,
-                endSpanEl: endSpanEl,
-                endOffset: 1
-            };
-            
-        },
-        modifyTextAtActiveIndex: function(type, insertText){
-            var maxlength = this.getMaxLength();
-            if(VueUtil.isNumber(maxlength) && type === 'insert'){
-                var rawValueString = (!VueUtil.isDef(this.rawValue) || (VueUtil.isNumber(this.rawValue && isNaN(this.rawValue)))) ? '' : (this.rawValue + '');
-                if( rawValueString.length >= maxlength){
-                    return;
-                }else if(insertText.length > 1){
-                    insertText = this.getRawValueWithBlocks(insertText);
-                    insertText = insertText.substring(0, maxlength - rawValueString.length);
-                }
-            }
-
-            if(this.activeIndex === -1){
-                //insert
-                ( type === 'insert' ) && this.setCurrentValue( ( this.currentValue ? this.currentValue : '' ) + insertText );
-
-                //backspace
-                ( type === 'backspace' ) && this.currentValue && this.setCurrentValue( this.currentValue.slice(0, this.currentValue.length - 1) );
-
-                //delete: delete nothing while at the end of text
-            }else {
-                var modifiedText = '';
-                var activeIndexOffset = 0;
-
-                if(type === 'insert'){
-                    modifiedText = this.currentValue.slice(0, this.activeIndex) + insertText + this.currentValue.slice(this.activeIndex);
-                    activeIndexOffset = insertText.length;
-                }
-
-                if(type === 'backspace' || type === 'delete'){
-                    var leftStr = this.currentValue.slice(0, this.activeIndex);
-                    var rightStr = this.currentValue.slice(this.activeIndex);
-                    modifiedText = type === 'backspace' ? ( leftStr.slice(0, leftStr.length - 1) + rightStr) : ( leftStr + rightStr.slice(1) );
-                    activeIndexOffset = type === 'backspace' ? ( this.activeIndex === 0 ? 0 : -1 ) : ( this.activeIndex === modifiedText.length ? -(modifiedText.length + 1): 0 );
-                }
-
-                this.setCurrentValue(modifiedText);
-                this.activeIndex = this.activeIndex + activeIndexOffset;
-            }
-        },
-        modifySelectedText: function(insertText){
-            var selectionIndex = this.getSelectionIndex();
-            var startIndex = selectionIndex.startIndex;
-            var endIndex = selectionIndex.endIndex;
-
-            var currentLeftStr = this.currentValue.slice(0, startIndex);
-            var currentRightStr = ( endIndex === -1 ? '' : this.currentValue.slice(endIndex) );
-
-            var maxlength = this.getMaxLength();
-            if(VueUtil.isNumber(maxlength) && VueUtil.isString(insertText) && insertText.length > 0){
-                var rawValueString = this.getRawValue(currentLeftStr + currentRightStr);
-                insertText = this.getRawValue( this.formatValue(insertText) );
-                if(rawValueString.length >= maxlength){
-                    return;
-                }else if(insertText.length > 1){
-                    insertText = this.getRawValueWithBlocks(insertText);
-                    insertText = insertText.substring(0, maxlength - rawValueString.length);
-                }
-            }
-            
-            this.setCurrentValue( currentLeftStr + insertText + currentRightStr );
-            this.activeIndex = endIndex === -1 ? -1 : ( startIndex + (insertText.length) );
-    
-            this.collapseToActiveText();
-        },
-        collapseToActiveText: function(){
-            var selection = window.getSelection();
-            if(!this.currentValue){
-                selection.collapse(this.$refs.inputContainer, 0);
-            }else {
-                var spans = this.$refs.inputContent.children;
-                var collapseSpan = this.activeIndex === -1 ? spans[spans.length - 1] : spans[this.activeIndex];
-                var collapseText = collapseSpan.childNodes[0];
-                var collapseOffset = this.activeIndex === -1 ? 1 : 0;
-                selection.collapse(collapseText, collapseOffset);
-            }
-
-            this.selectRange = false;
-
-            VueUtil.isIE && this.$refs.inputContainer.focus();
-        },
-        getInputContentRightX: function(){
-            var rect = this.$refs.inputContent.getBoundingClientRect();
-            var left = rect.left;
-            
-            var width = VueUtil.getStyle(this.$refs.inputContent, 'width');
-            var paddingLeft = VueUtil.getStyle(this.$refs.inputContent, 'paddingLeft');
-            var paddingRight = VueUtil.getStyle(this.$refs.inputContent, 'paddingRight');
-
-            return left + parseInt(width) - parseInt(paddingLeft) - parseInt(paddingRight);
-        },
-        selectAll: function(){
-            var spans = this.$refs.inputContent.children;
-                
-            if(!this.currentValue){
-                return;
-            }
-            
-            this.setTextRange({
-                startSpanEl: spans[0],
-                startOffset: 0,
-                endSpanEl: spans[spans.length - 1],
-                endOffset: 1
-            });
-            
-            this.selectRange = true;
-            this.activeIndex = 0;
-        },
-        focus: function(){
-            this.$refs.inputContainer && this.$refs.inputContainer.focus();
-        },
-        handleIconClick: function(event){
-            this.$emit('icon-click', event);
-        }
-      }
-    };
-    Vue.component(VueCodeInput.name, VueCodeInput);
-  });
 (function(context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
@@ -21918,7 +18943,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VuePopup, VueUtil) {
   'use strict';
   var VueAside = {
-    template: '<div v-show="visibleaside" :class="[{\'vue-aside-outter\': true, \'vue-aside__static\':relative}]"><div v-show="visibleaside" @touchmove.prevent :class="[\'vue-aside__wrapper\', {\'vue-aside__absolute\':relative}, {\'is-cleanness\': cleannessModal}]" @click.self="handleWrapperClick"></div><transition :name="transitionName"><div v-show="visibleaside" :class="[\'vue-aside\', {\'vue-aside__absolute\':relative}, sizeClass, customClass, positionClass]" :style="style" ref="aside"><div class="vue-aside__header"><span class="vue-aside__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot><div v-if="showClose" class="vue-aside__headerbtn"><i class="vue-aside__close vue-icon-close" @click=\'handleClose\'></i></div></div><div class="vue-aside__body"><slot></slot></div><div class="vue-aside__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></transition></div>',
+    template: '<div v-show="visibleaside" :class="[{\'vue-aside-outter\': true, \'vue-aside__static\':relative}]"><div v-show="visibleaside" :class="[\'vue-aside__wrapper\', {\'vue-aside__absolute\':relative}, {\'is-cleanness\': cleannessModal}]" @click.self="handleWrapperClick"></div><transition :name="transitionName"><div v-show="visibleaside" :class="[\'vue-aside\', {\'vue-aside__absolute\':relative}, sizeClass, customClass, positionClass]" ref="aside"><div class="vue-aside__header"><span class="vue-aside__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot><div v-if="showClose" class="vue-aside__headerbtn"><i class="vue-aside__close vue-icon-close" @click=\'handleClose\'></i></div></div><div class="vue-aside__body"><slot></slot></div><div class="vue-aside__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></transition></div>',
     name: 'VueAside',
     mixins: [VuePopup],
     data: function() {
@@ -21940,14 +18965,6 @@ return /******/ (function(modules) { // webpackBootstrap
       size: {
         type: String,
         default: 'small'
-      },
-      width: {
-        type: [String, Number],
-        default: ''
-      },
-      height: {
-        type: [String, Number],
-        default: ''
       },
       position: {
         type: String,
@@ -21978,7 +18995,6 @@ return /******/ (function(modules) { // webpackBootstrap
         } else {
           this.opened = false;
           VueUtil.off(this.$el, 'scroll', this.updatePopper);
-          this.focusTriggerOnClose && this.triggerElm && this.triggerElm.focus();
           this.$emit('close');
         }
       },
@@ -22005,24 +19021,12 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       }
     },
-    mounted: function() {
-      if (this.visible) {
-        var self = this;
-        var watchs = this._watchers.filter(function (watch) {return  watch.expression === 'visible';} );
-        watchs.map(function (watch) {watch.cb.bind(self)(true);});
-      }
-    },
     computed: {
       showTitle: function() {
         return VueUtil.trim(this.title) === '' ? false : true;
       },
       sizeClass: function() {
-        return (this.width || this.height) ? '' : 'vue-aside--' + this.size;
-      },
-      style: function() {
-        var width = isNaN(this.width) ? this.width : this.width + 'px';
-        var height = isNaN(this.height) ? this.height : this.height + 'px';
-        return (this.width || this.height) ? {width: width, height: height} : '';
+        return 'vue-aside--' + this.size;
       },
       positionClass: function() {
         var position = this.position;
@@ -22100,7 +19104,7 @@ return /******/ (function(modules) { // webpackBootstrap
     }
   };
   var VueAutocomplete = {
-    template: '<div class="vue-autocomplete" v-clickoutside="close" v-scrolling="close"><vue-input :size="size" :text-align="textAlign" :autofocus="autofocus" :tabindex="tabindex" ref="input" v-bind="$props" @compositionstart.native="handleComposition" @compositionupdate.native="handleComposition" @compositionend.native="handleComposition" @input="handleInput" @focus="handleFocus" @keydown.up.native.prevent="highlight(highlightedIndex - 1)" @keydown.down.native.prevent="highlight(highlightedIndex + 1)" @keydown.enter.native.prevent="handleKeyEnter" @keydown.native.tab="close"><template slot="prepend" v-if="$slots.prepend"><slot name="prepend"></slot></template><template slot="append" v-if="$slots.append"><slot name="append"></slot></template></vue-input><vue-autocomplete-suggestions :props="props" :class="[popperClass ? popperClass : \'\']" ref="suggestions" :suggestions="suggestions" v-if="suggestionVisible"></vue-autocomplete-suggestions></div>',
+    template: '<div class="vue-autocomplete" v-clickoutside="close" v-scrolling="close"><vue-input :text-align="textAlign" :autofocus="autofocus" :tabindex="tabindex" ref="input" v-bind="$props" @compositionstart.native="handleComposition" @compositionupdate.native="handleComposition" @compositionend.native="handleComposition" @input="handleInput" @focus="handleFocus" @keydown.up.native.prevent="highlight(highlightedIndex - 1)" @keydown.down.native.prevent="highlight(highlightedIndex + 1)" @keydown.enter.native.prevent="handleKeyEnter" @keydown.native.tab="close"><template slot="prepend" v-if="$slots.prepend"><slot name="prepend"></slot></template><template slot="append" v-if="$slots.append"><slot name="append"></slot></template></vue-input><vue-autocomplete-suggestions :props="props" :class="[popperClass ? popperClass : \'\']" ref="suggestions" :suggestions="suggestions" v-if="suggestionVisible"></vue-autocomplete-suggestions></div>',
     name: 'VueAutocomplete',
     mixins: [VueUtil.component.emitter],
     components: {
@@ -22135,7 +19139,6 @@ return /******/ (function(modules) { // webpackBootstrap
         default: true
       },
       customItem: String,
-      maxlength: Number,
       icon: String,
       onIconClick: Function
     },
@@ -22181,7 +19184,7 @@ return /******/ (function(modules) { // webpackBootstrap
       handleComposition: function(event) {
         if (event.type === 'compositionend') {
           this.isOnComposition = false;
-          this.handleChange(event.target.value);
+          this.handleChange(event.data);
         } else {
           this.isOnComposition = true;
         }
@@ -22282,16 +19285,8 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue) {
   'use strict';
   var VueButton = {
-    template: '<button @dblclick.stop :disabled="buttonDisabled || loading" @click="handleClick" :autofocus="autofocus" :tabindex="tabindex" :type="nativeType" :class="[\'vue-button\', type ? \'vue-button--\' + type : \'\', finalSize ? \'vue-button--\' + finalSize : \'\', {\'is-disabled\': buttonDisabled, \'is-loading\': loading, \'is-plain\': plain, \'is-circle\': circle}]"><i class="vue-icon-loading" v-if="loading"></i><i :class="icon" v-if="icon && !loading"></i><span v-if="$slots.default"><slot></slot></span></button>',
+    template: '<button @dblclick.stop :disabled="disabled || loading" @click="handleClick" :autofocus="autofocus" :tabindex="tabindex" :type="nativeType" :class="[\'vue-button\', type ? \'vue-button--\' + type : \'\', size ? \'vue-button--\' + size : \'\', {\'is-disabled\': disabled, \'is-loading\': loading, \'is-plain\': plain, \'is-circle\': circle}]"><i class="vue-icon-loading" v-if="loading"></i><i :class="icon" v-if="icon && !loading"></i><span v-if="$slots.default"><slot></slot></span></button>',
     name: 'VueButton',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-      vueFormItem: {
-        default: ''
-      },
-    },
     props: {
       type: {
         type: String,
@@ -22307,10 +19302,7 @@ return /******/ (function(modules) { // webpackBootstrap
         default: 'button'
       },
       loading: Boolean,
-      disabled: {
-        type: Boolean,
-        default: null
-      },
+      disabled: Boolean,
       plain: Boolean,
       circle: Boolean,
       autofocus: Boolean,
@@ -22323,14 +19315,6 @@ return /******/ (function(modules) { // webpackBootstrap
       handleClick: function(evt) {
         this.$emit('click', evt);
       }
-    },
-    computed: {
-      buttonDisabled: function() {
-        return this.disabled != undefined ? this.disabled : (this.vueForm || {}).disabled;
-      },
-      finalSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
     }
   };
   Vue.component(VueButton.name, VueButton);
@@ -22347,14 +19331,9 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCheckboxGroup = {
-    template: '<div class="vue-checkbox-group" :class="{\'check-style\': checkStyle, \'is-split\': realSplit}"><slot></slot></div>',
+    template: '<div class="vue-checkbox-group"><slot></slot></div>',
     name: 'VueCheckboxGroup',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueFormItem: {
-        default: ''
-      },
-    },
     props: {
       value: {},
       min: Number,
@@ -22366,11 +19345,6 @@ return /******/ (function(modules) { // webpackBootstrap
       tabindex: {
         type: Number,
         default: 0
-      },
-      checkStyle: Boolean,
-      split: {
-        type: Boolean,
-        default: null,
       }
     },
     methods: {
@@ -22384,14 +19358,6 @@ return /******/ (function(modules) { // webpackBootstrap
     watch: {
       value: function(value) {
         this.dispatch('VueFormItem', 'vue.form.change', [value]);
-      }
-    },
-    computed: {
-      finalSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
-      realSplit: function() {
-        return this.split == undefined ? this.checkStyle : this.split;
       }
     }
   };
@@ -22412,11 +19378,6 @@ return /******/ (function(modules) { // webpackBootstrap
     template: '<label :class="[\'vue-checkbox-button\', size ? \'vue-checkbox-button--\' + size : \'\', {\'is-disabled\': isDisabled}, {\'is-checked\': isChecked}, {\'is-focus\': isFocus}]"><input v-if="trueLabel || falseLabel" class="vue-checkbox-button__original" type="checkbox" :name="name" :disabled="isDisabled" :true-value="trueLabel" :false-value="falseLabel" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><input v-else class="vue-checkbox-button__original" type="checkbox" :name="name" :disabled="isDisabled" :value="label" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><span class="vue-checkbox-button__inner" v-if="$slots.default || label" :style="isChecked ? activeStyle : null"><slot>{{label}}</slot></span></label>',
     name: 'VueCheckboxButton',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     data: function() {
       return {
         selfModel: false,
@@ -22482,26 +19443,23 @@ return /******/ (function(modules) { // webpackBootstrap
       isDisabled: function() {
 
         return this._checkboxGroup
-          ? this._checkboxGroup.disabled || this.disabled || (this.vueForm || {}).disabled || this.isLimitDisabled
-          : this.disabled || (this.vueForm || {}).disabled;
+          ? this._checkboxGroup.disabled || this.disabled || this.isLimitDisabled
+          : this.disabled;
 
       },
       store: function() {
         return this._checkboxGroup ? this._checkboxGroup.value : this.value;
       },
-      checkStyle: function() {
-        return this._checkboxGroup.checkStyle;
-      },
       activeStyle: function() {
         return {
           backgroundColor: this._checkboxGroup.fill || '',
-          borderColor: (this.checkStyle ? this._checkboxGroup.textColor : this._checkboxGroup.fill) || '',
+          borderColor: this._checkboxGroup.fill || '',
           color: this._checkboxGroup.textColor || '',
-          'box-shadow': this.checkStyle? '' : '-1px 0 0 0 ' + this._checkboxGroup.fill
+          'box-shadow': '-1px 0 0 0 ' + this._checkboxGroup.fill
         };
       },
       size: function() {
-        return this._checkboxGroup.finalSize;
+        return this._checkboxGroup.size;
       },
       tabIndex: function() {
         return this._checkboxGroup ? this._checkboxGroup.tabindex : this.tabindex;
@@ -22547,14 +19505,9 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCheckbox = {
-    template: '<label v-show="isDisplay ? isChecked : true"  class="vue-checkbox"><span :class="[\'vue-checkbox__input\', {\'is-disabled\': isDisabled, \'is-checked\': isChecked, \'is-indeterminate\': indeterminate, \'is-focus\': isFocus}]"><span class="vue-checkbox__inner"></span><input v-if="trueLabel || falseLabel" class="vue-checkbox__original" z-index="0" type="checkbox" :name="name" :disabled="isDisabled" :true-value="trueLabel" :false-value="falseLabel" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><input v-else class="vue-checkbox__original" type="checkbox" :disabled="isDisabled" :value="label" :name="name" v-model="model" @change="handleChange" :tabindex="tabIndex"  @focus="isFocus = true" @blur="isFocus = false"></span><span class="vue-checkbox__label" v-if="$slots.default || label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
+    template: '<label class="vue-checkbox"><span :class="[\'vue-checkbox__input\', {\'is-disabled\': isDisabled, \'is-checked\': isChecked, \'is-indeterminate\': indeterminate, \'is-focus\': isFocus}]"><span class="vue-checkbox__inner"></span><input v-if="trueLabel || falseLabel" class="vue-checkbox__original" z-index="0" type="checkbox" :name="name" :disabled="isDisabled" :true-value="trueLabel" :false-value="falseLabel" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><input v-else class="vue-checkbox__original" type="checkbox" :disabled="isDisabled" :value="label" :name="name" v-model="model" @change="handleChange" :tabindex="tabIndex"  @focus="isFocus = true" @blur="isFocus = false"></span><span class="vue-checkbox__label" v-if="$slots.default || label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
     name: 'VueCheckbox',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     data: function() {
       return {
         selfModel: false,
@@ -22589,11 +19542,8 @@ return /******/ (function(modules) { // webpackBootstrap
       },
       isDisabled: function() {
         return this.isGroup
-          ? this._checkboxGroup.disabled || this.disabled || (this.vueForm || {}).disabled
-          : this.disabled || (this.vueForm || {}).disabled;
-      },
-      isDisplay: function() {
-        return this.isDisabled && (this.vueForm || {}).display;
+          ? this._checkboxGroup.disabled || this.disabled || (this.elForm || {}).disabled
+          : this.disabled || (this.elForm || {}).disabled;
       },
       isGroup: function() {
         var parent = this.$parent;
@@ -22608,7 +19558,7 @@ return /******/ (function(modules) { // webpackBootstrap
         return false;
       },
       store: function() {
-        return this._checkboxGroup ? this._checkboxGroup.value == undefined ? [] : this._checkboxGroup.value : this.value;
+        return this._checkboxGroup ? this._checkboxGroup.value : this.value;
       },
       tabIndex: function() {
         return this._checkboxGroup ? this._checkboxGroup.tabindex : this.tabindex;
@@ -22690,10 +19640,6 @@ return /******/ (function(modules) { // webpackBootstrap
         type: String,
         default: 'small'
       },
-      width: {
-        type: [String, Number],
-        default: ''
-      },
       customClass: {
         type: String,
         default: ''
@@ -22712,10 +19658,6 @@ return /******/ (function(modules) { // webpackBootstrap
         type: Boolean,
         default: false
       },
-      appendToBody: {
-        type: Boolean,
-        default: false
-      },
     },
     watch: {
       visibledialog: function(val) {
@@ -22730,7 +19672,6 @@ return /******/ (function(modules) { // webpackBootstrap
         } else {
           this.opened = false;
           VueUtil.off(this.$el, 'scroll', this.updatePopper);
-          this.focusTriggerOnClose && this.triggerElm && this.triggerElm.focus();
           this.$emit('close');
         }
       },
@@ -22762,11 +19703,10 @@ return /******/ (function(modules) { // webpackBootstrap
         return VueUtil.trim(this.title) === '' ? false : true;
       },
       sizeClass: function() {
-        return this.width ? '' : 'vue-dialog--' + this.size;
+        return 'vue-dialog--' + this.size;
       },
       style: function() {
-        var width = isNaN(this.width) ? this.width : this.width + 'px';
-        return this.size === 'full' ? {} : (this.width ? {'top': this.top, width: width, left: 'calc((100vw - ' + width + ') / 2)'} : {'top': this.top});
+        return this.size === 'full' ? {} : {'top': this.top};
       },
       draggableCancelSelector: function() {
         return (this.size === 'full' || this.draggable === false) ? '.vue-dialog' : '.vue-dialog__headerbtn, .vue-dialog__body, .vue-dialog__footer';
@@ -22779,16 +19719,6 @@ return /******/ (function(modules) { // webpackBootstrap
       },
       handleClose: function() {
         this.$emit('visible-change', false);
-      }
-    },
-    mounted: function() {
-      if (this.appendToBody) {
-        document.body.appendChild(this.$el);
-      }
-    },
-    destroyed: function() {
-      if (this.appendToBody && this.$el && this.$el.parentNode) {
-        this.$el.parentNode.removeChild(this.$el);
       }
     }
   };
@@ -22823,7 +19753,7 @@ return /******/ (function(modules) { // webpackBootstrap
       }
     });
     var insertDom = function(parent, el, binding) {
-      if (!el.instance.visible) {
+      if (!el.domVisible) {
         VueUtil.ownPropertyLoop(el.maskStyle, function(property) {
           el.mask.style[property] = el.maskStyle[property];
         });
@@ -22834,8 +19764,8 @@ return /******/ (function(modules) { // webpackBootstrap
           parent.style.overflow = 'hidden';
         }
         parent.appendChild(el.mask);
+        el.domVisible = true;
         el.instance.visible = true;
-        el.instance.hiding && ( el.instance.hiding = false ); // 上一个隐藏动作执行过程中进入 insertDom，此时，需要中断隐藏动作
         el.domInserted = true;
         Vue.nextTick(function() {
           if (binding.modifiers.fullscreen) {
@@ -22869,11 +19799,9 @@ return /******/ (function(modules) { // webpackBootstrap
           }
         }
       } else {
-        if (el.instance.visible) {
+        if (el.domVisible) {
           el.instance.$once('after-leave', function() {
-            if (!el.instance.hiding) {
-              return; // 隐藏被中断，不执行后续处理
-            }
+            el.domVisible = false;
             if (binding.modifiers.fullscreen && el.originalOverflow !== 'hidden') {
               document.body.style.overflow = el.originalOverflow;
             }
@@ -22882,12 +19810,8 @@ return /******/ (function(modules) { // webpackBootstrap
             } else {
               el.style.position = el.originalPosition;
             }
-            el.instance.hiding = false; // 隐藏动作未被中断，隐藏动作正常执行完
           });
           el.instance.visible = false;
-          // 用于标记隐藏动作是否有被中断（即还没执行到 after-leave ，马上又触发了一个显示的动作，进入了 insertDom 方法）
-          // 如果有被中断，则进入 after-leave 时，不执行后续隐藏动作
-          el.instance.hiding = true;
         }
       }
     };
@@ -22907,7 +19831,6 @@ return /******/ (function(modules) { // webpackBootstrap
     Vue.directive('loading', {
       bind: function(el, binding) {
         var mask = new VueLoading({
-          i18n: Vue.i18n,
           el: document.createElement('div'),
           data: {
             text: el.getAttribute('vue-loading-text'),
@@ -23001,7 +19924,10 @@ return /******/ (function(modules) { // webpackBootstrap
     // template: '<li :style="paddingStyle" @click="handleClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave" :class="[\'vue-menu-item\', {\'is-active\': active, \'is-disabled\': disabled}]"><template v-else><slot></slot></template></li>',
     template: '<li class="vue-menu-item"'
     + '    :style="[paddingStyle]"'
-    + '    :class="itemClass"'
+    + '    :class="{'
+    + '      \'is-active\': active,'
+    + '      \'is-disabled\': disabled'
+    + '    }"'
     + '    @click="handleClick"'
     + '  >'
     + '    <vue-tooltip'
@@ -23029,24 +19955,11 @@ return /******/ (function(modules) { // webpackBootstrap
         type: Object,
         required: false
       },
-      disabled: Boolean,
-      indentSize: {
-        type: Number
-      }
+      disabled: Boolean
     },
     computed: {
       active: function() {
         return this.index === this.rootMenu.activedIndex;
-      },
-      itemClass: function() {
-        var classNames = {
-          'is-active': this.active,
-          'is-disabled': this.disabled,
-        };
-
-        classNames['vue-menu-level-' + this.level] = true;
-        
-        return classNames;
       }
     },
     methods: {
@@ -23100,12 +20013,6 @@ return /******/ (function(modules) { // webpackBootstrap
       menuTrigger: {
         type: String,
         default: 'hover'
-      },
-      indentSize: {
-        type: Number
-      },
-      indentMethod: {
-        type: Function,
       }
     },
 
@@ -23157,9 +20064,6 @@ return /******/ (function(modules) { // webpackBootstrap
     computed: {
       isMenuPopup: function() {
         return this.mode === 'horizontal' || (this.mode === 'vertical' && this.collapse);
-      },
-      indentSizeVal: function() {
-        return this.indentSize;
       }
     },
     methods: {
@@ -23262,14 +20166,9 @@ return /******/ (function(modules) { // webpackBootstrap
   });
 
   var VueRadioGroup = {
-    template: '<div class="vue-radio-group" :class="{\'check-style\': checkStyle, \'is-split\': realSplit}" role="radiogroup" @keydown="handleKeydown"><slot></slot></div>',
+    template: '<div class="vue-radio-group" role="radiogroup" @keydown="handleKeydown"><slot></slot></div>',
     name: 'VueRadioGroup',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueFormItem: {
-        default: ''
-      },
-    },
     props: {
       value: {},
       size: String,
@@ -23279,16 +20178,11 @@ return /******/ (function(modules) { // webpackBootstrap
       tabindex: {
         type: Number,
         default: 0
-      },
-      checkStyle: Boolean,
-      split: {
-        type: Boolean,
-        default: null,
       }
     },
     watch: {
-      value: function(value, oldValue) {
-        this.$emit('change', value, oldValue);
+      value: function(value) {
+        this.$emit('change', value);
         this.dispatch('VueFormItem', 'vue.form.change', [this.value]);
       }
     },
@@ -23354,14 +20248,6 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       }
     },
-    computed: {
-      finalSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
-      realSplit: function() {
-        return this.split == undefined ? this.checkStyle : this.split;
-      }
-    },
     mounted: function() {
       this.handleTabindex();
       this.$on('radioChange', this.handleTabindex);
@@ -23383,11 +20269,6 @@ return /******/ (function(modules) { // webpackBootstrap
   var VueRadioButton = {
     template: '<label role="radio" :class="[\'vue-radio-button\', size ? \'vue-radio-button--\' + size : \'\', {\'is-active\': value === label}, {\'is-disabled\': isDisabled}, {\'is-focus\': isFocus}]" :tabindex="tabIndex"><input class="vue-radio-button__original" :value="label" type="radio" v-model="value" :name="name" :tabindex="-1" @focus="isFocus = true" @blur="isFocus = false" :disabled="isDisabled"><span class="vue-radio-button__inner" :style="value === label ? activeStyle : null"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
     name: 'VueRadioButton',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     data: function() {
       return {
         isFocus: false
@@ -23422,22 +20303,19 @@ return /******/ (function(modules) { // webpackBootstrap
         }
         return false;
       },
-      checkStyle: function() {
-        return this._radioGroup.checkStyle;
-      },
       activeStyle: function() {
         return {
           backgroundColor: this._radioGroup.fill || '',
-          borderColor: (this.checkStyle ? this._radioGroup.textColor : this._radioGroup.fill) || '',
-          boxShadow: this.checkStyle ? '' : (this._radioGroup.fill ? '-1px 0 0 0 ' + this._radioGroup.fill : ''),
+          borderColor: this._radioGroup.fill || '',
+          boxShadow: this._radioGroup.fill ? '-1px 0 0 0 ' + this._radioGroup.fill : '',
           color: this._radioGroup.textColor || ''
         };
       },
       size: function() {
-        return this._radioGroup.finalSize;
+        return this._radioGroup.size;
       },
       isDisabled: function() {
-        return this.disabled || this._radioGroup.disabled || (this.vueForm || {}).disabled;
+        return this.disabled || this._radioGroup.disabled;
       },
       tabIndex: function() {
         return (this.isDisabled || (this._radioGroup && this.value !== this.label)) ? -1 : this.isGroup ? this._radioGroup.tabindex : this.tabindex;
@@ -23493,14 +20371,7 @@ return /******/ (function(modules) { // webpackBootstrap
       if(Vue.i18n) opt.i18n = Vue.i18n;
       self.popperVM = new Vue(opt).$mount();
     },
-    deactivated: function() {
-      if (this.expectedState) {
-        this.setExpectedState(false);
-        this.debounceClose();
-      }
-    },
     beforeDestroy: function() {
-      this.$refs.popper && this.$refs.popper.parentElement && this.$refs.popper.parentElement.removeChild(this.$refs.popper);
       this.popperVM.$destroy();
     },
     render: function(createElement) {
@@ -23584,7 +20455,7 @@ return /******/ (function(modules) { // webpackBootstrap
       this.referenceElm = this.$el;
     },
     methods: {
-      debounceClose: VueUtil.debounce(70, function() {
+      debounceClose: VueUtil.debounce(function() {
         this.handleClosePopper();
       }),
       addEventHandle: function(old, fn) {
@@ -23622,14 +20493,9 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueRadio = {
-    template: '<label v-show="isDisplay ? model === label : true" role="radio" @keydown.space.stop.prevent="model = isDisabled ? model : label" :tabindex="tabIndex" class="vue-radio" :class="[{\'is-disabled\': isDisabled}]"><span :class="[\'vue-radio__input\', {\'is-disabled\': isDisabled, \'is-checked\': model === label, \'is-focus\': isFocus}]"><span class="vue-radio__inner"></span><input class="vue-radio__original" :value="label" type="radio" v-model="model" @focus="isFocus=true" @blur="isFocus=false" :name="name" :disabled="isDisabled" tabindex="-1"></span><span class="vue-radio__label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
+    template: '<label role="radio" @keydown.space.stop.prevent="model = isDisabled ? model : label" :tabindex="tabIndex" class="vue-radio" :class="[{\'is-disabled\': isDisabled}]"><span :class="[\'vue-radio__input\', {\'is-disabled\': isDisabled, \'is-checked\': model === label, \'is-focus\': isFocus}]"><span class="vue-radio__inner"></span><input class="vue-radio__original" :value="label" type="radio" v-model="model" @focus="isFocus=true" @blur="isFocus=false" :name="name" :disabled="isDisabled" tabindex="-1"></span><span class="vue-radio__label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
     name: 'VueRadio',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     props: {
       value: {},
       label: {},
@@ -23671,12 +20537,7 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       },
       isDisabled: function() {
-        return this.isGroup 
-        ? this._radioGroup.disabled || this.disabled || (this.vueForm || {}).disabled
-        : this.disabled || (this.vueForm || {}).disabled;
-      },
-      isDisplay: function() {
-        return this.isDisabled && (this.vueForm || {}).display;
+        return this.isGroup ? this._radioGroup.disabled || this.disabled : this.disabled;
       },
       tabIndex: function() {
         return (this.isDisabled || (this.isGroup && this.model !== this.label)) ? -1 : this.isGroup ? this._radioGroup.tabindex : this.tabindex;
@@ -23790,7 +20651,7 @@ return /******/ (function(modules) { // webpackBootstrap
         [h(
           'div',
           {
-            'class': ['vue-submenu__title', 'vue-menu-level-'+this.level],
+            'class': 'vue-submenu__title',
             ref: 'submenu-title',
             on: {
               'click': this.handleClick
@@ -23820,10 +20681,7 @@ return /******/ (function(modules) { // webpackBootstrap
         type: Number,
         default: 300
       },
-      disabled: Boolean,
-      indentSize: {
-        type: Number
-      }
+      disabled: Boolean
     },
     data: function() {
       return {
@@ -23951,16 +20809,6 @@ return /******/ (function(modules) { // webpackBootstrap
           }, 0);
           return;
         }
-
-        if (this.mode === 'horizontal') {
-          verticalMenu.style.left = menu.offsetWidth + 5 + 'px';
-          verticalMenu.style.top = 0;
-          
-          if (this.level > 1) {
-            verticalMenu.style.position = 'absolute';
-          }
-          return;
-        }
         
         if(this.rootMenu.collapse) {
           submenu.style.position = 'static';
@@ -24059,9 +20907,9 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue) {
   'use strict';
   var VueSwitch = {
-    template: '<label :tabindex="switchDisabled ? -1 : tabindex" @keydown.space.stop.prevent="toggleCheck" :class="[\'vue-switch\', {\'is-disabled\': switchDisabled, \'vue-switch--wide\': hasText}]">\
-      <div class="vue-switch__mask" v-show="switchDisabled"></div>\
-      <input ref="check" class="vue-switch__input" type="checkbox" @change="handleChange" v-model="_value" :name="name" :disabled="switchDisabled">\
+    template: '<label :tabindex="disabled ? -1 : tabindex" @keydown.space.stop.prevent="toggleCheck" :class="[\'vue-switch\', {\'is-disabled\': disabled, \'vue-switch--wide\': hasText}]">\
+      <div class="vue-switch__mask" v-show="disabled"></div>\
+      <input ref="check" class="vue-switch__input" type="checkbox" @change="handleChange" v-model="_value" :name="name" :disabled="disabled">\
       <span class="vue-switch__core" ref="core" :style="{\'width\': coreWidth + \'px\'}">\
         <span class="vue-switch__button" :style="buttonStyle"></span>\
       </span>\
@@ -24075,15 +20923,10 @@ return /******/ (function(modules) { // webpackBootstrap
       </transition>\
     </label>',
     name: 'VueSwitch',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     props: {
       value: {
         type: [Boolean, String, Number],
-        default: false
+        default: true
       },
       onValue: {
         type: [Boolean, String, Number],
@@ -24150,9 +20993,6 @@ return /******/ (function(modules) { // webpackBootstrap
         set: function(val) {
           this.$emit('input', val ? this.onValue : this.offValue);
         }
-      },
-      switchDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
       }
     },
     watch: {
@@ -24207,7 +21047,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueTabPane = {
-    template: '<div class="vue-tab-pane" :class="paneStyle ? \'vue-tab-pane-no-hide\': \'\'" v-show="noHide || active" :style="paneStyle" ><keep-alive><router-view v-if="router && active && $route.meta.keepAlive"></router-view></keep-alive><router-view v-if="router && active && !$route.meta.keepAlive"></router-view><slot v-if="!router"></slot></div>',
+    template: '<div class="vue-tab-pane" v-show="noHide || active" :style="paneStyle" ><keep-alive><router-view v-if="router && active && $route.meta.keepAlive"></router-view></keep-alive><router-view v-if="router && active && !$route.meta.keepAlive"></router-view><slot v-if="!router"></slot></div>',
     name: 'VueTabPane',
     props: {
       label: String,
@@ -24243,7 +21083,7 @@ return /******/ (function(modules) { // webpackBootstrap
           };
         }
 
-        return undefined;
+        return {};
       }
     },
     mounted: function() {
@@ -24522,10 +21362,6 @@ return /******/ (function(modules) { // webpackBootstrap
       noHide: {
         type: Boolean,
         default: false,
-      },
-      swipeChange: {
-        type: Boolean,
-        default: true,
       }
     },
     data: function() {
@@ -24594,12 +21430,10 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       },
       touchStart:function(event) {
-        if(!this.isMobile) return;
         this.mTouchStartX = event.changedTouches[0].clientX;
         this.mTouchStartY = event.changedTouches[0].clientY;
       },
       touchEnd:function(event) {
-        if(!this.isMobile) return;
         this.mTouchEndX = event.changedTouches[0].clientX;
         this.mTouchEndY = event.changedTouches[0].clientY;
         var moveRangeX = this.mTouchStartX - this.mTouchEndX;
@@ -24676,10 +21510,10 @@ return /******/ (function(modules) { // webpackBootstrap
       }, [newButton, createElement('tab-nav', navData, [])]);
       var panels = createElement('div', {
         'class': 'vue-tabs__content',
-        on: this.swipeChange ? {
+        on: {
           'touchstart': self.touchStart,
           'touchend': self.touchEnd,
-        } : {}
+        }
       }, [this.$slots.default]);
       return createElement('div', {
         'class': {
@@ -24824,9 +21658,8 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       },
       queryChange: function(query) {
-        if (!this.parent.lazyload && VueUtil.isFunction(this.parent.filterMethod)) {
-          var item = this.parent.data[this.index] || {label: this.label, value: this.value};
-          this.visible = this.parent.filterMethod(query, item, this.parent.getFormatedLabel(this));
+        if (!this.parent.lazyload && VueUtil.isFunction(this.parent.filterMethod) && this.parent.data.length > 0) {
+          this.visible = this.parent.filterMethod(query, this.parent.data[this.index], this.parent.getFormatedLabel(this));
         } else {
           var parsedQuery = String(query).replace(/(\^|\(|\)|\[|\]|\$|\*|\+|\.|\?|\\|\{|\}|\|)/g, '\\$1');
           this.visible = new RegExp(parsedQuery, 'i').test(this.parent.getFormatedLabel(this)) || this.created;
@@ -24976,46 +21809,31 @@ return /******/ (function(modules) { // webpackBootstrap
     '<div :class="[\'vue-select\', {\'filter-vue-select\': isMobile && visible && filterable}]" v-clickoutside="handleClose" v-scrolling="handleClose"> \
       <div :class="[\'vue-select__tags\', {\'no-reset-height\': !autoHeight}]" v-if="multiple" @click.stop="toggleMenu" \
         ref="tags" :style="{\'max-width\': inputWidth - 32 + \'px\'}"> \
-        <template v-if="!autoHeight && selected.length > 0">\
-        \
-          <vue-tag :closable="!selectDisabled" hit :type="selectDisabled ? \'\' : \'info\'" v-for="s in selected.slice(0, maxDisplayTags)" :key="getValueKey(s)" class="vue-select__tags_item"\
-            @close="deleteTag($event, s)"><span class="vue-select__tags-text">{{getFormatedLabel(s)}}</span></vue-tag>\
-\
-<vue-tooltip ref="tooltip" v-if="!isMobile && showTooltip && selected.length > maxDisplayTags" :placement="tooltipPlacement" :effect="tooltipEffect" :enterable="true">\
-              <div slot="content" class="vue-select-tooltip-content" ><vue-tag v-for="(item, index) in selected.slice(maxDisplayTags)" :key="getValueKey(item)" :closable="!selectDisabled" hit :type="selectDisabled ? \'\' : \'info\'" \
-              @close="deleteTag($event, item)"><span class="vue-select__tags-text">{{getFormatedLabel(item)}}</span></vue-tag></div>\
-              <vue-tag :closable="false" hit :type="selectDisabled ? \'\' : \'info\'" class="vue-select__tags_more" \
-              ><span class="vue-select__tags-text">+ {{ selected.length - maxDisplayTags }}</span></vue-tag>\
-            </vue-tooltip>\
-            \
-            <vue-tag v-if="(isMobile || !showTooltip) && selected.length > maxDisplayTags" :closable="false" hit :type="selectDisabled ? \'\' : \'info\'" class="vue-select__tags_more" \
-              ><span class="vue-select__tags-text">+ {{ selected.length - maxDisplayTags }}</span></vue-tag>\
-        </template>\
-        <transition-group v-if="autoHeight" @after-leave="resetInputHeight"> \
-          <vue-tag v-for="(item, index) in selected" :key="getValueKey(item)" :closable="!selectDisabled" hit :type="selectDisabled ? \'\' : \'info\'" \
+        <transition-group @after-leave="resetInputHeight"> \
+          <vue-tag v-for="(item, index) in selected" :key="getValueKey(item)" :closable="!disabled" hit :type="disabled ? \'\' : \'info\'" \
             @close="deleteTag($event, item)"><span class="vue-select__tags-text">{{getFormatedLabel(item)}}</span></vue-tag> \
         </transition-group>\
-        <input :tabindex="tabindex" @keydown.tab="visible = false" type="text" :class="[\'vue-select__input\', {\'is-mini\': finalSize===\'mini\'}]" @focus="visible = true; focusing=true;" @blur="focusing=false" \
-          :disabled="selectDisabled" @keyup="managePlaceholder" @keydown="resetInputState" @keydown.down.prevent.stop="navigateOptions(\'next\')" \
-          @keydown.up.prevent.stop="navigateOptions(\'prev\')" @keydown.enter.prevent.stop="selectOption" @keydown.esc.prevent="handleEsc" \
+        <input type="text" :class="[\'vue-select__input\', {\'is-mini\': size===\'mini\'}]" @focus="visible == true" \
+          :disabled="disabled" @keyup="managePlaceholder" @keydown="resetInputState" @keydown.down.prevent="navigateOptions(\'next\')" \
+          @keydown.up.prevent="navigateOptions(\'prev\')" @keydown.enter.prevent="selectOption" @keydown.esc.prevent="visible = false" \
           @keydown.delete="deletePrevTag" v-model="query" v-if="filterable" :readonly="isMobile" :style="{width: multipleInputLength + \'px\', \'max-width\': inputWidth - 42 + \'px\'}" \
           ref="input" />\
       </div> \
       <vue-input ref="reference" v-model="selectedLabel" type="text" :text-align="textAlign" \
-        :placeholder="placeholderLang" :autofocus="autofocus" :tabindex="multiple && filterable ? -1 : tabindex" :name="name" :size="finalSize" \
-        :disabled="selectDisabled" :readonly="isReadOnly" :validate-event="false" @click="handleIconClick" \
-        @mousedown.native="handleMouseDown" @keyup.native="debouncedOnInputChange" @input="keepMenu" @keydown.native.down.prevent.stop="navigateOptions(\'next\')" \
-        @keydown.native.up.prevent.stop="navigateOptions(\'prev\')" @keydown.native.enter.prevent.stop="selectOption" \
-        @keydown.native.esc.prevent="handleEsc" @keydown.native.tab="handleTab" @paste.native="debouncedOnInputChange" \
-        @mouseenter.native="inputHovering = true" @mouseleave.native="inputHovering = false" :icon="iconClass" :class="{focusing: focusing}"></vue-input> \
-      <transition @leave="destroyPopper" @after-enter="handleMenuEnter"> \
-        <vue-select-dropdown ref="popper" v-show="visible && emptyText !== false"  :append="append" :auto-width="autoWidth"> \
+        :placeholder="placeholderLang" :autofocus="autofocus" :tabindex="tabindex" :name="name" :size="size" \
+        :disabled="disabled" :readonly="isMobile || !filterable || multiple" :validate-event="false" @click="handleIconClick" \
+        @mousedown.native="handleMouseDown" @keyup.native="debouncedOnInputChange" @input="keepMenu" @keydown.native.down.prevent="navigateOptions(\'next\')" \
+        @keydown.native.up.prevent="navigateOptions(\'prev\')" @keydown.native.enter.prevent="selectOption" \
+        @keydown.native.esc.prevent="visible = false" @keydown.native.tab="visible = false" @paste.native="debouncedOnInputChange" \
+        @mouseenter.native="inputHovering = true" @mouseleave.native="inputHovering = false" :icon="iconClass"></vue-input> \
+      <transition @after-leave="destroyPopper" @after-enter="handleMenuEnter"> \
+        <vue-select-dropdown ref="popper" v-show="visible && emptyText !== false"  :append="append" > \
         <div :class="{\'vue-select-dropdown_main\':isMobile}">\
           <div @touchmove.prevent v-if="isMobile && visible && emptyText !== false" class="vue-aside__wrapper" @click="handleClose"></div> \
-            <div @touchmove.stop :class="{\'vue-aside vue-aside-bottom\':isMobile && visible && emptyText !== false}">\
-              <div class="tag_view" v-if="isMobile && visible && emptyText !== false && multiple && selected.length>0" @click.stop="toggleMenu">\
+            <div :class="{\'vue-aside vue-aside-bottom\':isMobile && visible && emptyText !== false}">\
+              <div class="tag_view" v-if="isMobile && visible && emptyText !== false && filterable && multiple && selected.length>0" @click.stop="toggleMenu">\
                 <transition-group   @after-leave="resetInputHeight" > \
-                  <vue-tag v-for="(item, index) in selected" :key="getValueKey(item)" :closable="!selectDisabled" hit :type="selectDisabled ? \'\' : \'info\'" \
+                  <vue-tag v-for="(item, index) in selected" :key="getValueKey(item)" :closable="!disabled" hit :type="disabled ? \'\' : \'info\'" \
                   @close="deleteTag($event, item)"><span class="vue-select__tags-text">{{getFormatedLabel(item)}}</span></vue-tag> \
                 </transition-group>\
               </div>\
@@ -25024,7 +21842,7 @@ return /******/ (function(modules) { // webpackBootstrap
               :icon="iconClass" @click="handleIconClick"></vue-input>\
               <div :class="{\'vue-select-dropdown_list_main\':isMobile && visible && emptyText !== false}">\
                 <ul :class="[\'vue-select-dropdown__list\', {\'is-empty\': !allowCreate && filteredOptionsCount === 0}]" \
-                  v-show="options.length > 0 && !loading" ref="itemContainer"> \
+                  v-show="options.length > 0 && !loading"> \
                   <vue-option :value="query" created v-if="showNewOption"></vue-option> \
                   <vue-recycle-scroller \
                   ref="scroller" \
@@ -25032,8 +21850,7 @@ return /******/ (function(modules) { // webpackBootstrap
                   :items="lazyData" \
                   :item-size="itemSize" \
                   :key-field="valueMember" \
-                  v-slot="ref"\
-                  :emit-update="emitUpdate"\
+                  v-slot="ref" \
                   v-if="lazyload"> \
                     <slot :item="ref.item"></slot> \
                   </vue-recycle-scroller> \
@@ -25048,41 +21865,30 @@ return /******/ (function(modules) { // webpackBootstrap
     </div>',
     mixins: [VueUtil.component.emitter],
     name: 'VueSelect',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-      vueFormItem: {
-        default: ''
-      },
-    },
     computed: {
-      finalSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
       iconClass: function() {
         var criteria;
         var resultCss;
         if (this.multiple) {
           if (this.visible) {
-            criteria = this.clearable && !this.selectDisabled && this.inputHovering;
+            criteria = this.clearable && !this.disabled && this.inputHovering;
             resultCss = criteria && !this.multipleLimit && !this.lazyload ? 'vue-icon-success is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up is-reverse');
             if(this.isMobile){
-              criteria = this.clearable && !this.selectDisabled;
+              criteria = this.clearable && !this.disabled;
               resultCss = criteria && !this.multipleLimit && !this.lazyload ? this.filterAllSelectedStatus ? 'vue-icon-success is-show-check is-all-select' : 'vue-icon-success is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up is-reverse');
             }
             return resultCss;
           } else {
-            criteria = this.clearable && !this.selectDisabled && this.inputHovering && VueUtil.isDef(this.value) && this.value.length > 0;
+            criteria = this.clearable && !this.disabled && this.inputHovering && VueUtil.isDef(this.value) && this.value.length > 0;
             if(this.isMobile)
-              criteria = this.clearable && !this.selectDisabled && VueUtil.isDef(this.value) && this.value.length > 0;
+              criteria = this.clearable && !this.disabled && VueUtil.isDef(this.value) && this.value.length > 0;
             return criteria ? 'vue-icon-error is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up');
           }
         } else {
-          criteria = this.clearable && !this.selectDisabled && this.inputHovering && VueUtil.isDef(this.value) && this.value !== '';
+          criteria = this.clearable && !this.disabled && this.inputHovering && VueUtil.isDef(this.value) && this.value !== '';
           resultCss = criteria ? 'vue-icon-error is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up');
           if(this.isMobile){
-            criteria = this.clearable && !this.selectDisabled && VueUtil.isDef(this.value) && this.value !== '' && !this.visible;
+            criteria = this.clearable && !this.disabled && VueUtil.isDef(this.value) && this.value !== '' && !this.visible;
             resultCss = criteria ? 'vue-icon-error is-show-close' : (this.remote || this.filterable) && this.visible ? '' : 'vue-icon-arrow-up';
           }
           return resultCss;
@@ -25127,7 +21933,7 @@ return /******/ (function(modules) { // webpackBootstrap
         var hasExistingOption = VueUtil.filter(self.options, function(option) {
           return !option.created;
         }).some(function(option) {
-          return option.currentLabel === self.query || (self.query ===  option.value && option.value === self.value);
+          return option.currentLabel === self.query;
         });
         return self.filterable && self.allowCreate && self.query !== '' && !hasExistingOption;
       },
@@ -25147,56 +21953,7 @@ return /******/ (function(modules) { // webpackBootstrap
         if (!this.placeholder)
           return this.$t('vue.select.placeholder');
         return this.placeholder;
-      },
-
-      selectDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
-      },
-
-      isReadOnly: function() {
-        return (this.isMobile || !this.filterable || this.multiple);
       }
-    },
-    beforeUpdate: function() {
-      var self = this;
-      if (!this.$el || this.autoHeight || this.selected.length == 0) return;
-      var elWidth = this.$el.clientWidth;
-      var tags = this.$el.querySelector('.vue-select__tags');
-      if (!tags) return;
-      
-      var max = 9999;
-      var div = document.createElement('div');
-      div.style.position = 'absolute';
-      tags.appendChild(div);
-      
-      for (var i = 0; i < this.selected.length; i++) {
-        var selectedTag = this.selected[i];
-        div.innerHTML = div.innerHTML + '<div class="vue-select__tags_item vue-tag vue-tag--info is-hit"><span style="float: left;"><span class="vue-select__tags-text">' + 
-        self.getFormatedLabel(selectedTag)
-        + '</span></span><i class="vue-tag__close vue-icon-close"></i></div>';
-
-        var noPlusBtnOff = this.filterable ? 45 : 35; //需要显示 +n tag时，剩余宽度大小
-        var hasPlusBtnOff = this.filterable ? 90 : 80; //不需要显示 +n tag时，剩余宽度大小
-        var offset = elWidth - div.clientWidth;
-
-        // 当当前所有的tag都能显示，不要出现+n按钮时，只需要剩余宽度大于 35 或45即可
-        if (offset > noPlusBtnOff && (i + 1) == this.selected.length) {
-          max = i + 1;
-          break;
-        }
-
-        //否则需要预留+n按钮位置
-        if (offset < hasPlusBtnOff) {
-          max = i;
-          break;
-        }
-      }
-
-      div.parentElement.removeChild(div);
-
-      self.$nextTick(function() {
-        self.maxDisplayTags = max;
-      });
     },
     directives: {
       Clickoutside: VueUtil.component.clickoutside(),
@@ -25231,10 +21988,6 @@ return /******/ (function(modules) { // webpackBootstrap
         type: Boolean,
         default: true
       },
-      autoWidth: {
-        type: Boolean,
-        default: true
-      },
       valueKey: {
         type: String,
         default: 'value'
@@ -25262,27 +22015,7 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       },
       labelFormatter: Function,
-      appendToSelf: Boolean,
-      showTooltip: {
-        type: Boolean,
-        default: true
-      },
-      selectOnTab: {
-        type: Boolean,
-        default: false
-      },
-      hoverFirstOnFilter: {
-        type: Boolean,
-        default: false
-      },
-      tooltipPlacement: {
-        type: String,
-        default: 'bottom'
-      },
-      tooltipEffect: {
-        type: String,
-        default: 'light'
-      },
+      appendToSelf: Boolean
     },
     data: function() {
       return {
@@ -25311,9 +22044,6 @@ return /******/ (function(modules) { // webpackBootstrap
         append: null,
         isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
         filterAllSelectedStatus:false,
-        maxDisplayTags: 9999,
-        focusing: false,
-        emitUpdate: false,
       };
     },
     watch: {
@@ -25322,7 +22052,6 @@ return /******/ (function(modules) { // webpackBootstrap
         handler: function(val) {
           formatedLabelCache = [];
           this.lazyData = val;
-          this.setSelected();
         }
       },
       multiple: function(val) {
@@ -25390,18 +22119,13 @@ return /******/ (function(modules) { // webpackBootstrap
           }
         }
         this.setSelected();
-
-        if (val != null && oldVal != null && val.length == 0 && oldVal.length == 0) {
-          return;
-        }
         this.$emit('change', val, valueItem, oldVal);
         this.dispatch('VueFormItem', 'vue.form.change', val);
       },
       query: function(val) {
         var self = this;
         self.$nextTick(function() {
-          self.visible && self.broadcast('VueSelectDropdown', 'updatePopper');
-          self.hoverFirstOnFilter && self.hoverFirst();
+          self.broadcast('VueSelectDropdown', 'updatePopper');
         });
         self.hoverIndex = -1;
         if (self.multiple && self.filterable) {
@@ -25484,22 +22208,13 @@ return /******/ (function(modules) { // webpackBootstrap
           if (self.filterable) {
             self.query = self.selectedLabel;
             if (self.multiple) {
-              if (!self.remote && !self.lazyload) {
-                self.filteredOptionsCount = self.optionsCount;
-                self.broadcast('VueOption', 'queryChange', '');
-                self.broadcast('VueOptionGroup', 'queryChange');
-              }
               if(self.$refs.input && !self.isMobile)
                 self.$refs.input.focus();
             } else {
               if (!self.remote && !self.lazyload) {
-                self.filteredOptionsCount = self.optionsCount;
                 self.broadcast('VueOption', 'queryChange', '');
                 self.broadcast('VueOptionGroup', 'queryChange');
               }
-            }
-            if (!self.remote && self.lazyload) {
-              this.lazyData = this.data;
             }
             if(self.isMobile && self.remote){
               setTimeout(function(){
@@ -25531,11 +22246,6 @@ return /******/ (function(modules) { // webpackBootstrap
       placeholder: function(val) {
         this.cachedPlaceHolder = val;
         this.managePlaceholder();
-      },
-      disabled: function() {
-        if (this.multiple) {
-          this.resetInputHeight();
-        }
       }
     },
     methods: {
@@ -25610,9 +22320,8 @@ return /******/ (function(modules) { // webpackBootstrap
             self.selectedLabel = self.getFormatedLabel(option);
 
           self.selected = option;
-          if (self.filterable) {
+          if (self.filterable)
             self.query = self.selectedLabel;
-          }
           return;
         }
         var result = [];
@@ -25633,7 +22342,7 @@ return /******/ (function(modules) { // webpackBootstrap
           this.filterAllSelectedStatus = false;
         } else if (this.iconClass.indexOf('vue-icon-success is-show-check') !== -1) {
           VueUtil.loop(this.options, function(option) {
-            if (option.visible && !option.disabled) {
+            if (!option.disabled) {
               value.push(option.value);
             }
           });
@@ -25694,16 +22403,8 @@ return /******/ (function(modules) { // webpackBootstrap
             newHeight += size;
           }
 
-          var newHeightInt = newHeight;
           newHeight !== size ? newHeight += 'px' : newHeight = '';
           input.style.height = newHeight;
-
-          if (this.multiple && this.$refs.input &&
-            this.$refs.input.getBoundingClientRect().bottom > input.getBoundingClientRect().bottom) {
-              newHeightInt += size;
-              newHeight = newHeightInt += 'px';
-              input.style.height = newHeight;
-          }
           if(icon) icon.style.lineHeight = newHeight;
           if (self.visible && self.emptyText !== false) {
             self.broadcast('VueSelectDropdown', 'updatePopper');
@@ -25755,12 +22456,12 @@ return /******/ (function(modules) { // webpackBootstrap
         if (this.filterable && this.query === '' && this.visible) {
           return;
         }
-        if (!this.selectDisabled) {
+        if (!this.disabled) {
           this.visible = !this.visible;
         }
       },
       keepMenu: function() {
-        if (!this.isReadOnly && !this.visible) {
+        if (!this.visible) {
           this.visible = true;
         }
       },
@@ -25802,12 +22503,6 @@ return /******/ (function(modules) { // webpackBootstrap
             }
           }
         }
-      },
-      handleEsc: function(event) {
-        if (this.visible) {
-          event.stopPropagation();
-        }
-        this.visible = false;
       },
       getHoverIndexLazy: function(direction) {
         var self = this;
@@ -25853,16 +22548,15 @@ return /******/ (function(modules) { // webpackBootstrap
           scrollPanel.scrollTop += topOverflowDistance;
         }
       },
-      selectOption: function(event, targetIndex) {
+      selectOption: function(event) {
         if (this.visible) {
-          event && event.stopPropagation();
+          event.stopPropagation();
         } else {
           this.visible = true;
           return;
         }
-        var index = targetIndex == undefined ? this.hoverIndex : targetIndex;
-        if (this.options[index]) {
-          this.handleOptionSelect(this.options[index]);
+        if (this.options[this.hoverIndex]) {
+          this.handleOptionSelect(this.options[this.hoverIndex]);
         }
       },
       deleteSelected: function(event) {
@@ -25873,21 +22567,15 @@ return /******/ (function(modules) { // webpackBootstrap
           this.$emit('input', '');
         }
         this.visible = false;
-        this.$emit('clear');
       },
       deleteTag: function(event, tag) {
         var index = this.selected.indexOf(tag);
-        if (index !== -1 && !this.selectDisabled) {
+        if (index !== -1 && !this.disabled) {
           var value = VueUtil.mergeArray([], this.value);
           value.splice(index, 1);
           this.$emit('input', value);
           this.$emit('remove-tag', tag);
         }
-        var self = this;
-        this.$nextTick(function() {
-          self.$refs.tooltip && self.$refs.tooltip.updatePopper();
-        });
-
         event.stopPropagation();
       },
       onInputChange: function() {
@@ -25901,11 +22589,6 @@ return /******/ (function(modules) { // webpackBootstrap
         var index = this.options.indexOf(option);
         if (index !== -1) {
           this.options.splice(index, 1);
-        }
-        
-        var cachedIndex = this.cachedOptions.indexOf(option);
-        if (cachedIndex !== -1) {
-          this.cachedOptions.splice(cachedIndex, 1);
         }
         
         var self = this;
@@ -25926,7 +22609,7 @@ return /******/ (function(modules) { // webpackBootstrap
         });
       },
       handleResize: function() {
-        if (this.multiple) this.resetInputWidth();
+        this.resetInputWidth();
         if (this.multiple) this.resetInputHeight();
       },
       debouncedOnInputChange: VueUtil.debounce(function() {
@@ -25972,7 +22655,7 @@ return /******/ (function(modules) { // webpackBootstrap
                   }
                 }
               }
-              self.multipleInputLength = totalLength - 65;
+              self.multipleInputLength = totalLength - 45;
 
               if (sameLineTagCount === 0) {
                 self.resetInputHeight();
@@ -25980,60 +22663,6 @@ return /******/ (function(modules) { // webpackBootstrap
             }, 100);
           });
         }
-      },
-      hoverFirst: function() {
-        var el;
-        if(this.lazyload) {
-          el = this.$refs.scroller && this.$refs.scroller.$el;
-        } else {
-          el = this.$refs.itemContainer && this.$refs.itemContainer;
-        }
-
-        if (el) {
-          el.scrollTo({
-            top: 0,
-            left: 0,
-          });
-        }
-        this.emitUpdate = true;
-        this.$nextTick(function() {
-          if (this.visible && this.lazyload && this.lazyData.length > 0) {
-            var val = this.lazyData[0][this.valueMember];
-            var self =this;
-            var scroller = this.$refs.scroller;
-
-            var debouncedHoverIndex = VueUtil._debounce(function() {
-              var index = scroller.pool.findIndex(function(pool) {
-                return pool.position > -1 && pool.item[self.valueMember] == val;
-              });
-
-              self.hoverIndex = index;
-              setTimeout(function() {
-                self.emitUpdate = false;
-                scroller.$off('update');
-              }, 100);
-            }, 60);
-
-            scroller.$on('update', debouncedHoverIndex);
-            setTimeout(function() {
-              debouncedHoverIndex();
-            }, 30);
-          }
-          
-          if (!this.lazyload) {
-            this.hoverIndex = this.options.findIndex(function(option) {
-              return option.disabled != true && option.groupDisabled != true && option.visible;
-            });
-          }
-        });
-
-      },
-      handleTab: function() {
-        if (this.selectOnTab) {
-          this.selectOption();
-        }
-
-        this.visible = false;
       }
     },
     created: function() {
@@ -26345,7 +22974,7 @@ return /******/ (function(modules) { // webpackBootstrap
   Node.prototype.updateLeafState = function() {
     var self = this;
     if (self.store.lazy === true && self.loaded !== true && VueUtil.isDef(self.isLeafByUser)) {
-      self.isLeaf = self.isLeafByUser;
+      self.isLeaf = selfk.isLeafByUser;
       return;
     }
     var childNodes = self.childNodes;
@@ -26468,10 +23097,6 @@ return /******/ (function(modules) { // webpackBootstrap
       }
     }
   };
-  Node.prototype.reloadData = function(callback, defaultProps) {
-    this.loaded = false;
-    this.loadData(callback, defaultProps);
-  };
   var TreeStore = function(options) {
     var self = this;
     self.currentNode = null;
@@ -26519,11 +23144,6 @@ return /******/ (function(modules) { // webpackBootstrap
         node.expand();
     };
     traverse(self);
-
-    if (this.currentNode && !this.currentNode.visible) {
-      self.setCurrentNodeKey(null);
-      self.tree.$emit('current-change', null, null);
-    }
   };
   TreeStore.prototype.setData = function(newVal) {
     var self = this;
@@ -26605,13 +23225,13 @@ return /******/ (function(modules) { // webpackBootstrap
       return;
     var nodeKey = node.key || node.getKey();
     if (nodeKey)
-    self.nodesMap[nodeKey] = node;
+      self.nodesMap[nodeKey] = node;
   };
   TreeStore.prototype.deregisterNode = function(node) {
     var self = this;
     var key = self.key;
     if (!key || !node || !node.data)
-    return;
+      return;
     var nodeKey = node.key || node.getKey();
     delete self.nodesMap[nodeKey];
   };
@@ -26750,48 +23370,21 @@ return /******/ (function(modules) { // webpackBootstrap
     return this.currentNode;
   };
   TreeStore.prototype.setCurrentNode = function(node) {
-    // this.currentNode && this.currentNode.vm && (this.currentNode.vm.isCurrent = false);
-
-    var self = this;
-
-    if (this.currentNode) {
-      var currentVm = VueUtil.findTree([this.tree], function(vm) {
-        return vm.node === self.currentNode;
-      }, {children: '$children'});
-
-      if (currentVm && currentVm.item) {
-        currentVm.item.isCurrent = false;
-      }
-    }
-
-    
     this.currentNode = node;
-
-    if (node) {
-      // node.vm.isCurrent = true;
-
-      var newVm = VueUtil.findTree([this.tree], function(vm) {
-        return vm.node === node;
-      }, {children: '$children'});
-
-      if (newVm && newVm.item) {
-        newVm.item.isCurrent = true;
-      }
-    }
   };
   TreeStore.prototype.setCurrentNodeKey = function(key) {
     var self = this;
     if (!key) {
-      self.setCurrentNode(null);
+      self.currentNode = null;
     } else {
       var node = self.getNode(key);
       if (node) {
-        self.setCurrentNode(node);
+        self.currentNode = node;
       }
     }
   };
   var VueTreeNode = {
-    template: '<div @click.stop="handleClick" @dblclick.stop="handleDblclick" v-show="node.visible" :class="[\'vue-tree-node\', {\'is-expanded\': childNodeRendered && expanded,\'is-current\': isCurrent,\'is-hidden\': !node.visible}]"><div class="vue-tree-node__content" :style="{\'padding-left\': (node.level - 1) * tree.indent + \'px\'}"><span @click.stop="handleExpandIconClick" :class="[\'vue-tree-node__expand-icon\', {\'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded}]"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition :disabled="!transition"><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" :transition="transition" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
+    template: '<div @click.stop="handleClick" @dblclick.stop="handleDblclick" v-show="node.visible" :class="[\'vue-tree-node\', {\'is-expanded\': childNodeRendered && expanded,\'is-current\': tree.store.currentNode === node,\'is-hidden\': !node.visible}]"><div class="vue-tree-node__content" :style="{\'padding-left\': (node.level - 1) * tree.indent + \'px\'}"><span @click.stop="handleExpandIconClick" :class="[\'vue-tree-node__expand-icon\', {\'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded}]"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
     name: 'VueTreeNode',
     mixins: [VueUtil.component.emitter],
     props: {
@@ -26800,7 +23393,6 @@ return /******/ (function(modules) { // webpackBootstrap
           return {};
         }
       },
-      transition: Boolean,
       props: {},
       renderContent: Function
     },
@@ -26835,8 +23427,7 @@ return /******/ (function(modules) { // webpackBootstrap
         childNodeRendered: false,
         showCheckbox: false,
         oldChecked: null,
-        oldIndeterminate: null,
-        isCurrent: false
+        oldIndeterminate: null
       };
     },
     watch: {
@@ -26851,7 +23442,7 @@ return /******/ (function(modules) { // webpackBootstrap
         if (val) {
           this.childNodeRendered = true;
         }
-      },
+      }
     },
     methods: {
       getNodeKey: function(node, index) {
@@ -26933,8 +23524,8 @@ return /******/ (function(modules) { // webpackBootstrap
   };
   var VueTree = {
     template: 
-    '<div :class="[\'vue-tree\', {\'vue-tree--highlight-current\': highlightCurrent}]" @scroll="handleScroll"> \
-      <vue-tree-node v-for="child in root.childNodes" :node="child" :transition="transition" :props="props" :key="getNodeKey(child)" \
+    '<div :class="[\'vue-tree\', {\'vue-tree--highlight-current\': highlightCurrent}]"> \
+      <vue-tree-node v-for="child in root.childNodes" :node="child" :props="props" :key="getNodeKey(child)" \
         :render-content="renderContent" @node-expand="handleNodeExpand"></vue-tree-node> \
       <div class="vue-tree__empty-block" v-if="!root.childNodes || root.childNodes.length === 0"><span class="vue-tree__empty-text">{{$t(\'vue.tree.emptyText\')}}</span></div> \
     </div>',
@@ -26944,7 +23535,6 @@ return /******/ (function(modules) { // webpackBootstrap
       VueTreeNode: VueTreeNode
     },
     data: function() {
-      this.scrollTop = null;
       return {
         store: null,
         root: null,
@@ -26989,10 +23579,6 @@ return /******/ (function(modules) { // webpackBootstrap
       indent: {
         type: Number,
         default: 16
-      },
-      transition: {
-        type: Boolean,
-        default: true,
       }
     },
     computed: {
@@ -27019,7 +23605,6 @@ return /******/ (function(modules) { // webpackBootstrap
         this.store.currentNodeKey = newVal;
       },
       data: function(newVal) {
-        this.store.nodesMap = {};
         this.store.setData(newVal);
       }
     },
@@ -27076,49 +23661,15 @@ return /******/ (function(modules) { // webpackBootstrap
         this.$emit('node-expand', nodeData, node, instance);
       },
       expandAll: function() {
-        var allNodes = this.store._getAllNodes();
-
-        VueUtil.eachTree(allNodes, function(node) {
-          if (node && node.visible && !node.isLeaf) {
-            node.expand();
-          }
-        }, {children: 'childNodes'});
+        this.store._getAllNodes().forEach(function(node) {
+          node.expanded = true;
+        });
       },
 
       collapseAll: function() {
         this.store._getAllNodes().forEach(function(node) {
           node.expanded = false;
         });
-      },
-      getNativeNode: function(nodeKey) {
-        function find(parentNode) {
-          var target = VueUtil.find(parentNode.childNodes, function(child) {
-            return child.key === nodeKey;
-          });
-
-          if (target) {
-            return target;
-          } else {
-            for (var i = 0; i < parentNode.childNodes.length; i++) {
-              var child = parentNode.childNodes[i];
-              target = find(child);
-              if (target) {
-                return target;
-              }
-            }
-          }
-        }
-
-        return find(this.store.root);
-      },
-
-      reloadNode: function(nodeKey) {
-        var node = this.getNativeNode(nodeKey);
-        node && node.reloadData();
-      },
-
-      handleScroll: function() {
-        this.scrollTop = this.$el && this.$el.scrollTop;
       }
     },
     created: function() {
@@ -27136,15 +23687,9 @@ return /******/ (function(modules) { // webpackBootstrap
         defaultExpandedKeys: self.defaultExpandedKeys,
         autoExpandParent: self.autoExpandParent,
         defaultExpandAll: self.defaultExpandAll,
-        filterNodeMethod: self.filterNodeMethod,
-        tree: self
+        filterNodeMethod: self.filterNodeMethod
       });
       self.root = self.store.root;
-    },
-    activated: function() {
-      this.$nextTick(function() {
-        this.$el.scrollTop = this.scrollTop;
-      });
     }
   };
   Vue.component(VueTree.name, VueTree);
@@ -27161,7 +23706,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCarousel = {
-    template: '<div :class="[\'vue-carousel\', {\'vue-carousvue--card\': type === \'card\'}]" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave" @touchstart.stop="handleTouchStart" @mousedown="handleMouseDrag"><div class="vue-carousel__container" :style="{height: height}"><transition name="carousel-arrow-left"><button type="button" v-if="arrowShowLeft" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousel-arrow-right"><button type="button" v-if="arrowShowRight" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul v-if="indicatorPosition !== \'none\'" :class="[\'vue-carousel__indicators\', {\'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\'}]"><li v-for="(item, index) in items" :class="[\'vue-carousel__indicator\', {\'is-active\': index === activeIndex}]" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button type="button" class="vue-carousel__button"></button></li></ul></div>',
+    template: '<div :class="[\'vue-carousel\', {\'vue-carousvue--card\': type === \'card\'}]" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave" @touchstart.stop="handleTouchStart" @mousedown="handleMouseDrag"><div class="vue-carousel__container" :style="{height: height}"><transition name="carousel-arrow-left"><button type="button" v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousel-arrow-right"><button type="button" v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul v-if="indicatorPosition !== \'none\'" :class="[\'vue-carousel__indicators\', {\'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\'}]"><li v-for="(item, index) in items" :class="[\'vue-carousel__indicator\', {\'is-active\': index === activeIndex}]" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button type="button" class="vue-carousel__button"></button></li></ul></div>',
     name: 'VueCarousel',
     props: {
       initialIndex: {
@@ -27217,26 +23762,13 @@ return /******/ (function(modules) { // webpackBootstrap
     },
     watch: {
       items: function(val) {
-        if (val.length > 0) {
+        if (val.length > 0)
           this.setActiveItem(0);
-          this.resetItemPosition();
-        }
       },
       activeIndex: function(val, oldVal) {
         this.resetItemPosition();
         this.$emit('change', val, oldVal);
       }
-    },
-    computed: {
-      arrowShow: function() {
-        return this.arrow !== 'never';
-      },
-      arrowShowLeft: function() {
-        return this.arrowShow && (this.wrap || this.activeIndex !== 0);
-      },
-      arrowShowRight: function() {
-        return this.arrowShow && (this.wrap || this.activeIndex !== this.items.length - 1);
-      },
     },
     methods: {
       handleMouseEnter: function() {
@@ -27331,21 +23863,18 @@ return /******/ (function(modules) { // webpackBootstrap
         });
       },
       playSlides: function() {
-        this.setActiveItem(this.activeIndex + 1);
-
-        var activeItem = this.items[this.activeIndex];
-        var interval = (activeItem && activeItem.interval) || this.interval;
-        
-        this.timer = setTimeout(this.playSlides, interval);
+        if (this.activeIndex < this.items.length - 1) {
+          this.activeIndex++;
+        } else {
+          this.activeIndex = 0;
+        }
       },
       pauseTimer: function() {
-        clearTimeout(this.timer);
+        clearInterval(this.timer);
       },
       startTimer: function() {
-        var activeItem = this.items[this.activeIndex];
-        var interval = (activeItem && activeItem.interval) || this.interval;
-        if (interval <= 0 || !this.autoplay) return;
-        this.timer = setTimeout(this.playSlides, interval);
+        if (this.interval <= 0 || !this.autoplay) return;
+        this.timer = setInterval(this.playSlides, this.interval);
       },
       setActiveItem: function(index) {
         if (VueUtil.isString(index)) {
@@ -27492,8 +24021,7 @@ return /******/ (function(modules) { // webpackBootstrap
               </div>',
     name: 'VueCarouselItem',
     props: {
-      name: String,
-      interval: Number,
+      name: String
     },
     data: function() {
       return {
@@ -27599,760 +24127,6 @@ return /******/ (function(modules) { // webpackBootstrap
 (function(context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
-    define(['Vue'], definition);
-  } else {
-    definition(context.Vue);
-  }
-})(this, function(Vue) {
-  'use strict';
-  var VueCardListItem = {
-    template: '<div class="vue-card-list-item" :class="itemClass"\
-    @click.capture="handleClickCapture" @click="handleClick" v-clickoutside="closeEditState"\
-    @touchstart="handleTouchstart" @touchmove="handleTouchmove" @touchend="handleTouchend">\
-      <div v-if="showIndex" class="vue-card-list-item-pre-wrapper">\
-        <span  class="vue-card-list-item-index"> {{index + 1}}</span> \
-      </div>\
-      <div class="vue-card-list-item-wrapper">\
-        <slot></slot>\
-      </div>\
-      <div class="vue-card-list-item-action" :class="{\'bottom-action\': bottomAction}" v-if="itemButton && itemButton.length > 0">\
-        <i v-for="button in itemButton" :class="[button.icon].concat(button.class)" @click.stop="callClickFunc(button, $event)" @touchstart="iconTouchstart($event, button)"></i>\
-      </div>\
-      <div class="vue-card-list-item-overlay" v-if="isPlaceholder" @mousedown.stop @touchstart.stop @touchmove.stop @touchend.stop @dblclick.stop @click.stop="addData"><i class="vue-icon-plus"></i></div>\
-    </div>',
-    directives: {
-      Clickoutside: VueUtil.component.clickoutside(),
-    },
-    props: {
-      data: Object,
-      readonly: Boolean,
-      index: Number,
-      isPlaceholder: Boolean,
-      itemButton: Array,
-    },
-    data: function() {
-      return {
-        itemControl: {
-          disabled: true,
-        },
-        isCurrent: false,
-        isNewRow: false,
-        showIndex: this.$parent.showIndex,
-        listMode: this.$parent.listMode,
-        bottomAction: false,
-      };
-    },
-    provide: function() {
-      return {
-        vueForm: this.itemControl
-      };
-    },
-    watch: {
-      isCurrentVal: function() {
-        this.isCurrent = this.isCurrentVal;
-        if (this.isCurrent) {
-          this.$parent.currentNode = this;
-        }
-      },
-      index: function() {
-        this.resetActionPosition(true);
-      }
-    },
-    created: function() {
-      var isNewRow = this.$parent.insertRows.indexOf(this.data) > -1;
-      this.isNewRow = isNewRow;
-
-      if (!isNewRow) {
-        this.originData = VueUtil.cloneDeep(this.data);
-      }
-    },
-    computed: {
-      itemClass: function() {
-        return {
-          'editing': this.itemControl.disabled === false,
-          'not-editing': this.itemControl.disabled !== false,
-          'current': this.isCurrent,
-        };
-      },
-      isCurrentVal: function() {
-        return this.$parent.currentRowId === this.data._rowId;
-      }
-    },
-    methods: {
-      startEditState: function() {
-        if (!this.readonly) {
-          this.itemControl.disabled = false;
-        }
-      },
-      closeEditState: function(mouseup, mousedown) {
-        if (mousedown.target && !mousedown.target.closest('.vue-popper') && !mousedown.target.closest('.vue-select-dropdown')) {
-          this.itemControl.disabled = true;
-        }
-      },
-      setCurrentRow: function() {
-        this.$parent.currentNode = this;
-        this.$parent.currentRowId = this.data._rowId;
-        this.resetActionPosition(true);
-      },
-      focus: function() {
-        this.$nextTick(function() {
-          var focusableElms = this.$el.querySelector('input:not([disabled]):not([tabindex=\'-1\']),select:not([disabled]):not([tabindex=\'-1\']),textarea:not([disabled]):not([tabindex=\'-1\']),button:not([disabled]):not([tabindex=\'-1\']),[tabindex]:not([tabindex=\'-1\'])');
-          focusableElms && focusableElms.focus();
-        });
-      },
-      handleTouchstart: function(e) {
-        this.setCurrentRow();
-
-        if (this.itemControl.disabled) {
-          this.touchData = {
-            x: e.touches[0].clientX,
-            y: e.touches[0].clientY,
-          };
-        }
-      },
-      handleTouchmove: function(e) {
-        if (!this.touchData) {
-          return;
-        } else {
-          var deltaY = e.changedTouches[0].clientY - this.touchData.y;
-          if (Math.abs(deltaY) > 50) {
-            this.touchData = null;
-          }
-        }
-      },
-      handleTouchend: function(e) {
-        if (!e.changedTouches[0] || !this.touchData) {
-          return;
-        }
-        var deltaX = e.changedTouches[0].clientX - this.touchData.x;
-        var deltaY = e.changedTouches[0].clientY - this.touchData.y;
-
-        this.touchData = null;
-  
-        if (deltaX < -100 && Math.abs(deltaY) < 50) {
-          this.$emit('drag-left');
-          return;
-        } else if (deltaX > 100 && Math.abs(deltaY) < 50) {
-          this.$emit('drag-right');
-          return;
-        }
-
-        var self = this;
-
-        // if (this.waitForSecondTouch) {
-          if (this.itemControl.disabled) {
-            setTimeout(function() {
-              self.startEditState();
-              self.focus();
-            }, 100);
-          }
-        // } else {
-        //   this.waitForSecondTouch = true;
-        //   setTimeout(function() {
-        //     self.waitForSecondTouch = false;
-        //   }, 500);
-        // }
-      },
-      handleClickCapture: function() {
-        if (!this.isPlaceholder) {
-          this.setCurrentRow();
-        }
-      },
-      handleClick: function() {
-        if (this.itemControl.disabled) {
-          this.startEditState();
-          this.focus();
-        }
-      },
-      addData: function() {
-        if(!this.$parent.readonly) {
-          this.$parent.addData();
-        }
-        this.$emit('placeholder-click');
-      },
-      forceResetLabel: function() {
-        var broadcast = function() {
-          VueUtil.loop(this.$children, function(child) {
-            var name = child.$options.name;
-            if (name === 'VueFormItem') {
-              child.resetLabelWidth();
-            } else {
-              broadcast.apply(child);
-            }
-          });
-        };
-        broadcast.call(this);
-      },
-      resetActionPosition: function(forceShow) {
-        var self = this;
-        var actionBtn = self.$el.querySelector('.vue-card-list-item-action'); 
-        if (!actionBtn) return;
-
-
-        var el = this.$el;
-        var container = el.parentElement;
-        var containerHeight = container.offsetHeight;
-        var buttonHeight = 56; //button容器高
-
-        var elRect = el.getBoundingClientRect();
-
-        var elToContainerTop = el.offsetTop - container.scrollTop;
-        var elToContainerBottom = container.offsetHeight - elToContainerTop - elRect.height;
-
-        var top;
-        var right = window.innerWidth - elRect.right + 20;
-
-        if (actionBtn.actionHidden !== 1) {
-          if (elToContainerBottom > containerHeight || elToContainerTop > containerHeight) {
-            actionBtn.style.display = 'none';
-          } else {
-            actionBtn.style.display = null;
-          }
-        }
-
-        if (elToContainerBottom < buttonHeight && elToContainerTop >= buttonHeight) {
-          top = elRect.top - buttonHeight;
-          this.bottomAction = false;
-        } else {
-          this.bottomAction = true;
-          top = elRect.top + elRect.height + 10;
-        }
-
-        if (forceShow) {
-          setTimeout(function() {
-            actionBtn.actionHidden = null;
-            actionBtn.style.display = null;
-          }, 100);
-        }
-        
-        actionBtn.style.top = top + 'px';
-        actionBtn.style.right = right + 'px';
-      },
-      callClickFunc: function(button, event) {
-        if (typeof button.click === 'function') {
-          button.click(this.data, event);
-        } else if (button.click) {
-          if (button.click === 'edit') {
-            this.handleClick();
-          }
-          this.$emit(button.click);
-        }
-      },
-      iconTouchstart: function(event, button) {
-        if (button.click !== 'drag') {
-          event.stopPropagation();
-        }
-      }
-    },
-  };
-
-  var VueCardList = {
-    template: '<div class="vue-card-list" :class="{\'list-mode\': listMode, readonly: readonly, draggable:canDrag, \'label-responsive\': labelResponsive}" :style="{height: height, flex: flex}" v-clickoutside="hideActionPanel">\
-      <div class="vue-card-list-header" v-if="showHeader && $slots.header">\
-        <div class="vue-card-list-item-pre-wrapper" v-if="showIndex">\
-        </div>\
-        <div class="vue-card-list-item-wrapper">\
-          <slot name="header"></slot>\
-        </div>\
-        <div class="vue-card-list-gutter" ref="gutter"></div>\
-      </div>\
-      <div class="vue-card-list-content" :class="contentClass" ref="content" @scroll="handleScroll">\
-        <vue-card-list-item v-if="placeholderItemShow" :data="defaultData || {}" :index="0" :readonly="true" is-placeholder @placeholder-click="$emit(\'placeholder-click\')">\
-            <slot v-bind="{data:defaultData || {}, index:1}"></slot>\
-        </vue-card-list-item>\
-        <vue-card-list-item ref="items" v-for="(d, i) in renderData" :key="d._rowId" :data="d" :index="i" :readonly="readonly" :item-button="itemButton" @drag-left="handleDragLeft(d)" @drag-right="handleDragRight(d)" @edit="handleEdit(d)" @delete="handleDelete(d)" @click.native="handleClick(d)">\
-            <slot v-bind="{data:d, index:i + 1}"></slot>\
-        </vue-card-list-item>\
-        <div v-if="!placeholderRow && renderData.length === 0" class="vue-card-list-empty-wrapper"><slot name="empty-content">{{emptyLabel || $t(\'vue.cardList.noData\')}}</slot></div>\
-      </div>\
-      <div class="vue-card-list-footer" v-if="!readonly && !placeholderItemShow">\
-        <vue-button size="large" type="text" @click="addData()">\
-          <i class="vue-icon-plus"></i> \
-          {{$t(\'vue.cardList.addButton\')}} \
-        </vue-button>\
-      </div> \
-    </div>',
-    name: 'VueCardList',
-    components: {
-      VueCardListItem: VueCardListItem,
-    },
-    directives: {
-      Clickoutside: VueUtil.component.clickoutside(),
-      Scrolling: VueUtil.component.scrolling
-    },
-    props: {
-      data: {
-        type: Array,
-      },
-      draggable: {
-        type: Boolean,
-        default: false,
-      },
-      showHeader: {
-        type: Boolean,
-        default: false,
-      },
-      listMode: {
-        type: Boolean,
-        default: false,
-      },
-      readonly: {
-        type: Boolean,
-        default: false,
-      },
-      showIndex: {
-        type: Boolean,
-        default: true,
-      },
-      defaultData: {
-        type: Object,
-      },
-      beforeDelete: {
-        type: Function,
-      },
-      placeholderRow: {
-        type: Boolean,
-        default: false,
-      },
-      height: {
-        type: String,
-        default: null
-      },
-      buttons: {
-        type: Array,
-        default: null
-      },
-      labelResponsive: {
-        type: Boolean,
-        default: false,
-      },
-      fitContent: {
-        type: Boolean,
-        default: false,
-      },
-      xs: {
-        type: Number
-      },
-      sm: {
-        type: Number
-      },
-      md: {
-        type: Number
-      },
-      lg: {
-        type: Number
-      },
-      xl: {
-        type: Number
-      },
-      emptyLabel: {
-        type: String,
-        default: null
-      },
-    },
-    data: function() {
-      return {
-        fullData: [],
-        currentRowId: null,
-        insertRows: [],
-        removedRows: [],
-        filters: null,
-        sorts: null,
-        isMobile: VueUtil.getSystemInfo().device == 'Mobile',
-      };
-    },
-    created: function() {
-      this.loadData(this.data);
-    },
-    computed: {
-      flex: function() {
-        return this.fitContent ? '0 0 auto': '1';
-      },
-      canDrag: function() {
-        return !this.readonly && this.draggable;
-      },
-      contentClass: function() {
-        if (this.listMode) {return null;}
-
-        var contentClass = [];
-        var self = this;
-
-        if (this.fullData.length > 0 || this.placeholderItemShow) {
-          ['xs', 'sm', 'md', 'lg', 'xl'].forEach(function(size) {
-            if (self[size] != null && self[size] > 0) {
-              contentClass.push(size + '-' + self[size]);
-            }
-          });
-        }
-
-        return contentClass;
-      },
-      placeholderItemShow: function() {
-        return this.placeholderRow && this.fullData.length === 0;
-      },
-      itemButton: function() {
-        var buttonConfig = [];
-
-        if (this.buttons == null && !this.readonly) {
-          buttonConfig = (this.draggable ? ['drag'] : []).concat(['edit', 'delete']);
-        } else {
-          buttonConfig = this.buttons || [];
-        }
-
-        return buttonConfig.map(function(button) {
-          if (typeof button === 'string') {
-            return {
-              drag: {
-                icon: 'vue-icon-enlarge',
-                class: ['vue-card-list-item-drag'],
-              },
-              edit: {
-                icon: 'vue-icon-edit2',
-                class: ['vue-card-list-item-edit'],
-                click: 'edit',
-              },
-              delete: {
-                icon: 'vue-icon-delete',
-                class: ['vue-card-list-item-delete'],
-                click: 'delete'
-              }
-            }[button];
-          } else {
-            return button;
-          }
-        });
-      },
-      afterFullData: function() {
-        var filteredData = VueUtil._filter(this.fullData, this.filters);
-        var sortedData = (this.sorts && this.sorts[0]) ? VueUtil.orderBy.call(this, filteredData, this.sorts[0], this.sorts[1]) : filteredData;
-        return sortedData;
-      },
-      renderData: function() {
-        return this.afterFullData;
-      },
-    },
-    watch: {
-      data: function(val) {
-        if (val != this.fullData) {
-          this.loadData(val);
-        }
-      },
-      fullData: function(data) {
-        var self = this;
-        data.forEach(function(item, index) {
-          if (self.draggable) {
-            if (item._order !== index) {
-              item._order = index;
-            }
-          }
-
-          if (!item._rowId) {
-            item._rowId = VueUtil.createUuid();
-          }
-        });
-      },
-      currentRowId: function(newVal, oldVal) {
-        this.$emit('current-change', this.getRowByRowId(newVal), this.getRowByRowId(oldVal));
-      }
-    },
-    methods: {
-      initDrag: function() {
-
-        if (this.sortable) {
-          this.sortable.destroy();
-        }
-
-        var el = this.$el.querySelector('.vue-card-list-content');
-        var self = this;
-
-        this.sortable = Sortable.create(el, {
-          handle: '.vue-card-list-item-drag',
-          scroll: true,
-          group: {
-            put: false
-          },
-          animation: 200,
-          onEnd: function (obj) {
-            var newIndex = obj.newIndex,
-            oldIndex = obj.oldIndex;
-
-            var element = self.fullData.splice(oldIndex, 1)[0];
-            if (element) {
-              self.fullData.splice(newIndex, 0, element);
-              self.$emit('drag', obj);
-            }
-          }
-        });
-      },
-      addData: function(data) {
-        var dataToAdd;
-        if (data) {
-          dataToAdd = VueUtil.cloneDeep(data);
-        } else if (this.defaultData) {
-          dataToAdd = VueUtil.cloneDeep(this.defaultData);
-        } else if (this.fullData.length > 0) {
-          var newData = VueUtil.cloneDeep(this.fullData[0]);
-          Object.keys(newData).forEach(function(key) {
-            var field = newData[key];
-            if (typeof field === 'string') {
-              newData[key] = '';
-            } else if (typeof field === 'number') {
-              newData[key] = 0;
-            } else if (typeof field === 'boolean') {
-              newData[key] = false;
-            } else if (Array.isArray(field)) {
-              newData[key] = [];
-            } else {
-              newData[key] = null;
-            }
-          });
-
-          dataToAdd = newData;
-        } else {
-          dataToAdd = {};
-        }
-
-        dataToAdd._rowId = VueUtil.createUuid();
-
-        this.fullData.push(dataToAdd);
-        this.insertRows.push(dataToAdd);
-
-        this.$nextTick(function() {
-          var last = VueUtil.last(this.$refs.items);
-          if (last && last.startEditState) {
-            last.startEditState();
-            last.setCurrentRow();
-            last.focus();
-            last.forceResetLabel();
-          }
-        });
-
-      },
-      handleDelete: function(d) {
-        if (!this.readonly) {
-          this.deleteData();
-        }
-
-        this.$emit('delete', d);
-      },
-      deleteData: function(row) {
-        var self = this;
-        var rowIdToDel = row ? row._rowId : self.currentRowId;
-
-        if (!rowIdToDel) return;
-
-        var delIndex = VueUtil.findIndex(this.fullData, function(dataItem) {
-          return dataItem._rowId === rowIdToDel;
-        });
-
-        if (this.beforeDelete) {
-          var result = this.beforeDelete(this.fullData[delIndex]);
-          if (result && result.then) {
-            result.then(function() {
-              self.doDelete(delIndex);
-            }, function() {
-              // 删除取消
-            });
-          } else if (result !== false) {
-            this.doDelete(delIndex);
-          }
-        } else {
-          this.doDelete(delIndex);
-        }
-      },
-      doDelete: function(delIndex) {
-        if (delIndex != null && delIndex > -1) {
-          var removedRow = this.fullData.splice(delIndex, 1)[0];
-          var insertIndex = this.insertRows.indexOf(removedRow);
-
-          if (insertIndex > -1) {
-            this.insertRows.splice(insertIndex, 1);
-          } else {
-            this.removedRows.push(removedRow);
-          }
-
-          var nextCurrentRow = this.fullData[delIndex] ? this.fullData[delIndex] : VueUtil.last(this.fullData);
-          this.currentRowId = nextCurrentRow ? nextCurrentRow._rowId : null;
-        }
-      },
-      handleEdit: function(row) {
-        this.$emit('edit', row);
-      },
-      handleDragLeft: function(data) {
-        if (!this.readonly && this.isMobile) {
-          this.deleteData();
-        }
-        this.$emit('drag-left', data);
-      },
-      handleDragRight: function(data) {
-        this.$emit('drag-right', data);
-      },
-      handleClick: function(data) {
-        this.$emit('click', data);
-      },
-      getRowByRowId: function(id) {
-        return VueUtil.find(this.fullData, function(item) {
-          return item._rowId === id;
-        } );
-      },
-      getCurrentRow: function() {
-        return this.getRowByRowId(this.currentRowId);
-      },
-      setCurrentRow: function(row) {
-        if (typeof row === 'string') {
-          this.currentRowId = row;
-        } else {
-          this.currentRowId = row._rowId;
-        }
-      },
-      getInsertRows: function() {
-        return this.insertRows;
-      },
-      getRemovedRows: function() {
-        return this.removedRows;
-      },
-      getUpdateRows: function() {
-
-        if (!this.$refs.items || this.$refs.items.length === 0) {
-          return [];
-        }
-
-        var updateRows = this.$refs.items.filter(function(item) {
-          return !item.isNewRow && !VueUtil.isEqual(item.data, item.originData);
-        }).map(function(item) {
-          return item.data;
-        });
-        return updateRows;
-      },
-      getChangedData: function() {
-        return {
-          insertRows: this.getInsertRows(),
-          updateRows: this.getUpdateRows(),
-          removedRows: this.getRemovedRows(),
-        };
-      },
-      loadData: function(data) {
-        if (!Array.isArray(data)) return;
-        
-        // 先把传入的数据按照_order字段进行排序
-        if(this.draggable) {
-          data.sort(VueUtil.firstBy(function(item) { return (item._order == undefined ? 99999999 : item._order);}, 'desc'));
-        }
-
-        //创建 rowid
-        data.forEach(function(item) {
-          if (!item._rowId) {
-            item._rowId = VueUtil.createUuid();
-          }
-        });
-
-        // 赋值给fullData 触发视图更新
-        this.fullData = data;
-
-        // 重置默认状态，如选中行等等
-        this.reset();
-
-        // 恢复changedData数据
-        this.resetChangedStatus();
-      },
-      resetChangedStatus: function() {
-        this.$nextTick(function() {
-          this.insertRows = [];
-          this.removedRows = [];
-        });
-      },
-      resetGutter: function() {
-        var contentEl = this.$refs.content;
-        if (!contentEl) return;
-
-        var overflowY = contentEl.scrollHeight > contentEl.clientHeight;
-        var gutter = this.$refs.gutter;
-
-        if (!gutter) return;
-
-        if (overflowY) {
-          if (this.scrollWidth == null) {
-            this.scrollWidth = (contentEl.offsetWidth - contentEl.clientWidth - 2) || 0;
-          }
-          gutter.style.width = this.scrollWidth + 'px';
-        } else {
-          gutter.style.width = 0;
-        }
-      },
-      reset: function() {
-        this.currentRowId = null;
-        this.filters = null;
-        this.sorts = null;
-
-        this.$nextTick(function() {
-          this.resetGutter();
-        });
-      },
-      handleScroll: VueUtil._debounce(function() {
-        if (this.isListenerScrollEnd) {
-          var content = this.$refs.content;
-          var isEnd = content.offsetHeight + content.scrollTop >= content.scrollHeight;
-          if (isEnd) {
-            this.$emit('scroll-end');
-          }
-        }
-      }, 300),
-      handleGlobalScroll: function() {
-        if (!this.currentNode) return;
-        this.currentNode.resetActionPosition();
-      },
-      hideActionPanel: function() {
-        var actionBtn = this.$el.querySelector('.current .vue-card-list-item-action');
-        if (actionBtn) {
-          actionBtn.style.display = 'none';
-          actionBtn.actionHidden = 1;
-        }
-      },
-      doFilter: function(filters) {
-        this.filters = filters;
-      },
-      doSort: function() {
-        this.sorts = arguments;
-      }
-    },
-    mounted: function() {
-      this.initDrag();
-      document.addEventListener('scroll', this.handleGlobalScroll, true);
-
-      var self = this;
-
-      if (this.$listeners['scroll-end']) {
-        this.isListenerScrollEnd = true;
-      }
-      if (window.ResizeObserver) {
-        this.resizeObserver = new ResizeObserver(function() {
-          self.resetGutter();
-        });
-        this.resizeObserver.observe(this.$refs.content);
-      } else {
-        VueUtil.addResizeListener(this.$refs.content, self.resetGutter);
-      }
-    },
-    beforeDestroy: function() {
-      if (this.sortable) {
-        this.sortable.destroy();
-      }
-      document.removeEventListener('scroll', this.handleGlobalScroll);
-
-      if (this.resizeObserver) {
-        this.resizeObserver.disconnect();
-        this.resizeObserver = null;
-      } else {
-        VueUtil.removeResizeListener(this.$refs.content, self.resetGutter);
-      }
-    },
-  };
-  Vue.component(VueCardList.name, VueCardList);
-});
-
-(function(context, definition) {
-  'use strict';
-  if (typeof define === 'function' && define.amd) {
     define(['Vue', 'VueUtil', 'VuePopper'], definition);
   } else {
     context.VuePopover = definition(context.Vue, context.VueUtil, context.VuePopper);
@@ -28361,7 +24135,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil, VuePopper) {
   'use strict';
   var VuePopover = {
-    template: '<span><transition :name="transition" @after-leave="destroyPopper"><div :class="[\'vue-popover\', popperClass, {\'no-arrow\': !visibleArrow}]" ref="popper" v-show="!disabled && showPopper" :style="{width: popoverWidth + \'px\', height: popoverHeight}"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{content}}</slot></div></transition><slot name="reference"></slot></span>',
+    template: '<span><transition @after-leave="destroyPopper"><div :class="[\'vue-popover\', popperClass, {\'no-arrow\': !visibleArrow}]" ref="popper" v-show="!disabled && showPopper" :style="{width: popoverWidth + \'px\' \}"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{content}}</slot></div></transition><slot name="reference"></slot></span>',
     name: 'VuePopover',
     mixins: [VuePopper],
     props: {
@@ -28378,47 +24152,23 @@ return /******/ (function(modules) { // webpackBootstrap
       reference: {},
       popperClass: String,
       width: [String, Number],
-      height: [String, Number],
       visibleArrow: {
         type: Boolean,
         default: true
-      },
-      autoClose: Boolean
+      }
     },
     data: function() {
       return {
-        popoverWidth: null,
-        popoverHeight: null
+        popoverWidth: null
       };
     },
     watch: {
       showPopper: function(newVal, oldVal) {
         if (newVal) {
           this.popoverWidth = this.width;
-          var reference = this.reference || this.$refs.reference;
           if (!this.popoverWidth) {
+            var reference = this.reference || this.$refs.reference;
             this.popoverWidth = parseInt(VueUtil.getStyle(reference, 'width'));
-          }
-          
-          if (this.height === 'auto-max') {
-            var placement = this.placement.split('-')[0];
-            var totalHeight = window.innerHeight;
-            if (['top', 'bottom'].indexOf(placement) !== -1) {
-              var rect = reference.getBoundingClientRect();
-              
-              var bottomRemain = totalHeight - rect.bottom;
-              var topRemain = rect.top;
-              var height = Math.max(bottomRemain, topRemain);
-  
-              this.popoverHeight = (height - (this.visibleArrow ? 25 : 20)) + 'px';
-            } else {
-              this.popoverHeight = (totalHeight - 20) + 'px';
-            }
-
-          } else if (this.height) {
-            this.popoverHeight = this.height + 'px';
-          } else {
-            this.popoverHeight = null;
           }
           this.$emit('show');
         } else {
@@ -28462,8 +24212,6 @@ return /******/ (function(modules) { // webpackBootstrap
             VueUtil.on(reference, 'mousedown', self.doShow);
             VueUtil.on(reference, 'mouseup', self.doClose);
           }
-        } else if (self.trigger === 'manual' && this.autoClose) {
-          VueUtil.on(document, 'click', self.documentClick);
         }
       },
       unBindEvents: function() {
@@ -28501,8 +24249,6 @@ return /******/ (function(modules) { // webpackBootstrap
             VueUtil.off(reference, 'mousedown', self.doShow);
             VueUtil.off(reference, 'mouseup', self.doClose);
           }
-        } else if (self.trigger === 'manual' && this.autoClose) {
-          VueUtil.off(document, 'click', self.documentClick);
         }
       },
       doToggle: function() {
@@ -28538,7 +24284,6 @@ return /******/ (function(modules) { // webpackBootstrap
       this.bindEvents();
     },
     destroyed: function() {
-      this.$refs.popper && this.$refs.popper.parentElement && this.$refs.popper.parentElement.removeChild(this.$refs.popper);
       this.unBindEvents();
     }
   };
@@ -28841,8 +24586,7 @@ return /******/ (function(modules) { // webpackBootstrap
         default: 'bottom-start'
       },
       offset: VuePopper.props.offset,
-      popperOptions: VuePopper.props.options,
-      appendToDirectParent: Boolean
+      popperOptions: VuePopper.props.options
     },
     methods: VuePopper.methods,
     data: VuePopper.data,
@@ -28851,12 +24595,12 @@ return /******/ (function(modules) { // webpackBootstrap
   var VueCascader = {
     template:'' +
 '<span \
-:class="[\'vue-cascader\', {\'is-opened\': menuVisible, \'is-disabled\': isDisabled},finalSize ? \'vue-cascader--\' + finalSize : \'\']" \
+:class="[\'vue-cascader\', {\'is-opened\': menuVisible, \'is-disabled\': disabled},size ? \'vue-cascader--\' + size : \'\']" \
 @click="handleClick" @mouseenter="inputHover = true" @mouseleave="inputHover = false" ref="reference" \
 v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 <vue-input :text-align="textAlign" ref="input" :autofocus="autofocus" :tabindex="tabindex" :readonly="!filterable" \
   :placeholder="currentLabels.length ? \'\' : placeholderLang" v-model="inputValue" @input="debouncedInputChange" \
-  :validate-event="false" :size="finalSize" :disabled="isDisabled" @keydown.native.down.prevent="navigateOptions(\'down\')" \
+  :validate-event="false" :size="size" :disabled="disabled" @keydown.native.down.prevent="navigateOptions(\'down\')" \
   @keydown.native.up.prevent="navigateOptions(\'up\')" @keydown.native.left.prevent="navigateOptions(\'left\')" \
   @keydown.native.right.prevent="navigateOptions(\'right\')" @keydown.native.enter.prevent="selectOption" \
   @keydown.native.esc.prevent="menuVisible = false" @keydown.native.tab="menuVisible = false"> \
@@ -28878,14 +24622,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 </span> \
 </span>',
     name: 'VueCascader',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-      vueFormItem: {
-        default: ''
-      },
-    },
     directives: {
       Clickoutside: VueUtil.component.clickoutside(),
       Scrolling: VueUtil.component.scrolling
@@ -28971,13 +24707,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           }
         });
         return labels;
-      },
-      isDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
-      },
-      finalSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
+      }
     },
     watch: {
       menuVisible: function(value) {
@@ -29041,12 +24771,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         self.$emit('active-item-change', value);
       },
       handlePick: function(value, close) {
-
-        var self = this;
-        self.$nextTick(function() {
-          self.updatePopper();
-        });
-        
         if (!VueUtil.isDef(close)) close = true;
         this.currentValue = value;
         this.$emit('input', value);
@@ -29140,7 +24864,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         this.menuVisible = false;
       },
       handleClick: function() {
-        if (this.isDisabled)
+        if (this.disabled)
           return;
         if (this.filterable) {
           this.menuVisible = true;
@@ -29206,13 +24930,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     },
     beforeCreate: function() {
       this.$parent.steps.push(this);
-    },
-    beforeDestroy: function beforeDestroy() {
-      var steps = this.$parent.steps;
-      var index = steps.indexOf(this);
-      if (index >= 0) {
-        steps.splice(index, 1);
-      }
     },
     computed: {
       currentStatus: function() {
@@ -29388,9 +25105,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       hideOnClick: {
         type: Boolean,
         default: true
-      },
-      tabindex: Number,
-      disabled: Boolean
+      }
     },
     data: function() {
       return {
@@ -29470,18 +25185,14 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       var hide = self.hide
         , splitButton = self.splitButton
         , type = self.type
-        , size = self.size
-        , disabled = self.disabled
-        , tabindex = self.tabindex;
+        , size = self.size;
       var handleClick = function() {
         self.$emit('click');
       };
       var triggerElm = !splitButton ? self.$slots.default : createElement('vue-button-group', null, [createElement('vue-button', {
         attrs: {
           type: type,
-          size: size,
-          tabindex: tabindex,
-          disabled: disabled,
+          size: size
         },
         nativeOn: {
           click: handleClick
@@ -29490,8 +25201,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         ref: 'trigger',
         attrs: {
           type: type,
-          size: size,
-          tabindex: tabindex
+          size: size
         },
         class: 'vue-dropdown__caret-button'
       }, [createElement('i', {
@@ -29524,7 +25234,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     name: 'VueDropdownItem',
     mixins: [VueUtil.component.emitter],
     props: {
-      command: [String, Object],
+      command: String,
       disabled: Boolean,
       divided: Boolean
     },
@@ -29566,7 +25276,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       '$parent.menuAlign': {
         immediate: true,
         handler: function(val) {
-          this.currentPlacement = val ? 'bottom-' + val : 'bottom';
+          this.currentPlacement = 'bottom-' + val;
         }
       }
     }
@@ -29598,15 +25308,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       expandOnClickHeader: {
         type: Boolean,
         default: true
-      },
-      noHide: {
-        type: Boolean,
-        default: false,
-      },
-      initAfterOpen: {
-        type: Boolean,
-        default: false,
-      },
+      }
     },
     data: function() {
       return {
@@ -29662,7 +25364,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCollapseItem = {
-    template: '<div :class="[\'vue-collapse-item\', {\'is-active\': isActive}]"><div :class="[\'vue-collapse-item__header\', {\'header-expand\': headerExpand}]" @click="handleHeaderClick"><i class="vue-collapse-item__header__arrow vue-icon-arrow-right" @click="handleIconClick" v-show="expandOnClick"></i><slot name="title">{{title}}</slot></div><collapse-transition><div class="vue-collapse-item__wrap" v-show="noHide || isActive" :style="itemStyle"><div class="vue-collapse-item__content"><slot v-if="!initAfterOpen || firstActive"></slot></div></div></collapse-transition></div>',
+    template: '<div :class="[\'vue-collapse-item\', {\'is-active\': isActive}]"><div :class="[\'vue-collapse-item__header\', {\'header-expand\': headerExpand}]" @click="handleHeaderClick"><i class="vue-collapse-item__header__arrow vue-icon-arrow-right" @click="handleIconClick" v-show="expandOnClick"></i><slot name="title">{{title}}</slot></div><collapse-transition><div class="vue-collapse-item__wrap" v-show="isActive"><div class="vue-collapse-item__content"><slot></slot></div></div></collapse-transition></div>',
     name: 'VueCollapseItem',
     mixins: [VueUtil.component.emitter],
     components: {
@@ -29674,8 +25376,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           height: 'auto',
           display: 'block'
         },
-        contentHeight: 0,
-        firstActive: false,
+        contentHeight: 0
       };
     },
     props: {
@@ -29697,37 +25398,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       headerExpand: function() {
         return this.$parent.expandOnClickHeader;
-      },
-      noHide: function() {
-        return this.$parent.noHide;
-      },
-      itemStyle: function() {
-        if (this.noHide && !this.isActive) {
-          return {
-            position: 'absolute',
-            top: '-100000px',
-            visibility: 'hidden'
-          };
-        }
-
-        return undefined;
-      },
-      initAfterOpen: function() {
-        return this.$parent.initAfterOpen;
-      },
-    },
-    watch: {
-      isActive: [{
-        immediate: true,
-        handler: function(val) {
-          this.$parent.$emit(val ? 'open' : 'close', this.$parent.activeNames, this.name);
-          if (val) {
-            this.firstActive = true;
-          }
-        }
-      }, function(val) {
-        this.$parent.$emit('state-change', this.$parent.activeNames, this.name, val ? 'open' : 'close');
-      }]
+      }
     },
     methods: {
       handleIconClick: function() {
@@ -29741,10 +25412,10 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         }
       },
       collapseAfterEnter: function() {
-        this.$parent.$emit('change', this.$parent.activeNames, this.name, 'enter');
+        this.$parent.$emit('change', this.$parent.activeNames);
       },
       collapseAfterLeave: function() {
-        this.$parent.$emit('change', this.$parent.activeNames, this.name, 'leave');
+        this.$parent.$emit('change', this.$parent.activeNames);
       }
     }
   };
@@ -30111,14 +25782,12 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     '    v-clickoutside="handleClose" v-scrolling="handleClose"'+
     '    :placeholder="placeholder"'+
     '    @focus="handleFocus"'+
-    '    @click.native="handleClick"'+
     '    @keydown.native="handleKeydown"'+
     '    :value="displayValue"'+
     '    @input="function (value) {return userInput = value;}"'+
     '    @change="handleChange"'+
     '    @mouseenter.native="handleMouseEnter"'+
     '    @mouseleave.native="showClose = false"'+
-    '    @mousedown.native="handleMousedown"'+
     '    :validateEvent="false"'+
     '    :tabindex="tabindex"'+
     '    :icon="showClose ? \'\' + clearIcon : \'\'"'+
@@ -30154,7 +25823,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     '    v-else>'+
     '    <i :class="[\'vue-input__icon\', \'vue-range__icon\', triggerClass]"></i>'+
     '    <input'+
-    '      autocomplete="off"'+
+    '      autocompvare="off"'+
     '      :placeholder="startPlaceholder"'+
     '      :value="displayValue && displayValue[0]"'+
     '      :disabled="pickerDisabled"'+
@@ -30171,7 +25840,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     '      <span class="vue-range-separator">{{ rangeSeparator }}</span>'+
     '    </slot>'+
     '    <input'+
-    '      autocomplete="off"'+
+    '      autocompvare="off"'+
     '      :placeholder="endPlaceholder"'+
     '      :value="displayValue && displayValue[1]"'+
     '      :disabled="pickerDisabled"'+
@@ -30197,10 +25866,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         if (VueUtil.getSystemInfo().device != 'Mobile') {
           return;
         }
-
-        if (!vnode.context.popperElm) {
-          return;
-        }
         var pel= vnode.context.popperElm.querySelector('.vue-picker-panel');
         if(mousedown.target.classList=='vue-aside__wrapper'){
           
@@ -30224,14 +25889,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         
       }),
       Scrolling: VueUtil.component.scrolling
-    },
-    inject: {
-      vueForm: {
-        default: ''
-      },
-      vueFormItem: {
-        default: ''
-      },
     },
     props: {
       size: String,
@@ -30294,18 +25951,25 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       };
     },
     watch: {
-      pickerDisabled: function(val) {
-        if (val) {
-          this.hidePicker();
-        }
-      },
       pickerVisible: function (val) {
         if (this.readonly || this.pickerDisabled) return;
         if (val) {
           this.showPicker();
+          this.valueOnOpen = Array.isArray(this.value) ?  this.value.slice() : this.value;
         } else {
-          this.finishEdit();
+          this.hidePicker();
+          this.emitChange(this.value);
+          this.userInput = null;
+  
+          if (this.validateEvent) {
+            this.dispatch('VueFormItem', 'vue.form.blur');
+          }
+  
+          this.$emit('blur', this);
+          this.blur();
         }
+       
+
       },
       parsedValue: {
         immediate: true,
@@ -30419,13 +26083,16 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
   
         return Array.isArray(this.value) ? this.value.map(function (val) {
           return new Date(val);
-        }) : isNaN(new Date(this.value).getTime()) ? '' : new Date(this.value);
+        }) : new Date(this.value);
       },
-      pickerSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
+      _elFormItemSize: function _elFormItemSize() {
+        return (this.elFormItem || {}).elFormItemSize;
+      },
+      pickerSize: function () {
+        return this.size || this._elFormItemSize || (this.$ELEMENT || {}).size;
       },
       pickerDisabled: function () {
-        return this.disabled || (this.vueForm || {}).disabled;
+        return this.disabled || (this.elForm || {}).disabled;
       },
       firstInputId: function () {
         var obj = {};
@@ -30532,14 +26199,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
   
         if (this.userInput === '') {
           this.emitInput(null);
+          this.emitChange(null);
           this.userInput = null;
-        }
-
-        if (!this.pickerVisible) {
-          var self = this;
-          setTimeout(function() {
-            self.finishEdit();
-          },0);
         }
       },
       handleStartInput: function (event) {
@@ -30626,22 +26287,10 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       handleFocus: function () {
         var type = this.type;
         if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1 && !this.pickerVisible) {
-          if (!this.picker) {
-            this.mountPicker();
-          }
-          this.valueOnOpen = Array.isArray(this.value) ?  this.value.slice() : this.value;
+          this.pickerVisible = true;
         }
   
         this.$emit('focus', this);
-      },
-      handleMousedown: function(event){
-        var type = this.type;
-        if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1 && event.target === this.$refs.reference.$refs.input) {
-          this.pickerVisible = true;
-        }
-      },
-      handleClick: function() {
-        this.$emit('click', this);
       },
       handleKeydown: function (event) {
         var self = this;
@@ -30656,32 +26305,17 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         if (keyCode === 9) {
           if (!this.ranged) {
             this.handleChange();
-            if (!this.pickerVisible) {
-              this.$nextTick(function() {
-                this.$nextTick(function() {
-                  this.finishEdit();
-                });
-              });
-            }
             this.pickerVisible = this.picker.visible = false;
-            
+            this.blur();
+
             // grid内部无法捕获到tab事件
             if (!(this.$el && this.$el.parentNode.className.indexOf('vue-xtable-cell') > -1)) {
               event.stopPropagation();
             }
-          } else {
+          } else if(!event.shiftKey) {
             // user may change focus between two input
             setTimeout(function () {
               if (self.refInput.indexOf(document.activeElement) === -1) {
-
-                if (!self.pickerVisible) {
-                  self.$nextTick(function() {
-                    self.$nextTick(function() {
-                      self.finishEdit();
-                    });
-                  });
-                }
-
                 self.pickerVisible = false;
   
                 self.blur();
@@ -30701,23 +26335,11 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         if (keyCode === 13) {
           if (this.userInput === '' || this.isValidValue(this.parseString(this.displayValue))) {
             this.handleChange();
-            
-            if (!this.pickerVisible) {
-              this.$nextTick(function() {
-                this.$nextTick(function() {
-                  this.finishEdit();
-                });
-              });
-            }
-
             this.pickerVisible = this.picker.visible = false;
+            this.blur();
           }
-
-          // grid内部无法捕获到enter事件
-          if (!(this.$el && this.$el.parentNode.className.indexOf('vue-xtable-cell') > -1)) {
-            event.stopPropagation();
-          }
-
+  
+          event.stopPropagation();
           return;
         } // if user is typing, do not let picker handle key input
   
@@ -30727,12 +26349,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           return;
         } // delegate other keys to panel
   
-        if (keyCode === 40 && HAVE_TRIGGER_TYPES.indexOf(this.type) !== -1 && !this.pickerVisible) {
-          event.stopPropagation();
-          this.pickerVisible = true;
-          return;
-        }
-
+  
         if (this.picker && this.picker.handleKeydown) {
           this.picker.handleKeydown(event);
         }
@@ -30740,7 +26357,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       handleRangeClick: function () {
         var type = this.type;
   
-        if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1) {
+        if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1 && !this.pickerVisible) {
           this.pickerVisible = true;
         }
   
@@ -30886,19 +26503,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         } else {
           return true;
         }
-      },
-      finishEdit: function() {
-        this.hidePicker();
-        this.emitChange(this.value);
-        this.userInput = null;
-
-        if (this.validateEvent) {
-          this.dispatch('VueFormItem', 'vue.form.blur');
-        }
-
-        this.$emit('blur', this);
-        this.blur();
-      
       }
     }
   };
@@ -31182,7 +26786,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     '      <vue-scrollbar'+
     '        @mouseenter.native="emitSelectRange(\'hours\')"'+
     '        @mousemove.native="adjustCurrentSpinner(\'hours\')"'+
-    '        @touchend.native="adjustCurrentSpinner(\'hours\')"'+
     '        class="vue-time-spinner__wrapper"'+
     '        wrap-style="max-height: inherit;"'+
     '        view-class="vue-time-spinner__list"'+
@@ -31199,7 +26802,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     '      <vue-scrollbar'+
     '        @mouseenter.native="emitSelectRange(\'minutes\')"'+
     '        @mousemove.native="adjustCurrentSpinner(\'minutes\')"'+
-    '        @touchend.native="adjustCurrentSpinner(\'minutes\')"'+
     '        class="vue-time-spinner__wrapper"'+
     '        wrap-style="max-height: inherit;"'+
     '        view-class="vue-time-spinner__list"'+
@@ -31217,7 +26819,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     '        v-show="showSeconds"'+
     '        @mouseenter.native="emitSelectRange(\'seconds\')"'+
     '        @mousemove.native="adjustCurrentSpinner(\'seconds\')"'+
-    '        @touchend.native="adjustCurrentSpinner(\'seconds\')"'+
     '        class="vue-time-spinner__wrapper"'+
     '        wrap-style="max-height: inherit;"'+
     '        view-class="vue-time-spinner__list"'+
@@ -31590,9 +27191,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         }
       },
       selectableRange: function (val) {
-        this.$nextTick(function() {
-          this.$refs.spinner.selectableRange = val;
-        });
+        this.$refs.spinner.selectableRange = val;
       },
       defaultValue: function (val) {
         if (!isDate(this.value)) {
@@ -33301,9 +28900,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
             37: -1,
             39: 1,
             offset: function (date, step) {
-              date.setMonth(0);
-              date.setDate(1);
-              date.setTime(VueUtil.clearTime(date).getTime());
               return date.setFullYear(date.getFullYear() + step);
             }
           },
@@ -33313,8 +28909,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
             37: -1,
             39: 1,
             offset: function (date, step) {
-              date.setDate(1);
-              date.setTime(VueUtil.clearTime(date).getTime());
               return date.setMonth(date.getMonth() + step);
             }
           },
@@ -33343,11 +28937,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         var newDate = new Date(this.date.getTime());
   
         while (Math.abs(now - newDate.getTime()) <= year) {
-
           var map = mapping[mode];
-          if(!map) {
-            break;
-          }
           map.offset(newDate, map[keyCode]);
   
           if (typeof this.disabledDate === 'function' && this.disabledDate(newDate)) {
@@ -34499,11 +30089,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 })(this, function(Vue, VueUtil, VuePopup) {
   'use strict';
   var VueMessageBox = {
-    template: '<div><div class="vue-message-box__wrapper" v-show="visible"></div><transition name="msgbox-fade" @after-leave="doDestroy"><div :class="[\'vue-message-box\', customClass]" v-show="visible"><div class="vue-message-box__header" v-if="title !== null"><div class="vue-message-box__title">{{title || $t(\'vue.messagebox.title\')}}</div></div><div class="vue-message-box__content" v-if="message !== \'\'"><div :class="[\'vue-message-box__status\', typeClass]"></div><div class="vue-message-box__message" :style="{\'margin-left\': typeClass ? \'50px\' : \'0\'}"><slot><p>{{message}}</p></slot></div></div><div class="vue-message-box__btns">'
-    +'<vue-button :loading="confirmButtonLoading" ref="confirm" :class="[confirmButtonClasses]" @click.native="handleAction(\'confirm\')" v-if="reverseButton">{{confirmButtonText || $t(\'vue.messagebox.confirm\')}}</vue-button>'
-    +'<vue-button :loading="cancelButtonLoading"  ref="cancel"  :class="[cancelButtonClasses]"  @click.native="handleAction(\'cancel\')" v-if="showCancelButton">{{cancelButtonText || $t(\'vue.messagebox.cancel\')}}</vue-button>'
-    +'<vue-button :loading="confirmButtonLoading" ref="confirm" :class="[confirmButtonClasses]" @click.native="handleAction(\'confirm\')"  v-if="!reverseButton">{{confirmButtonText || $t(\'vue.messagebox.confirm\')}}</vue-button>'
-    +'</div></div></transition></div>',
+    template: '<div><div class="vue-message-box__wrapper" v-show="visible"></div><transition name="msgbox-fade" @after-leave="doDestroy"><div :class="[\'vue-message-box\', customClass]" v-show="visible"><div class="vue-message-box__header" v-if="title !== null"><div class="vue-message-box__title">{{title || $t(\'vue.messagebox.title\')}}</div></div><div class="vue-message-box__content" v-if="message !== \'\'"><div :class="[\'vue-message-box__status\', typeClass]"></div><div class="vue-message-box__message" :style="{\'margin-left\': typeClass ? \'50px\' : \'0\'}"><slot><p>{{message}}</p></slot></div></div><div class="vue-message-box__btns"><vue-button :loading="cancelButtonLoading" :class="[cancelButtonClasses]" v-if="showCancelButton" @click.native="handleAction(\'cancel\')">{{cancelButtonText || $t(\'vue.messagebox.cancel\')}}</vue-button><vue-button :loading="confirmButtonLoading" ref="confirm" :class="[confirmButtonClasses]" @click.native="handleAction(\'confirm\')">{{confirmButtonText || $t(\'vue.messagebox.confirm\')}}</vue-button></div></div></transition></div>',
     mixins: [VuePopup],
     computed: {
       typeClass: function() {
@@ -34543,7 +30129,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           self.$destroy();
           setTimeout(function() {
             if(self.$el) {
-              self.focusTriggerOnClose && self.triggerElm && self.triggerElm.focus();
               document.body.removeChild(self.$el);
             }
           }, 200);
@@ -34568,11 +30153,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         if (val) {
           self.uid++;
           self.$nextTick(function() {
-            if (this.focusCancel === true) {
-              self.$refs.cancel && self.$refs.cancel.$el.focus();
-            } else {
-              self.$refs.confirm.$el.focus();
-            }
+            self.$refs.confirm.$el.focus();
           });
         }
       }
@@ -34593,9 +30174,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         confirmButtonClass: '',
         cancelButtonClass: '',
         callback: null,
-        beforeClose: null,
-        focusCancel: false,
-        reverseButton: false,
+        beforeClose: null
       };
     }
   };
@@ -34613,17 +30192,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     }
   };
   var initInstance = function() {
-    var propsData;
-    if (msgQueue.length > 0) {
-      propsData = {
-        trapFocus: msgQueue[0].options.trapFocus,
-        focusTriggerOnClose: msgQueue[0].options.focusTriggerOnClose,
-      };
-    }
     instance = new MessageBoxConstructor({
-      i18n: Vue.i18n,
-      el: document.createElement('div'),
-      propsData: propsData
+      el: document.createElement('div')
     });
     instance.callback = defaultCallback;
   };
@@ -34752,7 +30322,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       doDestroy: function() {
         this.$destroy();
-        this.$el.parentNode.removeChild(this.$el);
       }
     },
     mounted: function() {
@@ -34814,7 +30383,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       Notification.close(id, userOnClose);
     };
     var instance = new NotificationConstructor({
-      i18n: Vue.i18n,
       data: options
     });
     if (VueUtil.isVNode(options.message)) {
@@ -35244,7 +30812,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 })(this, function(Vue) {
   'use strict';
   var VueProgress = {
-    template: '<div :class="[\'vue-progress\', \'vue-progress--\' + type, status ? \'is-\' + status : \'\',{\'vue-progress--without-text\': !showText,\'vue-progress--text-inside\': textInside,}]"><div class="vue-progress-bar" v-if="type === \'line\'"><div class="vue-progress-bar__outer" :style="{height: strokeWidth + \'px\'}"><div class="vue-progress-bar__inner" :style="barStyle"><div class="vue-progress-bar__innerText" v-if="showText && textInside">{{text}}</div></div></div></div><div class="vue-progress-circle" :style="{height: width + \'px\', width: width + \'px\'}" v-else><svg viewBox="0 0 100 100"><path class="vue-progress-circle__track" :d="trackPath" stroke="#e5e9f2" :stroke-width="relativeStrokeWidth" fill="none"></path><path class="vue-progress-circle__path" :d="trackPath" stroke-linecap="round" :stroke="stroke" :stroke-width="relativeStrokeWidth" fill="none" :style="circlePathStyle"></path></svg></div><div class="vue-progress__text" v-if="showText && !textInside" :style="{fontSize: progressTextSize + \'px\'}"><template v-if="!status">{{text}}</template><i v-else :class="iconClass"></i></div></div>',
+    template: '<div :class="[\'vue-progress\', \'vue-progress--\' + type, status ? \'is-\' + status : \'\',{\'vue-progress--without-text\': !showText,\'vue-progress--text-inside\': textInside,}]"><div class="vue-progress-bar" v-if="type === \'line\'"><div class="vue-progress-bar__outer" :style="{height: strokeWidth + \'px\'}"><div class="vue-progress-bar__inner" :style="barStyle"><div class="vue-progress-bar__innerText" v-if="showText && textInside">{{percentage}}%</div></div></div></div><div class="vue-progress-circle" :style="{height: width + \'px\', width: width + \'px\'}" v-else><svg viewBox="0 0 100 100"><path class="vue-progress-circle__track" :d="trackPath" stroke="#e5e9f2" :stroke-width="relativeStrokeWidth" fill="none"></path><path class="vue-progress-circle__path" :d="trackPath" stroke-linecap="round" :stroke="stroke" :stroke-width="relativeStrokeWidth" fill="none" :style="circlePathStyle"></path></svg></div><div class="vue-progress__text" v-if="showText && !textInside" :style="{fontSize: progressTextSize + \'px\'}"><template v-if="!status">{{percentage}}%</template><i v-else :class="iconClass"></i></div></div>',
     name: 'VueProgress',
     props: {
       type: {
@@ -35272,10 +30840,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       showText: {
         type: Boolean,
         default: true
-      },
-      textFormatter: {
-        type: Function,
-        default: null
       }
     },
     computed: {
@@ -35326,13 +30890,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       progressTextSize: function() {
         return this.type === 'line' ? 12 + this.strokeWidth * 0.4 : this.width * 0.25 + 6;
-      },
-      text: function() {
-        if (!this.textFormatter) {
-          return this.percentage + '%'; 
-        } else {
-          return this.textFormatter(this.percentage, this.status);
-        }
       }
     }
   };
@@ -35374,7 +30931,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     },
     computed: {
       disabled: function() {
-        return this.$parent.sliderDisabled;
+        return this.$parent.disabled;
       },
       max: function() {
         return this.$parent.max;
@@ -35494,13 +31051,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     }
   };
   var VueSlider = {
-    template: '<div class="vue-slider" :class="{\'is-vertical\': vertical}"><div :class="[\'vue-slider__runway\', {\'disabled\': sliderDisabled}]" :style="runwayStyle" @click="onSliderClick" ref="slider"><div class="vue-slider__bar" :style="barStyle"></div><slider-button :vertical="vertical" v-model="firstValue" ref="button1"></slider-button><slider-button :vertical="vertical" v-model="secondValue" ref="button2" v-if="range"></slider-button><div class="vue-slider__stop" v-for="item in stops" :style="vertical ? {\'bottom\': item + \'%\'} : {\'left\': item + \'%\'}" v-if="showStops"></div></div></div>',
+    template: '<div class="vue-slider" :class="{\'is-vertical\': vertical}"><div :class="[\'vue-slider__runway\', {\'disabled\': disabled}]" :style="runwayStyle" @click="onSliderClick" ref="slider"><div class="vue-slider__bar" :style="barStyle"></div><slider-button :vertical="vertical" v-model="firstValue" ref="button1"></slider-button><slider-button :vertical="vertical" v-model="secondValue" ref="button2" v-if="range"></slider-button><div class="vue-slider__stop" v-for="item in stops" :style="vertical ? {\'bottom\': item + \'%\'} : {\'left\': item + \'%\'}" v-if="showStops"></div></div></div>',
     name: 'VueSlider',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     mixins: [VueUtil.component.emitter],
     props: {
       min: {
@@ -35638,7 +31190,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         this.$refs[button].setPosition(percent);
       },
       onSliderClick: function(event) {
-        if (this.sliderDisabled || this.dragging) return;
+        if (this.disabled || this.dragging) return;
         var sliderSize = 1;
         if (this.$refs.slider) {
           sliderSize = this.$refs.slider['client' + (this.vertical ? 'Height' : 'Width')];
@@ -35694,9 +31246,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       barStyle: function() {
         return this.vertical ? {height: this.barSize, bottom: this.barStart} : {width: this.barSize, left: this.barStart};
-      },
-      sliderDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
       }
     },
     mounted: function() {
@@ -35733,13 +31282,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueRate = {
-    template: '<div class="vue-rate"><span v-for="item in max" class="vue-rate__item" @mousemove="setCurrentValue(item, $event)" @mouseleave="resetCurrentValue" @click="selectValue(item)" :style="{cursor: rateDisabled ? \'auto\' : \'pointer\'}"><i :class="[\'vue-rate__icon\', classes[item - 1], {\'hover\': hoverIndex === item}]" :style="getIconStyle(item)"><i v-if="showDecimalIcon(item)" :class="[\'vue-rate__decimal\', decimalIconClass]" :style="decimalStyle"></i></i></span><span v-if="showText" class="vue-rate__text" :style="{color: textColor}">{{text}}</span></div>',
+    template: '<div class="vue-rate"><span v-for="item in max" class="vue-rate__item" @mousemove="setCurrentValue(item, $event)" @mouseleave="resetCurrentValue" @click="selectValue(item)" :style="{cursor: disabled ? \'auto\' : \'pointer\'}"><i :class="[\'vue-rate__icon\', classes[item - 1], {\'hover\': hoverIndex === item}]" :style="getIconStyle(item)"><i v-if="showDecimalIcon(item)" :class="[\'vue-rate__decimal\', decimalIconClass]" :style="decimalStyle"></i></i></span><span v-if="showText" class="vue-rate__text" :style="{color: textColor}">{{text}}</span></div>',
     name: 'VueRate',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     data: function() {
       return {
         classMap: {},
@@ -35815,7 +31359,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     computed: {
       text: function() {
         var result = '';
-        if (this.rateDisabled) {
+        if (this.disabled) {
           result = this.textTemplate.replace(/\{\s*value\s*\}/, this.value);
         } else {
           result = this.texts[Math.ceil(this.currentValue) - 1];
@@ -35824,7 +31368,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       decimalStyle: function() {
         var width = '';
-        if (this.rateDisabled) {
+        if (this.disabled) {
           width = (this.valueDecimal < 50 ? 0 : 50) + '%';
         }
         if (this.allowHalf) {
@@ -35842,7 +31386,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         return this.getValueFromMap(this.value, this.classMap);
       },
       voidClass: function() {
-        return this.rateDisabled ? this.classMap.disabledVoidClass : this.classMap.voidClass;
+        return this.disabled ? this.classMap.disabledVoidClass : this.classMap.voidClass;
       },
       activeClass: function() {
         return this.getValueFromMap(this.currentValue, this.classMap);
@@ -35864,9 +31408,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           result.push(this.voidClass);
         }
         return result;
-      },
-      rateDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
       }
     },
     watch: {
@@ -35910,18 +31451,18 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         return result;
       },
       showDecimalIcon: function(item) {
-        var showWhenDisabled = this.rateDisabled && this.valueDecimal > 0 && item - 1 < this.value && item > this.value;
+        var showWhenDisabled = this.disabled && this.valueDecimal > 0 && item - 1 < this.value && item > this.value;
         var showWhenAllowHalf = this.allowHalf && this.pointerAtLeftHalf && ((item - 0.5).toFixed(1) === this.currentValue.toFixed(1));
         return showWhenDisabled || showWhenAllowHalf;
       },
       getIconStyle: function(item) {
-        var voidColor = this.rateDisabled ? this.colorMap.disabledVoidColor : this.colorMap.voidColor;
+        var voidColor = this.disabled ? this.colorMap.disabledVoidColor : this.colorMap.voidColor;
         return {
           color: item <= this.currentValue ? this.activeColor : voidColor
         };
       },
       selectValue: function(value) {
-        if (this.rateDisabled) {
+        if (this.disabled) {
           return;
         }
         if (this.allowHalf && this.pointerAtLeftHalf) {
@@ -35931,7 +31472,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         }
       },
       setCurrentValue: function(value, event) {
-        if (this.rateDisabled) {
+        if (this.disabled) {
           return;
         }
         if (this.allowHalf) {
@@ -35950,7 +31491,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         this.hoverIndex = value;
       },
       resetCurrentValue: function() {
-        if (this.rateDisabled) {
+        if (this.disabled) {
           return;
         }
         if (this.allowHalf) {
@@ -36027,37 +31568,34 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
   };
   var UploadList = {
     template: '<transition-group tag="ul" :class="[\'vue-upload-list\', \'vue-upload-list--\' + listType, {\'is-disabled\': disabled}]" name="vue-list">\
-                <li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file.uid" @click="$emit(\'click\', file)">\
-                  <slot :file="file" :is-mobile="isMobile" >\
+                <li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file.uid">\
                   <img class="vue-upload-list__item-thumbnail" v-if="!isMobile && file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1"\
                    :src="file.url" :alt="file.name"/>\
-                  <a v-if="!isMobile" class="vue-upload-list__item-name" @click.stop="handleClick(file, index, files)">\
+                  <a v-if="!isMobile" class="vue-upload-list__item-name" @click="handleClick(file, index, files)">\
                    <i class="vue-icon-document"></i>{{file.name}}</a>\
                   <label v-if="!isMobile" class="vue-upload-list__item-status-label">\
-                    <i v-if="file.status !== \'fail\'" :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
-                    <i v-else  :class="{\'vue-icon-upload-fail\': true}">!</i>\
+                    <i :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
                   </label>\
-                  <i class="vue-icon-close" v-if="!isMobile && !disabled" @click.stop="$emit(\'remove\', file)"></i>\
+                  <i class="vue-icon-close" v-if="!isMobile && !disabled" @click="$emit(\'remove\', file)"></i>\
                   <vue-progress v-if="!isMobile && file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" :stroke-width="listType === \'picture-card\' ? 6 : 2" \
                   :percentage="parsePercentage(file.percentage)"></vue-progress>\
                   <span class="vue-upload-list__item-actions" v-if="!isMobile && listType === \'picture-card\'">\
-                    <span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click.stop="handlePreview(file,index,files)">\
+                    <span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click="handlePreview(file,index,files)">\
                       <i class="vue-icon-view"></i>\
                     </span>\
-                    <span v-if="!disabled" class="vue-upload-list__item-delete" @click.stop="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span>\
-                    <span v-if="showDownload" class="vue-upload-list__item-download" @click.stop="$emit(\'download\', file)"><i class="vue-icon-download2"></i></span>\
+                    <span v-if="!disabled" class="vue-upload-list__item-delete" @click="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span>\
                   </span>\
                   <div v-if="isMobile" style="position:relative;overflow:hidden;width:100%;height:100%;">\
                     <img class="vue-upload-list__item-thumbnail" v-if="file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1" \
-                        :src="file.url" :alt="listType === \'picture-card\'?file.name:\'load failed\'" @click.stop="handlePreview(file,index,files)" />\
-                    <a class="vue-upload-list__item-name" @click.stop="handleClick(file,index,files)"><i class="vue-icon-document"></i>{{file.name}}</a>\
+                        :src="file.url" :alt="listType === \'picture-card\'?file.name:\'load failed\'" @click="handlePreview(file,index,files)" />\
+                    <a class="vue-upload-list__item-name" @click="handleClick(file,index,files)"><i class="vue-icon-document"></i>{{file.name}}</a>\
                     <label class="vue-upload-list__item-status-label">\
                       <i :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
                     </label>\
                     <vue-progress v-if="file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" \
                     :stroke-width="listType === \'picture-card\' ? 6 : 2" :percentage="parsePercentage(file.percentage)"></vue-progress>\
                   </div>\
-                  <i v-if="isMobile && !disabled" class="vue-icon-error" @click.stop="$emit(\'remove\', file)"></i></slot>\
+                  <i v-if="isMobile && !disabled" class="vue-icon-error" @click="$emit(\'remove\', file)"></i>\
                 </li></transition-group>',
     props: {
       files: {
@@ -36067,7 +31605,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         }
       },
       disabled: Boolean,
-      showDownload: Boolean,
       handlePreview: Function,
       listType: String
     },
@@ -36106,7 +31643,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       multiple: Boolean,
       max: Number,
       accept: String,
-      capture: String,
       onStart: Function,
       onProgress: Function,
       onSuccess: Function,
@@ -36145,11 +31681,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
               formData.append(key, option.data[key]);
             });
           }
-          if (option.file instanceof Blob) {
-            formData.append(option.filename, option.file, option.file.name);
-          } else {
-            formData.append(option.filename, option.file);
-          }
+          formData.append(option.filename, option.file);
           this.$http.post(option.action, formData, httpOption).then(function(reqponse) {
             option.onSuccess(reqponse);
           }, function(reqponse) {
@@ -36207,7 +31739,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         var before = self.beforeUpload(rawFile);
         if (before && before.then) {
           before.then(function(processedFile) {
-            if (VueUtil.isFile(processedFile) || processedFile instanceof Blob) {
+            if (VueUtil.isFile(processedFile)) {
               self.post(processedFile);
             } else {
               self.post(rawFile);
@@ -36277,7 +31809,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       var handleChange = this.handleChange;
       var multiple = this.multiple;
       var accept = this.accept;
-      var capture = this.capture;
       var listType = this.listType;
       var uploadFiles = this.uploadFiles;
       var disabled = this.disabled;
@@ -36302,7 +31833,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         }
       };
       data.class['vue-upload--' + listType] = true;
-      return createElement('div', data, [drag ? createElement('upload-dragger', {attrs: {disabled: disabled}, on: {'file': uploadFiles}}, [this.$slots.default]) : this.$slots.default, createElement('input', {class: 'vue-upload__input', attrs: {type: 'file', name: name, multiple: multiple, accept: accept, capture: capture}, ref: 'input', on: {'change': handleChange}}, [])]);
+      return createElement('div', data, [drag ? createElement('upload-dragger', {attrs: {disabled: disabled}, on: {'file': uploadFiles}}, [this.$slots.default]) : this.$slots.default, createElement('input', {class: 'vue-upload__input', attrs: {type: 'file', name: name, multiple: multiple, accept: accept}, ref: 'input', on: {'change': handleChange}}, [])]);
     }
   };
   var IframeUpload = {
@@ -36322,7 +31853,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       withCredentials: Boolean,
       accept: String,
-      capture: String,
       onStart: Function,
       onProgress: Function,
       onSuccess: Function,
@@ -36424,7 +31954,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       var disabled = this.disabled;
       var oClass = {'vue-upload': true};
       oClass['vue-upload--' + listType] = true;
-      return createElement('div', {'class': oClass, on: {'click': this.handleClick}, nativeOn: {'drop': this.onDrop, 'dragover': this.handleDragover, 'dragleave': this.handleDragleave}}, [createElement('iframe', {on: {'load': this.onload}, ref: 'iframe', attrs: {name: frameName}}, []), createElement('form', {ref: 'form', attrs: {action: this.action, target: frameName, enctype: 'multipart/form-data', method: 'POST'}}, [createElement('input', {'class': 'vue-upload__input', attrs: {type: 'file', name: 'file', accept: this.accept, capture: this.capture}, ref: 'input', on: {'change': this.handleChange}}, []), createElement('input', {attrs: {type: 'hidden', name: 'documentDomain', value: document.domain}}, []), createElement('span', {ref: 'data'}, [])]), drag ? createElement('upload-dragger', {on: {'file': uploadFiles}, attrs: {disabled: disabled}}, [this.$slots.default]) : this.$slots.default]);
+      return createElement('div', {'class': oClass, on: {'click': this.handleClick}, nativeOn: {'drop': this.onDrop, 'dragover': this.handleDragover, 'dragleave': this.handleDragleave}}, [createElement('iframe', {on: {'load': this.onload}, ref: 'iframe', attrs: {name: frameName}}, []), createElement('form', {ref: 'form', attrs: {action: this.action, target: frameName, enctype: 'multipart/form-data', method: 'POST'}}, [createElement('input', {'class': 'vue-upload__input', attrs: {type: 'file', name: 'file', accept: this.accept}, ref: 'input', on: {'change': this.handleChange}}, []), createElement('input', {attrs: {type: 'hidden', name: 'documentDomain', value: document.domain}}, []), createElement('span', {ref: 'data'}, [])]), drag ? createElement('upload-dragger', {on: {'file': uploadFiles}, attrs: {disabled: disabled}}, [this.$slots.default]) : this.$slots.default]);
     }
   };
   var migrating = {
@@ -36442,15 +31972,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
   };
   var VueUpload = {
     name: 'VueUpload',
-    model: {
-      event: 'input',
-      prop: 'fileList',
-    },
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     mixins: [migrating],
     components: {
       UploadList: UploadList,
@@ -36489,7 +32010,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         default: true
       },
       accept: String,
-      capture: String,
       type: {
         type: String,
         default: 'select'
@@ -36497,12 +32017,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       beforeUpload: Function,
       beforeRemove: Function,
       onRemove: {
-        type: Function,
-        default: function() {}
-      },
-      beforeDownload: Function,
-      download: Function,
-      onDownload: {
         type: Function,
         default: function() {}
       },
@@ -36541,12 +32055,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       httpRequest: Function,
       disabled: Boolean,
-      showDownload: Boolean,
       clickable: {
-        type: Boolean,
-        default: true
-      },
-      autoRemoveFail: {
         type: Boolean,
         default: true
       }
@@ -36559,11 +32068,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         tempIndex: 1
       };
     },
-    computed: {
-      uploadDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
-      }
-    },
     watch: {
       fileList: {
         immediate: true,
@@ -36572,12 +32076,11 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           self.uploadFiles = VueUtil.map(fileList, function(item) {
             item.uid = item.uid || (Date.now() + self.tempIndex++);
             item.status = self.autoUpload ? 'success' : 'ready';
-            item.status = item.status || 'success';
             return item;
           });
         }
       },
-      uploadDisabled: function(val) {
+      disabled: function(val) {
         VueUtil.loop(this.$el.querySelectorAll('button'), function(buttonNote) {
           if (val) {
             VueUtil.addClass(buttonNote, 'is-disabled');
@@ -36605,7 +32108,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         }
         this.uploadFiles.push(file);
         this.onChange(file, this.uploadFiles);
-        this.$emit('input', this.uploadFiles);
       },
       handleProgress: function(ev, rawFile) {
         var file = this.getFile(rawFile);
@@ -36620,17 +32122,15 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           file.response = res;
           this.onSuccess(res, file, this.uploadFiles);
           this.onChange(file, this.uploadFiles);
-          this.$emit('input', this.uploadFiles);
         }
       },
       handleError: function(err, rawFile) {
         var file = this.getFile(rawFile);
         var fileList = this.uploadFiles;
         file.status = 'fail';
-        this.autoRemoveFail && fileList.splice(fileList.indexOf(file), 1);
+        fileList.splice(fileList.indexOf(file), 1);
         this.onError(err, file, this.uploadFiles);
         this.onChange(file, this.uploadFiles);
-        this.$emit('input', this.uploadFiles);
       },
       handleRemove: function(file, raw) {
         if (raw) {
@@ -36642,7 +32142,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           self.abort(file);
           var fileList = self.uploadFiles;
           fileList.splice(fileList.indexOf(file), 1);
-          self.$emit('input', fileList);
           self.onRemove(file, fileList);
         }
 
@@ -36659,37 +32158,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           }
         }
       },
-      handleDownload: function(file, raw) {
-        var self = this;
-        if (raw) {
-          file = this.getFile(raw);
-        }
-
-        function doDownload() {
-          if (self.download) {
-            self.download(file, self.uploadFiles);
-          } else {
-            VueUtil.saveAs(file.raw || file.url, file.name);
-          }
-          self.onDownload(file);
-        }
-
-        if (!this.beforeDownload) {
-          doDownload();
-        } else if (typeof this.beforeDownload === 'function') {
-          var before = this.beforeDownload(file);
-          if (before && before.then) {
-            before.then(function() {
-              doDownload();
-            }, noop);
-          } else if (before !== false) {
-            doDownload();
-          }
-        }
-      },
-      handleClick: function(file) {
-        this.$emit('list-click', file);
-      },
       getFile: function(rawFile) {
         var fileList = this.uploadFiles;
         var target;
@@ -36704,7 +32172,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       clearFiles: function() {
         this.uploadFiles = [];
-        this.$emit('input', this.uploadFiles);
       },
       submit: function() {
         var self = this;
@@ -36726,20 +32193,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     },
     render: function(createElement) {
       var uploadList;
-      var self = this;
       if (this.showFileList) {
-        uploadList = createElement('UploadList', {attrs: {disabled: this.uploadDisabled, showDownload: this.showDownload, listType: this.listType, files: this.uploadFiles, handlePreview: this.onPreview}, on: {'remove': this.handleRemove, 'download': this.handleDownload, 'click': this.handleClick}}, [
-
-          function (props) {
-            if (self.$scopedSlots.file) {
-              return self.$scopedSlots.file({
-                file: props.file,
-                isMobile: props.isMobile
-              });
-            }
-          }
-
-        ]);
+        uploadList = createElement('UploadList', {attrs: {disabled: this.disabled, listType: this.listType, files: this.uploadFiles, handlePreview: this.onPreview}, on: {'remove': this.handleRemove}}, []);
       }
       var uploadData = {
         directives: [{
@@ -36758,11 +32213,10 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           name: this.name,
           data: this.data,
           accept: this.accept,
-          capture: this.capture,
           fileList: this.uploadFiles,
           autoUpload: this.autoUpload,
           listType: this.listType,
-          disabled: this.uploadDisabled,
+          disabled: this.disabled,
           clickable: this.clickable,
           'on-start': this.handleStart,
           'on-progress': this.handleProgress,
@@ -36890,7 +32344,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 })(this, function(Vue) {
   'use strict';
   var VueNote = {
-    template: '<div :class="[\'vue-note\', typeClass, typeBox]"><div class="vue-note__content"><span class="vue-note__title is-bold" v-if="title">{{title}}</span><div v-if="$slots.default" class="vue-note__description"><slot></slot></div></div></div>',
+    template: '<div :class="[\'vue-note\', typeClass, typeBox]"><div class="vue-note__content"><span class="vue-note__title is-bold" v-if="title">{{title}}</span><div class="vue-note__description"><slot></slot></div></div></div>',
     name: 'VueNote',
     props: {
       title: {
@@ -36951,11 +32405,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         type: Boolean,
         default: true
       },
-      scrollbar: Boolean,
-      itemSize: {
-        type: Number,
-        default: 0
-      },
+      scrollbar: Boolean
     },
     methods: {
       updateKeyList: function() {
@@ -37022,8 +32472,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         delta.total = 0;
         delta.marginTop = 0;
         delta.marginBottom = 0;
-        delta.size = (this.itemSize || (this.isMobile?23:36)) - 10;
-        delta.remain = Math.floor(this.height * 1 / delta.size) + 1;
+        delta.size = this.isMobile?13:20;
+        delta.remain = Math.floor(this.height * 1 / delta.size);
         delta.end = delta.remain;
         delta.keeps = delta.remain;
         if (slots.length <= delta.remain) {
@@ -37056,11 +32506,11 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         list = createElement('div', {
           'class': ['vue-list'],
           'style': {
-            'height': this.height * 1 + 'px'
+            'height': this.isMobile? '100%' : this.height * 1 + 'px'
           }
         }, [createElement('vue-scrollbar', {
             props: {
-              height: this.height * 1
+              height: this.isMobile? '100%' :this.height * 1
             },
             'on': {
               'scrollY': this.handleScroll
@@ -37364,11 +32814,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         r = parseHexChannel(hex.substring(0, 2));
         g = parseHexChannel(hex.substring(2, 4));
         b = parseHexChannel(hex.substring(4));
-      } else if (hex.length === 8) {
-        r = parseHexChannel(hex.substring(0, 2));
-        g = parseHexChannel(hex.substring(2, 4));
-        b = parseHexChannel(hex.substring(4, 6));
-        this._alpha = parseHexChannel(hex.substring(6)) / 255 * 100;
       }
       var _rgb2hsv = rgb2hsv(r, g, b);
       var h = _rgb2hsv.h;
@@ -37737,134 +33182,32 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       self.update();
     }
   };
-
-  var VueColorPanel = {
-    template: '<div class="vue-color-panel" @mousedown="handleMouseup"><div class="vue-color-dropdown__main-wrapper">\
-    <hue-slider ref="hue" :color="color" vertical style="float: right;"></hue-slider>\
-    <sv-panel ref="sl" :color="color"></sv-panel>\
-  </div>\
-  <alpha-slider v-if="showAlpha" ref="alpha" :color="color"></alpha-slider>\
-  <template v-if="showColors" >\
-  <div class="vue-color-dropdown__colors-wrapper" v-for="grp in colorsGrp">\
-    <span class="vue-color-dropdown__colors-block is-alpha" v-for="color in grp" @click="selectColor(color)"><div :style="{backgroundColor: color}"></div></span>\
-  </div></template></div>',
-      name: 'VueColorPanel',
-      components: {
-        SvPanel: SvPanel,
-        HueSlider: HueSlider,
-        AlphaSlider: AlphaSlider
-      },
-
-      props: {
-        value: String,
-        colorFormat: String,
-        showAlpha: Boolean,
-        showColors: Boolean,
-        disabled: Boolean,
-        color: {
-          type: Object,
-          default: function() {
-            return new Color({
-              enableAlpha: this.showAlpha,
-              format: this.colorFormat
-            });
-          }
-        },
-
-        colors: {
-          type: Array,
-          default: function() {
-            return ['#000000', '#ffffff', '#eeece1', '#1e497b', '#4e81bb', '#e2534d', '#9aba60', '#8165a0', '#47acc5', '#f9974c', '#f6a9a9', '#faad80', '#b5eaea', 'rgba(0,0,0,0)'];
-          }
-        },
-      },
-      computed: {
-        colorsGrp: function() {
-          if (this.colors && typeof this.colors[0] === 'string') {
-            return [this.colors];
-          }
-          return this.colors;
-        },
-      },
-      
-      watch: {
-        value: function(val) {
-          if (val && val !== this.color.value) {
-            this.color.fromString(val);
-            this.update();
-          }
-        },
-        // color: {
-        //   handler: function() {
-        //     this.$emit('input', this.color.value);
-        //     this.$emit('change', this.color.value);
-        //   },
-        //   deep: true
-        // }
-      },
-
-      methods: {
-        selectColor: function(value) {
-          this.color._alpha = 100;
-          this.color.fromString(value);
-          this.$emit('input', this.color.value);
-          this.$emit('change', this.color.value);
-        },
-        update: function() {
-          var _$refs = this.$refs;
-          var sl = _$refs.sl;
-          var hue = _$refs.hue;
-          var alpha = _$refs.alpha;
-          sl && sl.update();
-          hue && hue.update();
-          alpha && alpha.update();
-        },
-        handleMouseup: function() {
-          document.addEventListener('mouseup', this.triggerValueChange);
-        },
-        triggerValueChange: function() {
-          document.removeEventListener('mouseup', this.triggerValueChange);
-          if (this.value !== this.color.value) {
-            this.$emit('input', this.color.value);
-            this.$emit('change', this.color.value);
-          }
-        }
-      },
-
-      mounted: function() {
-        var value = this.value;
-        if (value) {
-          this.color.fromString(value);
-        }
-      },
-
-  };
-
-  Vue.component(VueColorPanel.name, VueColorPanel);
-
   var PickerDropdown = {
     template: '<transition @after-leave="destroyPopper">\
                 <div class="vue-color-dropdown" v-show="showPopper">\
-                <vue-color-panel ref="panel" :color="color" :showAlpha="showAlpha" :showColors="showColors" :colors="colors"></vue-color-panel>\
-                <div class="vue-color-dropdown__btns">\
-                <vue-row type="flex" justify="space-between">\
-                  <vue-col :span="14"><vue-input size="small" class="vue-color-dropdown__value" v-model="currentColor" @blur="formatColor"></vue-input></vue-col>\
-                  <vue-col :span="10">\
-                    <vue-button type="text" @click="$emit(\'clear\')">{{$t(\'vue.colorpicker.clear\')}}</vue-button>\
-                    <vue-button @click="confirmValue">{{$t(\'vue.colorpicker.confirm\')}}</vue-button>\
-                  </vue-col></vue-row></div>\
-                  </div></transition>',
+                  <div class="vue-color-dropdown__main-wrapper">\
+                    <hue-slider ref="hue" :color="color" vertical style="float: right;"></hue-slider>\
+                    <sv-panel ref="sl" :color="color"></sv-panel>\
+                  </div>\
+                  <alpha-slider v-if="showAlpha" ref="alpha" :color="color"></alpha-slider>\
+                  <div class="vue-color-dropdown__btns">\
+                    <vue-row type="flex" justify="space-between">\
+                      <vue-col :span="14"><vue-input size="small" class="vue-color-dropdown__value" v-model="currentColor" @blur="formatColor"></vue-input></vue-col>\
+                      <vue-col :span="10">\
+                        <vue-button type="text" @click="$emit(\'clear\')">{{$t(\'vue.colorpicker.clear\')}}</vue-button>\
+                        <vue-button @click="confirmValue">{{$t(\'vue.colorpicker.confirm\')}}</vue-button>\
+                      </vue-col></vue-row></div></div></transition>',
     mixins: [VuePopper],
     components: {
-      VueColorPanel: VueColorPanel,
+      SvPanel: SvPanel,
+      HueSlider: HueSlider,
+      AlphaSlider: AlphaSlider
     },
     props: {
       color: {
         required: true
       },
-      showAlpha: Boolean,
-      showColors: Boolean,
-      colors: Array,
+      showAlpha: Boolean
     },
     data: function() {
       return {
@@ -37877,10 +33220,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       formatColor: function() {
         this.$parent.color.fromString(this.currentColor);
-      },
-      selectColor: function(value) {
-        this.color._alpha = 100;
-        this.color.fromString(value);
       }
     },
     mounted: function() {
@@ -37896,16 +33235,20 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         if (val === true) {
           self.$nextTick(function() {
             var _$refs = self.$refs;
-            var panel = _$refs.panel;
-            panel && panel.update();
+            var sl = _$refs.sl;
+            var hue = _$refs.hue;
+            var alpha = _$refs.alpha;
+            sl && sl.update();
+            hue && hue.update();
+            alpha && alpha.update();
           });
         }
       }
     }
   };
   var VueColorPicker = {
-    template: '<div class="vue-color-picker" :class="[colorDisabled ? \'is-disabled\' : \'\']" v-clickoutside="hide" v-scrolling="hide"> \
-                <div class="vue-color-picker__mask" v-if="colorDisabled"></div> \
+    template: '<div class="vue-color-picker" :class="[disabled ? \'is-disabled\' : \'\']" v-clickoutside="hide" v-scrolling="hide"> \
+                <div class="vue-color-picker__mask" v-if="disabled"></div> \
                 <div class="vue-color-picker__trigger" @click="handleTrigger"> \
                   <slot>\
                   <span :class="[\'vue-color-picker__color\', {\'is-alpha\': showAlpha}]">\
@@ -37915,26 +33258,18 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
                   <span class="vue-color-picker__icon vue-icon-arrow-down"></span>\
                   </slot>\
                 </div> \
-                <picker-dropdown ref="dropdown" :class="popperClass" \
+                <picker-dropdown ref="dropdown" \
                   class="vue-color-picker__panel" v-model="showPicker" @pick="confirmValue" @clear="clearValue" :color="color" \
-                  :show-alpha="showAlpha" :colors="colors" :showColors="showColors">\
+                  :show-alpha="showAlpha">\
                 </picker-dropdown> \
                 <div @touchmove.prevent v-if="isMobile && showPicker" class="color_dropdown_mask_view" @click="showPicker=false"></div> \
               </div>',
     name: 'VueColorPicker',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     props: {
       value: String,
       showAlpha: Boolean,
       colorFormat: String,
-      disabled: Boolean,
-      colors: Array,
-      showColors: Boolean,
-      popperClass: String,
+      disabled: Boolean
     },
     directives: {
       Clickoutside: VueUtil.component.clickoutside(),
@@ -37951,9 +33286,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           var b = colorToRgb.b;
           return this.showAlpha ? 'rgba(' + r + ', ' + g + ', ' + b + ', ' + this.color.get('alpha') / 100 + ')' : 'rgb(' + r + ', ' + g + ', ' + b + ')';
         }
-      },
-      colorDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
       }
     },
     watch: {
@@ -37970,7 +33302,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           this.showPanelColor = true;
         }
       },
-      colorDisabled: function(val) {
+      disabled: function(val) {
         if(val === true) {
           this.showPicker = false;
         }
@@ -37978,7 +33310,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     },
     methods: {
       handleTrigger: function() {
-        if (this.colorDisabled) return;
+        if (this.disabled) return;
         this.showPicker = !this.showPicker;
       },
       confirmValue: function(value) {
@@ -39106,31 +34438,6 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     }
     return url;
   };
-
-  var httpGet = function(url, requestConfig) {
-    return Vue.http ? httpGetVue(url, requestConfig) : httpGetAxios(url, requestConfig);
-  };
-
-  var httpGetVue = function(url, requestConfig) {
-    return new Promise(function(resolve, reject) {
-      Vue.http.get(url, requestConfig).then(function(response) {
-        resolve(response.bodyText);
-      }, function(response) {
-        reject(response.status);
-      });
-    });
-  };
-
-  var httpGetAxios = function(url, requestConfig) {
-    return new Promise(function(resolve, reject) {
-      axios.get(url, requestConfig).then(function(response) {
-        resolve(response.data);
-      }, function(response) {
-        reject(response.status);
-      });
-    });
-  };
-
   var StyleContext = function(component, elt) {
     this.component = component;
     this.elt = elt;
@@ -39226,8 +34533,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
   };
   ScriptContext.prototype = {
     getContent: function() {
-      var content = this.elt.textContent;
-      return content.replace('export default', 'module.exports = ');
+      return this.elt.textContent;
     },
     setContent: function(content) {
       this.elt.textContent = content;
@@ -39236,7 +34542,13 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       this.elt.textContent = content + this.elt.textContent;
     },
     asynReadContent: function(url) {
-      return httpVueLoader.httpRequest(url);
+      return new Promise(function(resolve, reject) {
+        Vue.http.get(url).then(function(reqponse) {
+          resolve(reqponse.bodyText);
+        }, function(reqponse) {
+          reject(reqponse.status);
+        });
+      });
     },
     compile: function() {
       var childModuleRequire = function(childURL) {
@@ -39297,24 +34609,11 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       }
       return this._scopeId;
     },
-    load: function(componentURL, requestConfig) {
-      var isTextContent = false;
-      var options = {};
-      if (typeof componentURL === 'object') {
-        options = componentURL;
-        
-        if (options.content) {
-          isTextContent = true;
-        } else {
-          this.url = options.url;
-        }
-      } else if (typeof componentURL === 'string') {
-        this.url = componentURL;
-      }
-
-      return (isTextContent ? Promise.resolve(options.content) : httpVueLoader.httpRequest(componentURL, requestConfig)).then(function(responseText) {
+    load: function(componentURL) {
+      this.url = componentURL;
+      return httpVueLoader.httpRequest(componentURL).then(function(responseText) {
         scriptScopedCache = [];
-        this.baseURI = isTextContent ? '' : componentURL.substr(0, componentURL.lastIndexOf('/') + 1);
+        this.baseURI = componentURL.substr(0, componentURL.lastIndexOf('/') + 1);
         var doc = document.implementation.createHTMLDocument('');
         doc.body.innerHTML = (this.baseURI ? '<base href="' + this.baseURI + '">' : '') + responseText;
         for (var it = doc.body.firstChild; it; it = it.nextSibling) {
@@ -39400,9 +34699,9 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     }
   };
   var httpVueLoader = {
-    load: function(url, requestConfig) {
+    load: function(url) {
       return function() {
-        return new Component().load(url, requestConfig).then(function(component) {
+        return new Component().load(url).then(function(component) {
           if (VueUtil.isDef(component.script)) {
             return promiseLoop(scriptScopedCache, component.script.asynReadContent).then(function(responseText){
               component.script.addContent(responseText);
@@ -39427,8 +34726,14 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     require: function(moduleName) {
       return window[moduleName];
     },
-    httpRequest: function(url, requestConfig) {
-      return httpGet(url, requestConfig);
+    httpRequest: function(url) {
+      return new Promise(function(resolve, reject) {
+        Vue.http.get(url).then(function(reqponse) {
+          resolve(reqponse.bodyText);
+        }, function(reqponse) {
+          reject(reqponse.status);
+        });
+      });
     },
     langProcessor: {
       html: identity,
@@ -39436,8 +34741,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       css: identity
     }
   };
-  var VueLoader = function(url, requestConfig) {
-    return httpVueLoader.load(url, requestConfig);
+  var VueLoader = function(url) {
+    return httpVueLoader.load(url);
   };
   return VueLoader;
 });
@@ -39475,6 +34780,24 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
   };
   Vue.use(imgload);
 });
+
+/*!
+ * Signature Pad v2.3.2
+ * https://github.com/szimek/signature_pad
+ *
+ * Copyright 2017 Szymon Nowak
+ * Released under the MIT license
+ *
+ * The main idea and some parts of the code (e.g. drawing variable width Bézier curve) are taken from:
+ * http://corner.squareup.com/2012/07/smoother-signatures.html
+ *
+ * Implementation of interpolation using cubic Bézier curves is taken from:
+ * http://benknowscode.wordpress.com/2012/09/14/path-interpolation-using-cubic-bezier-and-control-point-estimation-in-javascript
+ *
+ * Algorithm for approximated length of a Bézier curve is taken from:
+ * http://www.lemoda.net/maths/bezier-length/index.html
+ *
+ */
 
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -40121,10 +35444,6 @@ return SignaturePad;
         type: String,
         default: 'image/png'
       },
-      saveQuality: {
-        type: Number,
-        default: 0.8
-      },
       options: {
         type: Object,
         default: function () {
@@ -40143,6 +35462,7 @@ return SignaturePad;
         signaturePad: {},
         cacheImages: [],
         signatureData: TRANSPARENT_PNG,
+        onResizeHandler: null
       };
     },
     mounted: function() {
@@ -40151,11 +35471,16 @@ return SignaturePad;
       var signaturePad = new SignaturePad(canvas, VueUtil.merge({}, DEFAULT_OPTIONS, options));
       this.signaturePad = signaturePad;
   
-      VueUtil.addResizeListener(this.$el, this.resizeCanvas);
+      this.onResizeHandler = this.resizeCanvas.bind(this);
+  
+      window.addEventListener('resize', this.onResizeHandler, false);
+  
       this.resizeCanvas();
     },
     beforeDestroy: function() {
-      VueUtil.removeResizeListener(this.$el, this.resizeCanvas);
+      if (this.onResizeHandler) {
+        window.removeEventListener('resize', this.onResizeHandler, false);
+      }
     },
     methods: {
       resizeCanvas: function() {
@@ -40173,7 +35498,7 @@ return SignaturePad;
         var signaturePad = this.signaturePad;
         var saveType = this.saveType;
   
-        if (['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'].indexOf(saveType) == -1) {
+        if (['image/png', 'image/jpeg', 'image/svg+xml'].indexOf(saveType) == -1) {
           throw new Error('Image type is incorrect!');
         }
   
@@ -40183,7 +35508,7 @@ return SignaturePad;
             isEmpty: true
           };
         } else {
-          this.signatureData = signaturePad.toDataURL(saveType, this.saveQuality);
+          this.signatureData = signaturePad.toDataURL(saveType);
   
           return {
             isEmpty: false,
@@ -42883,9 +38208,6 @@ var RecycleScroller = {
 
         // No view assigned to item
         if (!view) {
-          if (_i3 === items.length - 1) this.$emit('scroll-end');
-          if (_i3 === 0) this.$emit('scroll-start');
-
           type = item[typeField];
 
           if (continuous) {
@@ -43533,22 +38855,14 @@ Object.defineProperty(exports, '__esModule', { value: true });
   } else {
     context.VueLang = definition(context.Vue, context.VueUtil);
     delete context.VueLang;
+    delete context.VuePopper;
     delete context.VuePopup;
-    setTimeout(function() {
-      delete context.VuePopper;
-    }, 300);
   }
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueLang = {
     zh: {
       vue: {
-        attachment: {
-          view: {
-              directory: '导航',
-              loading: '正在加载,请稍等'
-          }
-        },
         colorpicker: {
           confirm: '确定',
           clear: '清空'
@@ -43666,11 +38980,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
         image:{
           error: '加载失败'
         },
-        cardList:{
-          addButton: '追加数据',
-          deleteButton: '删除数据',
-          noData: '暂无数据',
-        },
         xtable: {
           error: {
             groupFixed: '如果使用分组表头，固定列必须在左右两侧',
@@ -43726,7 +39035,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
             xml: 'XML 数据(*.xml)',
             txt: '文本文件(制表符分隔)(*.txt)',
             xlsx: 'Excel 工作簿(*.xlsx)',
-            xls: 'Excel 工作簿(*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -43759,27 +39067,12 @@ Object.defineProperty(exports, '__esModule', { value: true });
             addRow: '新增行',
             insertRow: '插入行',
             delRow: '删除行',
-            fixed: '固定列',
-            setting: '显示/隐藏列',
           }
-        },
-        dateformat: {
-          dayNamesShort: '周日_周一_周二_周三_周四_周五_周六',
-          dayNames: '星期日_星期一_星期二_星期三_星期四_星期五_星期六',
-          monthNamesShort: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
-          monthNames: '一月_二月_三月_四月_五月_六月_七月_八月_九月_十月_十一月_十二月',
-          amPm: '上午_下午',
         }
       }
     },
     ja: {
       vue: {
-        attachment: {
-          view: {
-              directory: 'ナビゲーション',
-              loading: '読み込み中、しばらくお待ちください。'
-          }
-        },
         colorpicker: {
           confirm: 'はい',
           clear: 'クリア'
@@ -43897,11 +39190,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
         image: {
           error: '読み込みに失敗しました'
         },
-        cardList:{
-          addButton: 'データを追加',
-          deleteButton: 'データを削除',
-          noData: 'データなし',
-        },
         xtable: {
           error: {
             groupFixed: 'Grouping headersが使われている場合、fixed columnsは左右になくてはなりません',
@@ -43957,7 +39245,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
             xml: 'XML データ(*.xml)',
             txt: 'テキスト(タブ区切り)(*.txt)',
             xlsx: 'Excel ワークブック(*.xlsx)',
-            xls: 'Excel ワークブック(*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -43990,27 +39277,12 @@ Object.defineProperty(exports, '__esModule', { value: true });
             addRow: '行追加',
             insertRow: '行挿入',
             delRow: '行削除',
-            fixed: '固定列',
-            setting: '表示／非表示列',
-          },
-        },
-        dateformat: {
-          dayNamesShort: '日_月_火_水_木_金_土',
-          dayNames: '日曜日_月曜日_火曜日_水曜日_木曜日_金曜日_土曜日',
-          monthNamesShort: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
-          monthNames: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
-          amPm: '午前_午後',
+          }
         }
       }
     },
     en: {
       vue: {
-        attachment: {
-          view: {
-              directory: 'Navigation',
-              loading: 'Loading, please wait.'
-          }
-        },
         colorpicker: {
           confirm: 'OK',
           clear: 'Clear'
@@ -44128,11 +39400,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
         image:{
           error: 'Failed to load'
         },
-        cardList:{
-          addButton: 'Add Data',
-          deleteButton: 'Delete Data',
-          noData: 'No Data',
-        },
         xtable: {
           error: {
             groupFixed: 'If grouping headers are used, fixed columns must be on the left and right sides.',
@@ -44188,7 +39455,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
             xml: 'XML Data(*.xml)',
             txt: 'Text (Tab delimited) (*.txt)',
             xlsx: 'Excel Workbook (*.xlsx)',
-            xls: 'Excel Workbook (*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -44221,8 +39487,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
             addRow: 'Add Row',
             insertRow: 'Insert Row',
             delRow: 'Delete Row',
-            fixed: 'Fix Column',
-            setting: 'Show/Hide Column',
           }
         }
       }
@@ -44371,7 +39635,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
   var isServer = Vue.prototype.$isServer;
   var template= '\
     <transition name="viewer-fade"> \
-      <div class="vue-image-viewer__wrapper" :class="{preview: showPreview}" :style="{ \'z-index\': zIndex }" > \
+      <div class="vue-image-viewer__wrapper" :style="{ \'z-index\': zIndex }" > \
         <div :class="[\'vue-image-viewer__mask\',{\'mask__dark\':isMobile}]"></div> \
         <span v-if="isMobile && !isSingle" class="vue-image-view__titile">{{imgIndex+1+\' / \'+ imgsLength}}</span>\
         <!-- CLOSE --> \
@@ -44392,24 +39656,13 @@ Object.defineProperty(exports, '__esModule', { value: true });
         <!-- ACTIONS --> \
         <div class="vue-image-viewer__btn vue-image-viewer__actions"> \
           <div class="vue-image-viewer__actions__inner"> \
-            <slot name="leftActions"></slot>\
             <i class="vue-icon-zoom-out" @click="handleActions(\'zoomOut\')"></i> \
             <i class="vue-icon-zoom-in" @click="handleActions(\'zoomIn\')"></i> \
-            <i v-if="!isMobile && showActionsDivider" class="vue-image-viewer__actions__divider"></i> \
+            <i class="vue-image-viewer__actions__divider"></i> \
             <i v-if="!isMobile" :class="mode.icon" @click="toggleMode"></i> \
-            <i v-if="showDownload" class="vue-icon-download2" @click="download"></i>\
-            <i v-if="!isMobile && showActionsDivider" class="vue-image-viewer__actions__divider"></i> \
+            <i v-if="!isMobile" class="vue-image-viewer__actions__divider"></i> \
             <i class="vue-icon-rotate-left" @click="handleActions(\'anticlocelise\')"></i> \
             <i class="vue-icon-rotate-right" @click="handleActions(\'clocelise\')"></i> \
-            <slot name="rightActions"></slot>\
-          </div> \
-        </div> \
-        <!-- PREVIEW --> \
-        <div v-if="showPreview" class="vue-image-viewer__btn vue-image-viewer__preview"> \
-          <div class="vue-image-viewer__preview__inner"> \
-          <vue-scrollbar :do-scroll="false" @mousewheel.native.stop.prevent="handleScroll" ref="scrollContainer" :vertical="false" class="vue-image-viewer__preview__scroll" >\
-            <img v-for="(url, i) in realPreviewList" class="vue-image-viewer__preview__img" :class="{active: i === imgIndex}" :key="url" :src="url" @click="imgIndex = i"></img>\
-          </vue-scrollbar>\
           </div> \
         </div> \
         <!-- CANVAS --> \
@@ -44482,29 +39735,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
       onClose: {
         type: Function,
         default: function(){ return {};}
-      },
-      appendToBody: {
-        type: Boolean,
-        default: true
-      },
-      showPreview: {
-        type: Boolean,
-        default: false
-      },
-      showActionsDivider: {
-        type: Boolean,
-        default: true
-      },
-      showDownload: {
-        type: Boolean,
-        default: false
-      },
-      getFileName: {
-        type: Function,
-      },
-      previewList: {
-        type: Array,
-        default: null
       }
     },
   
@@ -44560,9 +39790,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
           style.maxWidth = style.maxHeight = '100%';
         }
         return style;
-      },
-      realPreviewList: function() {
-        return this.previewList || this.urlList;
       }
     },
     watch: {
@@ -44570,7 +39797,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
         handler: function(val) {
           this.reset();
           this.onSwitch(val);
-          this.resetPreviewScroll();
         }
       },
       currentImg: function(val) {
@@ -44757,54 +39983,10 @@ Object.defineProperty(exports, '__esModule', { value: true });
             break;
         }
         transform.enableTransition = enableTransition;
-      },
-      handleScroll: function(e) {
-        var eventDelta = e.wheelDelta || -e.deltaY * 40;
-        var $scrollWrapper = this.$refs.scrollContainer.$refs.wrap;
-        $scrollWrapper.scrollLeft = $scrollWrapper.scrollLeft - eventDelta / 4;
-      },
-      resetPreviewScroll: function() {
-        if (this.showPreview) {
-          this.$nextTick(function() {
-            var activeImage = this.$el.querySelector('.vue-image-viewer__preview__img.active');
-            activeImage && activeImage.scrollIntoView();
-          });
-        }
-      },
-      download: function() {
-        function defaultGetFileName(path) {
-          path = path || '';
-          return path.split('\\').pop().split('/').pop().split('?').shift();
-        }
-        var filenameFunc = this.getFileName || defaultGetFileName;
-        VueUtil.saveAs(this.currentImg, filenameFunc(this.currentImg));
       }
     },
     mounted: function() {
       this.deviceSupportInstall();
-
-      if (this.appendToBody) {
-        document.body.appendChild(this.$el);
-      }
-
-      var self = this;
-      if (this.showPreview) {
-        var activeImage = this.$el.querySelector('.vue-image-viewer__preview__img.active');
-        if (activeImage) {
-          activeImage.onload = function() {
-            setTimeout(function() {
-              self.resetPreviewScroll();
-            }, 400);
-          };
-        }
-      }
-
-    },
-    destroyed: function() {
-      // if appendToBody is true, remove DOM node after destroy
-      if (this.appendToBody && this.$el && this.$el.parentNode) {
-        this.$el.parentNode.removeChild(this.$el);
-      }
     }
   };
   Vue.component(ImageViewer.name, ImageViewer);
@@ -44823,7 +40005,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
   'use strict';
   var template = ' \
     <div :class="{\'vue-image\':true,\'vue-image__lazy\':lazy,\'vue-image__round\':round}"> \
-      <div v-html="svgContent" v-if="isTextSvg" v-show="false"></div>\
       <span v-if="showText" class="vue-image__label"\
         v-bind="$attrs" v-on="$listeners" \
         @click="clickHandler" :class="{\'vue-image__preview\': preview }">{{imgLabel}}</span>\
@@ -44833,8 +40014,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
       <slot v-else-if="error" name="error"> \
         <div class="vue-image__error">{{$t("vue.image.error")}}</div> \
       </slot> \
-      <svg v-else-if="isTextSvg" @click="clickHandler" class="vue-image__inner" :viewBox="[0,0,imageWidth,imageHeight].join(\' \')"\
-      v-bind="$attrs" v-on="$listeners" :style="imageStyle" :class="{ \'vue-image__inner--center\': alignCenter, \'vue-image__preview\': preview }"><use :xlink:href="\'#\'+id"/></svg>\
       <img \
         v-else \
         class="vue-image__inner" \
@@ -44844,7 +40023,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
         :src="src" \
         :style="imageStyle" \
         :class="{ \'vue-image__inner--center\': alignCenter, \'vue-image__preview\': preview }"> \
-      <vue-image-viewer :z-index="zIndex" v-if="preview && showViewer" :on-close="closeViewer" :url-list="previewSrcList" :active-index="previewActiveIndex"/> \
+      <vue-image-viewer :z-index="zIndex" v-if="preview && showViewer" :on-close="closeViewer" :url-list="previewSrcList"/> \
     </div>';
     
   var isServer = Vue.prototype.$isServer;
@@ -44899,6 +40078,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
   };
   var isString = VueUtil.isString,
       isHtmlElement = function(node) { return node && node.nodeType === Node.ELEMENT_NODE; };
+  var throttle=VueUtil.throttle;
 
   var isSupportObjectFit = function(){
       return document.documentElement.style.objectFit !== undefined;
@@ -44929,7 +40109,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
       src: String,
       fit: String,
       lazy: Boolean,
-      textSvg: Boolean,
       scrollContainer: {},
       previewSrcList: {
         type: Array,
@@ -44940,8 +40119,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
         default: 2000
       },
       imgLabel: String,
-      round: Boolean,
-      previewActiveIndex: Number
+      round: Boolean
     },
 
     data:function() {
@@ -44951,9 +40129,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
         show: !this.lazy,
         imageWidth: 0,
         imageHeight: 0,
-        showViewer: false,
-        svgContent: '',
-        id: 'svg'+VueUtil.createUuid(),
+        showViewer: false
       };
     },
 
@@ -44976,9 +40152,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
       },
       showText: function() {
         return (typeof this.imgLabel != 'undefined' && this.imgLabel != '');
-      },
-      isTextSvg: function() {
-        return this.textSvg && this.src && this.src.indexOf('.svg') > 0;
       }
     },
 
@@ -45006,46 +40179,30 @@ Object.defineProperty(exports, '__esModule', { value: true });
     methods: {
       loadImage: function() {
         if (this.$isServer) return;
-        var self = this;
+
         // reset status
         this.loading = true;
         this.error = false;
 
-        if (this.isTextSvg) {
-          Vue.http.get(self.src).then(function(resp) {
-            var content = resp.body;
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-            var svgEle = tempDiv.querySelector('svg');
-            svgEle.setAttribute('id', self.id);
-            var width = svgEle.getAttribute('width');
-            var height = svgEle.getAttribute('height');
+        var img = new Image();
+        var self = this;
+        img.onload = function(e){self.handleLoad(e, img);};
+        img.onerror = self.handleError.bind(self);
 
-            self.svgContent = svgEle.outerHTML;
-            self.handleLoad(null, {width: width, height: height});
-          }).catch(self.handleError);
-        } else {
-          var img = new Image();
-
-          img.onload = function(e){self.handleLoad(e, img);};
-          img.onerror = self.handleError.bind(self);
-  
-          // bind html attrs
-          // so it can behave consistently
-          Object.keys(self.$attrs)
-            .forEach(function(key){
-              var value = self.$attrs[key];
-              img.setAttribute(key, value);
-            });
-          img.src = self.src;
-        }
+        // bind html attrs
+        // so it can behave consistently
+        Object.keys(self.$attrs)
+          .forEach(function(key){
+            var value = self.$attrs[key];
+            img.setAttribute(key, value);
+          });
+        img.src = self.src;
       },
       handleLoad: function(e, img) {
         this.error = false;
         this.imageWidth = img.width;
         this.imageHeight = img.height;
         this.loading = false;
-        this.$emit('load', e);
       },
       handleError: function(e) {
         this.loading = false;
@@ -45055,7 +40212,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
       handleLazyLoad: function() {
         if (isInContainer(this.$el, this._scrollContainer)) {
           this.show = true;
-          this.$emit('lazyload');
           this.removeLazyLoadListener();
         }
       },
@@ -45075,9 +40231,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
         if (_scrollContainer) {
           this._scrollContainer = _scrollContainer;
-          this._lazyLoadHandler = VueUtil._throttle(this.handleLazyLoad, 200, {
-            trailing: true
-          });
+          this._lazyLoadHandler = throttle(200, this.handleLazyLoad);
           on(_scrollContainer, 'scroll', this._lazyLoadHandler);
           this.handleLazyLoad();
         }
@@ -45146,1294 +40300,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
   };
   Vue.component(VueImage.name, VueImage);
 });
-(function(context, definition) {
-  'use strict';
-  if (typeof define === 'function' && define.amd) {
-    define(['Vue', 'VueUtil'], definition);
-  } else {
-    definition(context.Vue);
-  }
-})(this, function(Vue) {
-  'use strict';
-  var VueSvgIcon = {
-    name: 'VueSvgIcon',
-    template: '  <div v-if="isExternal" :style="styleExternalIcon" class="vue-svg-external-icon vue-svg-icon" v-on="$listeners" />\
-    <svg v-else :class="svgClass" aria-hidden="true" v-on="$listeners">\
-      <use :xlink:href="iconName" />\
-    </svg>',
-    props: {
-      iconClass: {
-        type: String,
-        required: true
-      },
-      className: {
-        type: String,
-        default: ''
-      },
-      customClass: {
-        type: String,
-        default: ''
-      }
-    },
-    computed: {
-      isExternal: function() {
-        return this.iconClass.indexOf('.svg') > -1;
-      },
-      iconName: function() {
-        return '#icon-' + this.iconClass;
-      },
-      svgClass: function() {
-        if (this.customClass) {
-          return this.customClass;
-        }
-
-        if (this.className) {
-          return 'vue-svg-icon ' + this.className;
-        } else {
-          return 'vue-svg-icon';
-        }
-      },
-      styleExternalIcon: function() {
-        return {
-          mask: 'url(' + this.iconClass + ') no-repeat 50% 50%',
-          '-webkit-mask': 'url(' + this.iconClass + ') no-repeat 50% 50%'
-        };
-      }
-    }
-  };
-  Vue.component(VueSvgIcon.name, VueSvgIcon);
-});
-
-(function (context, definition) {
-  'use strict';
-  if (typeof define === 'function' && define.amd) {
-    define(['Vue'], definition);
-  } else {
-    context.VueSplitPanes = definition(context.Vue);
-    delete context.VueSplitPanes;
-  }
-})(this, function (Vue) {
-  'use strict';
-
-  function _objectWithoutProperties(obj, keys) {
-    var target = {};
-    for (var i in obj) {
-      if (keys.indexOf(i) >= 0) continue;
-      if (!Object.prototype.hasOwnProperty.call(obj, i)) continue;
-      target[i] = obj[i];
-    }
-    return target;
-  }
-
-  var VueSplitPanes = {
-    name: 'VueSplitPanes',
-    props: {
-      horizontal: {
-        type: Boolean
-      },
-      pushOtherPanes: {
-        type: Boolean,
-        default: true
-      },
-      dblClickSplitter: {
-        type: Boolean,
-        default: true
-      },
-      rtl: {
-        type: Boolean,
-        default: false
-      },
-      // Right to left direction.
-      firstSplitter: {
-        type: Boolean
-      },
-      theme: {
-        type: [String, Boolean],
-        default: 'default'
-      }
-    },
-    provide: function () {
-      return {
-        requestUpdate: this.requestUpdate,
-        onPaneAdd: this.onPaneAdd,
-        onPaneRemove: this.onPaneRemove,
-        onPaneClick: this.onPaneClick
-      };
-    },
-    data: function () {
-      return {
-        container: null,
-        ready: false,
-        panes: [],
-        touch: {
-          mouseDown: false,
-          dragging: false,
-          activeSplitter: null
-        },
-        splitterTaps: {
-          // Used to detect double click on touch devices.
-          splitter: null,
-          timeoutId: null
-        }
-      };
-    },
-    computed: {
-      panesCount: function () {
-        return this.panes.length;
-      },
-      // Indexed panes by `_uid` of Pane components for fast lookup.
-      // Every time a pane is destroyed this index is recomputed.
-      indexedPanes: function () {
-        return this.panes.reduce(function (obj, pane) {
-          return (obj[pane.id] = pane) && obj;
-        }, {});
-      }
-    },
-    methods: {
-      updatePaneComponents: function () {
-        var _this = this;
-
-        // On update refresh the size of each pane through the registered `update` method (in onPaneAdd).
-        this.panes.forEach(function (pane) {
-          var upd = {};
-          upd[_this.horizontal ? 'height' : 'width'] = ''.concat(_this.indexedPanes[pane.id].size, '%');
-          pane.update && pane.update(upd);
-        });
-      },
-      bindEvents: function () {
-        document.addEventListener('mousemove', this.onMouseMove, {
-          passive: false
-        });
-        document.addEventListener('mouseup', this.onMouseUp); // Passive: false to prevent scrolling while touch dragging.
-
-        if ('ontouchstart' in window) {
-          document.addEventListener('touchmove', this.onMouseMove, {
-            passive: false
-          });
-          document.addEventListener('touchend', this.onMouseUp);
-        }
-      },
-      unbindEvents: function () {
-        document.removeEventListener('mousemove', this.onMouseMove, {
-          passive: false
-        });
-        document.removeEventListener('mouseup', this.onMouseUp);
-
-        if ('ontouchstart' in window) {
-          document.removeEventListener('touchmove', this.onMouseMove, {
-            passive: false
-          });
-          document.removeEventListener('touchend', this.onMouseUp);
-        }
-      },
-      onMouseDown: function (event, splitterIndex) {
-        this.bindEvents();
-        this.touch.mouseDown = true;
-        this.touch.activeSplitter = splitterIndex;
-      },
-      onMouseMove: function (event) {
-        if (this.touch.mouseDown) {
-          // Prevent scrolling while touch dragging (only works with an active event, eg. passive: false).
-          event.preventDefault();
-          this.touch.dragging = true;
-          this.calculatePanesSize(this.getCurrentMouseDrag(event));
-          this.$emit('resize', this.panes.map(function (pane) {
-            return {
-              min: pane.min,
-              max: pane.max,
-              size: pane.size
-            };
-          }));
-        }
-      },
-      onMouseUp: function () {
-        var _this2 = this;
-
-        if (this.touch.dragging) {
-          this.$emit('resized', this.panes.map(function (pane) {
-            return {
-              min: pane.min,
-              max: pane.max,
-              size: pane.size
-            };
-          }));
-        }
-
-        this.touch.mouseDown = false; // Keep dragging flag until click event is finished (click happens immediately after mouseup)
-        // in order to prevent emitting `splitter-click` event if splitter was dragged.
-
-        setTimeout(function () {
-          _this2.touch.dragging = false;
-
-          _this2.unbindEvents();
-        }, 100);
-      },
-      // If touch device, detect double tap manually (2 taps separated by less than 500ms).
-      onSplitterClick: function (event, splitterIndex) {
-        var _this3 = this;
-
-        if ('ontouchstart' in window) {
-          event.preventDefault(); // Detect splitter double taps if the option is on.
-
-          if (this.dblClickSplitter) {
-            if (this.splitterTaps.splitter === splitterIndex) {
-              clearTimeout(this.splitterTaps.timeoutId);
-              this.splitterTaps.timeoutId = null;
-              this.onSplitterDblClick(event, splitterIndex);
-              this.splitterTaps.splitter = null; // Reset for the next tap check.
-            } else {
-              this.splitterTaps.splitter = splitterIndex;
-              this.splitterTaps.timeoutId = setTimeout(function () {
-                _this3.splitterTaps.splitter = null;
-              }, 500);
-            }
-          }
-        }
-
-        if (!this.touch.dragging) this.$emit('splitter-click', this.panes[splitterIndex]);
-      },
-      // On splitter dbl click or dbl tap maximize this pane.
-      onSplitterDblClick: function (event, splitterIndex) {
-        var totalMinSizes = 0;
-
-        var targetSplitter = this.panes[splitterIndex];
-
-        if (targetSplitter.maximized) {
-          this.panes.map(function(pane) {
-            pane.size = pane.originSize || pane.size;
-          });
-          targetSplitter.maximized = false;
-          this.$emit('pane-restore', targetSplitter);
-        } else {
-          this.panes = this.panes.map(function (pane, i) {
-            pane.originSize = pane.size;
-            pane.size = i === splitterIndex ? pane.max : pane.min;
-            if (i !== splitterIndex) totalMinSizes += pane.min;
-            return pane;
-          });
-          targetSplitter.maximized = true;
-          targetSplitter.size -= totalMinSizes;
-          this.$emit('pane-maximize', targetSplitter);
-        }
-      },
-      onPaneClick: function (event, paneId) {
-        this.$emit('pane-click', this.indexedPanes[paneId]);
-      },
-      // Get the cursor position relative to the splitpane container.
-      getCurrentMouseDrag: function (event) {
-        var rect = this.container.getBoundingClientRect();
-
-        var _ref = 'ontouchstart' in window && event.touches ? event.touches[0] : event,
-          clientX = _ref.clientX,
-          clientY = _ref.clientY;
-
-        return {
-          x: clientX - rect.left,
-          y: clientY - rect.top
-        };
-      },
-      // Returns the drag percentage of the splitter relative to the 2 panes it's inbetween.
-      // if the sum of size of the 2 cells is 60%, the dragPercentage range will be 0 to 100% of this 60%.
-      getCurrentDragPercentage: function (drag) {
-        drag = drag[this.horizontal ? 'y' : 'x']; // In the code bellow 'size' refers to 'width' for vertical and 'height' for horizontal layout.
-
-        var containerSize = this.container[this.horizontal ? 'clientHeight' : 'clientWidth'];
-        if (this.rtl && !this.horizontal) drag = containerSize - drag;
-        return drag * 100 / containerSize;
-      },
-      calculatePanesSize: function (drag) {
-        var splitterIndex = this.touch.activeSplitter;
-        var sums = {
-          prevPanesSize: this.sumPrevPanesSize(splitterIndex),
-          nextPanesSize: this.sumNextPanesSize(splitterIndex),
-          prevReachedMinPanes: 0,
-          nextReachedMinPanes: 0
-        };
-        var minDrag = 0 + (this.pushOtherPanes ? 0 : sums.prevPanesSize);
-        var maxDrag = 100 - (this.pushOtherPanes ? 0 : sums.nextPanesSize);
-        var dragPercentage = Math.max(Math.min(this.getCurrentDragPercentage(drag), maxDrag), minDrag); // If not pushing other panes, panes to resize are right before and right after splitter.
-
-        var panesToResize = [splitterIndex, splitterIndex + 1];
-        var paneBefore = this.panes[panesToResize[0]] || null;
-        var paneAfter = this.panes[panesToResize[1]] || null;
-        var paneBeforeMaxReached = paneBefore.max < 100 && dragPercentage >= paneBefore.max + sums.prevPanesSize;
-        var paneAfterMaxReached = paneAfter.max < 100 && dragPercentage <= 100 - (paneAfter.max + this.sumNextPanesSize(splitterIndex + 1)); // Prevent dragging beyond pane max.
-
-        if (paneBeforeMaxReached || paneAfterMaxReached) {
-          if (paneBeforeMaxReached) {
-            paneBefore.size = paneBefore.max;
-            paneAfter.size = Math.max(100 - paneBefore.max - sums.prevPanesSize - sums.nextPanesSize, 0);
-          } else {
-            paneBefore.size = Math.max(100 - paneAfter.max - sums.prevPanesSize - this.sumNextPanesSize(splitterIndex + 1), 0);
-            paneAfter.size = paneAfter.max;
-          }
-
-          return;
-        } // When pushOtherPanes = true, find the closest expanded pane on each side of the splitter.
-
-
-        if (this.pushOtherPanes) {
-          var vars = this.doPushOtherPanes(sums, dragPercentage);
-          if (!vars) return; // Prevent other calculation.
-
-          sums = vars.sums;
-          panesToResize = vars.panesToResize;
-          paneBefore = this.panes[panesToResize[0]] || null;
-          paneAfter = this.panes[panesToResize[1]] || null;
-        }
-
-        if (paneBefore !== null) {
-          paneBefore.size = Math.min(Math.max(dragPercentage - sums.prevPanesSize - sums.prevReachedMinPanes, paneBefore.min), paneBefore.max);
-        }
-
-        if (paneAfter !== null) {
-          paneAfter.size = Math.min(Math.max(100 - dragPercentage - sums.nextPanesSize - sums.nextReachedMinPanes, paneAfter.min), paneAfter.max);
-        }
-      },
-      doPushOtherPanes: function (sums, dragPercentage) {
-        var _this4 = this;
-
-        var splitterIndex = this.touch.activeSplitter;
-        var panesToResize = [splitterIndex, splitterIndex + 1]; // Pushing Down.
-        // Going smaller than the current pane min size: take the previous expanded pane.
-
-        if (dragPercentage < sums.prevPanesSize + this.panes[panesToResize[0]].min) {
-          panesToResize[0] = this.findPrevExpandedPane(splitterIndex).index;
-          sums.prevReachedMinPanes = 0; // If pushing a n-2 or less pane, from splitter, then make sure all in between is at min size.
-
-          if (panesToResize[0] < splitterIndex) {
-            this.panes.forEach(function (pane, i) {
-              if (i > panesToResize[0] && i <= splitterIndex) {
-                pane.size = pane.min;
-                sums.prevReachedMinPanes += pane.min;
-              }
-            });
-          }
-
-          sums.prevPanesSize = this.sumPrevPanesSize(panesToResize[0]); // If nothing else to push down, cancel dragging.
-
-          if (panesToResize[0] === undefined) {
-            sums.prevReachedMinPanes = 0;
-            this.panes[0].size = this.panes[0].min;
-            this.panes.forEach(function (pane, i) {
-              if (i > 0 && i <= splitterIndex) {
-                pane.size = pane.min;
-                sums.prevReachedMinPanes += pane.min;
-              }
-            });
-            this.panes[panesToResize[1]].size = 100 - sums.prevReachedMinPanes - this.panes[0].min - sums.prevPanesSize - sums.nextPanesSize;
-            return null;
-          }
-        } // Pushing Up.
-        // Pushing up beyond min size is reached: take the next expanded pane.
-
-
-        if (dragPercentage > 100 - sums.nextPanesSize - this.panes[panesToResize[1]].min) {
-          panesToResize[1] = this.findNextExpandedPane(splitterIndex).index;
-          sums.nextReachedMinPanes = 0; // If pushing a n+2 or more pane, from splitter, then make sure all in between is at min size.
-
-          if (panesToResize[1] > splitterIndex + 1) {
-            this.panes.forEach(function (pane, i) {
-              if (i > splitterIndex && i < panesToResize[1]) {
-                pane.size = pane.min;
-                sums.nextReachedMinPanes += pane.min;
-              }
-            });
-          }
-
-          sums.nextPanesSize = this.sumNextPanesSize(panesToResize[1] - 1); // If nothing else to push up, cancel dragging.
-
-          if (panesToResize[1] === undefined) {
-            sums.nextReachedMinPanes = 0;
-            this.panes[this.panesCount - 1].size = this.panes[this.panesCount - 1].min;
-            this.panes.forEach(function (pane, i) {
-              if (i < _this4.panesCount - 1 && i >= splitterIndex + 1) {
-                pane.size = pane.min;
-                sums.nextReachedMinPanes += pane.min;
-              }
-            });
-            this.panes[panesToResize[0]].size = 100 - sums.prevPanesSize - sums.nextReachedMinPanes - this.panes[this.panesCount - 1].min - sums.nextPanesSize;
-            return null;
-          }
-        }
-
-        return {
-          sums: sums,
-          panesToResize: panesToResize
-        };
-      },
-      sumPrevPanesSize: function (splitterIndex) {
-        return this.panes.reduce(function (total, pane, i) {
-          return total + (i < splitterIndex ? pane.size : 0);
-        }, 0);
-      },
-      sumNextPanesSize: function (splitterIndex) {
-        return this.panes.reduce(function (total, pane, i) {
-          return total + (i > splitterIndex + 1 ? pane.size : 0);
-        }, 0);
-      },
-      // Return the previous pane from siblings which has a size (width for vert or height for horz) of more than 0.
-      findPrevExpandedPane: function (splitterIndex) {
-        var pane = VueUtil.find(VueUtil.clone(this.panes).reverse(), function (p) {
-          return p.index < splitterIndex && p.size > p.min;
-        });
-
-        return pane || {};
-      },
-      // Return the next pane from siblings which has a size (width for vert or height for horz) of more than 0.
-      findNextExpandedPane: function (splitterIndex) {
-        var pane = VueUtil.find(this.panes, function (p) {
-          return p.index > splitterIndex + 1 && p.size > p.min;
-        });
-        return pane || {};
-      },
-      checkSplitpanesNodes: function () {
-        VueUtil.forEach(this.container.children, function (child) {
-          var isPane = child.classList.contains('vue-split-panes__pane');
-          var isSplitter = child.classList.contains('vue-split-panes__splitter'); // Node is not a Pane or a splitter: remove it.
-
-          if (!isPane && !isSplitter) {
-            child.parentNode.removeChild(child); // el.remove() doesn't work on IE11.
-            // eslint-disable-next-line no-console
-
-            console.warn('vue-split-panes: Only <vue-split-pane> elements are allowed at the root of <vue-split-panes>. One of your DOM nodes was removed.');
-            return;
-          }
-        });
-      },
-      addSplitter: function (paneIndex, nextPaneNode) {
-        var _this5 = this;
-
-        var isVeryFirst = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-        var splitterIndex = paneIndex - 1;
-        var elm = document.createElement('div');
-        elm.classList.add('vue-split-panes__splitter');
-
-        if (!isVeryFirst) {
-          elm.onmousedown = function (event) {
-            return _this5.onMouseDown(event, splitterIndex);
-          };
-
-          if (typeof window !== 'undefined' && 'ontouchstart' in window) {
-            elm.ontouchstart = function (event) {
-              return _this5.onMouseDown(event, splitterIndex);
-            };
-          }
-
-          elm.onclick = function (event) {
-            return _this5.onSplitterClick(event, splitterIndex + 1);
-          };
-        }
-
-        if (this.dblClickSplitter) {
-          elm.ondblclick = function (event) {
-            return _this5.onSplitterDblClick(event, splitterIndex + 1);
-          };
-        }
-
-        nextPaneNode.parentNode.insertBefore(elm, nextPaneNode);
-      },
-      removeSplitter: function (node) {
-        node.onmousedown = undefined;
-        node.onclick = undefined;
-        node.ondblclick = undefined;
-        node.parentNode.removeChild(node); // el.remove() doesn't work on IE11.
-      },
-      redoSplitters: function () {
-        var _this6 = this;
-
-        var children = Array.prototype.slice.call(this.container.children);
-        children.forEach(function (el) {
-          if (VueUtil.hasClass(el, 'vue-split-panes__splitter')) _this6.removeSplitter(el);
-        });
-        var paneIndex = 0;
-        children.forEach(function (el) {
-          if (VueUtil.hasClass(el, 'vue-split-panes__pane')) {
-            if (!paneIndex && _this6.firstSplitter) _this6.addSplitter(paneIndex, el, true); else if (paneIndex) _this6.addSplitter(paneIndex, el);
-            paneIndex++;
-          }
-        });
-      },
-      // Called by Pane component on programmatic resize.
-      requestUpdate: function (_ref2) {
-        var target = _ref2.target,
-          args = _objectWithoutProperties(_ref2, ['target']);
-
-        var pane = this.indexedPanes[target._uid];
-        Object.entries(args).forEach(function (arg) {
-          var key = arg[0];
-          var value = arg[1];
-
-          return pane[key] = value;
-        });
-      },
-      onPaneAdd: function (pane) {
-        var _this7 = this;
-
-        // 1. Add pane to array at the same index it was inserted in the <vue-split-panes> tag.
-        var index = -1;
-        VueUtil.some(pane.$el.parentNode.children, function (el) {
-          if (VueUtil.hasClass(el, 'vue-split-panes__pane')) index++;
-          return el === pane.$el;
-        });
-        var min = parseFloat(pane.minSize);
-        var max = parseFloat(pane.maxSize);
-        this.panes.splice(index, 0, {
-          id: pane._uid,
-          index: index,
-          min: isNaN(min) ? 0 : min,
-          max: isNaN(max) ? 100 : max,
-          size: pane.size === null ? null : parseFloat(pane.size),
-          givenSize: pane.size,
-          update: pane.update
-        }); // Redo indexes after insertion for other shifted panes.
-
-        this.panes.forEach(function (p, i) {
-          return p.index = i;
-        });
-
-        if (this.ready) {
-          this.$nextTick(function () {
-            // 2. Add the splitter.
-            _this7.redoSplitters(); // 3. Resize the panes.
-
-
-            _this7.resetPaneSizes({
-              addedPane: _this7.panes[index]
-            }); // 4. Fire `pane-add` event.
-
-
-            _this7.$emit('pane-add', {
-              index: index,
-              panes: _this7.panes.map(function (pane) {
-                return {
-                  min: pane.min,
-                  max: pane.max,
-                  size: pane.size
-                };
-              })
-            });
-          });
-        }
-      },
-      onPaneRemove: function (pane) {
-        var _this8 = this;
-
-        // 1. Remove the pane from array and redo indexes.
-        var index = VueUtil.findIndex(this.panes, function (p) {
-          return p.id === pane._uid;
-        });
-        var removed = this.panes.splice(index, 1)[0];
-        this.panes.forEach(function (p, i) {
-          return p.index = i;
-        });
-        this.$nextTick(function () {
-          // 2. Remove the splitter.
-          _this8.redoSplitters(); // 3. Resize the panes.
-
-
-          var r = VueUtil.clone(removed) || {};
-          r.index = index;
-
-          _this8.resetPaneSizes({
-            removedPane: r
-          }); // 4. Fire `pane-remove` event.
-
-
-          _this8.$emit('pane-remove', {
-            removed: removed,
-            panes: _this8.panes.map(function (pane) {
-              return {
-                min: pane.min,
-                max: pane.max,
-                size: pane.size
-              };
-            })
-          });
-        });
-      },
-      resetPaneSizes: function () {
-        var changedPanes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-        if (!changedPanes.addedPane && !changedPanes.removedPane) this.initialPanesSizing(); else if (this.panes.some(function (pane) {
-          return pane.givenSize !== null || pane.min || pane.max < 100;
-        })) this.equalizeAfterAddOrRemove(changedPanes); else this.equalize();
-        if (this.ready) this.$emit('resized', this.panes.map(function (pane) {
-          return {
-            min: pane.min,
-            max: pane.max,
-            size: pane.size
-          };
-        }));
-      },
-      equalize: function () {
-        var equalSpace = 100 / this.panesCount;
-        var leftToAllocate = 0;
-        var ungrowable = [];
-        var unshrinkable = [];
-        this.panes.forEach(function (pane) {
-          pane.size = Math.max(Math.min(equalSpace, pane.max), pane.min);
-          leftToAllocate -= pane.size;
-          if (pane.size >= pane.max) ungrowable.push(pane.id);
-          if (pane.size <= pane.min) unshrinkable.push(pane.id);
-        });
-        if (leftToAllocate > 0.1) this.readjustSizes(leftToAllocate, ungrowable, unshrinkable);
-      },
-      initialPanesSizing: function () {
-        var _this9 = this;
-
-        var equalSpace = 100 / this.panesCount;
-        var leftToAllocate = 100;
-        var ungrowable = [];
-        var unshrinkable = [];
-        var definedSizes = 0; // Check if pre-allocated space is 100%.
-
-        this.panes.forEach(function (pane) {
-          leftToAllocate -= pane.size;
-          if (pane.size !== null) definedSizes++;
-          if (pane.size >= pane.max) ungrowable.push(pane.id);
-          if (pane.size <= pane.min) unshrinkable.push(pane.id);
-        }); // set pane sizes if not set.
-
-        var leftToAllocate2 = 100;
-
-        if (leftToAllocate > 0.1) {
-          this.panes.forEach(function (pane) {
-            if (pane.size === null) {
-              pane.size = Math.max(Math.min(leftToAllocate / (_this9.panesCount - definedSizes), pane.max), pane.min);
-            }
-
-            leftToAllocate2 -= pane.size;
-          });
-          if (leftToAllocate2 > 0.1) this.readjustSizes(leftToAllocate, ungrowable, unshrinkable);
-        }
-      },
-      equalizeAfterAddOrRemove: function () {
-        var _ref5 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-          addedPane = _ref5.addedPane,
-          removedPane = _ref5.removedPane;
-
-        var equalSpace = 100 / this.panesCount;
-        var leftToAllocate = 0;
-        var ungrowable = [];
-        var unshrinkable = [];
-
-        if (addedPane && addedPane.givenSize !== null) {
-          equalSpace = (100 - addedPane.givenSize) / (this.panesCount - 1);
-        } // Check if pre-allocated space is 100%.
-
-
-        this.panes.forEach(function (pane) {
-          leftToAllocate -= pane.size;
-          if (pane.size >= pane.max) ungrowable.push(pane.id);
-          if (pane.size <= pane.min) unshrinkable.push(pane.id);
-        });
-        if (Math.abs(leftToAllocate) < 0.1) return; // Ok.
-
-        this.panes.forEach(function (pane) {
-          if (addedPane && addedPane.givenSize !== null && addedPane.id === pane.id) { } else pane.size = Math.max(Math.min(equalSpace, pane.max), pane.min);
-
-          leftToAllocate -= pane.size;
-          if (pane.size >= pane.max) ungrowable.push(pane.id);
-          if (pane.size <= pane.min) unshrinkable.push(pane.id);
-        });
-        if (leftToAllocate > 0.1) this.readjustSizes(leftToAllocate, ungrowable, unshrinkable);
-      },
-
-      /* recalculatePaneSizes ({ addedPane, removedPane } = {}) {
-        let leftToAllocate = 100
-        let equalSpaceToAllocate = leftToAllocate / this.panesCount
-        let ungrowable = []
-        let unshrinkable = []
-        // When adding a pane with no size, apply min-size if defined otherwise divide another pane
-        // (next or prev) in 2.
-        // if (addedPane && addedPane.size === null) {
-        //   if (addedPane.min) addedPane.size = addedPane.min
-        //   else {
-        //     const paneToDivide = this.panes[addedPane.index + 1] || this.panes[addedPane.index - 1]
-        //     if (paneToDivide) {
-        //       // @todo: Dividing that pane in 2 could be incorrect if becoming lower than its min size.
-        //       addedPane.size = paneToDivide.size / 2
-        //       paneToDivide.size /= 2
-        //     }
-        //   }
-        // }
-        this.panes.forEach((pane, i) => {
-          // Added pane - reduce the size of the next pane.
-          if (addedPane && addedPane.index + 1 === i) {
-            pane.size = Math.max(Math.min(100 - this.sumPrevPanesSize(i) - this.sumNextPanesSize(i + 1), pane.max), pane.min)
-            // @todo: if could not allocate correctly, try to allocate in the next pane straight away,
-            // then still do the second loop if not correct.
-          }
-          // Removed pane - increase the size of the next pane.
-          else if (removedPane && removedPane.index === i) {
-            pane.size = Math.max(Math.min(100 - this.sumPrevPanesSize(i) - this.sumNextPanesSize(i + 1), pane.max), pane.min)
-            // @todo: if could not allocate correctly, try to allocate in the next pane straight away,
-            // then still do the second loop if not correct.
-          }
-          // Initial load and on demand recalculation.
-          else if (!addedPane && !removedPane && pane.size === null) {
-            pane.size = Math.max(Math.min(equalSpaceToAllocate, pane.max), pane.min)
-          }
-          leftToAllocate -= pane.size
-          if (pane.size >= pane.max) ungrowable.push(pane.id)
-          if (pane.size <= pane.min) unshrinkable.push(pane.id)
-        })
-        // Do one more loop to adjust sizes if still wrong.
-        // > 0.1: Prevent maths rounding issues due to bytes.
-        if (Math.abs(leftToAllocate) > 0.1) this.readjustSizes(leftToAllocate, ungrowable, unshrinkable)
-      }, */
-      // Second loop to adjust sizes now that we know more about the panes constraints.
-      readjustSizes: function (leftToAllocate, ungrowable, unshrinkable) {
-        var _this10 = this;
-
-        var equalSpaceToAllocate;
-        if (leftToAllocate > 0) equalSpaceToAllocate = leftToAllocate / (this.panesCount - ungrowable.length); else equalSpaceToAllocate = leftToAllocate / (this.panesCount - unshrinkable.length);
-        this.panes.forEach(function (pane, i) {
-          if (leftToAllocate > 0 && !VueUtil.includes(ungrowable, pane.id)) {
-            // Need to diff the size before and after to get the exact allocated space.
-            var newPaneSize = Math.max(Math.min(pane.size + equalSpaceToAllocate, pane.max), pane.min);
-            var allocated = newPaneSize - pane.size;
-            leftToAllocate -= allocated;
-            pane.size = newPaneSize;
-          } else if (!VueUtil.includes(unshrinkable, pane.id)) {
-            // Need to diff the size before and after to get the exact allocated space.
-            var _newPaneSize = Math.max(Math.min(pane.size + equalSpaceToAllocate, pane.max), pane.min);
-
-            var _allocated = _newPaneSize - pane.size;
-
-            leftToAllocate -= _allocated;
-            pane.size = _newPaneSize;
-          } // Update each pane through the registered `update` method.
-
-          var upd = {};
-          upd[_this10.horizontal ? 'height' : 'width'] = ''.concat(_this10.indexedPanes[pane.id].size, '%');
-          pane.update(upd);
-        });
-
-        if (Math.abs(leftToAllocate) > 0.1) {
-          // > 0.1: Prevent maths rounding issues due to bytes.
-          // Don't emit on hot reload when Vue destroys panes.
-          this.$nextTick(function () {
-            if (_this10.ready) {
-              // eslint-disable-next-line no-console
-              console.warn('vue-split-panes: Could not resize panes correctly due to their constraints.');
-            }
-          });
-        }
-      }
-      /* distributeEmptySpace () {
-        let growablePanes = []
-        let collapsedPanesCount = 0
-        let growableAmount = 0 // Total of how much the current panes can grow to fill blank space.
-        let spaceToDistribute = 100 - this.panes.reduce((sum, pane) => (sum += pane.size) && sum, 0)
-        // Do a first loop to determine if we can distribute the new blank space between all the
-        // expandedPanes, without expanding the collapsed ones.
-        this.panes.forEach(pane => {
-          if (pane.size < pane.max) growablePanes.push(pane)
-          if (!pane.size) collapsedPanesCount++
-          else growableAmount += pane.max - pane.size
-        })
-        // If the blank space to distribute is too great for the expanded panes, also expand collapsed ones.
-        let expandCollapsedPanes = growableAmount < spaceToDistribute
-        // New space to distribute equally.
-        let growablePanesCount = (growablePanes.length - (expandCollapsedPanes ? 0 : collapsedPanesCount))
-        let equalSpaceToDistribute = spaceToDistribute / growablePanesCount
-        // if (growablePanesCount === 1) equalSpace = 100 / this.panesCount
-        let spaceLeftToDistribute = spaceToDistribute
-        // Now add the equalSpaceToDistribute to each pane size accordingly.
-        growablePanes.forEach(pane => {
-          if (pane.size < pane.max && (pane.size || (!pane.size && expandCollapsedPanes))) {
-            const newSize = Math.min(pane.size + equalSpaceToDistribute, pane.max)
-            let allocatedSpace = (newSize - pane.size)
-            spaceLeftToDistribute -= allocatedSpace
-            pane.size = newSize
-            // If the equalSpaceToDistribute is not fully added to the current pane, distribute the remainder
-            // to the next panes.
-            // Also fix decimal issue due to bites - E.g. calculating 8.33 and getting 8.3299999999999
-            if (equalSpaceToDistribute - allocatedSpace > 0.1) equalSpaceToDistribute = spaceLeftToDistribute / (--growablePanesCount)
-          }
-        })
-        /* Disabled otherwise will show up on hot reload.
-        // if there is still space to allocate show warning message.
-        if (this.panesCount && ~~spaceLeftToDistribute) {
-          // eslint-disable-next-line no-console
-          console.warn('vue-split-panes: Could not distribute all the empty space between panes due to their constraints.')
-        } *\/
-        this.$emit('resized', this.panes.map(pane => ({ min: pane.min, max: pane.max, size: pane.size })))
-      } */
-
-    },
-    watch: {
-      panes: {
-        // Every time a pane is updated, update the panes accordingly.
-        deep: true,
-        immediate: false,
-        handler: function () {
-          this.updatePaneComponents();
-        }
-      },
-      horizontal: function () {
-        this.updatePaneComponents();
-      },
-      firstSplitter: function () {
-        this.redoSplitters();
-      },
-      dblClickSplitter: function (enable) {
-        var _this11 = this;
-
-        var splitters = Array.prototype.slice.call(this.container.querySelectorAll('.vue-split-panes__splitter'));
-
-        splitters.forEach(function (splitter, i) {
-          splitter.ondblclick = enable ? function (event) {
-            return _this11.onSplitterDblClick(event, i);
-          } : undefined;
-        });
-      }
-    },
-    beforeDestroy: function () {
-      // Prevent emitting console warnings on hot reloading.
-      this.ready = false;
-    },
-    mounted: function () {
-      this.container = this.$refs.container;
-      this.checkSplitpanesNodes();
-      this.redoSplitters();
-      this.resetPaneSizes();
-      this.$emit('ready');
-      this.ready = true;
-    },
-    render: function (h) {
-      return h('div', {
-        ref: 'container',
-        class: ['vue-split-panes', 'vue-split-panes--'.concat(this.horizontal ? 'horizontal' : 'vertical'), {
-          'vue-split-panes--dragging': this.touch.dragging
-        }, this.theme ? this.theme + '-theme' : '']
-      }, this.$slots.default);
-    }
-
-  };
-  Vue.component(VueSplitPanes.name, VueSplitPanes);
-});
-
-(function (context, definition) {
-  'use strict';
-  if (typeof define === 'function' && define.amd) {
-    define(['Vue'], definition);
-  } else {
-    context.VueSplitPane = definition(context.Vue);
-    delete context.VueSplitPane;
-  }
-})(this, function (Vue) {
-  'use strict';
-
-  var VueSplitPane = {
-    template: '<div class="vue-split-panes__pane vue-split-pane" @click="onPaneClick($event, _uid)" :style="style">\
-    <slot/>\
-  </div>',
-    name: 'VueSplitPane',
-    inject: ['requestUpdate', 'onPaneAdd', 'onPaneRemove', 'onPaneClick'],
-    props: {
-      size: {
-        type: [Number, String],
-        default: null
-      },
-      minSize: {
-        type: [Number, String],
-        default: 0
-      },
-      maxSize: {
-        type: [Number, String],
-        default: 100
-      }
-    },
-    data: function() {
-      return {
-        style: {}
-      };
-    },
-    mounted: function() {
-      this.onPaneAdd(this);
-    },
-    beforeDestroy: function() {
-      this.onPaneRemove(this);
-    },
-    methods: {
-      // Called from the splitpanes component.
-      update: function(style) {
-        this.style = style;
-      }
-    },
-    computed: {
-      sizeNumber: function() {
-        return this.size || this.size === 0 ? parseFloat(this.size) : null;
-      },
-      minSizeNumber: function() {
-        return parseFloat(this.minSize);
-      },
-      maxSizeNumber: function() {
-        return parseFloat(this.maxSize);
-      }
-    },
-    watch: {
-      sizeNumber: function(size) {
-        this.requestUpdate({
-          target: this,
-          size: size
-        });
-      },
-      minSizeNumber: function(min) {
-        this.requestUpdate({
-          target: this,
-          min: min
-        });
-      },
-      maxSizeNumber: function(max) {
-        this.requestUpdate({
-          target: this,
-          max: max
-        });
-      }
-    }
-  };
-  Vue.component(VueSplitPane.name, VueSplitPane);
-});
-
-
-/***************************************************************************************
- *
- *  attachmen view image - layout 上下 布局
- *  
-****************************************************************************************/
-        
-Vue.component('VueAttachmentView', {
-    template: '<div :class="[\'vue-attachment-view\',isScreenFull?\'is-fullscreen\':\'\']" :style="{height:isScreenFull?\'100vh\':height}" \
-                    v-bind="$attrs" \
-                    v-on="$listeners" \
-                    >\
-                <vue-row class="tools v-flex">\
-                    <vue-col class="left-tools v-flex">\
-                        <vue-button type="text" icon="vue-icon-menu" class="v-button" @click="showFlyout"></vue-button>\
-                        <div class="file-name text-ellipsis" :title="fileName">{{fileName}}</div>\
-                    </vue-col>\
-                    <vue-col class="center-tools v-flex">\
-                        <div class="tools-buttons v-flex">\
-                            <vue-button type="text" icon="vue-icon-zoom-out" class="v-button" @click="zoomOut"></vue-button>\
-                            <vue-button type="text" icon="vue-icon-zoom-in" class="v-button" @click="zoomIn"></vue-button>\
-                            <vue-button type="text" icon="vue-icon-sort" class="v-button" @click="maxSize"></vue-button>\
-                            <vue-button type="text" icon="vue-icon-document" class="v-button" @click="zoomReset"></vue-button>\
-                           <div class="v-hr"></div>\
-                        </div>\
-                        <div class="pageselector-container v-flex">\
-                            <vue-input class="page-no" type="text" width="20" v-model="currentPageNo" @change="currentPageNoChange"></vue-input>\
-                            <p class="page-length">/&nbsp;{{filePageSize}}</p>\
-                        </div>\
-                        <div class="v-flex">\
-                            <vue-button type="text" icon="vue-icon-arrow-left" class="v-button" @click="prePageNo"></vue-button>\
-                            <vue-button type="text" icon="vue-icon-arrow-right" class="v-button" @click="nextPageNo"></vue-button>\
-                            <vue-button type="text" icon="vue-icon-refresh" class="v-button" @click="rotateItem"></vue-button>\
-                        </div>\
-                      </vue-col>\
-                    <vue-col class="right-tools v-flex">\
-                        <div class="tools-buttons v-flex">\
-                            <vue-button type="text" icon="vue-icon-enlarge" class="v-button" @click="screenFull"></vue-button>\
-                        </div>\
-                    </vue-col>\
-                </vue-row>\
-                <vue-row class="file-body">\
-                    <div size="tiny" :class="[\'contents-flyout\', showFlyoutVisible ? \'is-display\':\'\']">\
-                        <vue-row type="flex" justify="space-between" class="flyout-title">\
-                            <span class="text-ellipsis" :title="$t(\'vue.attachment.view.directory\')">{{$t(\'vue.attachment.view.directory\')}}</span>\
-                            <vue-button type="text" icon="vue-icon-close" @click="showFlyout"></vue-button>\
-                        </vue-row>\
-                        <div class="flyout-view tiny-scrollbar" ref="flyoutView">\
-                           <div class="item" v-for="(item,index) in imageList">\
-                               <vue-image :class="[index+1 === currentPageNo?\'is-selected\':\'\']" :src="item" :page-no="index+1" @click="flyImgClick">\
-                                    <div slot="placeholder" class="image-slot">\
-                                         {{$t("vue.attachment.view.loading")}}<span class="dot">...</span>\
-                                    </div>\
-                                </vue-image>\
-                               <div class="page-no">{{index+1}}</div>\
-                            </div>\
-                        </div>\
-                    </div>\
-                    <div class="contents tiny-scrollbar" ref="contents" @scroll="handleScroll">\
-                       <div class="content-view" ref="contentView" :style="contentStyle">\
-                           <div :class="[\'item\',isMaxSizeItem?\'is-width\':\'\',imgConfig[index].img.rotate?\'is-rotate\':\'\', isAutoItemConten?\'is-content\':\'\']" v-for="(item,index) in imageList" :id="\'content-view-item_\'+(index+1)" :style="imgConfig[index].item">\
-                               <vue-image :src="item" lazy @load="imgConfig[index].img.onload(item,index)" :text-svg="textSvg" \
-                                    v-bind="$attrs" \
-                                    v-on="$listeners" \
-                                    :scroll-container="$refs.contents"\
-                                    >\
-                                    <div slot="placeholder" class="image-slot">\
-                                          {{$t("vue.attachment.view.loading")}}<span class="dot">...</span>\
-                                     </div>\
-                               </vue-image>\
-                            </div>\
-                       </div>\
-                    </div>\
-                </vue-row>\
-                </div>',
-    props: {
-        height: String,
-        imageList: {
-            'type': Array,
-            'default': function () {
-                return [];
-            }
-        },
-        fileName: String,
-        textSvg: Boolean
-    },
-    data: function () {
-        return {
-            currentPageNo: 1,
-            showFlyoutVisible: false,
-            flyoutPages: [],
-            isScreenFull: false,
-            contentStyle: {
-                zoom: 1,
-                width: null
-            },
-            itemStyle: {
-                width: ''
-            },
-            itemStyleDefaultWidth: '60%',
-            changeFlyView: true,
-            //自动宽度
-            isMaxSizeItem: false,
-            //自动适应内容
-            isAutoItemConten: true,
-            // itemAutoStyle: {},
-            //图片展示配置
-            imgConfig: []
-        };
-    },
-    computed: {
-        filePageSize: function () {
-            return this.imageList ? Math.max(this.imageList.length, 0) : 0;
-        }
-    },
-    watch: {
-        imageList: function (val) {
-            this.setImageConfig();
-        }
-    },
-    mounted: function () {
-        this.setImageConfig();
-    },
-    methods: {
-        currentPageNoChange: function () {
-            var self = this;
-            self.changeContentView();
-            if (self.changeFlyView) {
-                self.changeFlyoutView();
-            }
-            self.changeFlyView = true;
-        },
-        getItemConfig: function () {
-            var self = this;
-            return {
-                item: {
-                    width: null,
-                    height: null
-                },
-                img: {
-                    naturalWidth: 0,
-                    naturalHeight: 0,
-                    rotate: '',
-                    onload: function (src, index) {
-                        self.autoContentItem(index + 1, self.isMaxSizeItem, self.isAutoItemConten);
-                    }
-                }
-            };
-        },
-        setImageConfig: function () {
-            var self = this;
-            var data = self.imageList;
-            self.imgConfig.splice(0);
-            for (var i = 0; i < data.length; i++) {
-                var item = VueUtil.merge({
-                    img: {
-                        url: data[i]
-                    }
-                }, self.getItemConfig());
-                self.imgConfig.push(item);
-            }
-        },
-        showFlyout: function () {
-            this.showFlyoutVisible = !this.showFlyoutVisible;
-        },
-        prePageNo: function () {
-            this.currentPageNo = Math.max(Number(this.currentPageNo) - 1, 1);
-            this.currentPageNoChange();
-        },
-        nextPageNo: function () {
-            this.currentPageNo = Math.min(Number(this.currentPageNo) + 1, this.filePageSize);
-            this.currentPageNoChange();
-        },
-        flyImgClick: function (evt) {
-            this.changeFlyView = false;
-            this.currentPageNo = Number(evt.target.getAttribute('page-no'));
-            this.currentPageNoChange();
-        },
-        changeFlyoutView: function () {
-            var pageNo = this.currentPageNo;
-            var flyoutImg = this.$refs.flyoutView.querySelector('img[page-no=\'' + pageNo + '\']');
-            if (flyoutImg) {
-                flyoutImg.scrollIntoView(false);
-            }
-        },
-        getContentView: function (pageNo) {
-            var self = this;
-            return self.$refs.contentView.querySelector('div[id=\'content-view-item_' + pageNo + '\']');
-        },
-        getCurrentContentView: function () {
-            var self = this;
-            return self.getContentView(self.currentPageNo);
-        },
-        changeContentView: function () {
-            var img = this.getCurrentContentView();
-            if (img) {
-                this.$nextTick(function () {
-                    img.scrollIntoView(false);
-                });
-            }
-        },
-        //适应容器宽度
-        maxSize: function () {
-            var self = this;
-            self.resetContent();
-            self.isMaxSizeItem = true;
-            self.isAutoItemConten = false;
-            self.autoContentAllItem();
-            self.changeContentView();
-        },
-        screenFull: function () {
-            this.isScreenFull = !this.isScreenFull;
-        },
-        changeContenViewWidth: function (changeNum) {
-            var self = this;
-            var style = self.contentStyle;
-            var zoom = style.zoom + changeNum;
-            if(zoom){
-              style.zoom = zoom;
-            }
-        },
-        zoomIn: function () {
-            this.changeContenViewWidth(0.1);
-        },
-        zoomOut: function () {
-            this.changeContenViewWidth(-0.1);
-        },
-        autoContentAllItem: function () {
-            var self = this;
-            var imgConfig = self.imgConfig;
-            for (var i in imgConfig) {
-                self.autoContentItem(Number(i) + 1, self.isMaxSizeItem, self.isAutoItemConten);
-            }
-        },
-        autoContentItem: function (pageNo, isMaxSizeItem, isAutoItemConten) {
-            var self = this;
-            var contentsDom = self.$refs.contentView;
-            var contentWidth = contentsDom.clientWidth;
-            var contentHeight = contentsDom.clientHeight;
-            var targetPageNo = pageNo ? pageNo : self.currentPageNo;
-            var img = self.getContentView(targetPageNo).getElementsByTagName('img')[0];
-            if (img) {
-                var itemConfig = self.imgConfig[targetPageNo - 1].item;
-                var imgConfig = self.imgConfig[targetPageNo - 1].img;
-                var contentPer = contentWidth / contentHeight;
-                var imgPer = img.naturalWidth / img.naturalHeight;
-                var isWidthBigger = imgPer > contentPer || isMaxSizeItem;
-                img.style.objectFit = isAutoItemConten ? 'contain' : null;
-
-                imgConfig.naturalWidth = img.naturalWidth;
-                imgConfig.naturalHeight = img.naturalHeight;
-                imgConfig.objectFit = img.style.objectFit;
-
-                if(['rotate(90deg)', 'rotate(270deg)'].indexOf(imgConfig.rotate) > -1){
-                    //旋转
-                    if(isWidthBigger){ //宽>高
-                        itemConfig.width = contentWidth + 'px';
-                        itemConfig.height = contentHeight + 'px';
-                        imgConfig.width = contentHeight - 16 + 'px';
-                        imgConfig.height = (contentHeight - 16) * imgPer + 'px';
-                    }else{
-                        itemConfig.width = contentWidth + 'px';
-                        itemConfig.height = (contentWidth - 16) * imgPer + 16 + 'px';
-                        imgConfig.width = (contentWidth - 16) * imgPer + 'px';
-                        imgConfig.height = contentWidth - 16 + 'px';
-                    }
-                }else{
-                    if(isWidthBigger){ //宽>高
-                        itemConfig.width = contentWidth + 'px';
-                        itemConfig.height = 'auto';
-                        imgConfig.width = contentWidth - 16 + 'px';
-                        imgConfig.height = 'auto';
-                    }else{
-                        itemConfig.width = contentWidth + 'px';
-                        itemConfig.height = contentHeight + 'px';
-                        imgConfig.width = 'auto';
-                        imgConfig.height = contentHeight - 16 + 'px';
-                    }
-                }
-                img.style.width = imgConfig.width;
-                img.style.height = imgConfig.height;
-            }
-        },
-        //重置内容缩放
-        resetContent: function () {
-            var self = this;
-            self.contentStyle.zoom = 1;
-        },
-        //自适应内容大小
-        zoomReset: function () {
-            var self = this;
-            self.resetContent();
-            self.isAutoItemConten = true;
-            self.isMaxSizeItem = false;
-            self.autoContentAllItem();
-            self.changeContentView();
-        },
-        rotateItem: function () {
-            var self = this;
-            var img = this.getCurrentContentView().getElementsByTagName('img')[0];
-            var rotate = img.style.transform;
-            switch (rotate) {
-                case 'rotate(90deg)':
-                    rotate = 'rotate(180deg)';
-                    break;
-                case 'rotate(180deg)':
-                    rotate = 'rotate(270deg)';
-                    break;
-                case 'rotate(270deg)':
-                    rotate = '';
-                    break;
-                case '':
-                    rotate = 'rotate(90deg)';
-            }
-            img.style.transform = rotate;
-            self.imgConfig[self.currentPageNo - 1].img.rotate = rotate;
-            self.autoContentItem(self.currentPageNo, false, true);
-        },
-        handleScroll: VueUtil.debounce(100, function (event) {
-            var currentEl;
-            var els = Array.from(this.$refs.contentView.querySelectorAll('.item'));
-
-            for (var index = 0; index < els.length; index++) {
-                var el = els[index];
-                var container = el.parentElement.parentElement;
-                currentEl = el;
-
-                if (el.offsetTop + el.offsetHeight > container.scrollTop + 300) {
-                    break;
-                }
-            }
-            this.currentPageNo = els.indexOf(currentEl) + 1;
-        })
-    }
-});
-
 (function (context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
@@ -46456,7 +40322,6 @@ Vue.component('VueAttachmentView', {
     // resizable: false,
     // stripe: false,
     // border: false,
-    getVisibleSelect: false,
     fit: true,
     emptyCell: '　',
     showHeader: true,
@@ -46602,13 +40467,7 @@ Vue.component('VueAttachmentView', {
     },
     updateCellTitle: function updateCellTitle(evnt) {
       var cellElem = evnt.currentTarget.querySelector('.vue-xtable-cell');
-
-      var content;
-      if (VueUtil.hasClass(cellElem.parentElement, 'col--actived')) {
-        return;
-      } else {
-        content = cellElem.innerText;
-      }
+      var content = cellElem.innerText;
 
       if (cellElem.getAttribute('title') !== content) {
         cellElem.setAttribute('title', content);
@@ -46618,26 +40477,25 @@ Vue.component('VueAttachmentView', {
       var bodyElem = $table.$refs.tableBody.$el;
       var trElem = bodyElem.querySelector('[data-rowid="'.concat(UtilTools.getRowid($table, row), '"]'));
 
-      var bodyHeight = bodyElem.clientHeight;
-      var bodySrcollTop = bodyElem.scrollTop;
-      var trOffsetTop;
-      var trHeight;
       if (trElem) {
-        trOffsetTop = trElem.offsetTop + (trElem.offsetParent ? trElem.offsetParent.offsetTop : 0);
-        trHeight = trElem.clientHeight;
-      } else if ($table.scrollYLoad) {
-        // 懒加载
-        trHeight = $table.scrollYStore.rowHeight;
-        trOffsetTop = $table.afterFullData.indexOf(row) * trHeight;
-      }
+        var bodyHeight = bodyElem.clientHeight;
+        var bodySrcollTop = bodyElem.scrollTop;
+        var trOffsetTop = trElem.offsetTop + (trElem.offsetParent ? trElem.offsetParent.offsetTop : 0);
+        var trHeight = trElem.clientHeight; // 检测行是否在可视区中
 
-        if (trOffsetTop < bodySrcollTop) {
+        if (trOffsetTop < bodySrcollTop || trOffsetTop > bodySrcollTop + bodyHeight) {
           // 向上定位
           return $table.scrollTo(null, trOffsetTop);
-        } else if (trOffsetTop > bodyHeight + bodySrcollTop - trHeight) {
+        } else if (trOffsetTop + trHeight >= bodyHeight + bodySrcollTop) {
           // 向下定位
-          return $table.scrollTo(null, trOffsetTop - bodyHeight + trHeight);
+          return $table.scrollTo(null, bodySrcollTop + trHeight);
         }
+      } else {
+        // 如果是虚拟渲染跨行滚动
+        if ($table.scrollYLoad) {
+          return $table.scrollTo(null, ($table.afterFullData.indexOf(row) - 1) * $table.scrollYStore.rowHeight);
+        }
+      }
 
       return Promise.resolve();
     },
@@ -46747,23 +40605,14 @@ Vue.component('VueAttachmentView', {
     /**
      * 获取单元格节点索引
      */
-    getCellNodeIndex: function getCellNodeIndex(cell, fullColumnIdData) {
+    getCellNodeIndex: function getCellNodeIndex(cell) {
       var trElem = cell.parentNode;
-
-      var columnIndex = fullColumnIdData ? fullColumnIdData[cell.dataset.colid].index : VueUtil.arrayIndexOfVal(trElem.children, cell);
+      var columnIndex = VueUtil.arrayIndexOfVal(trElem.children, cell);
       var rowIndex = VueUtil.arrayIndexOfVal(trElem.parentNode.children, trElem);
       return {
         columnIndex: columnIndex,
         rowIndex: rowIndex
       };
-    },
-
-    getCellById: function (row, id) {
-      var cell = [].filter.call(row.children, function(el) {
-        return el.dataset.colid === id;
-      });
-      
-      return VueUtil.get(cell,0);
     },
 
     /**
@@ -46820,8 +40669,7 @@ Vue.component('VueAttachmentView', {
     },
 
     getTableSpanCell: function($table, params) {
-      var column = params.column;
-      var bodyElem = $table.$refs[''.concat(column.fixed || 'table', 'Body')];
+
       var tableEl = (bodyElem || $table.$refs.tableBody).$el;
       var table = tableEl.querySelector('table');
       var rowIndex = $table.getRowIndex(params.row);
@@ -46951,7 +40799,7 @@ Vue.component('VueAttachmentView', {
   document.addEventListener('paste', GlobalEvent.trigger, false);
   window.addEventListener('mousedown', GlobalEvent.trigger, false);
   window.addEventListener('blur', GlobalEvent.trigger, false);
-
+  window.addEventListener('resize', GlobalEvent.trigger, false);
   window.addEventListener(wheelName, GlobalEvent.trigger, false);
 
   //utils.js
@@ -47015,7 +40863,6 @@ Vue.component('VueAttachmentView', {
         filterMethod: _vm.filterMethod,
         filterRender: _vm.filterRender,
         copyFormatter: _vm.copyFormatter,
-        formatterKey: _vm.formatterKey,
         pasteFormatter: _vm.pasteFormatter,
         treeNode: _vm.treeNode,
         cellRender: _vm.cellRender,
@@ -47039,8 +40886,7 @@ Vue.component('VueAttachmentView', {
         renderData: renderData,
         // 单元格插槽，只对 grid 有效
         slots: _vm.slots,
-        own: _vm,
-        excelExportConfig: _vm.excelExportConfig
+        own: _vm
       });
     }
 
@@ -47055,11 +40901,6 @@ Vue.component('VueAttachmentView', {
       value: function update(name, value) {
         // 不支持双向的属性
         if (!VueUtil.includes(['filters'], name)) {
-          if (name == 'field') {
-            this[name] = value;
-            this['property'] = value;
-            return;
-          }
           this[name] = value;
         }
       }
@@ -47155,7 +40996,6 @@ Vue.component('VueAttachmentView', {
         var rest, formatData;
         var $table = params.$table;
         var colid = column.id;
-        var formatterKey = column.formatterKey;
         var cacheFormat = $table && $table.fullAllDataRowMap.has(row);
 
         if (cacheFormat) {
@@ -47167,20 +41007,8 @@ Vue.component('VueAttachmentView', {
           }
         }
 
-        var formatterKeyResult;
-
-        if (typeof formatterKey == 'function') {
-          formatterKeyResult = formatterKey(row, column, params);
-        } else if (VueUtil.isArray(formatterKey)) {
-          formatterKeyResult = VueUtil.reduce(formatterKey, function(result, field) {
-            return result + '=%=' + row[field];
-          }, '');
-        } else if (typeof formatterKey == 'string') {
-          formatterKeyResult = row[formatterKey];
-        }
-
         if (rest && formatData[colid]) {
-          if (formatData[colid].value === cellValue && formatData[colid].formatterKey === formatterKeyResult) {
+          if (formatData[colid].value === cellValue) {
             return formatData[colid].label;
           }
         }
@@ -47197,23 +41025,14 @@ Vue.component('VueAttachmentView', {
         if (formatData) {
           formatData[colid] = {
             value: cellValue,
-            label: cellLabel,
-            formatterKey: formatterKeyResult,
+            label: cellLabel
           };
         }
       }
 
       return cellLabel;
     },
-    setCellValue: function setCellValue(row, column, value, table) {
-
-      // 如果table不为空，尝试触发change事件
-      if (table) {
-        oldVal = VueUtil.get(row, column.property);
-        if (oldVal != value) {
-          table.$emit('cell-change', row, column.property, value, oldVal);
-        }
-      }
+    setCellValue: function setCellValue(row, column, value) {
       return VueUtil.set(row, column.property, value);
     },
     getColumnConfig: function getColumnConfig(_vm, options) {
@@ -47433,7 +41252,7 @@ Vue.component('VueAttachmentView', {
             var cellValue = evnt.target.value;
       
             if (isSyncCell(renderOpts, params, context)) {
-              UtilTools.setCellValue(row, column, cellValue, $table);
+              UtilTools.setCellValue(row, column, cellValue);
             } else {
               model.update = true;
               model.value = cellValue;
@@ -47642,23 +41461,10 @@ Vue.component('VueAttachmentView', {
           if(!attrs.value){
             attrs.value=cellValue;
           }
-          var slotPrefix = 'edit-render-';
-
-          var slotNames = VueUtil.keys(context.$column.own.$scopedSlots).filter(function(slotsName) {
-              return !slotsName.indexOf(slotPrefix);
-          });
-
-          var scopedSlots = {};
-
-          slotNames.forEach(function(slotsName) {
-            scopedSlots[slotsName.replace(slotPrefix, '')] = context.$column.own.$scopedSlots[slotsName];
-          });
-          
           return [h(name, {
             class: 'vue-default-'.concat(name),
             attrs: attrs,
-            on: getFallbackEvents(renderOpts, params, context),
-            scopedSlots: scopedSlots,
+            on: getFallbackEvents(renderOpts, params, context)
           })];
         }
         
@@ -47675,7 +41481,7 @@ Vue.component('VueAttachmentView', {
             var cellValue = evnt;
         
             if (isSyncCell(renderOpts, params, context)) {
-              UtilTools.setCellValue(row, column, cellValue, $table);
+              UtilTools.setCellValue(row, column, cellValue);
             } else {
               model.update = true;
               model.value = cellValue;
@@ -47684,14 +41490,11 @@ Vue.component('VueAttachmentView', {
           });
         
           if (events) {
-            VueUtil.each(events, function(cb, key) {
-              on[key] = function() {
-                for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-                  args[_key] = arguments[_key];
-                }
-                cb.apply(null, [params].concat(args));
+            VueUtil.assign(on, VueUtil.mapValues(events, function (cb) {
+              return function () {
+                cb.apply(null, [params].concat.apply(params, arguments));
               };
-            });
+            }));
           }
         
           return on;
@@ -48421,14 +42224,23 @@ Vue.component('VueAttachmentView', {
       var isRequired;
   
       if (editRules) {
-        if(VueUtil.isArray(params.column.property)){
-          params.column.property.some(function (item) {
-            isRequired = $table.getIsRequiredByOne(item);
-            if(isRequired){ return true; }
-          });
-        }else{
-          isRequired = $table.getIsRequiredByOne(params.column.property);
-        }
+        function getIsRequiredByOne(property){
+            var columnRules = VueUtil.get(editRules, property);
+
+            if (columnRules) {
+              isRequired = columnRules.some(function (rule) {
+                return rule.required;
+              });
+            }
+		}
+		if(VueUtil.isArray(params.column.property)){
+			params.column.property.some(function (item) {
+				getIsRequiredByOne(item);
+				if(isRequired){ return true; }
+			});
+		}else{
+			getIsRequiredByOne(params.column.property);
+		}
       }
   
       return [isRequired ? h('i', {
@@ -48494,7 +42306,6 @@ Vue.component('VueAttachmentView', {
 
   return Cell;
 });
-/* eslint-disable no-inner-declarations */
 (function(context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
@@ -48503,13 +42314,50 @@ Vue.component('VueAttachmentView', {
     context.VueXtable = definition(context.baseTable, context.tools, context.cell);
   }
 })(this, function(baseTable, tools, cell) {
+  // 多列排序方法 github.com/Teun/thenBy.js
+  var firstBy = (function () {
+    function identity(v) { return v; }
+
+    function ignoreCase(v) { return typeof (v) === 'string' ? v.toLowerCase() : v; }
+
+    function makeCompareFunction(f, opt) {
+      opt = typeof (opt) === 'number' ? { direction: opt } : opt || {};
+      if (typeof (f) != 'function') {
+        var prop = f;
+        // make unary function
+        f = function (v1) { return v1[prop] ? v1[prop] : ''; };
+      }
+      if (f.length === 1) {
+        // f is a unary function mapping a single item to its sort score
+        var uf = f;
+        var preprocess = opt.ignoreCase ? ignoreCase : identity;
+        var cmp = opt.cmp || function (v1, v2) { return v1 < v2 ? -1 : v1 > v2 ? 1 : 0; };
+        f = function (v1, v2) { return cmp(preprocess(uf(v1)), preprocess(uf(v2))); };
+      }
+      if (opt.direction === -1) return function (v1, v2) { return -f(v1, v2); };
+      return f;
+    }
+
+    function tb(func, opt) {
+      var x = (typeof (this) == 'function' && !this.firstBy) ? this : false;
+      var y = makeCompareFunction(func, opt);
+      var f = x ? function (a, b) {
+        return x(a, b) || y(a, b);
+      }
+        : y;
+      f.thenBy = tb;
+      return f;
+    }
+    tb.firstBy = tb;
+    return tb;
+  })();
   
   // methods.js
   var mod = {};
   (function() {
     var rowUniqueId = 0;
     var isWebkit = !!document.documentElement['webkitMatchesSelector'] && !VueUtil.isEdge;
-    var debounceScrollYDuration = VueUtil.isIE ? 60 : 40; // 分组表头的属性
+    var debounceScrollYDuration = VueUtil.isIE ? 40 : 20; // 分组表头的属性
     
     var headerProps = {
       children: 'children'
@@ -48562,7 +42410,6 @@ Vue.component('VueAttachmentView', {
         this.clearRowExpand();
         this.clearTreeExpand();
         this.clearActived();
-        this.clearOrderIndex();
     
         if (baseTable._filter) {
           this.clearFilter();
@@ -48603,6 +42450,12 @@ Vue.component('VueAttachmentView', {
         return this.handleTableData(true).then(this.updateFooter).then(this.recalculate);
       },
       handleTableData: function handleTableData(force) {
+        if (this.keyboardConfig || this.mouseConfig) {
+          this.clearIndexChecked();
+          this.clearHeaderChecked();
+          this.clearChecked();
+          this.clearCopyed();
+        }
         
         var scrollYLoad = this.scrollYLoad,
             scrollYStore = this.scrollYStore;
@@ -48655,7 +42508,7 @@ Vue.component('VueAttachmentView', {
         if (scrollYLoad) {
           rest = this.computeScrollLoad();
         }
-        
+    
         return rest.then(function () {
           // 是否加载了数据
           _this2.isLoadData = true;
@@ -48672,7 +42525,7 @@ Vue.component('VueAttachmentView', {
             rest = rest.then(_this2.recalculate);
           }
     
-          return rest.then();
+          return rest.then(_this2.refreshScroll);
         });
       },
     
@@ -49004,7 +42857,6 @@ Vue.component('VueAttachmentView', {
         var tableFullData = this.tableFullData,
             visibleColumn = this.visibleColumn;
     
-        var self = this;
         if (!arguments.length) {
           rows = tableFullData;
         } else if (rows && !VueUtil.isArray(rows)) {
@@ -49019,7 +42871,7 @@ Vue.component('VueAttachmentView', {
           rows.forEach(function (row) {
             visibleColumn.forEach(function (column) {
               if (column.property) {
-                tools.UtilTools.setCellValue(row, column, null, self);
+                tools.UtilTools.setCellValue(row, column, null);
               }
             });
           });
@@ -49079,34 +42931,34 @@ Vue.component('VueAttachmentView', {
         }
     
         if (oRow) {
-          function isEqualsByListOrOne(obj, cb) {
-            if (VueUtil.isArray(obj)) {
-              return obj.some(function (item) {
-                if (cb(item)) {
-                  return true;
-                }
-              });
-            } else {
-              return cb(obj);
-            }
-          }
+		  function isEqualsByListOrOne(obj,cb){
+			  if(VueUtil.isArray(obj)){
+				return obj.some(function(item){
+					if(cb(item)){
+						 return true;
+					 }
+				});
+			  }else{
+				return cb(obj);
+			  }
+		  }
           if (arguments.length > 1) {
-            function isEqualByOne(item) {
-              return !VueUtil.isEqual(VueUtil.get(oRow, item), VueUtil.get(row, item));
-            }
-            return isEqualsByListOrOne(field, isEqualByOne);
+            function isEqualByOne(item){
+				 return !VueUtil.isEqual(VueUtil.get(oRow, item), VueUtil.get(row, item));
+			 }
+			 return isEqualsByListOrOne(field,isEqualByOne);
           }
-
+    
           for (var index = 0, len = visibleColumn.length; index < len; index++) {
             property = visibleColumn[index].property;
-            function isEqualByOne(item) {
-              if (property && !VueUtil.isEqual(VueUtil.get(oRow, item), VueUtil.get(row, item))) {
-                return true;
-              }
-            }
-            if (isEqualsByListOrOne(property, isEqualByOne)) {
-              return true;
-            }
+            function isEqualByOne(item){
+				if (property && !VueUtil.isEqual(VueUtil.get(oRow, item), VueUtil.get(row, item))) {
+					return true;
+				}
+			}
+			if(isEqualsByListOrOne(property,isEqualByOne)){
+				return true;
+			}
           }
         }
     
@@ -49178,11 +43030,8 @@ Vue.component('VueAttachmentView', {
       /**
        * 用于多选行，获取已选中的数据
        */
-      getSelectRecords: function getSelectRecords(getVisibleSelect) {
-
-        getVisibleSelect = getVisibleSelect != undefined ? getVisibleSelect : GlobalConfig.getVisibleSelect;
-
-        var tableFullData = getVisibleSelect === true ? this.afterFullData : this.tableFullData,
+      getSelectRecords: function getSelectRecords() {
+        var tableFullData = this.tableFullData,
             treeConfig = this.treeConfig; // 在 v3.0 中废弃 selectConfig
     
         var checkboxConfig = this.checkboxConfig || this.selectConfig || {};
@@ -49270,9 +43119,7 @@ Vue.component('VueAttachmentView', {
             return true;
           });
         });
-
-        this.currentRow && tableData.indexOf(this.currentRow) == -1 && this.clearCurrentRow(true);
-
+    
         if (this.sortingColumns && this.sortingColumns.length > 0) {
           var iteratees = this.sortingColumns.map(function(column) {
             return column.sortMethod || column.property;
@@ -49298,26 +43145,24 @@ Vue.component('VueAttachmentView', {
                   column.sortBy.forEach(function (sortBy) {
                     sortAry.push({
                       prop: sortBy,
-                      order: column.order
+                      order: column.order === 'desc' ? -1 : undefined
                     });
                   });
                 } else {
                   sortAry.push({
                     prop: column.sortMethod || column.property,
-                    order: column.order
+                    order: column.order === 'desc' ? -1 : undefined
                   });
                 }
               });
-
-              tableData = VueUtil.sortByKeys(sortAry, tableData);
+      
+              var sortFunc = firstBy(sortAry[0].prop, sortAry[0].order);
+              for (var index = 1; index < sortAry.length; index++) {
+                sortFunc = sortFunc.thenBy(sortAry[index].prop, sortAry[index].order);
+              }
+              tableData = tableData.sort(sortFunc);
             }
           }
-        }
-
-        if (tableData.length > 0 && tableData[0]._orderIndex !== undefined) {
-          tableData.sort(function(a,b) {
-            return a._orderIndex - b._orderIndex;
-          });
         }
 
         this.afterFullData = tableData;
@@ -49362,14 +43207,6 @@ Vue.component('VueAttachmentView', {
       handleDefault: function handleDefault() {
         var _this10 = this;
     
-        this.scrollTo(0,0);
-        if (this.keyboardConfig || this.mouseConfig) {
-          this.clearIndexChecked();
-          this.clearHeaderChecked();
-          this.clearChecked();
-          this.clearCopyed();
-        }
-        
         // 在 v3.0 中废弃 selectConfig
         var checkboxConfig = this.checkboxConfig || this.selectConfig;
     
@@ -49464,7 +43301,7 @@ Vue.component('VueAttachmentView', {
           column.fixed = position === false ? undefined : position === 'right' ? position : 'left';
         } else {
           this.tableFullColumn.forEach(function (column) {
-            column.fixed = column.own.fixed;
+            column.fixed = undefined;
           });
         }
         
@@ -49489,7 +43326,7 @@ Vue.component('VueAttachmentView', {
           column.visible = visible;
         } else {
           this.tableFullColumn.forEach(function (column) {
-            column.visible = VueUtil.isDef(column.own.visible) ? column.own.visible : true;
+            column.visible = true;
           });
         }
     
@@ -49522,10 +43359,7 @@ Vue.component('VueAttachmentView', {
        * 将固定的列左边、右边分别靠边
        * 如果使用了分组表头，固定列必须在左侧或者右侧
        */
-      refreshColumn: function refreshColumn(resetScroll) {
-        if (resetScroll == null) {
-          resetScroll = true;
-        }
+      refreshColumn: function refreshColumn() {
         var _this12 = this;
     
         var isColspan;
@@ -49543,12 +43377,7 @@ Vue.component('VueAttachmentView', {
         var scrollX = optimizeOpts.scrollX; // 如果是分组表头，如果子列全部被隐藏，则根列也隐藏
     
         if (isGroup) {
-          VueUtil.eachTree(this.collectColumn, function (column, index, items, path, parent) {
-
-            if (parent && parent.fixed) {
-              column.fixed = parent.fixed;
-            }
-            
+          VueUtil.eachTree(this.collectColumn, function (column) {
             if (column.children && column.children.length) {
               column.visible = !!VueUtil.findTree(column.children, function (subColumn) {
                 return subColumn.children && subColumn.children.length ? 0 : subColumn.visible;
@@ -49609,7 +43438,7 @@ Vue.component('VueAttachmentView', {
           // }
     
     
-          resetScroll && VueUtil.assign(scrollXStore, {
+          VueUtil.assign(scrollXStore, {
             startIndex: 0,
             visibleIndex: 0
           });
@@ -49801,18 +43630,6 @@ Vue.component('VueAttachmentView', {
             }
           }
         });
-
-        // 没有自动列（未指定宽度的列）时，最后计算一次是否有多余空间，补充给min-width列的最后一列
-        if (autoList.length == 0) {
-          var odiffer = bodyWidth - tableWidth;
-          if (odiffer > 0) {
-            var minList = scaleMinList.concat(pxMinList);
-            if (minList.length > 0) {
-              minList[minList.length - 1].renderWidth += odiffer;
-              tableWidth = bodyWidth;
-            }
-          }
-        }
         var tableHeight = bodyElem.offsetHeight;
         var overflowY = bodyElem.scrollHeight > bodyElem.clientHeight;
         this.scrollbarWidth = overflowY ? bodyElem.offsetWidth - bodyWidth : 0;
@@ -49933,15 +43750,6 @@ Vue.component('VueAttachmentView', {
               //     thElem.style.width = `${scrollbarWidth}px`
               //   })
               // }
-              if (name === 'main') {
-                var mainHeaderListElem = elemStore['main-header-list']; 
-                if (mainHeaderListElem) {
-                  var gutterInner = mainHeaderListElem.querySelector('.col--gutter-inner');
-                  if (gutterInner) {
-                    gutterInner.style.width = scrollbarWidth + 'px';
-                  }
-                }
-              }
     
             } else if (layout === 'body') {
               var emptyBlockElem = elemStore[''.concat(name, '-').concat(layout, '-emptyBlock')];
@@ -50028,16 +43836,6 @@ Vue.component('VueAttachmentView', {
               //     thElem.style.width = `${scrollbarWidth}px`
               //   })
               // }
-
-              if (name === 'main') {
-                var mainFooterListElem = elemStore['main-footer-list']; 
-                if (mainFooterListElem) {
-                  var gutterInnerFooter = mainFooterListElem.querySelector('.col--gutter-inner');
-                  if (gutterInnerFooter) {
-                    gutterInnerFooter.style.width = scrollbarWidth + 'px';
-                  }
-                }
-              }
     
             }
     
@@ -50078,10 +43876,9 @@ Vue.component('VueAttachmentView', {
                   if (listElem) {
                     VueUtil.loop(listElem.querySelectorAll('.'.concat(column.id)), function (thElem) {
                       var cellElem = thElem.querySelector('.vue-xtable-cell');
-
-                      var borderYShow = typeof border === 'object' ? border.y : border;
+    
                       if (cellElem) {
-                        cellElem.style.width = ''.concat(borderYShow ? renderWidth - 1 : renderWidth, 'px');
+                        cellElem.style.width = ''.concat(border ? renderWidth - 1 : renderWidth, 'px');
                       }
                     });
                   }
@@ -50140,9 +43937,6 @@ Vue.component('VueAttachmentView', {
         if (end) {
           end();
         }
-        if (type.indexOf('event.') == 0) {
-          _this15.$emit(type.replace('event.', ''), args);
-        }
     
         return rest;
       },
@@ -50186,7 +43980,7 @@ Vue.component('VueAttachmentView', {
                 if (editConfig.mode === 'row') {
                   var rowNode = getEventTargetNode(evnt, $el, 'vue-xtable-body--row'); // row 方式，如果点击了不同行
     
-                  isClear = rowNode.flag ? getRowNode(rowNode.targetElem).item !== getRowNode(actived.args.cell.parentNode).item : (VueUtil.hasClass(evnt.target, 'vue-xtable-table--body-wrapper') ? 1 : 0);
+                  isClear = rowNode.flag ? getRowNode(rowNode.targetElem).item !== getRowNode(actived.args.cell.parentNode).item : 0;
                 } else {
                   // cell 方式，如果是非编辑列
                   isClear = !getEventTargetNode(evnt, $el, 'col--edit', true).flag;
@@ -50260,8 +44054,6 @@ Vue.component('VueAttachmentView', {
             var isUpArrow = keyCode === 38;
             var isRightArrow = keyCode === 39;
             var isDwArrow = keyCode === 40;
-            var isPageUp = keyCode === 33;
-            var isPageDown = keyCode === 34;
             var isDel = keyCode === 46;
             var isA = keyCode === 65;
             var isC = keyCode === 67;
@@ -50270,18 +44062,10 @@ Vue.component('VueAttachmentView', {
             var isCtrlKey = evnt.ctrlKey;
             var isShiftKey = evnt.shiftKey;
             var operArrow = isLeftArrow || isUpArrow || isRightArrow || isDwArrow;
-            var isPage = isPageUp || isPageDown;
             var operCtxMenu = isCtxMenu && ctxMenuStore.visible && (isEnter || isSpacebar || operArrow);
             var params;
     
             if (isEsc) {
-              _this17.$emit('esc-key', {
-                $table: _this17,
-                currentRow:currentRow,
-                select: selected,
-                actived: actived
-              }, evnt);
-
               // 如果按下了 Esc 键，关闭快捷菜单、筛选
               _this17.closeMenu();
     
@@ -50302,55 +44086,37 @@ Vue.component('VueAttachmentView', {
                   });
                 }
               }
-            } else if (isSpacebar) {
-
-              _this17.$emit('space-key', {
-                $table: _this17,
-                currentRow:currentRow,
-                select: selected,
-                actived: actived
-              }, evnt);
-
-                if ((keyboardConfig.isArrow || keyboardConfig.isTab) && selected.row && selected.column && (selected.column.type === 'checkbox' || selected.column.type === 'selection' || selected.column.type === 'radio')) {
-                // 在 v3.0 中废弃 type=selection
-                // 空格键支持选中复选列
-                evnt.preventDefault(); // 在 v3.0 中废弃 type=selection
-      
-                if (selected.column.type === 'checkbox' || selected.column.type === 'selection') {
-                  _this17.handleToggleCheckRowEvent(selected.args, evnt);
-                } else {
-                  _this17.triggerRadioRowEvent(evnt, selected.args);
-                }
+            } else if (isSpacebar && (keyboardConfig.isArrow || keyboardConfig.isTab) && selected.row && selected.column && (selected.column.type === 'checkbox' || selected.column.type === 'selection' || selected.column.type === 'radio')) {
+              // 在 v3.0 中废弃 type=selection
+              // 空格键支持选中复选列
+              evnt.preventDefault(); // 在 v3.0 中废弃 type=selection
+    
+              if (selected.column.type === 'checkbox' || selected.column.type === 'selection') {
+                _this17.handleToggleCheckRowEvent(selected.args, evnt);
+              } else {
+                _this17.triggerRadioRowEvent(evnt, selected.args);
               }
-            } else if (isEnter) {
-              _this17.$emit('enter-key', {
-                $table: _this17,
-                currentRow:currentRow,
-                select: selected,
-                actived: actived
-              }, evnt);
-              if ((keyboardConfig.isArrow || keyboardConfig.isTab) && (selected.row || actived.row || treeConfig && highlightCurrentRow && currentRow)) {
-                // 如果是激活状态，退则出到下一行
-                if (selected.row || actived.row) {
-                  _this17.moveSelected(selected.row ? selected.args : actived.args, isLeftArrow, isUpArrow, isRightArrow, true, isPageUp, isPageDown, evnt);
-                } else if (treeConfig && highlightCurrentRow && currentRow) {
-                  // 如果是树形表格当前行回车移动到子节点
-                  var childrens = currentRow[treeConfig.children];
-      
-                  if (childrens && childrens.length) {
-                    evnt.preventDefault();
-                    var targetRow = childrens[0];
-                    params = {
-                      $table: _this17,
-                      row: targetRow
-                    };
-      
-                    _this17.setTreeExpansion(currentRow, true).then(function () {
-                      return _this17.scrollToRow(targetRow);
-                    }).then(function () {
-                      return _this17.triggerCurrentRowEvent(evnt, params);
-                    });
-                  }
+            } else if (isEnter && (keyboardConfig.isArrow || keyboardConfig.isTab) && (selected.row || actived.row || treeConfig && highlightCurrentRow && currentRow)) {
+              // 如果是激活状态，退则出到下一行
+              if (selected.row || actived.row) {
+                _this17.moveSelected(selected.row ? selected.args : actived.args, isLeftArrow, isUpArrow, isRightArrow, true, evnt);
+              } else if (treeConfig && highlightCurrentRow && currentRow) {
+                // 如果是树形表格当前行回车移动到子节点
+                var childrens = currentRow[treeConfig.children];
+    
+                if (childrens && childrens.length) {
+                  evnt.preventDefault();
+                  var targetRow = childrens[0];
+                  params = {
+                    $table: _this17,
+                    row: targetRow
+                  };
+    
+                  _this17.setTreeExpansion(currentRow, true).then(function () {
+                    return _this17.scrollToRow(targetRow);
+                  }).then(function () {
+                    return _this17.triggerCurrentRowEvent(evnt, params);
+                  });
                 }
               }
             } else if (operCtxMenu) {
@@ -50369,13 +44135,13 @@ Vue.component('VueAttachmentView', {
     
                 _this17.handleActived(selected.args, evnt);
               }
-            } else if ((operArrow || isPage) && keyboardConfig.isArrow) {
+            } else if (operArrow && keyboardConfig.isArrow) {
               // 如果按下了方向键
               if (selected.row && selected.column) {
-                _this17.moveSelected(selected.args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, isPageUp, isPageDown, evnt);
-              } else if ((isUpArrow || isDwArrow || isPage) && highlightCurrentRow && currentRow) {
+                _this17.moveSelected(selected.args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, evnt);
+              } else if ((isUpArrow || isDwArrow) && highlightCurrentRow && currentRow) {
                 // 当前行按键上下移动
-                _this17.moveCurrentRow(isUpArrow, isDwArrow, isPageUp, isPageDown, evnt);
+                _this17.moveCurrentRow(isUpArrow, isDwArrow, evnt);
               }
             } else if (isTab && keyboardConfig.isTab) {
               // 如果按下了 Tab 键切换
@@ -50387,40 +44153,30 @@ Vue.component('VueAttachmentView', {
             } else if (isDel || (treeConfig && highlightCurrentRow && currentRow ? isBack && keyboardConfig.isArrow : isBack)) {
               // 如果是删除键
               if (keyboardConfig.isDel && (selected.row || selected.column)) {
-                params = {
-                  $table: _this17,
-                  row: selected.row,
-                  column: selected.column,
-                };
-
-                var selectedCellEditable = _this17.isCellEditable(params);
-
-                if (_this17.mouseConfig.checked && !isBack) {
-
-                  var checkedData = _this17.getMouseCheckeds();
-                  var cRows = checkedData.rows;
-                  var cColumns = checkedData.columns;
-
-                  cRows.forEach(function(cRow) {
-
-                    cColumns.forEach(function(cColumn) {
-
-                      if (_this17.isCellEditable({row: cRow, column: cColumn})) {
-                        tools.UtilTools.setCellValue(cRow, cColumn, null, _this17);
-                      }
-
-                    });
-                  });
-                } else {
-                  if (selectedCellEditable) {
-                    tools.UtilTools.setCellValue(selected.row, selected.column, null, _this17);
-                  }
+                tools.UtilTools.setCellValue(selected.row, selected.column, null);
+    
+                if (isBack) {
+                  _this17.handleActived(selected.args, evnt);
                 }
-
-                if (selectedCellEditable) {
-                  if (isBack) {
-                    _this17.handleActived(selected.args, evnt);
-                  }
+              } else if (isBack && keyboardConfig.isArrow && treeConfig && highlightCurrentRow && currentRow) {
+                // 如果树形表格回退键关闭当前行返回父节点
+                var findTreeData = VueUtil.findTree(_this17.afterFullData, function (item) {
+                  return item === currentRow;
+                }, treeConfig),
+                    parentRow = findTreeData.parent;
+    
+                if (parentRow) {
+                  evnt.preventDefault();
+                  params = {
+                    $table: _this17,
+                    row: parentRow
+                  };
+    
+                  _this17.setTreeExpansion(parentRow, false).then(function () {
+                    return _this17.scrollToRow(parentRow);
+                  }).then(function () {
+                    return _this17.triggerCurrentRowEvent(evnt, params);
+                  });
                 }
               }
             } else if (keyboardConfig.isCut && isCtrlKey && (isA || isX || isC)) {
@@ -50429,18 +44185,7 @@ Vue.component('VueAttachmentView', {
                 _this17.handleAllChecked(evnt);
               } else if (isX || isC) {
                 if (!editStore.actived.column && !editStore.actived.row) {
-                  if (_this17.beforeCopy) {
-                    var ret = _this17.beforeCopy();
-                    if (ret.then) {
-                      ret.then(function() {
-                        _this17.handleCopyed(isX, evnt);
-                      });
-                    } else if (ret !== false) {
-                      _this17.handleCopyed(isX, evnt);
-                    }
-                  } else {
-                    _this17.handleCopyed(isX, evnt);
-                  }
+                  _this17.handleCopyed(isX, evnt);
                 }
               }
             } else if (keyboardConfig.isEdit && !isCtrlKey && (keyCode >= 48 && keyCode <= 57 || keyCode >= 65 && keyCode <= 90 || keyCode >= 96 && keyCode <= 111 || keyCode >= 186 && keyCode <= 192 || keyCode >= 219 && keyCode <= 222 || keyCode === 32)) {
@@ -50459,25 +44204,12 @@ Vue.component('VueAttachmentView', {
 
       handleGlobalPaste: function(evnt) {
         if (this.isActivated) {
-          var self = this;
-          if (this.beforePaste) {
-            var data = this.getClipboardData(evnt);
-            var ret = this.beforePaste(evnt, data);
-            if (ret.then) {
-              ret.then(function() {
-                self.handlePaste(evnt, data);
-              });
-            } else if (ret !== false) {
-              this.handlePaste(evnt);
-            }
-          } else {
-            this.handlePaste(evnt);
-          }
+          this.handlePaste(evnt);
         }
       },
-      handleGlobalResizeEvent: VueUtil.throttle(100, function handleGlobalResizeEvent() {
+      handleGlobalResizeEvent: function handleGlobalResizeEvent() {
         this.recalculate();
-      }),
+      },
       handleTooltipLeaveEvent: function handleTooltipLeaveEvent(evnt) {
         var _this18 = this;
     
@@ -50572,17 +44304,9 @@ Vue.component('VueAttachmentView', {
         var cell = evnt.currentTarget;
         var tooltip = this.$refs.tooltip;
         var wrapperElem = cell.children[0];
-        var content = cell.textContent;
+        var content = cell.innerText;
     
-        var fixedBtn = false;
-
-        if (!row) {
-          if (cell.classList.contains('sort--active') || cell.classList.contains('filter--active')) {
-            fixedBtn = true;
-          }
-        }
-
-        if (content && (fixedBtn || wrapperElem.scrollWidth > wrapperElem.clientWidth)) {
+        if (content && wrapperElem.scrollWidth > wrapperElem.clientWidth) {
           VueUtil.assign(this.tooltipStore, {
             row: row,
             column: column,
@@ -50858,7 +44582,7 @@ Vue.component('VueAttachmentView', {
        * @param {Boolean} value 是否选中
        */
       setAllSelection: function setAllSelection(value) {
-        var tableFullData = this.afterFullData,
+        var tableFullData = this.tableFullData,
             treeConfig = this.treeConfig,
             selection = this.selection; // 在 v3.0 中废弃 selectConfig
     
@@ -50886,9 +44610,9 @@ Vue.component('VueAttachmentView', {
             var clearValFn = function clearValFn(row, rowIndex) {
               var _checkMethod2;
     
-              if (!checkMethod || (VueUtil.get(row, property) && checkMethod((_checkMethod2 = {
+              if (!checkMethod || (checkMethod((_checkMethod2 = {
                 row: row
-              }, tools.UtilTools.defineProperty(_checkMethod2, indexKey, rowIndex), tools.UtilTools.defineProperty(_checkMethod2, '$rowIndex', rowIndex), _checkMethod2)))) {
+              }, tools.UtilTools.defineProperty(_checkMethod2, indexKey, rowIndex), tools.UtilTools.defineProperty(_checkMethod2, '$rowIndex', rowIndex), _checkMethod2)) ? 0 : selection.indexOf(row) > -1)) {
                 VueUtil.set(row, property, value);
               }
             };
@@ -50957,7 +44681,7 @@ Vue.component('VueAttachmentView', {
         this.checkSelectionStatus();
       },
       checkSelectionStatus: function checkSelectionStatus() {
-        var tableFullData = this.afterFullData,
+        var tableFullData = this.tableFullData,
             editStore = this.editStore,
             selection = this.selection,
             treeIndeterminates = this.treeIndeterminates; // 在 v3.0 中废弃 selectConfig
@@ -50990,7 +44714,6 @@ Vue.component('VueAttachmentView', {
               }
 
             } : function (row) {
-              allDisabled = false;
               return VueUtil.get(row, property);
             }) && !allDisabled;
             this.isIndeterminate = !this.isAllSelected && tableFullData.some(function (row) {
@@ -51012,7 +44735,6 @@ Vue.component('VueAttachmentView', {
                 return true;
               }
             } : function (row) {
-              allDisabled = false;
               return selection.indexOf(row) > -1;
             }) && !allDisabled;
             this.isIndeterminate = !this.isAllSelected && tableFullData.some(function (row) {
@@ -51194,18 +44916,12 @@ Vue.component('VueAttachmentView', {
       /**
        * 用于当前行，手动清空当前高亮的状态
        */
-      clearCurrentRow: function clearCurrentRow(triggerEvent) {
-        var oldCurrentRow = this.currentRow;
+      clearCurrentRow: function clearCurrentRow() {
         this.currentRow = null;
         this.hoverRow = null;
         VueUtil.loop(this.$el.querySelectorAll('.row--current'), function (elem) {
           return tools.DomTools.removeClass(elem, 'row--current');
         });
-
-        if(triggerEvent) {
-          this.$emit('current-change', null, oldCurrentRow);
-        }
-        
         return this.$nextTick();
       },
     
@@ -51450,9 +45166,7 @@ Vue.component('VueAttachmentView', {
           }
         }
     
-          if (!actived.args || evnt.currentTarget !== actived.args.cell) {
-            tools.UtilTools.emitEvent(this, 'cell-dblclick', [params, evnt]);
-          }
+        tools.UtilTools.emitEvent(this, 'cell-dblclick', [params, evnt]);
       },
     
       /**
@@ -51462,7 +45176,6 @@ Vue.component('VueAttachmentView', {
         var property = column.property;
     
         if (column.sortable || column.remoteSort) {
-          this.clearOrderIndex();
           var evntParams = {
             column: column,
             property: property,
@@ -51496,17 +45209,11 @@ Vue.component('VueAttachmentView', {
       sort: function sort(field, order) {
         var visibleColumn = this.visibleColumn,
             tableFullColumn = this.tableFullColumn,
-            collectColumn = this.collectColumn,
             remoteSort = this.remoteSort,
             singleSort = this.singleSort;
         var column = VueUtil.find(visibleColumn, function (item) {
           return item.property === field;
         });
-
-        var columns = VueUtil.filterTree(collectColumn, function (item) {
-          return item.property === field;
-        });
-        
         var isRemote = VueUtil.isBoolean(column.remoteSort) ? column.remoteSort : remoteSort;
     
         if (column.sortable || column.remoteSort) {
@@ -51516,15 +45223,12 @@ Vue.component('VueAttachmentView', {
     
           if (column.order !== order) {
             if(singleSort) {
-              [tableFullColumn.concat(collectColumn)].forEach(function (column) {
+              tableFullColumn.forEach(function (column) {
                   column.order = null;
               });
               this.sortingColumns = [];
             }
             column.order = order; // 如果是服务端排序，则跳过本地排序处理
-            columns.forEach( function(col) {
-              col.order = order;
-            });
             if(this.sortingColumns.indexOf(column) == -1)  this.sortingColumns.push(column); //加入排序顺序数组
 
             if (!isRemote) {
@@ -51551,16 +45255,6 @@ Vue.component('VueAttachmentView', {
             });
           }
         });
-
-        var columns = VueUtil.filterTree(this.collectColumn, function (item) {
-          return !property || property == item.property;
-        });
-
-        columns.forEach( function(col) {
-          col.order = null;
-        });
-
-
         return this.handleTableData(true);
       },
     
@@ -52065,7 +45759,7 @@ Vue.component('VueAttachmentView', {
             // 计算 X 逻辑
             if (scrollXLoad) {
               var firstColumn = visibleColumn[0];
-              var cWidth = scrollX.cSize || (firstColumn ? firstColumn.renderWidth : 40);
+              var cWidth = firstColumn ? firstColumn.renderWidth : 40;
               var visibleXSize = (parseFloat(scrollX.vSize || Math.ceil(tableBodyElem.clientWidth / cWidth)) || 0);
               scrollXStore.visibleSize = visibleXSize; // 自动优化
     
@@ -52106,16 +45800,9 @@ Vue.component('VueAttachmentView', {
               }
     
               var clientHeight = tableBodyElem.clientHeight;
-
               var propsHeight = parseInt(_this26.height);
               var calcHeight = propsHeight ? propsHeight : clientHeight;
-
-              if (typeof _this26.height == 'string' && _this26.height.indexOf('%') > 0) {
-                calcHeight = clientHeight;
-              }
-
               var visibleYSize = (parseFloat(scrollY.vSize || Math.ceil(calcHeight / rHeight)) || 0);
-              
               scrollYStore.visibleSize = visibleYSize;
               scrollYStore.rowHeight = rHeight; // 自动优化
     
@@ -52124,7 +45811,7 @@ Vue.component('VueAttachmentView', {
               }
     
               if (!scrollY.rSize) {
-                scrollYStore.renderSize = VueUtil.isFirefox ? visibleYSize + 10 : VueUtil.isEdge ? visibleYSize * 15 : isWebkit ? visibleYSize  + 10 : visibleYSize + 10;
+                scrollYStore.renderSize = VueUtil.isFirefox ? visibleYSize * 6 : VueUtil.isEdge ? visibleYSize * 10 : isWebkit ? visibleYSize + 2 : visibleYSize * 6;
               }
     
               _this26.updateScrollYData();
@@ -52137,9 +45824,8 @@ Vue.component('VueAttachmentView', {
         });
       },
       updateScrollXData: function updateScrollXData() {
-        var scrollXStore = this.scrollXStore,
-            columnStore = this.columnStore,
-            visibleColumn = (columnStore.leftList || []).concat(columnStore.centerList || []).concat(columnStore.rightList || []);
+        var visibleColumn = this.visibleColumn,
+            scrollXStore = this.scrollXStore;
         this.tableColumn = visibleColumn.slice(scrollXStore.startIndex, scrollXStore.startIndex + scrollXStore.renderSize);
         this.updateScrollXSpace();
       },
@@ -52256,6 +45942,7 @@ Vue.component('VueAttachmentView', {
           if (rightBody) {
             rightBody.$el.scrollTop = scrollTop;
           }
+    
           bodyElem.scrollTop = scrollTop;
         }
     
@@ -52332,6 +46019,7 @@ Vue.component('VueAttachmentView', {
        */
       clearScroll: function clearScroll() {
         var _this29 = this;
+    
         var $refs = this.$refs;
         var tableBody = $refs.tableBody;
         var tableBodyElem = tableBody ? tableBody.$el : null;
@@ -52370,18 +46058,6 @@ Vue.component('VueAttachmentView', {
         }
     
         return this.$nextTick();
-      },
-
-      addOrderIndex: function() {
-        this.afterFullData.forEach(function(d, i) {
-          d._orderIndex = i;
-        });
-      },
-
-      clearOrderIndex: function() {
-        this.tableFullData.forEach(function(data) {
-          data._orderIndex = undefined;
-        });
       },
     
       /**
@@ -52432,9 +46108,17 @@ Vue.component('VueAttachmentView', {
 
               if (hasCellRule) {
                 return _this30.validCellRules(type, row, column, cellValue).then(function () {
+                  if (customVal && validStore.visible) {
+                    tools.UtilTools.setCellValue(row, column, cellValue);
+                  }
+    
                   _this30.clearValidate();
                 }).catch(function (_ref7) {
                   var rule = _ref7.rule;
+    
+                  if (customVal) {
+                    tools.UtilTools.setCellValue(row, column, cellValue);
+                  }
     
                   _this30.showValidTooltip({
                     rule: rule,
@@ -52476,6 +46160,7 @@ Vue.component('VueAttachmentView', {
           var renderWidth = column.renderWidth;
           var fixed = column.fixed;
           var filters = column.filters;
+          var dragged = column.dragged;
 
           if (property && !visible) {
             setting.hidden.push(property);
@@ -52496,7 +46181,7 @@ Vue.component('VueAttachmentView', {
               }
             });
           }
-          if (!isGroup && property && table.dragged) {
+          if (!isGroup && property && dragged) {
             setting.drag.push({
               property: property,
               index: this.getColumnIndex(column)
@@ -52506,7 +46191,7 @@ Vue.component('VueAttachmentView', {
 
         if(isGroup) {
           this.collectColumn.forEach(function(collectColumn, index) {
-            if (table.dragged) {
+            if (collectColumn.dragged) {
               setting.drag.push({
                 property: table.beforeDragColumn.indexOf(collectColumn),
                 index: index
@@ -52544,10 +46229,6 @@ Vue.component('VueAttachmentView', {
       },
 
       setUserSetting: function(settingStr) {
-        this.resetFixColumn();
-        this.resetCustoms();
-        this.resetResizable();
-        this.clearOrderIndex();
         var setting =  JSON.parse(settingStr);
         var tableFullColumn = this.tableFullColumn;
         var table = this;
@@ -52588,19 +46269,15 @@ Vue.component('VueAttachmentView', {
             var sortingColumn = table.safeGetColumnByField(orderObj.property);
             table.sortingColumns.push(sortingColumn);
             sortingColumn.order = orderObj.order;
-
-            var columns = VueUtil.filterTree(table.collectColumn, function (item) {
-              return item.property === orderObj.property;
-            });
-
-            columns.forEach( function(col) {
-              col.order = orderObj.order;
-            });
-
           });
         }
 
         var dragColumns = setting.drag;
+        dragColumns.sort(function(a, b) {
+          var aIndex = table.getColumnIndex(table.safeGetColumnByField(a.property));
+          var bIndex = table.getColumnIndex(table.safeGetColumnByField(b.property));
+          return aIndex - bIndex;
+        });
 
         VueUtil.forEach(dragColumns, function(dragObj) {
           var property = dragObj.property;
@@ -52616,7 +46293,7 @@ Vue.component('VueAttachmentView', {
           var newColumnIndex = index;
 
           var currRow = cols.splice(oldColumnIndex, 1)[0];
-          table.dragged = 'dragged';
+          currRow.dragged = 'dragged';
           cols.splice(newColumnIndex, 0, currRow);
         });
         
@@ -52631,8 +46308,6 @@ Vue.component('VueAttachmentView', {
 
         this.handleTableData(true);
         this.cacheColumnMap();
-
-        this.$emit('set-user-setting', setting);
         return this.refreshColumn();
       },
 
@@ -52643,13 +46318,7 @@ Vue.component('VueAttachmentView', {
           if(this.isGroup && !this.beforeDragColumn) {
             this.beforeDragColumn = this.collectColumn.slice(0);
           }
-
-          var el = self.$el.querySelector('.body--wrapper>.vue-xtable-table--header .vue-xtable-header--row');
-
-          if (!el) {
-            return;
-          }
-          self.columnDragSortable = Sortable.create(el, {
+          self.columnDragSortable = Sortable.create(self.$el.querySelector('.body--wrapper>.vue-xtable-table--header .vue-xtable-header--row'), {
             handle: '.vue-xtable-header--column:not(.col--fixed):not(.col--index):not(.col--drag)',
             onEnd: this.onDragEnd,
             onMove: function(evt) {
@@ -52694,7 +46363,7 @@ Vue.component('VueAttachmentView', {
         var oldColumnIndex = xTable.getColumnIndex(tableColumn[oldIndex]);
         var newColumnIndex = xTable.getColumnIndex(tableColumn[newIndex]); // 移动到目标列
         var currCol = col.splice(oldColumnIndex, 1)[0];
-        xTable.dragged = 'dragged';
+        currCol.dragged = 'dragged';
         col.splice(newColumnIndex, 0, currCol);
         xTable.loadColumn(col);
         xTable.$emit('column-drag', {
@@ -52705,7 +46374,6 @@ Vue.component('VueAttachmentView', {
       },
 
       resetColumnDrag: function() {
-        this.dragged = false;
         if(this.originColumn) {
           this.loadColumn(this.originColumn);
         }
@@ -52726,71 +46394,19 @@ Vue.component('VueAttachmentView', {
        *************************/
 
 
-      initRowDrag: function (fixed) {
+      initRowDrag: function () {
         var self = this;
         self.$nextTick(function () {
-          var className = fixed == 'left' ? 'fixed-left--wrapper' : fixed == 'right' ? 'fixed-right--wrapper' : 'body--wrapper';
-          if (!this.overflowX) className = 'body--wrapper';
-          
-          var el = self.$el.querySelector('.' + className + '>.vue-xtable-table--body tbody');
-
-          if (!el) return;
-
-          if (self.rowSortable) {
-
-            if (self.rowSortable.el != el) {
-              self.rowSortable.destroy();
-            } else {
-              return;
-            }
-          }
-
-          self.rowSortable = Sortable.create(el, {
+          self.rowSortable = Sortable.create(self.$el.querySelector('.body--wrapper>.vue-xtable-table--body tbody'), {
             handle: '.col--drag',
-            group: {
-              put: false
-            },
-            onChange: function (evt) {
-              if (!fixed) return;
-              var newIndex = evt.newIndex;
-              var dragingRowId =  document.querySelector('[draggable="true"]').dataset.rowid;
-
-              var mainTr = document.querySelector('.body--wrapper tr[data-rowid="' + dragingRowId + '"]');
-              var container = mainTr.parentElement;
-
-              if(VueUtil.indexOf(container.children, mainTr) < newIndex) {
-
-                container.children[newIndex].insertAdjacentElement('afterend', mainTr);
-              } else {
-                container.insertBefore(mainTr, container.children[newIndex]);
-
-              }
-
-            },
             onEnd: function (obj) {
 
               var newIndex = obj.newIndex,
                 oldIndex = obj.oldIndex;
               var data = self.tableData;
-              var fullData = self.afterFullData;
-              var currRow = data[oldIndex];
-
-              var fullOldIndex = fullData.indexOf(currRow);
-              var fullNewIndex;
-              var beforeRow = data[newIndex - 1];
-              if (beforeRow) {
-                fullNewIndex = fullData.indexOf(beforeRow) + 1;
-              } else {
-                fullNewIndex = 0;
-              }
-
-              var fullCurrRow = fullData.splice(fullOldIndex, 1)[0];
-              fullData.splice(fullNewIndex, 0, fullCurrRow);
-
-              self.addOrderIndex();
-
-              self.updateAfterFullData();
-              self.setCurrentRow(fullCurrRow);
+              var currRow = data.splice(oldIndex, 1)[0];
+              data.splice(newIndex, 0, currRow);
+              self.setCurrentRow(currRow);
 
               self.clearSelected();
               self.clearChecked();
@@ -52801,8 +46417,6 @@ Vue.component('VueAttachmentView', {
               self.editStore.checked.rowNodes = null;
               self.editStore.selected.args = null;
 
-              self.handleTableData(true);
-              
               self.$emit('row-drag', {
                 newIndex: newIndex,
                 oldIndex: oldIndex,
@@ -52819,24 +46433,7 @@ Vue.component('VueAttachmentView', {
 
       getColumnIndexFromVisibleIndex: function(visibleIndex) {
         return this.tableFullColumn.indexOf(this.tableColumn[visibleIndex]);
-      },
-
-      getIsRequiredByOne: function(property){
-        var editRules = this.enabledEditRules;
-
-        if (!editRules) {
-          return;
-        }
-        
-        var columnRules = VueUtil.get(editRules, property);
-        var isRequired;
-        if (columnRules) {
-          isRequired = columnRules.some(function (rule) {
-            return rule.required;
-          });
-        }
-        return isRequired;
-      },
+      }
     }; // Module methods
     
     var funcs = 'filter,clearFilter,closeMenu,getMouseSelecteds,getMouseCheckeds,clearCopyed,clearChecked,clearHeaderChecked,clearIndexChecked,clearSelected,insert,insertAt,insertRow,delRow,remove,removeSelecteds,revert,revertData,getRecordset,getInsertRecords,getRemoveRecords,getUpdateRecords,clearActived,getActiveRow,hasActiveRow,isActiveByRow,setActiveRow,setActiveCell,setSelectCell,clearValidate,fullValidate,validate,exportCsv,openExport,exportData,openImport,importData,readFile,importByFile,print'.split(',');
@@ -52868,16 +46465,6 @@ Vue.component('VueAttachmentView', {
           columnStore = $table.columnStore,
           footerData = $table.footerData;
       var fixedColumn = columnStore[''.concat(fixedType, 'List')];
-
-      $table.$nextTick(function() {
-        var hasDragCol = VueUtil.find($table.tableColumn, function (col) {
-          return col.type === 'drag';
-        });
-        if(hasDragCol) {
-          $table.initRowDrag(hasDragCol.fixed);
-        }
-      });
-
       return h('div', {
         class: 'vue-xtable-table--fixed-'.concat(fixedType, '-wrapper'),
         ref: ''.concat(fixedType, 'Container')
@@ -52946,7 +46533,7 @@ Vue.component('VueAttachmentView', {
         },
         // 是否带有纵向边框
         border: {
-          type: [Boolean, Object],
+          type: Boolean,
           default: function _default() {
             return GlobalConfig.border;
           }
@@ -53128,10 +46715,6 @@ Vue.component('VueAttachmentView', {
         editConfig: Object,
         // 校验配置项
         validConfig: Object,
-        // 导出配置项
-        exportConfig: Object,
-        // 导入配置项
-        importConfig: Object,
         // 校验规则配置项
         editRules: Object,
         // 优化配置项
@@ -53140,14 +46723,6 @@ Vue.component('VueAttachmentView', {
         params: Object,
         //允许列拖拽排序
         columnDrag: Boolean,
-        recalculateAfterClearActived: {
-          type: Boolean,
-          default: true,
-        },
-        // 粘贴前处理
-        beforePaste: Function,
-        // 复制前处理
-        beforeCopy: Function,
       },
       provide: function provide() {
         return {
@@ -53278,9 +46853,7 @@ Vue.component('VueAttachmentView', {
           validResults: [],
           printUrl: '',
           // 存放排序列顺序
-          sortingColumns: [],
-          //条件处理后
-          afterFullData: [],
+          sortingColumns: []
         };
       },
       computed: {
@@ -53361,7 +46934,7 @@ Vue.component('VueAttachmentView', {
          * 判断列全选的复选框是否禁用
          */
         isAllCheckboxDisabled: function isAllCheckboxDisabled() {
-          var tableData = this.afterFullData,
+          var tableFullData = this.tableFullData,
               treeConfig = this.treeConfig; // 在 v3.0 中废弃 selectConfig
     
           var checkboxConfig = this.checkboxConfig || this.selectConfig || {};
@@ -53369,13 +46942,13 @@ Vue.component('VueAttachmentView', {
               checkMethod = checkboxConfig.checkMethod;
     
           if (strict) {
-            if (tableData.length) {
+            if (tableFullData.length) {
               if (checkMethod) {
                 if (treeConfig) {} // 暂时不支持树形结构
                 // 如果所有行都被禁用
     
     
-                return tableData.every(function (row, rowIndex) {
+                return tableFullData.every(function (row, rowIndex) {
                   return !checkMethod({
                     row: row,
                     rowIndex: rowIndex,
@@ -53404,38 +46977,15 @@ Vue.component('VueAttachmentView', {
             res[result.rowId][result.property].push(result);
           });
           return res;
-        },
-        enabledEditRules: function() {
-          var editRules = this.editRules || {};
-          var resultRules = {};
-          VueUtil.each(editRules, function(rules, prop) {
-            resultRules[prop] = VueUtil.filter(rules, function(rule) {
-              return rule.enabled == null || (VueUtil.isBoolean(rule.enabled) ? rule.enabled : rule.enabled());
-            });
-          });
-
-          return resultRules;
         }
       },
       watch: {
         data: function data(value) {
           if (!this._isUpdateData) {
-            this.editStore.actived.row && this.clearActived();
             this.loadTableData(value, true).then(this.handleDefault);
           }
     
           this._isUpdateData = false;
-        },
-        afterFullData: function(){
-          var children = this.treeConfig && this.treeConfig.children;
-
-          function updateRowIndex(data){
-            data.forEach(function(row, i) {
-              row.$rowIndex = i;
-              children && VueUtil.isArray(row[children]) && (updateRowIndex(row[children]));
-            });
-          }
-          updateRowIndex(this.afterFullData);
         },
         customs: function customs(value) {
           if (!this.isUpdateCustoms) {
@@ -53500,7 +47050,7 @@ Vue.component('VueAttachmentView', {
           }
         },
         syncResize: function syncResize(value) {
-          if (value !== undefined && value !== null) {
+          if (value) {
             this.$nextTick(this.recalculate);
           }
         },
@@ -53546,8 +47096,9 @@ Vue.component('VueAttachmentView', {
           // 最后滚动位置
           lastScrollLeft: 0,
           lastScrollTop: 0,
-          // 完整数据
+          // 完整数据、条件处理后
           tableFullData: [],
+          afterFullData: [],
           // 缓存数据集
           fullAllDataRowMap: new Map(),
           fullAllDataRowIdData: {},
@@ -53626,6 +47177,8 @@ Vue.component('VueAttachmentView', {
 
         tools.GlobalEvent.on(this, 'paste', this.handleGlobalPaste);
     
+        tools.GlobalEvent.on(this, 'resize', this.handleGlobalResizeEvent);
+    
         tools.GlobalEvent.on(this, 'contextmenu', this.handleGlobalContextmenuEvent);
     
         this.preventEvent(null, 'created', {
@@ -53646,11 +47199,10 @@ Vue.component('VueAttachmentView', {
             return col.type === 'drag';
           });
           if(hasDragCol) {
-            this.initRowDrag(hasDragCol.fixed);
+            this.initRowDrag();
           }
         });
 
-        VueUtil.addResizeListener(this.getParentElem(), this.handleGlobalResizeEvent);
       },
       activated: function activated() {
         this.refreshScroll();
@@ -53659,7 +47211,6 @@ Vue.component('VueAttachmentView', {
         });
       },
       deactivated: function deactivated() {
-        this.clostTooltip();
         this.preventEvent(null, 'deactivated', {
           $table: this
         });
@@ -53701,12 +47252,7 @@ Vue.component('VueAttachmentView', {
         tools.GlobalEvent.off(this, 'resize');
     
         tools.GlobalEvent.off(this, 'contextmenu');
-
-        tools.GlobalEvent.off(this, 'paste');
-
-        var parentElem = this.getParentElem();
-        parentElem && VueUtil.removeResizeListener(parentElem, this.handleGlobalResizeEvent);
-
+    
         this.preventEvent(null, 'destroyed', {
           $table: this
         });
@@ -53761,7 +47307,7 @@ Vue.component('VueAttachmentView', {
         return h('div', {
           class: (_class = {
             'vue-xtable-table': 1
-          }, tools.UtilTools.defineProperty(_class, 'size--'.concat(vSize), vSize), tools.UtilTools.defineProperty(_class, 'vue-xtable-editable', editConfig), tools.UtilTools.defineProperty(_class, 'show--head', showHeader), tools.UtilTools.defineProperty(_class, 'show--foot', showFooter), tools.UtilTools.defineProperty(_class, 'fixed--left', leftList.length), tools.UtilTools.defineProperty(_class, 'fixed--right', rightList.length), tools.UtilTools.defineProperty(_class, 'all-overflow', showOverflow), tools.UtilTools.defineProperty(_class, 'all-head-overflow', showHeaderOverflow), tools.UtilTools.defineProperty(_class, 'c--highlight', highlightCell), tools.UtilTools.defineProperty(_class, 't--animat', optimizeOpts.animat), tools.UtilTools.defineProperty(_class, 't--stripe', stripe), tools.UtilTools.defineProperty(_class, 't--border', typeof border === 'object' ? border.y : border), tools.UtilTools.defineProperty(_class, 't--border-hide-x', typeof border === 'object' ? border.x === false : false),tools.UtilTools.defineProperty(_class, 't--border-hide-outside', typeof border === 'object' ? border.outside === false : false), tools.UtilTools.defineProperty(_class, 't--selected', mouseConfig.selected), tools.UtilTools.defineProperty(_class, 't--checked', mouseConfig.checked), tools.UtilTools.defineProperty(_class, 'row--highlight', highlightHoverRow), tools.UtilTools.defineProperty(_class, 'column--highlight', highlightHoverColumn), tools.UtilTools.defineProperty(_class, 'is--loading', loading), tools.UtilTools.defineProperty(_class, 'scroll--y', overflowY), tools.UtilTools.defineProperty(_class, 'scroll--x', overflowX), tools.UtilTools.defineProperty(_class, 'virtual--x', scrollXLoad), tools.UtilTools.defineProperty(_class, 'virtual--y', scrollYLoad), _class)
+          }, tools.UtilTools.defineProperty(_class, 'size--'.concat(vSize), vSize), tools.UtilTools.defineProperty(_class, 'vue-xtable-editable', editConfig), tools.UtilTools.defineProperty(_class, 'show--head', showHeader), tools.UtilTools.defineProperty(_class, 'show--foot', showFooter), tools.UtilTools.defineProperty(_class, 'fixed--left', leftList.length), tools.UtilTools.defineProperty(_class, 'fixed--right', rightList.length), tools.UtilTools.defineProperty(_class, 'all-overflow', showOverflow), tools.UtilTools.defineProperty(_class, 'all-head-overflow', showHeaderOverflow), tools.UtilTools.defineProperty(_class, 'c--highlight', highlightCell), tools.UtilTools.defineProperty(_class, 't--animat', optimizeOpts.animat), tools.UtilTools.defineProperty(_class, 't--stripe', stripe), tools.UtilTools.defineProperty(_class, 't--border', border), tools.UtilTools.defineProperty(_class, 't--selected', mouseConfig.selected), tools.UtilTools.defineProperty(_class, 't--checked', mouseConfig.checked), tools.UtilTools.defineProperty(_class, 'row--highlight', highlightHoverRow), tools.UtilTools.defineProperty(_class, 'column--highlight', highlightHoverColumn), tools.UtilTools.defineProperty(_class, 'is--loading', loading), tools.UtilTools.defineProperty(_class, 'scroll--y', overflowY), tools.UtilTools.defineProperty(_class, 'scroll--x', overflowX), tools.UtilTools.defineProperty(_class, 'virtual--x', scrollXLoad), tools.UtilTools.defineProperty(_class, 'virtual--y', scrollYLoad), _class)
         }, [
         /**
          * 隐藏列
@@ -53851,7 +47397,7 @@ Vue.component('VueAttachmentView', {
             filterStore: filterStore
           },
           ref: 'filterWrapper'
-        }) : undefined,
+        }) : _e(),
         /**
          * 快捷菜单
          */
@@ -53974,21 +47520,18 @@ Vue.component('VueAttachmentView', {
     copyFormatter: [Function, Array, String],
     // 黏贴时值的格式化方法
     pasteFormatter: [Function, Array, String],
-    // 值的format缓存key
-    formatterKey: [Function, Array, String],
     // 额外的参数
     params: Object,
     visible: {
       type: Boolean,
       default: true
-    },
-    excelExportConfig: Function
+    }
   };
   var watch = {};
   VueUtil.keys(props).forEach(function (name) {
     watch[name] = function (value) {
       this.columnConfig.update(name, value);
-      this.$table.refreshColumn(false);
+      this.$table.refreshColumn();
     };
   });
   var VueXtableColumn = {
@@ -54126,9 +47669,6 @@ Vue.component('VueAttachmentView', {
       if (value) {
         this.show();
       }
-    },
-    deactivated: function() {
-      this.wrapperMouseleaveEvent({});
     },
     beforeDestroy: function beforeDestroy() {
       var $el = this.$el,
@@ -54357,31 +47897,16 @@ Vue.component('VueAttachmentView', {
   }
 })(this, function (tools, baseTable) {
 
-  function getHotKey(hotKeys, btnType) {
-    var btnHotKey = hotKeys[btnType];
-    var focusClickTypes = ['setting', 'fixed'];
-    if(btnHotKey) {
-      return [
-        {
-          name: 'hotkey',
-          arg: btnHotKey.key,
-          value: btnHotKey.keyAction || (focusClickTypes.indexOf(btnType) > -1 ? 'focusClick' : undefined)
-        }
-      ];
-    }
-    return;
-  }
-
   var vueFixedPanel = {
     template: '<div class="vue-xtable-toolbar-fixed-panel">\
     <vue-form label-width="100px"> \
       <vue-form-item :label="$t(\'vue.table.leftPin\')"> \
-        <vue-select append-to-self ref="left" clearable v-model="left" multiple @change="leftPin" > \
+        <vue-select ref="left" clearable v-model="left" multiple @change="leftPin" > \
           <vue-option v-for="(column, index) in options" :key="index" :label="column.label" :value="column.value"></vue-option> \
         </vue-select> \
       </vue-form-item> \
       <vue-form-item :label="$t(\'vue.table.rightPin\')"> \
-        <vue-select append-to-self  ref="right" clearable v-model="right" multiple @change="rightPin"> \
+        <vue-select ref="right" clearable v-model="right" multiple @change="rightPin"> \
           <vue-option v-for="(column, index) in options" :key="index" :label="column.label" :value="column.value"></vue-option> \
         </vue-select> \
       </vue-form-item> \
@@ -54550,19 +48075,7 @@ Vue.component('VueAttachmentView', {
       },
       size: String,
       data: Array,
-      customs: Array,
-      tabKey: {
-        type: [Boolean, Object],
-        default: function _default() {
-          return GlobalConfig.toolbar.tabKey;
-        }
-      },
-      hotKey: {
-        type: Object,
-        default: function _default() {
-          return GlobalConfig.toolbar.hotKey;
-        }
-      }
+      customs: Array
     },
     inject: {
       $grid: {
@@ -54620,10 +48133,10 @@ Vue.component('VueAttachmentView', {
         return VueUtil.assign({}, GlobalConfig.toolbar.refresh, this.refresh);
       },
       importOpts: function importOpts() {
-        return VueUtil.assign({}, GlobalConfig.toolbar.import, typeof this.import == 'object' ? VueUtil.assign({display: true},this.import) : {display: this.import});
+        return VueUtil.assign({}, GlobalConfig.toolbar.import, typeof this.import == 'object' ? this.import : {display: this.import});
       },
       exportOpts: function exportOpts() {
-        return VueUtil.assign({}, GlobalConfig.toolbar.export, typeof this.export == 'object' ? VueUtil.assign({display: true},this.export) : {display: this.export});
+        return VueUtil.assign({}, GlobalConfig.toolbar.export, typeof this.export == 'object' ? this.export : {display: this.export});
       },
       resizableOpts: function resizableOpts() {
         return VueUtil.assign({
@@ -54724,11 +48237,6 @@ Vue.component('VueAttachmentView', {
       var customWrapperOns = {};
       var $buttons = $scopedSlots.buttons;
       var $tools = $scopedSlots.tools;
-      var tabKey = _this2.tabKey;
-      if (tabKey === true) {
-        tabKey = {};
-      }
-      var hotKey = _this2.hotKey || {};
 
       if (setting || fixed) {
         if (settingOpts.trigger === 'manual') {// 手动触发
@@ -54740,23 +48248,7 @@ Vue.component('VueAttachmentView', {
           customWrapperOns.mouseleave = this.handleWrapperMouseleaveEvent;
         } else {
           // 点击触发
-          var self =this;
           customBtnOns.click = this.handleClickSettingEvent;
-          customBtnOns.keydown = function (e) {
-            if (e.keyCode == 27) {
-              e.stopPropagation();
-              self.handleClickSettingEvent(e);
-            }
-          };
-          customWrapperOns.keydown = function (e) {
-            if (e.keyCode == 27) {
-              e.stopPropagation();
-              self.handleClickSettingEvent(e);
-            }
-          };
-          customWrapperOns.click = function (e) {
-            e.stopPropagation();
-          };
         }
       }
 
@@ -54777,22 +48269,8 @@ Vue.component('VueAttachmentView', {
           props: {
             disabled: item.disabled
           },
-          directives: item.key ? [
-            {
-              name: 'hotkey',
-              arg: item.key,
-              value: item.keyAction
-            }
-          ] : undefined,
-          attrs: {
-            tabindex: tabKey || item.tabIndex !== undefined ? item.tabIndex : -1
-          }
         }, item.dropdowns && item.dropdowns.length ? [
-          h('vue-button', {
-            attrs: {
-              tabindex: tabKey || item.tabIndex !== undefined ? item.tabIndex : -1
-            }
-          }, [tools.UtilTools.getFuncText(item.name),
+          h('vue-button', null, [tools.UtilTools.getFuncText(item.name),
           h('i', {
             class: 'vue-icon-arrow-down vue-icon--right'
           })
@@ -54822,10 +48300,8 @@ Vue.component('VueAttachmentView', {
             type: 'text',
             icon: GlobalConfig.icon.addRow,
           },
-          directives: getHotKey(hotKey, 'addRow'),
           attrs: {
-            title: GlobalConfig.i18n('vue.xtable.toolbar.addRow'),
-            tabindex: tabKey ? tabKey['addRow'] : -1
+            title: GlobalConfig.i18n('vue.xtable.toolbar.addRow')
           },
           on: {
             click: this.addRowEvent
@@ -54839,10 +48315,8 @@ Vue.component('VueAttachmentView', {
             type: 'text',
             icon: GlobalConfig.icon.insertRow,
           },
-          directives: getHotKey(hotKey, 'insertRow'),
           attrs: {
-            title: GlobalConfig.i18n('vue.xtable.toolbar.insertRow'),
-            tabindex: tabKey ? tabKey['insertRow'] : -1
+            title: GlobalConfig.i18n('vue.xtable.toolbar.insertRow')
           },
           on: {
             click: this.insertRowEvent
@@ -54856,10 +48330,8 @@ Vue.component('VueAttachmentView', {
             icon: GlobalConfig.icon.delRow,
             disabled: this.disableDelRow
           },
-          directives: getHotKey(hotKey, 'delRow'),
           attrs: {
-            title: GlobalConfig.i18n('vue.xtable.toolbar.delRow'),
-            tabindex: tabKey ? tabKey['delRow'] : -1
+            title: GlobalConfig.i18n('vue.xtable.toolbar.delRow')
           },
           on: {
             click: this.delRowEvent
@@ -54874,10 +48346,8 @@ Vue.component('VueAttachmentView', {
           type: 'text',
           icon: GlobalConfig.icon.import,
         },
-        directives: getHotKey(hotKey, 'import'),
         attrs: {
-          title: GlobalConfig.i18n('vue.xtable.toolbar.impConfirm'),
-          tabindex: tabKey ? tabKey['import'] : -1
+          title: GlobalConfig.i18n('vue.xtable.toolbar.impConfirm')
         },
         on: {
           click: this.importEvent
@@ -54888,10 +48358,8 @@ Vue.component('VueAttachmentView', {
           type: 'text',
           icon: GlobalConfig.icon.export
         },
-        directives: getHotKey(hotKey, 'export'),
         attrs: {
-          title: GlobalConfig.i18n('vue.xtable.toolbar.expConfirm'),
-          tabindex: tabKey ? tabKey['export'] : -1
+          title: GlobalConfig.i18n('vue.xtable.toolbar.expConfirm')
         },
         on: {
           click: this.exportEvent
@@ -54903,10 +48371,8 @@ Vue.component('VueAttachmentView', {
           icon: GlobalConfig.icon.refresh,
           loading: this.isRefresh
         },
-        directives: getHotKey(hotKey, 'refresh'),
         attrs: {
-          title: GlobalConfig.i18n('vue.xtable.toolbar.refresh'),
-          tabindex: tabKey ? tabKey['refresh'] : -1
+          title: GlobalConfig.i18n('vue.xtable.toolbar.refresh')
         },
         on: {
           click: this.refreshEvent
@@ -54918,15 +48384,9 @@ Vue.component('VueAttachmentView', {
           'is--active': settingStore.visible
         }],
         ref: 'customWrapper'
-      }, [h('button', {
+      }, [h('div', {
         class: 'vue-xtable-custom--setting-btn',
-        on: customBtnOns,
-        directives: getHotKey(hotKey, 'setting'),
-        attrs: {
-          type: 'button',
-          title: GlobalConfig.i18n('vue.xtable.toolbar.setting'),
-          tabindex: tabKey ? tabKey['setting'] : -1
-        }
+        on: customBtnOns
       }, [h('i', {
         class: GlobalConfig.icon.custom
       })]), h('div', {
@@ -54968,15 +48428,9 @@ Vue.component('VueAttachmentView', {
             'is--active': settingStore.fixedVisible
           }],
           ref: 'fixedWrapper'
-        }, [h('button', {
+        }, [h('div', {
           class: 'vue-xtable-custom--setting-btn',
-          on: customBtnOns,
-          directives: getHotKey(hotKey, 'fixed'),
-          attrs: {
-            type: 'button',
-            title: GlobalConfig.i18n('vue.xtable.toolbar.fixed'),
-            tabindex: tabKey ? tabKey['fixed'] : -1
-          },
+          on: customBtnOns
         }, [h('i', {
           class: GlobalConfig.icon.fixed
         })]), h('div', {
@@ -54990,8 +48444,7 @@ Vue.component('VueAttachmentView', {
               visible: settingStore.fixedVisible,
               tableFullColumn: tableFullColumn,
               toolbar: _this2
-            },
-            ref: 'fixedPanel'
+            }
           })]
           )
         ]
@@ -55036,13 +48489,6 @@ Vue.component('VueAttachmentView', {
         });
 
         this.comp = this.$table || this.$grid;
-        var table = (this.$table || this.$grid.$refs.xTable);
-
-        var self = this;
-        table && table.$on('set-user-setting', function() {
-          var fixedPanel = self.$refs.fixedPanel;
-          fixedPanel && fixedPanel.updateFixed(fixedPanel.cols);
-        });
       },
       openSetting: function openSetting() {
         this.settingStore.visible = true;
@@ -55459,19 +48905,17 @@ Vue.component('VueAttachmentView', {
           footerData = _comp$getTableData.footerData;
 
         var selectRecords = comp.getSelectRecords();
-        var defOpts = VueUtil.assign({
-          original: true,
-          message: true,
-          isPrint: true,
-          showOriginal: true,
-        }, exportOpts, options);
-
-        var exportColumns = fullColumn.filter(defOpts.columnFilterMethod || function (column) {
+        var exportColumns = fullColumn.filter(function (column) {
           return column.type === 'index' || column.property && ['checkbox', 'selection', 'radio'].indexOf(column.type) === -1;
         });
         var treeStatus = comp.getTreeStatus();
         var forceOriginal = !!treeStatus;
         var hasFooter = !!footerData.length;
+        var defOpts = VueUtil.assign({
+          original: true,
+          message: true,
+          isPrint: true,
+        }, exportOpts, options);
         var types = defOpts.types || baseTable.exportTypes; // 处理类型
 
         defOpts.types = types.map(function (value) {
@@ -55482,7 +48926,7 @@ Vue.component('VueAttachmentView', {
         }); // 索引列默认不选中
 
         exportColumns.forEach(function (column) {
-          column.checked = defOpts.columnCheckMethod ? defOpts.columnCheckMethod(column) : column.type !== 'index';
+          column.checked = column.type !== 'index';
         }); // 更新条件
 
         VueUtil.assign(exportStore, {
@@ -55500,7 +48944,6 @@ Vue.component('VueAttachmentView', {
           type: defOpts.type || defOpts.types[0].value,
           types: defOpts.types,
           original: forceOriginal || defOpts.original,
-          showOriginal: defOpts.showOriginal,
           message: defOpts.message,
           isPrint: defOpts.isPrint,
           isHeader: true,
@@ -55644,42 +49087,12 @@ Vue.component('VueAttachmentView', {
           align = this.align,
           border = this.border,
           background = this.background,
-          perfect = this.perfect,
-          $scopedSlots = this.$scopedSlots,
-          $grid = this.$grid;
-
-      var $left = $scopedSlots.left;
-      var $right = $scopedSlots.right;
-
-      var childNodes = [];
-
-      if($left){
-        childNodes.push(
-          h('span', {
-            class: 'vue-xtable-pager--left-wrapper'
-          }, [
-            $left.call(this, { $grid: $grid })
-          ])
-        );
-      }
-
-      childNodes = childNodes.concat(layouts.map(function (name) {
-        return _this['render'.concat(name)](h);
-      }));
-
-      if($right){
-        childNodes.push(
-          h('span', {
-            class: 'vue-xtable-pager--right-wrapper'
-          }, [
-            $right.call(this, { $grid: $grid })
-          ])
-        );
-      }
-
+          perfect = this.perfect;
       return h('div', {
         class: ['vue-xtable-pager', (_ref = {}, tools.UtilTools.defineProperty(_ref, 'size--'.concat(vSize), vSize), tools.UtilTools.defineProperty(_ref, 'align--'.concat(align), align), tools.UtilTools.defineProperty(_ref, 'p--border', border), tools.UtilTools.defineProperty(_ref, 'p--background', background), tools.UtilTools.defineProperty(_ref, 'p--perfect', perfect), tools.UtilTools.defineProperty(_ref, 'is--loading', loading), _ref)]
-      }, childNodes);
+      }, layouts.map(function (name) {
+        return _this['render'.concat(name)](h);
+      }));
     },
     methods: {
       // 上一页
@@ -56050,7 +49463,7 @@ var convertToRows = function convertToRows(originColumns) {
   var maxLevel = 1;
 
   var traverse = function traverse(column, parent) {
-    if (parent) {
+    if (parent && !column.fixed) {
       column.level = parent.level + 1;
 
       if (maxLevel < column.level) {
@@ -56058,6 +49471,9 @@ var convertToRows = function convertToRows(originColumns) {
       }
     }
 
+    if(column.fixed) {
+      column.level = 1;
+    }
     if (column.children && column.children.length && column.children.some(function (column) {
       return column.visible;
     })) {
@@ -56065,10 +49481,8 @@ var convertToRows = function convertToRows(originColumns) {
       column.children.forEach(function (subColumn) {
         if (subColumn.visible) {
           traverse(subColumn, column);
-          if(subColumn.fixed === column.fixed || (!subColumn.fixed && !column.fixed)) {
+          if(!subColumn.fixed) {
             colSpan += subColumn.colSpan;
-          } else {
-            subColumn.level = 1;
           }
         }
       });
@@ -56337,13 +49751,9 @@ var VueXtableHeader = {
           };
         }
         return column.colSpan === 0 ? null : h('th', {
-          class: ['vue-xtable-header--column', column.id, (_ref = {}, _defineProperty(_ref, 'col--'.concat(headAlign), headAlign), _defineProperty(_ref, 'col--fixed', column.fixed),
-            _defineProperty(_ref, 'col--index', column.type === 'index'), _defineProperty(_ref, 'col--drag', column.type === 'drag'), _defineProperty(_ref, 'col--group', isColGroup),
-            _defineProperty(_ref, 'col--ellipsis', hasEllipsis), _defineProperty(_ref, 'fixed--hidden', fixedHiddenColumn), _defineProperty(_ref, 'is--sortable', column.sortable),
-            _defineProperty(_ref, 'is--editable', column.editRender), _defineProperty(_ref, 'is--required', $table.getIsRequiredByOne(column.property)), _defineProperty(_ref, 'is--filter', column.filters.length),
-            _defineProperty(_ref, 'filter--active', column.filters.some(function (item) {
+          class: ['vue-xtable-header--column', column.id, (_ref = {}, _defineProperty(_ref, 'col--'.concat(headAlign), headAlign), _defineProperty(_ref, 'col--fixed', column.fixed), _defineProperty(_ref, 'col--index', column.type === 'index'), _defineProperty(_ref, 'col--drag', column.type === 'drag'), _defineProperty(_ref, 'col--group', isColGroup), _defineProperty(_ref, 'col--ellipsis', hasEllipsis), _defineProperty(_ref, 'fixed--hidden', fixedHiddenColumn), _defineProperty(_ref, 'is--sortable', column.sortable), _defineProperty(_ref, 'is--filter', column.filters.length), _defineProperty(_ref, 'filter--active', column.filters.some(function (item) {
             return item.checked;
-          })),_defineProperty(_ref, 'sort--active', (column.order === 'asc' || column.order === 'desc')) , _ref), tools.UtilTools.getClass(headerClassName, params), tools.UtilTools.getClass(headerCellClassName, params)],
+          })), _ref), tools.UtilTools.getClass(headerClassName, params), tools.UtilTools.getClass(headerCellClassName, params)],
           attrs: {
             'data-colid': column.id,
             colspan: column.colSpan,
@@ -56380,7 +49790,7 @@ var VueXtableHeader = {
          */
         !fixedHiddenColumn && !isColGroup && (VueUtil.isBoolean(column.resizable) ? column.resizable : resizable) ? h('div', {
           class: ['vue-xtable-resizable', {
-            'is--line': typeof border === 'object' ? !border.y : !border
+            'is--line': !border
           }],
           on: {
             mousedown: function mousedown(evnt) {
@@ -56398,14 +49808,12 @@ var VueXtableHeader = {
         }) : null]);
       }).concat([h('th', {
         class: 'col--gutter'
-      }, [h('div', {
-        class: 'col--gutter-inner'
-      })])]));
+      })]));
     }))]),
     /**
      * 其他
      */
-     (typeof border === 'object' && border.x === false) ?   undefined : h('div', {
+    h('div', {
       class: 'vue-xtable-table--repair',
       ref: 'repair'
     })]);
@@ -56765,15 +50173,6 @@ var VueXtableHeader = {
         });
       } 
     };
-
-
-    if (column.type === 'drag') {
-      tdOns['!pointerdown'] = function (evnt) {
-        if ($table.expandeds && $table.expandeds.length > 0) {
-          $table.expandeds = [];
-        }
-      };
-    }
   
   // 合并行或列
     if (spanMethod) {
@@ -56810,9 +50209,7 @@ var VueXtableHeader = {
       attrs: attrs,
       style: cellStyle ? VueUtil.isFunction(cellStyle) ? cellStyle(params) : cellStyle : null,
       on: tdOns
-    }, allColumnOverflow && fixedHiddenColumn ? [h('div', {
-      class: ['vue-xtable-cell'],
-    })] : [h('div', {
+    }, allColumnOverflow && fixedHiddenColumn ? [] : [h('div', {
       class: ['vue-xtable-cell', {
         'c--title': showTitle,
         'c--tooltip': showTooltip,
@@ -56842,22 +50239,28 @@ var VueXtableHeader = {
         rowStyle = $table.rowStyle,
         treeConfig = $table.treeConfig,
         treeExpandeds = $table.treeExpandeds,
+        scrollYLoad = $table.scrollYLoad,
+        scrollYStore = $table.scrollYStore,
         editStore = $table.editStore,
         expandeds = $table.expandeds,
         getColumnIndex = $table.getColumnIndex,
         validResultsCell = $table.validResultsCell;
     var rows = [];
-    tableData.forEach(function (row) {
-      
+    tableData.forEach(function (row, $rowIndex) {
       var _ref3;
   
       var trOn = {};
-      var $rowIndex = row.$rowIndex;
-      var seq = $rowIndex + 1;
       var rowIndex = $rowIndex;
+      var seq = rowIndex + 1;
+  
+      if (scrollYLoad) {
+        seq += scrollYStore.startIndex;
+      } // 确保任何情况下 rowIndex 都精准指向真实 data 索引
+  
   
       rowIndex = $table.getRowIndex(row); // 事件绑定
   
+      row.$rowIndex = $rowIndex;
       row.rowIndex = rowIndex;
 
       var rowid = tools.UtilTools.getRowid($table, row);
@@ -57012,9 +50415,9 @@ var VueXtableHeader = {
    */
   
   
+  var scrollProcessTimeout;
   
   function syncBodyScroll(scrollTop, elem1, elem2) {
-    var scrollProcessTimeout;
     if (elem1 || elem2) {
       if (elem1) {
         elem1.onscroll = null;
@@ -57026,7 +50429,7 @@ var VueXtableHeader = {
         elem2.scrollTop = scrollTop;
       }
   
-      clearTimeout(elem1 ? elem1.scrollProcessTimeout : elem2 ? elem2.scrollProcessTimeout : null);
+      clearTimeout(scrollProcessTimeout);
       scrollProcessTimeout = setTimeout(function () {
         if (elem1) {
           elem1.onscroll = elem1._onscroll;
@@ -57036,14 +50439,6 @@ var VueXtableHeader = {
           elem2.onscroll = elem2._onscroll;
         }
       }, 100);
-
-      if (elem1) {
-        elem1.scrollProcessTimeout = scrollProcessTimeout;
-      }
-  
-      if (elem2) {
-        elem2.scrollProcessTimeout = scrollProcessTimeout;
-      }
     }
   }
   
@@ -57489,9 +50884,7 @@ var VueXtableHeader = {
           }, tools.UtilTools.formatText(list[$table.tableColumn.indexOf(column)], 1))]);
         }).concat([h('td', {
           class: 'col--gutter'
-        },[h('div', {
-          class: 'col--gutter-inner'
-        })])]));
+        })]));
       }))])]);
     },
     methods: {
@@ -57627,17 +51020,11 @@ var VueXtableHeader = {
               },
               visible: true
             });
-            
-            // 复原状态
-            filterStore.options.forEach(function(option) {
-              option._checked = option.checked;
-            });
-
             filterStore.isAllSelected = filterStore.options.every(function (item) {
-              return item._checked;
+              return item.checked;
             });
             filterStore.isIndeterminate = !filterStore.isAllSelected && filterStore.options.some(function (item) {
-              return item._checked;
+              return item.checked;
             });
             this.$nextTick(function () {
               var filterWrapperElem = filterWrapper.$el;
@@ -57645,7 +51032,7 @@ var VueXtableHeader = {
               var wrapperLeft = left - clientWidth / 2 + 10;
 
               if (pageX + clientWidth > visibleWidth) {
-                wrapperLeft = left - clientWidth - 22;
+                wrapperLeft = left - clientWidth;
               }
 
               filterStore.style.left = ''.concat(Math.max(20, wrapperLeft + 20), 'px');
@@ -57680,7 +51067,6 @@ var VueXtableHeader = {
         filterStore.visible = false; // 如果是服务端筛选，则跳过本地筛选处理
 
         if (!remoteFilter) {
-          this.clearOrderIndex();
           this.handleTableData(true);
         }
 
@@ -57732,7 +51118,6 @@ var VueXtableHeader = {
         }
 
         this.closeFilter();
-        this.checkSelectionStatus();
         this.$nextTick(this.recalculate);
       },
 
@@ -57744,11 +51129,9 @@ var VueXtableHeader = {
       resetFilterEvent: function resetFilterEvent(evnt) {
         this.filterStore.options.forEach(function (item) {
           item.checked = false;
-          item._checked = false;
           item.data = item._data;
         });
         this.confirmFilterEvent(evnt);
-        this.checkSelectionStatus();
       },
 
       /**
@@ -57766,7 +51149,6 @@ var VueXtableHeader = {
           if (filters && filters.length) {
             filters.forEach(function (item) {
               item.checked = false;
-              item._checked = false;
               item.data = item._data;
             });
           }
@@ -57882,7 +51264,7 @@ var VueXtableHeader = {
               type: 'checkbox'
             },
             domProps: {
-              checked: item._checked
+              checked: item.checked
             },
             on: {
               change: function change(evnt) {
@@ -57897,7 +51279,7 @@ var VueXtableHeader = {
             class: 'vue-xtable-table--filter-label',
             on: {
               click: function click(evnt) {
-                return _this.changeRadioOption(evnt, !item._checked, item);
+                return _this.changeRadioOption(evnt, !item.checked, item);
               }
             }
           }, item.label)]));
@@ -57931,7 +51313,7 @@ var VueXtableHeader = {
       filterCheckAllEvent: function filterCheckAllEvent(evnt, value) {
         var filterStore = this.filterStore;
         filterStore.options.forEach(function (item) {
-          item._checked = value;
+          item.checked = value;
         });
         filterStore.isAllSelected = value;
         filterStore.isIndeterminate = false;
@@ -57939,10 +51321,10 @@ var VueXtableHeader = {
       checkOptions: function checkOptions() {
         var filterStore = this.filterStore;
         filterStore.isAllSelected = filterStore.options.every(function (item) {
-          return item._checked;
+          return item.checked;
         });
         filterStore.isIndeterminate = !filterStore.isAllSelected && filterStore.options.some(function (item) {
-          return item._checked;
+          return item.checked;
         });
       },
 
@@ -57960,7 +51342,7 @@ var VueXtableHeader = {
       },
       // （多选）筛选发生改变
       changeMultipleOption: function changeMultipleOption(evnt, checked, item) {
-        item._checked = checked;
+        item.checked = checked;
         this.checkOptions();
       },
       // 筛选发生改变
@@ -57973,9 +51355,6 @@ var VueXtableHeader = {
       },
       // 确认筛选
       confirmFilter: function confirmFilter() {
-        this.filterStore.options.forEach(function(option) {
-          option.checked = option._checked;
-        });
         this.$parent.confirmFilterEvent();
       },
       // 重置筛选
@@ -58082,10 +51461,6 @@ var VueXtableHeader = {
             };
   
             if (columnTargetNode.flag) {
-
-              if (VueUtil.closest(columnTargetNode.targetElem, '.vue-xtable-table') !== columnTargetNode.container) {
-                return;
-              }
               var cell = columnTargetNode.targetElem;
               var column = this.getColumnNode(cell).item;
               var typePrefix = ''.concat(layout, '-');
@@ -58396,11 +51771,6 @@ var VueXtableHeader = {
         }
 
         [].unshift.apply(editStore.insertList, newRecords);
-
-        var scrollY = this.optimizeOpts.scrollY;
-        this.scrollYLoad = scrollY && scrollY.gt && scrollY.gt < tableFullData.length;
-
-        this.addOrderIndex();
         this.handleTableData();
         this.updateCache();
         this.checkSelectionStatus();
@@ -58411,7 +51781,7 @@ var VueXtableHeader = {
 
         return this.$nextTick().then(function () {
           _this.recalculate();
-          _this.updateFooter();
+
           return {
             row: newRecords.length ? newRecords[newRecords.length - 1] : null,
             rows: newRecords
@@ -58484,7 +51854,6 @@ var VueXtableHeader = {
         VueUtil.remove(insertList, function (row) {
           return rows.indexOf(row) > -1;
         });
-        this.addOrderIndex();
         this.handleTableData();
         this.updateCache();
         this.checkSelectionStatus();
@@ -58495,7 +51864,7 @@ var VueXtableHeader = {
 
         return this.$nextTick().then(function () {
           _this2.recalculate();
-          _this2.updateFooter();
+
           return {
             row: rows && rows.length ? rows[rows.length - 1] : null,
             rows: rest
@@ -58690,7 +52059,7 @@ var VueXtableHeader = {
             // 判断是否禁用编辑
             var type = 'edit-disabled';
 
-            if (!activeMethod || activeMethod(params) || editConfig.mode === 'row') {
+            if (!activeMethod || activeMethod(params)) {
               if (this.keyboardConfig || this.mouseConfig) {
                 this.clearCopyed(evnt);
                 this.clearChecked();
@@ -58706,14 +52075,7 @@ var VueXtableHeader = {
               actived.column = column;
 
               this.currentActiveRowOldValue = VueUtil.cloneDeep(row);
-              if (clearColumn) {
-                if (Array.isArray(clearColumn.property)) {
-                  // property 绑定多个字段时， 按键输入激活前清空第一个字段值
-                  tools.UtilTools.setCellValue(row, {property: clearColumn.property[0]}, null, _this4);
-                } else {
-                  tools.UtilTools.setCellValue(row, clearColumn, null, _this4);
-                }
-              }
+              if (clearColumn) tools.UtilTools.setCellValue(row, clearColumn, null);
               if (editConfig.mode === 'row') {
                 tableColumn.forEach(function (column) {
                   return _this4._getColumnModel(row, column);
@@ -58725,8 +52087,6 @@ var VueXtableHeader = {
               this.$nextTick(function () {
                 _this4.handleFocus(params, evnt);
               });
-            } else {
-              this.clearActived(evnt);
             }
 
             tools.UtilTools.emitEvent(this, type, [params, evnt]);
@@ -58737,7 +52097,7 @@ var VueXtableHeader = {
               var oldModel = oldColumn.model;
 
               if (oldModel.update) {
-                tools.UtilTools.setCellValue(row, oldColumn, oldModel.value, _this4);
+                tools.UtilTools.setCellValue(row, oldColumn, oldModel.value);
               }
 
               this.clearValidate();
@@ -58764,12 +52124,11 @@ var VueXtableHeader = {
         }
       },
       _setColumnModel: function _setColumnModel(row, column) {
-        var self = this;
         var model = column.model,
             editRender = column.editRender;
 
         if (editRender && model.update) {
-          tools.UtilTools.setCellValue(row, column, model.value, self);
+          tools.UtilTools.setCellValue(row, column, model.value);
 
           model.update = false;
           model.value = null;
@@ -58808,7 +52167,7 @@ var VueXtableHeader = {
         actived.args = null;
         actived.row = null;
         actived.column = null;
-        return (baseTable._valid ? this.clearValidate() : this.$nextTick()).then(this.recalculateAfterClearActived === false ? undefined : this.recalculate);
+        return (baseTable._valid ? this.clearValidate() : this.$nextTick()).then(this.recalculate);
       },
       _getActiveRow: function _getActiveRow() {
         var $el = this.$el,
@@ -58851,18 +52210,12 @@ var VueXtableHeader = {
         if (editRender) {
           var compRender = baseTable.Renderer.get(editRender.name);
 
-          var autofocus = editRender.autofocus || 'input:not([disabled]):not([tabindex=\'-1\']),select:not([disabled]):not([tabindex=\'-1\']),textarea:not([disabled]):not([tabindex=\'-1\']),button:not([disabled]):not([tabindex=\'-1\']),[tabindex]:not([tabindex=\'-1\'])',
+          var autofocus = editRender.autofocus,
               autoselect = editRender.autoselect;
           var inputElem; // 如果指定了聚焦 class
 
           if (autofocus) {
-            // 如果cell有多个可focus对象，focus第一个，shift tab 回退时 focus最后一个
-            if (evnt && evnt.shiftKey) {
-              var inputElems = cell.querySelectorAll(autofocus);
-              inputElem = inputElems[inputElems.length- 1];
-            } else {
-              inputElem = cell.querySelector(autofocus);
-            }
+            inputElem = cell.querySelector(autofocus);
           } // 渲染器的聚焦处理
 
 
@@ -58949,22 +52302,18 @@ var VueXtableHeader = {
             visibleColumn = this.visibleColumn;
 
         if (!VueUtil.isDef(field)) field = 0;
-        var column;
-        if(typeof field === 'number') {
-          column = visibleColumn[field];
-        } else {
-          column = VueUtil.find(visibleColumn, function (column) {
-            return column.property === field;
-          });
-        }
-        var rowIndex = tableData.indexOf(row);
+        if (row && (!editConfig || editConfig.trigger === 'dblclick')) {
+          var column;
+          if(typeof field === 'number') {
+            column = visibleColumn[field];
+          } else {
+            column = VueUtil.find(visibleColumn, function (column) {
+              return column.property === field;
+            });
+          }
+          var rowIndex = tableData.indexOf(row);
 
-        if (rowIndex > -1 && column) {
-
-          this.setCurrentRow(row, column);
-          this.isActivated = true;
-
-          if (row && (!editConfig || editConfig.trigger === 'dblclick' || editConfig.trigger === 'manual')) {
+          if (rowIndex > -1 && column) {
             var cell = tools.DomTools.getCell(this, {
               row: row,
               rowIndex: rowIndex,
@@ -58978,6 +52327,9 @@ var VueXtableHeader = {
               columnIndex: visibleColumn.indexOf(column),
               cell: cell
             };
+
+            this.setCurrentRow(row, column);
+            this.isActivated = true;
             this.handleSelected(params, {});
           }
         }
@@ -59003,13 +52355,7 @@ var VueXtableHeader = {
             cell = params.cell;
 
         var selectMethod = function selectMethod() {
-          if (selected.row !== row || selected.column !== column) {
-
-            if (!(mouseConfig.selected || mouseConfig.checked)) {
-              _this7._clearActived(evnt);
-              return _this7.$nextTick();
-            }
-
+          if ((mouseConfig.selected || mouseConfig.checked) && (selected.row !== row || selected.column !== column)) {
             if (actived.row !== row || (editConfig.mode === 'cell' ? actived.column !== column : false)) {
               if (_this7.keyboardConfig) {
                 _this7.clearChecked(evnt);
@@ -59021,10 +52367,6 @@ var VueXtableHeader = {
                 _this7.clearSelected(evnt);
               }
 
-              if (VueUtil.isIE && document.activeElement && actived.args.cell && actived.args.cell.contains(document.activeElement)) {
-                document.activeElement.blur();
-              }
-              
               _this7.clearActived(evnt);
 
               selected.args = params;
@@ -59036,7 +52378,7 @@ var VueXtableHeader = {
               } // 如果配置了批量选中功能，则为批量选中状态
 
 
-              if (mouseConfig.checked && cell) {
+              if (mouseConfig.checked) {
                 var headerElem = elemStore['main-header-list'];
 
                 _this7.handleChecked([[cell]]);
@@ -59167,21 +52509,13 @@ var VueXtableHeader = {
       */
       handleValidError: function handleValidError(params) {
         var _this = this;
-        var evnt = {
+
+        this.handleActived(params, {
           type: 'valid-error',
           trigger: 'call'
-        };
-
-        if (this.validOpts.cellActive === false) {
-          this.clearSelected(evnt);
-          this.handleSelected(params, evnt).then(function () {
-            return _this.showValidTooltip(params);
-          });
-        } else {
-          this.handleActived(params, evnt).then(function () {
-            return _this.showValidTooltip(params);
-          });
-        }
+        }).then(function () {
+          return _this.showValidTooltip(params);
+        });
       },
 
       /**
@@ -59367,7 +52701,7 @@ var VueXtableHeader = {
       validCellRules: function validCellRules(type, row, column, val) {
         var _this3 = this;
 
-        var editRules = this.enabledEditRules,
+        var editRules = this.editRules,
             treeConfig = this.treeConfig;
         var property = column.property;
         var errorRules = [];
@@ -59376,8 +52710,7 @@ var VueXtableHeader = {
 
         if (property && editRules) {
 //if prop is Array
-      // eslint-disable-next-line no-inner-declarations
-      function validOne(propertyItem){
+		  function validOne(propertyItem){
               var rules = VueUtil.get(editRules, propertyItem);
               var cellValue = VueUtil.isUndefined(val) ? VueUtil.get(row, propertyItem) : val;
 
@@ -59432,7 +52765,7 @@ var VueXtableHeader = {
                     }
                   }));
                 });
-        }
+			  }
 			}
             if(VueUtil.isArray(property)){
                 property.forEach(function(propertyItem){
@@ -59557,25 +52890,16 @@ var VueXtableHeader = {
         var validTip = $refs.validTip;
         var content = rule.message;
         this.$nextTick(function () {
-          if(!VueUtil.isEqual({
+          VueUtil.assign(_this5.validStore, {
             row: row,
             column: column,
             rule: rule,
             content: content,
-            visible: true,
-            isArrow: _this5.validStore.isArrow
-          }, _this5.validStore)){
-            VueUtil.assign(_this5.validStore, {
-              row: row,
-              column: column,
-              rule: rule,
-              content: content,
-              visible: true
-            });
-  
-            if (validTip && (validOpts.message === 'tooltip' || validOpts.message === 'default' && !height && tableData.length < 2)) {
-              validTip.toVisible(cell, content);
-            }
+            visible: true
+          });
+
+          if (validTip && (validOpts.message === 'tooltip' || validOpts.message === 'default' && !height && tableData.length < 2)) {
+            validTip.toVisible(cell, content);
           }
 
           tools.UtilTools.emitEvent(_this5, 'valid-error', [params]);
@@ -59654,7 +52978,6 @@ var VueXtableHeader = {
             // lockView: true,
             // showFooter: false,
             // maskClosable: true
-            appendToBody: VueUtil.getSystemInfo().os === 'iOS'
           },
           on: {
             open: this.showEvent
@@ -59772,7 +53095,7 @@ var VueXtableHeader = {
               defaultOptions.isFooter = value;
             }
           }
-        }, GlobalConfig.i18n('vue.xtable.toolbar.expOptFooter')), defaultOptions.showOriginal ? h('vue-checkbox', {
+        }, GlobalConfig.i18n('vue.xtable.toolbar.expOptFooter')), h('vue-checkbox', {
           props: {
             disabled: storeData.forceOriginal
           },
@@ -59782,7 +53105,7 @@ var VueXtableHeader = {
               defaultOptions.original = value;
             }
           }
-        }, GlobalConfig.i18n('vue.xtable.toolbar.expOptOriginal')) : null])])]), h('div', {
+        }, GlobalConfig.i18n('vue.xtable.toolbar.expOptOriginal'))])])]), h('div', {
           class: 'vue-xtable-export--panel-btns'
         }, [defaultOptions.isPrint ? h('vue-button', {
           on: {
@@ -59885,12 +53208,7 @@ var VueXtableHeader = {
             return GlobalConfig.i18n('vue.xtable.types.'.concat(storeData.type));
           }
     
-          var types = this.defaultOptions.types || baseTable.importTypes;
-
-          if (types.indexOf('xlsx') > -1) {
-            types = types.concat('xls');
-          }
-          return '*.'.concat((types).join(', *.'));
+          return '*.'.concat((this.defaultOptions.types || baseTable.importTypes).join(', *.'));
         }
       },
       render: function render(h) {
@@ -59915,7 +53233,6 @@ var VueXtableHeader = {
             // lockView: true,
             // showFooter: false,
             // maskClosable: true
-            appendToBody: VueUtil.getSystemInfo().os === 'iOS'
           }
         }, [h('div', {
           class: 'vue-xtable-export--panel'
@@ -60015,7 +53332,7 @@ var VueXtableHeader = {
 
 
   (function() {
-    var defaultHtmlStyle = 'body{margin:0;font-size:14px}table{text-align:left;border-width:1px 0 0 1px}tbody{white-space:pre-wrap;}table,td,th{border-style:solid;border-color:#e8eaec}tfoot,thead{background-color:#f8f8f9}td,th{padding:6px;border-width:0 1px 1px 0}.tree-icon-wrapper{position:relative;display:inline-block;width:18px}.tree-icon{position:absolute;top:-9px;left:0;width:0;height:0;border-style:solid;border-width:6px;border-top-color:#939599;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent}.tree-node{text-align:left}.tree-indent{display:inline-block}'; // 导入
+    var defaultHtmlStyle = 'body{margin:0;font-size:14px}table{text-align:left;border-width:1px 0 0 1px}table,td,th{border-style:solid;border-color:#e8eaec}tfoot,thead{background-color:#f8f8f9}td,th{padding:6px;border-width:0 1px 1px 0}.tree-icon-wrapper{position:relative;display:inline-block;width:18px}.tree-icon{position:absolute;top:-9px;left:0;width:0;height:0;border-style:solid;border-width:6px;border-top-color:#939599;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent}.tree-node{text-align:left}.tree-indent{display:inline-block}'; // 导入
 
     var impForm = document.createElement('form');
     var impInput = document.createElement('input');
@@ -60041,7 +53358,8 @@ var VueXtableHeader = {
       var _getExportData = getExportData($table, opts, fullData, oColumns),
           columns = _getExportData.columns,
           datas = _getExportData.datas;
-      return $table.preventEvent(null, 'event.export' + (opts.silent ? '.silent' : ''), {
+
+      return $table.preventEvent(null, 'event.export', {
         $table: $table,
         options: opts,
         columns: columns,
@@ -60113,13 +53431,11 @@ var VueXtableHeader = {
       });
     
       if (opts.isFooter) {
-        var footerData = getFooterData($table, columns, opts);
-
+        var footerData = $table.footerData;
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
-
         footers.forEach(function (rows) {
-          content += columns.map(function (column, index) {
-            return '"'.concat(rows[index] || '', '"');
+          content += columns.map(function (column) {
+            return '"'.concat(rows[$table.getColumnIndex(column)] || '', '"');
           }).join(',') + '\n';
         });
       }
@@ -60133,14 +53449,11 @@ var VueXtableHeader = {
 
       var indexKey = 'xtable-column-index';
       var exportDatas = [];
-      var fields = {};
-      VueUtil.loop(columns, function(column){
+      var fields = columns.map(function(column) {
         if (column.type === 'index') {
-          fields[indexKey] = indexKey;
-        } else if (!isOriginal && VueUtil.isFunction(column.excelExportConfig)) {
-          fields[column.property] = column.excelExportConfig;
+          return indexKey;
         } else {
-          fields[column.property] = column.property;
+          return column.property;
         }
       });
 
@@ -60184,12 +53497,12 @@ var VueXtableHeader = {
         exportDatas.push(data);
       });
       if (opts.isFooter) {
-        var footerData = getFooterData($table, columns, opts);
+        var footerData = $table.footerData;
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
         footers.forEach(function (rows) {
           var data = {};
-          columns.map(function (column, index) {
-            var content = rows[index] || '';
+          columns.map(function (column) {
+            var content = rows[$table.getColumnIndex(column)] || '';
             data[column.type === 'index'? indexKey : column.property] = content;
           });
           exportDatas.push(data);
@@ -60235,11 +53548,11 @@ var VueXtableHeader = {
       });
     
       if (opts.isFooter) {
-        var footerData = getFooterData($table, columns, opts);
+        var footerData = $table.footerData;
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
         footers.forEach(function (rows) {
-          content += columns.map(function (column, index) {
-            return ''.concat(rows[index] || '');
+          content += columns.map(function (column) {
+            return ''.concat(rows[$table.getColumnIndex(column)] || '');
           }).join(',') + '\n';
         });
       }
@@ -60349,14 +53662,14 @@ var VueXtableHeader = {
       }
     
       if (opts.isFooter) {
-        var footerData = getFooterData($table, columns, opts);
+        var footerData = $table.footerData;
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
     
         if (footers.length) {
           html += '<tfoot>';
           footers.forEach(function (rows) {
-            html += '<tr>'.concat(columns.map(function (column, index) {
-              return '<td>'.concat(rows[index] || '', '</td>');
+            html += '<tr>'.concat(columns.map(function (column) {
+              return '<td>'.concat(rows[$table.getColumnIndex(column)] || '', '</td>');
             }).join(''), '</tr>');
           });
           html += '</tfoot>';
@@ -60406,11 +53719,11 @@ var VueXtableHeader = {
       });
     
       if (opts.isFooter) {
-        var footerData = getFooterData($table, columns, opts);
+        var footerData = $table.footerData;
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
         footers.forEach(function (rows) {
-          xml += '<Row>'.concat(columns.map(function (column, index) {
-            return '<Cell><Data ss:Type="String">'.concat(rows[index] || '', '</Data></Cell>');
+          xml += '<Row>'.concat(columns.map(function (column) {
+            return '<Cell><Data ss:Type="String">'.concat(rows[$table.getColumnIndex(column) || ''], '</Data></Cell>');
           }).join(''), '</Row>');
         });
       }
@@ -60465,33 +53778,22 @@ var VueXtableHeader = {
       }
     }
     
-    function getLabelData($table, columns, datas, opts) {
+    function getLabelData($table, columns, datas) {
       var treeConfig = $table.treeConfig;
       var virtualScroller = $table.getVirtualScroller();
-      return datas.map(function (row, rowIndex) {
+      return datas.map(function (row) {
         var item = {
           hasChild: treeConfig && hasTreeChildren($table, row)
         };
-        columns.forEach(function (column, columnIndex) {
-          if (virtualScroller.scrollX || virtualScroller.scrollY || opts.dataSource || column.visible === false) {
+        columns.forEach(function (column) {
+          if (virtualScroller.scrollX || virtualScroller.scrollY) {
             var params = {
               $table:$table,
               column:column,
               row:row
             };
-            var cellLabel;
-            if (column.type === 'index') {
-              cellLabel = column.indexMethod ? column.indexMethod({
-                row: row,
-                rowIndex: rowIndex,
-                column: column,
-                columnIndex: columnIndex
-              }) : rowIndex + 1;
-            } else {
-              cellLabel = tools.UtilTools.formatText(tools.UtilTools.getCellLabel(row, column, params), 1);
-            }
-
-            item[column.id] = cellLabel ? (VueUtil.isString(cellLabel) ? cellLabel.trim() : cellLabel) : '';
+            var cellLabel = tools.UtilTools.formatText(tools.UtilTools.getCellLabel(row, column, params), 1);
+            item[column.id] = cellLabel || '';
           } else {
             var cell = tools.DomTools.getCell($table, {
               row: row,
@@ -60518,7 +53820,7 @@ var VueXtableHeader = {
     
       return {
         columns: columns,
-        datas: opts.original ? datas : getLabelData($table, columns, datas, opts)
+        datas: opts.original ? datas : getLabelData($table, columns, datas)
       };
     }
     
@@ -60767,7 +54069,7 @@ var VueXtableHeader = {
           rest = parseCsv(tableFullColumn, content, $table);
           break;
 
-        case 'xlsx', 'xls':
+        case 'xlsx':
           rest = parseXlsx(tableFullColumn, content, $table, book);
           break;
     
@@ -60855,18 +54157,12 @@ var VueXtableHeader = {
             download: true,
             type: 'csv',
             data: null,
-            dataSource: null,
-            silent: false,
             columns: null,
             columnFilterMethod: null,
             dataFilterMethod: null,
             footerFilterMethod: null
-          }, GlobalConfig.export, this.exportConfig, options);
+          }, GlobalConfig.export, options);
     
-          if (opts.dataSource) {
-            opts.data = opts.dataSource;
-          }
-
           if (!opts.filename) {
             opts.filename = 'export';
           }
@@ -60879,7 +54175,7 @@ var VueXtableHeader = {
             throw new Error(tools.UtilTools.getLog('vue.xtable.error.notType', [opts.type]));
           }
     
-          if ((!options || !options.columns) && !opts.columnFilterMethod) {
+          if (!options || !options.columns) {
             // 在 v3.0 中废弃 type=selection
             opts.columnFilterMethod = function (column) {
               return column.property && ['index', 'checkbox', 'selection', 'radio'].indexOf(column.type) === -1;
@@ -60918,9 +54214,6 @@ var VueXtableHeader = {
             });
             var types = options.types || baseTable.importTypes;
     
-            if (types.indexOf('xlsx') > -1) {
-              types = types.concat('xls');
-            }
             if (VueUtil.includes(types, type)) {
               this.preventEvent(null, 'event.import', {
                 $table: this,
@@ -60929,7 +54222,7 @@ var VueXtableHeader = {
                 columns: this.tableFullColumn
               }, function () {
 
-                if(type == 'xlsx' || type == 'xls') {
+                if(type == 'xlsx') {
                   VueUtil.Excel.importExcel([file], {cellDates: true}, function(data, book) {
                     handleImport(_this, data, options, book);
                   });
@@ -60961,7 +54254,7 @@ var VueXtableHeader = {
         _importData: function _importData(options) {
           var _this2 = this;
     
-          var opts = VueUtil.assign({}, GlobalConfig.import, this.importConfig, options);
+          var opts = VueUtil.assign({}, GlobalConfig.import, options);
           var rest = new Promise(function (resolve, reject) {
             _this2._importResolve = resolve;
             _this2._importReject = reject;
@@ -60985,11 +54278,6 @@ var VueXtableHeader = {
           }
     
           var types = options.types || baseTable.importTypes;
-
-          if (types.indexOf('xlsx') > -1) {
-            types = types.concat('xls');
-          }
-
           impInput.accept = '.'.concat(types.join(', .'));
     
           impInput.onchange = function (evnt) {
@@ -61067,19 +54355,6 @@ var VueXtableHeader = {
 
   return mod;
 });
-
-function getFooterData($table, columns, opts) {
-  var footerData = $table.footerData;
-
-  if ($table.showFooter && $table.footerMethod) {
-    footerData = $table.tableColumn.length ? $table.footerMethod({
-      columns: columns,
-      data: opts.data || $table.afterFullData
-    }) : [];
-  }
-  return footerData;
-}
-
 (function(context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
@@ -61105,23 +54380,7 @@ function getFooterData($table, columns, opts) {
         var params = VueUtil.assign({}, args);
         var rowIndex = afterFullData.indexOf(params.row);
         var columnIndex = visibleColumn.indexOf(params.column);
-        
-        // 测试一个单元格内，多个元素跳转问题
-        if (params.column.slots.edit) {
-          var focusableElms = params.cell.querySelectorAll('input:not([disabled]):not([tabindex=\'-1\']),select:not([disabled]):not([tabindex=\'-1\']),textarea:not([disabled]):not([tabindex=\'-1\']),button:not([disabled]):not([tabindex=\'-1\']),[tabindex]:not([tabindex=\'-1\'])');
-          if (focusableElms.length > 1) {
-            var activeIndex = Array.prototype.indexOf.call(focusableElms, document.activeElement);
-            if ((evnt.shiftKey && activeIndex == 0) || (!evnt.shiftKey && activeIndex == focusableElms.length - 1)) {
-              evnt.preventDefault();
-            } else {
-              return;
-            }
-          } else {
-            evnt.preventDefault();
-          }
-        } else {
-          evnt.preventDefault();
-        }
+        evnt.preventDefault();
 
         if (params.column.editRender && params.column.editRender.name && params.column.editRender.name.indexOf('checkbox') > -1) {
 
@@ -61145,11 +54404,7 @@ function getFooterData($table, columns, opts) {
           // 向左
           for (var len = columnIndex - 1; len >= 0; len--) {
             if (!hasIndexColumn(visibleColumn[len])) {
-
-              if (this.isCellEditable({
-                column:  visibleColumn[len],
-                row: afterFullData[rowIndex]
-              })) {
+              if (visibleColumn[len].editRender) {
                 targetColumnIndex = len;
                 targetColumn = visibleColumn[len];
                 break;
@@ -61164,14 +54419,9 @@ function getFooterData($table, columns, opts) {
   
             for (var _len = visibleColumn.length - 1; _len >= 0; _len--) {
               if (!hasIndexColumn(visibleColumn[_len])) {
-                if (this.isCellEditable({
-                  column:  visibleColumn[_len],
-                  row: targetRow
-                })) {
-                  targetColumnIndex = _len;
-                  targetColumn = visibleColumn[_len];
-                  break;
-                }
+                targetColumnIndex = _len;
+                targetColumn = visibleColumn[_len];
+                break;
               }
             }
           }
@@ -61179,10 +54429,7 @@ function getFooterData($table, columns, opts) {
           // 向右
           for (var index = columnIndex + 1; index < visibleColumn.length; index++) {
             if (!hasIndexColumn(visibleColumn[index])) {
-              if (this.isCellEditable({
-                column:  visibleColumn[index],
-                row: afterFullData[rowIndex]
-              })) {
+              if (visibleColumn[index].editRender) {
                 targetColumnIndex = index;
                 targetColumn = visibleColumn[index];
                 break;
@@ -61197,15 +54444,9 @@ function getFooterData($table, columns, opts) {
   
             for (var _index = 0; _index < visibleColumn.length; _index++) {
               if (!hasIndexColumn(visibleColumn[_index])) {
-
-                if (this.isCellEditable({
-                  column:  visibleColumn[_index],
-                  row: targetRow
-                })) {
-                  targetColumnIndex = _index;
-                  targetColumn = visibleColumn[_index];
-                  break;
-                }
+                targetColumnIndex = _index;
+                targetColumn = visibleColumn[_index];
+                break;
               }
             }
           }
@@ -61240,22 +54481,8 @@ function getFooterData($table, columns, opts) {
           }
         }
       },
-      getPageSize: function() {
-        var pageSize;
-        var tableBody = this.$refs.tableBody;
-        var tableBodyElem = tableBody ? tableBody.$el : null;
-        var rHeight;
-        var firstTrElem = tableBodyElem.querySelector('tbody>tr');
-        if (firstTrElem) {
-          rHeight = firstTrElem.clientHeight;
-        }
-        var clientHeight = tableBodyElem.clientHeight;
-        pageSize = parseFloat(Math.round(clientHeight / rHeight));
-
-        return pageSize;
-      },
       // 处理当前行方向键移动
-      moveCurrentRow: function moveCurrentRow(isUpArrow, isDwArrow, isPageUp, isPageDown, evnt) {
+      moveCurrentRow: function moveCurrentRow(isUpArrow, isDwArrow, evnt) {
         var _this2 = this;
   
         var currentRow = this.currentRow,
@@ -61264,17 +54491,6 @@ function getFooterData($table, columns, opts) {
         var targetRow;
         evnt.preventDefault();
   
-        var pageSize;
-        var step = 1;
-        if(isPageUp || isPageDown) {
-          pageSize = this.getPageSize();
-          step = pageSize;
-        }
-
-        if (isPageUp) isUpArrow = true;
-        if (isPageDown) isDwArrow = true;
-        var targetIndex;
-
         if (treeConfig) {
           var findTreeData = VueUtil.findTree(afterFullData, function (item) {
             return item === currentRow;
@@ -61289,18 +54505,11 @@ function getFooterData($table, columns, opts) {
           }
         } else {
           var rowIndex = afterFullData.indexOf(currentRow);
+  
           if (isUpArrow && rowIndex > 0) {
-            targetIndex = rowIndex - step;
-            if (targetIndex < 0) {
-              targetIndex = 0;
-            }
-            targetRow = afterFullData[targetIndex];
+            targetRow = afterFullData[rowIndex - 1];
           } else if (isDwArrow && rowIndex < afterFullData.length - 1) {
-            targetIndex = rowIndex + step;
-            if (targetIndex > afterFullData.length - 1) {
-              targetIndex = afterFullData.length - 1;
-            }
-            targetRow = afterFullData[targetIndex];
+            targetRow = afterFullData[rowIndex + 1];
           }
         }
   
@@ -61315,7 +54524,7 @@ function getFooterData($table, columns, opts) {
         }
       },
       // 处理可编辑方向键移动
-      moveSelected: function moveSelected(args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, isPageUp, isPageDown, evnt) {
+      moveSelected: function moveSelected(args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, evnt) {
         var _this3 = this;
         var params = VueUtil.assign({}, args);
 
@@ -61332,43 +54541,18 @@ function getFooterData($table, columns, opts) {
         var afterFullData = this.afterFullData,
             visibleColumn = this.tableColumn,
             hasIndexColumn = this.hasIndexColumn;
-
-        var pageSize;
-        if(isPageUp || isPageDown) {
-          pageSize = this.getPageSize();
-        }
-        if (isPageUp) isUpArrow = true;
-        if (isPageDown) isDwArrow = true;
         
         var visibleIndex = this.getVisibleIndexFromColumnIndex(params.columnIndex);
         evnt.preventDefault();
-        var targetIndex;
-
+  
         if (isUpArrow && params.rowIndex) {
-          targetIndex = params.rowIndex - (pageSize || 1);
-
-          if (targetIndex < 0) {
-            targetIndex = 0;
-          }
-
-          params.rowIndex = targetIndex;
+          params.rowIndex -= 1;
           params.row = afterFullData[params.rowIndex];
           params.$rowIndex = params.row.$rowIndex;
-        } else if (isDwArrow) {
-          if (params.rowIndex < afterFullData.length - 1) {
-
-            targetIndex = params.rowIndex + (pageSize || 1);
-
-            if (targetIndex > afterFullData.length -1) {
-              targetIndex = afterFullData.length -1;
-            }
-
-            params.rowIndex = targetIndex;
-            params.row = afterFullData[params.rowIndex];
-            params.$rowIndex = params.row.$rowIndex;
-          } else {
-            _this3.handleSelected({}, evnt);
-          }
+        } else if (isDwArrow && params.rowIndex < afterFullData.length - 1) {
+          params.rowIndex += params.cell.rowSpan;
+          params.row = afterFullData[params.rowIndex];
+          params.$rowIndex = params.row.$rowIndex;
         } else if (isLeftArrow && visibleIndex) {
           for (var len = visibleIndex - 1; len >= 0; len--) {
             if (!hasIndexColumn(visibleColumn[len])) {
@@ -61549,10 +54733,8 @@ function getFooterData($table, columns, opts) {
               var headerList = elemStore['main-header-list'].children;
               var cellLastElementChild = cell.parentNode.lastElementChild;
               var cellFirstElementChild = cell.parentNode.firstElementChild;
-
-              var headStartId = cell.dataset.colid;
-              var headStart = tools.DomTools.getCellById(headerList[0], headStartId);
-
+              var colIndex = [].indexOf.call(cell.parentNode.children, cell);
+              var headStart = headerList[0].children[colIndex];
               var updateEvent = VueUtil._throttle(function (evnt) {
                 evnt.preventDefault();
   
@@ -61572,9 +54754,10 @@ function getFooterData($table, columns, opts) {
                     handleIndexChecked(tools.DomTools.getRowNodes(bodyList, tools.DomTools.getCellNodeIndex(firstCell), tools.DomTools.getCellNodeIndex(cell)));
                   } else if (!tools.DomTools.hasClass(targetElem, 'col--index')) {
   
+                    var _colIndex = [].indexOf.call(targetElem.parentNode.children, targetElem);
+  
                     if(headerList.length == 1) {
-                      var headId = targetElem.dataset.colid;
-                      var head = tools.DomTools.getCellById(headerList[0], headId);
+                      var head = headerList[0].children[_colIndex];
                       handleHeaderChecked(tools.DomTools.getRowNodes(headerList, tools.DomTools.getCellNodeIndex(head), tools.DomTools.getCellNodeIndex(headStart)));
                     } else if(headerList.length > 1) {
                       
@@ -61636,7 +54819,7 @@ function getFooterData($table, columns, opts) {
               this.closeMenu();
             } else if (mouseConfig.selected) {
               // 除了双击其他都没有选中状态
-              if (editConfig.trigger === 'dblclick' || editConfig.trigger === 'manual' ) {
+              if (editConfig.trigger === 'dblclick') {
                 // 如果不在所有选中的范围之内则重新选中
                 if (!checked.rowNodes || !checked.rowNodes.some(function (list) {
                   return VueUtil.includes(list, cell);
@@ -61959,12 +55142,7 @@ function getFooterData($table, columns, opts) {
           rowNodes = editStore.selected.args && [[editStore.selected.args.cell]] ;
         }
 
-        var selection = window.getSelection();
-        var isTextSelected = selection.anchorNode && !selection.isCollapsed && this.$el.contains(selection.anchorNode);
-        if(isTextSelected){
-          document.execCommand('copy');
-          return;
-        } else if (!rowNodes) {
+        if (!rowNodes) {
           return;
         }
 
@@ -61981,7 +55159,8 @@ function getFooterData($table, columns, opts) {
   
           var _DomTools$getCellNode = tools.DomTools.getCellNodeIndex(firstRows[0]),
               rowIndex = _DomTools$getCellNode.rowIndex,
-              columnIndex = VueUtil.findIndex(tableColumn , function(col) { return col.id === firstRows[0].dataset.colid;});
+              columnIndex = _DomTools$getCellNode.columnIndex;
+  
           columns = tableColumn.slice(columnIndex, columnIndex + firstRows.length);
           rows = tableData.slice(rowIndex, rowIndex + rowNodes.length);
         }
@@ -62045,13 +55224,11 @@ function getFooterData($table, columns, opts) {
       /**
        * 处理粘贴
        */
-      handlePaste: function handlePaste(evnt, copyData) {
+      handlePaste: function handlePaste(evnt) {
         var table = this;
-        var data = copyData || this.getClipboardData(evnt);
+        var data = this.getClipboardData(evnt);
         var tableData = this.tableData,
-            tableFullColumn = this.tableFullColumn,
-            _this$mouseConfig3 = this.mouseConfig,
-            mouseConfig = _this$mouseConfig3 === void 0 ? {} : _this$mouseConfig3,
+            visibleColumn = this.visibleColumn,
             editStore = this.editStore,
             elemStore = this.elemStore;
         var copyed = editStore.copyed,
@@ -62059,96 +55236,50 @@ function getFooterData($table, columns, opts) {
         var cut = copyed.cut,
             rows = data.rows,
             columns = data.columns;
-
-        var rowNodes;
-
-        if (this.mouseConfig.checked) {
-          rowNodes = editStore.checked.rowNodes;
-        } else if(this.mouseConfig.selected) {
-          rowNodes = editStore.selected.args && [[editStore.selected.args.cell]] ;
-        }
   
         if (rows.length && columns.length && selected.row && selected.column) {
           var _selected$args = selected.args,
               rowIndex = _selected$args.$rowIndex,
               columnIndex = _selected$args.columnIndex;
-
-              if (this.mouseConfig.checked) {
-                var checkedData = table.getMouseCheckeds();
-                rowIndex = checkedData.rows[0].$rowIndex;
-                columnIndex = table.getColumnIndex(checkedData.columns[0]);
-              }
-
-          var times = parseInt(rowNodes.length / rows.length) || 1;
-          for (var time = 0; time < times; time++) {
-
-            VueUtil.loop(rows, function (row, rIndex) {
-              var offsetRow = table.afterFullData[rowIndex + rIndex + (time * rows.length)];
+          VueUtil.loop(rows, function (row, rIndex) {
+            var offsetRow = tableData[rowIndex + rIndex];
   
-              if (offsetRow) {
-                VueUtil.loop(columns, function (column, cIndex) {
-                  var timesForSingleColumns = (columns.length === 1 && rowNodes[0].length > 1) ? rowNodes[0].length : 1;
+            if (offsetRow) {
+              VueUtil.loop(columns, function (column, cIndex) {
+                var offsetColumn = visibleColumn[columnIndex + cIndex];
 
-                  for (var timesForSingleColumn = 0; timesForSingleColumn < timesForSingleColumns; timesForSingleColumn++) {
+                if (offsetColumn) {
 
-                    var offsetColumn = tableFullColumn[columnIndex + cIndex + timesForSingleColumn];
-
-                    if (offsetColumn && !offsetColumn.visible) {
-                      timesForSingleColumns++;
-                    }
-                    if (offsetColumn && offsetColumn.visible) {
-                      if (table.isCellEditable({row: offsetRow, column: offsetColumn})) {
-                        var val = tools.UtilTools.getCellValue(row, column);
-                        var formattedVal = table.getFormattedVal(val, offsetRow, offsetColumn, 'paste');
-                        tools.UtilTools.setCellValue(offsetRow, offsetColumn, formattedVal, table);
-                      }
-                    }
+                  if (table.isCellEditable({row: offsetRow, column: offsetColumn})) {
+                    var val = tools.UtilTools.getCellValue(row, column);
+                    var formattedVal = table.getFormattedVal(val, offsetRow, offsetColumn, 'paste');
+                    tools.UtilTools.setCellValue(offsetRow, offsetColumn, formattedVal);
                   }
-    
-                  if (cut) {
-                    var oldRow = copyed.rows[rIndex];
-                    var oldCol = copyed.columns[cIndex];
-                    if (table.isCellEditable({row: oldRow, column: oldCol})) {
-                      tools.UtilTools.setCellValue(oldRow, oldCol, null, table);
-                    }
+                }
+  
+                if (cut) {
+                  var oldRow = copyed.rows[rIndex];
+                  var oldCol = copyed.columns[cIndex];
+                  if (table.isCellEditable({row: oldRow, column: oldCol})) {
+                    tools.UtilTools.setCellValue(oldRow, oldCol, null);
                   }
-                });
-              }
-            });
-
-          }
-
+                }
+              });
+            }
+          });
+  
           if (cut) {
             this.clearCopyed();
           }
   
           var bodyList = elemStore['main-body-list'].children;
-
-          var cell;
-
-          if (this.mouseConfig.checked) {
-            cell = tools.DomTools.getCell(this, {
-              row: checkedData.rows[0],
-              column: checkedData.columns[0]
-            });
-          } else {
-            cell = selected.args.cell;
-          }
-
+          var cell = selected.args.cell;
           var trElem = cell.parentNode;
           var colIndex = VueUtil.arrayIndexOfVal(trElem.children, cell);
           var rIndex = VueUtil.arrayIndexOfVal(bodyList, trElem);
-          var targetTrElem = bodyList[Math.min(rIndex + (times * rows.length) - 1, bodyList.length - 1)];
-          var targetCell = targetTrElem.children[Math.min(colIndex + (columns.length > 1 ? columns.length : rowNodes[0].length) - 1, targetTrElem.children.length - 1)];
-
-          if (mouseConfig.checked) {
-            this.handleChecked(tools.DomTools.getRowNodes(bodyList, tools.DomTools.getCellNodeIndex(cell), tools.DomTools.getCellNodeIndex(targetCell)));
-          } else if(mouseConfig.selected) {
-            this.$nextTick(function() {
-              table.addColSdCls();
-            });
-          }
-          this.updateFooter();
+          var targetTrElem = bodyList[rIndex + rows.length - 1];
+          var targetCell = targetTrElem.children[colIndex + columns.length - 1];
+          this.handleChecked(tools.DomTools.getRowNodes(bodyList, tools.DomTools.getCellNodeIndex(cell), tools.DomTools.getCellNodeIndex(targetCell)));
         }
       },
 
@@ -62428,7 +55559,6 @@ function getFooterData($table, columns, opts) {
         }
       };
       var chart = new modal({
-        i18n: Vue.i18n,
         el: dialogdiv,//document.createElement('div'),
         propsData: options
       });
@@ -62741,22 +55871,6 @@ function getFooterData($table, columns, opts) {
             return this.$refs.xTable[name].apply(this.$refs.xTable[name], arguments);
         };
     });
-    
-    function emptyAndCopyAttrs(target, values) {
-      
-      //empty attrs not in values
-      Object.keys(target).forEach(function(key) {
-        if (!values.hasOwnProperty(key)) {
-          Vue.delete(target, key);
-        }
-      });
-      
-      //copy attrs from values
-      Object.keys(values).forEach(function(key) {
-        Vue.set(target, key, values[key]);
-      });
-    }
-    
     var VueXgrid = {
         name: 'VueXgrid',
         props: _objectSpread({
@@ -62782,9 +55896,7 @@ function getFooterData($table, columns, opts) {
                     total: 0,
                     pageSize: 10,
                     currentPage: 1
-                },
-                listeners_: {},
-                actualEditConfig: {}
+                }
             };
         },
         computed: {
@@ -62818,12 +55930,6 @@ function getFooterData($table, columns, opts) {
                 if (toolbar && $refs.toolbar) {
                     $refs.toolbar.loadStorage();
                 }
-            },
-            $listeners: {
-              immediate: true,
-              handler: function(val){
-                  emptyAndCopyAttrs(this.listeners_, val);
-              }
             }
         },
         created: function created() {
@@ -62870,7 +55976,7 @@ function getFooterData($table, columns, opts) {
 
             var $slots = this.$slots,
                 $scopedSlots = this.$scopedSlots,
-                $listeners = this.listeners_,
+                $listeners = this.$listeners,
                 pagerConfig = this.pagerConfig,
                 vSize = this.vSize,
                 loading = this.loading,
@@ -62887,11 +55993,9 @@ function getFooterData($table, columns, opts) {
             var props = VueUtil.assign({}, tableProps, {
                 optimization: VueUtil.assign({}, GlobalConfig.optimization, optimization)
             });
-            var tableOns = $listeners;
+            var tableOns = VueUtil.assign({}, $listeners);
             var $buttons = $scopedSlots.buttons;
             var $tools = $scopedSlots.tools;
-            var $pagerLeft = $scopedSlots['pager-left'];
-            var $pagerRight = $scopedSlots['pager-right'];
 
             if (proxyConfig) {
                 VueUtil.assign(props, {
@@ -62929,7 +56033,7 @@ function getFooterData($table, columns, opts) {
             }
 
             if (editConfig) {
-                props.editConfig = VueUtil.merge(this.actualEditConfig, editConfig, {
+                props.editConfig = VueUtil.assign({}, editConfig, {
                     activeMethod: this.handleActiveMethod
                 });
             }
@@ -62942,16 +56046,6 @@ function getFooterData($table, columns, opts) {
 
             if ($tools) {
                 toolbarScopedSlots.tools = $tools;
-            }
-
-            var pagerScopedSlots = {};
-
-            if($pagerLeft){
-                pagerScopedSlots.left = $pagerLeft;
-            }
-
-            if($pagerRight){
-                pagerScopedSlots.right = $pagerRight;
             }
 
             return h('div', {
@@ -62975,8 +56069,7 @@ function getFooterData($table, columns, opts) {
                 on: {
                     'page-change': this.pageChangeEvent
                 },
-                ref: 'pager',
-                scopedSlots: pagerScopedSlots
+                ref: 'pager'
             }) : null]);
         },
         methods: _objectSpread({}, methods, {
@@ -63438,21 +56531,18 @@ function getFooterData($table, columns, opts) {
   context.VueXtable.mixins.push(context.VueXtableEditMixin);
 
   context.baseTable.reg('export');
+  VueUtil.assign(context.baseTable.types, {
+    csv: 1,
+    html: 1,
+    xml: 1,
+    txt: 1
+  });
 
-  Object.defineProperty(baseTable, 'types', {
-    get: function get() {
-      var res = {
-        csv: 1,
-        html: 1,
-        xml: 1,
-        txt: 1
-      };
-
-      if(VueUtil.Excel) {
-        res.xlsx = 1;
-      }
-
-      return res;
+  document.addEventListener('DOMContentLoaded', function() {
+    if(VueUtil.Excel) {
+      VueUtil.assign(baseTable.types, {
+        xlsx: 1
+      });
     }
   });
 

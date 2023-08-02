@@ -156,7 +156,7 @@
             var cellValue = evnt.target.value;
       
             if (isSyncCell(renderOpts, params, context)) {
-              UtilTools.setCellValue(row, column, cellValue, $table);
+              UtilTools.setCellValue(row, column, cellValue);
             } else {
               model.update = true;
               model.value = cellValue;
@@ -365,23 +365,10 @@
           if(!attrs.value){
             attrs.value=cellValue;
           }
-          var slotPrefix = 'edit-render-';
-
-          var slotNames = VueUtil.keys(context.$column.own.$scopedSlots).filter(function(slotsName) {
-              return !slotsName.indexOf(slotPrefix);
-          });
-
-          var scopedSlots = {};
-
-          slotNames.forEach(function(slotsName) {
-            scopedSlots[slotsName.replace(slotPrefix, '')] = context.$column.own.$scopedSlots[slotsName];
-          });
-          
           return [h(name, {
             class: 'vue-default-'.concat(name),
             attrs: attrs,
-            on: getFallbackEvents(renderOpts, params, context),
-            scopedSlots: scopedSlots,
+            on: getFallbackEvents(renderOpts, params, context)
           })];
         }
         
@@ -398,7 +385,7 @@
             var cellValue = evnt;
         
             if (isSyncCell(renderOpts, params, context)) {
-              UtilTools.setCellValue(row, column, cellValue, $table);
+              UtilTools.setCellValue(row, column, cellValue);
             } else {
               model.update = true;
               model.value = cellValue;
@@ -407,14 +394,11 @@
           });
         
           if (events) {
-            VueUtil.each(events, function(cb, key) {
-              on[key] = function() {
-                for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-                  args[_key] = arguments[_key];
-                }
-                cb.apply(null, [params].concat(args));
+            VueUtil.assign(on, VueUtil.mapValues(events, function (cb) {
+              return function () {
+                cb.apply(null, [params].concat.apply(params, arguments));
               };
-            });
+            }));
           }
         
           return on;

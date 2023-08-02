@@ -23,23 +23,7 @@
         var params = VueUtil.assign({}, args);
         var rowIndex = afterFullData.indexOf(params.row);
         var columnIndex = visibleColumn.indexOf(params.column);
-        
-        // 测试一个单元格内，多个元素跳转问题
-        if (params.column.slots.edit) {
-          var focusableElms = params.cell.querySelectorAll('input:not([disabled]):not([tabindex=\'-1\']),select:not([disabled]):not([tabindex=\'-1\']),textarea:not([disabled]):not([tabindex=\'-1\']),button:not([disabled]):not([tabindex=\'-1\']),[tabindex]:not([tabindex=\'-1\'])');
-          if (focusableElms.length > 1) {
-            var activeIndex = Array.prototype.indexOf.call(focusableElms, document.activeElement);
-            if ((evnt.shiftKey && activeIndex == 0) || (!evnt.shiftKey && activeIndex == focusableElms.length - 1)) {
-              evnt.preventDefault();
-            } else {
-              return;
-            }
-          } else {
-            evnt.preventDefault();
-          }
-        } else {
-          evnt.preventDefault();
-        }
+        evnt.preventDefault();
 
         if (params.column.editRender && params.column.editRender.name && params.column.editRender.name.indexOf('checkbox') > -1) {
 
@@ -63,11 +47,7 @@
           // 向左
           for (var len = columnIndex - 1; len >= 0; len--) {
             if (!hasIndexColumn(visibleColumn[len])) {
-
-              if (this.isCellEditable({
-                column:  visibleColumn[len],
-                row: afterFullData[rowIndex]
-              })) {
+              if (visibleColumn[len].editRender) {
                 targetColumnIndex = len;
                 targetColumn = visibleColumn[len];
                 break;
@@ -82,14 +62,9 @@
   
             for (var _len = visibleColumn.length - 1; _len >= 0; _len--) {
               if (!hasIndexColumn(visibleColumn[_len])) {
-                if (this.isCellEditable({
-                  column:  visibleColumn[_len],
-                  row: targetRow
-                })) {
-                  targetColumnIndex = _len;
-                  targetColumn = visibleColumn[_len];
-                  break;
-                }
+                targetColumnIndex = _len;
+                targetColumn = visibleColumn[_len];
+                break;
               }
             }
           }
@@ -97,10 +72,7 @@
           // 向右
           for (var index = columnIndex + 1; index < visibleColumn.length; index++) {
             if (!hasIndexColumn(visibleColumn[index])) {
-              if (this.isCellEditable({
-                column:  visibleColumn[index],
-                row: afterFullData[rowIndex]
-              })) {
+              if (visibleColumn[index].editRender) {
                 targetColumnIndex = index;
                 targetColumn = visibleColumn[index];
                 break;
@@ -115,15 +87,9 @@
   
             for (var _index = 0; _index < visibleColumn.length; _index++) {
               if (!hasIndexColumn(visibleColumn[_index])) {
-
-                if (this.isCellEditable({
-                  column:  visibleColumn[_index],
-                  row: targetRow
-                })) {
-                  targetColumnIndex = _index;
-                  targetColumn = visibleColumn[_index];
-                  break;
-                }
+                targetColumnIndex = _index;
+                targetColumn = visibleColumn[_index];
+                break;
               }
             }
           }
@@ -158,22 +124,8 @@
           }
         }
       },
-      getPageSize: function() {
-        var pageSize;
-        var tableBody = this.$refs.tableBody;
-        var tableBodyElem = tableBody ? tableBody.$el : null;
-        var rHeight;
-        var firstTrElem = tableBodyElem.querySelector('tbody>tr');
-        if (firstTrElem) {
-          rHeight = firstTrElem.clientHeight;
-        }
-        var clientHeight = tableBodyElem.clientHeight;
-        pageSize = parseFloat(Math.round(clientHeight / rHeight));
-
-        return pageSize;
-      },
       // 处理当前行方向键移动
-      moveCurrentRow: function moveCurrentRow(isUpArrow, isDwArrow, isPageUp, isPageDown, evnt) {
+      moveCurrentRow: function moveCurrentRow(isUpArrow, isDwArrow, evnt) {
         var _this2 = this;
   
         var currentRow = this.currentRow,
@@ -182,17 +134,6 @@
         var targetRow;
         evnt.preventDefault();
   
-        var pageSize;
-        var step = 1;
-        if(isPageUp || isPageDown) {
-          pageSize = this.getPageSize();
-          step = pageSize;
-        }
-
-        if (isPageUp) isUpArrow = true;
-        if (isPageDown) isDwArrow = true;
-        var targetIndex;
-
         if (treeConfig) {
           var findTreeData = VueUtil.findTree(afterFullData, function (item) {
             return item === currentRow;
@@ -207,18 +148,11 @@
           }
         } else {
           var rowIndex = afterFullData.indexOf(currentRow);
+  
           if (isUpArrow && rowIndex > 0) {
-            targetIndex = rowIndex - step;
-            if (targetIndex < 0) {
-              targetIndex = 0;
-            }
-            targetRow = afterFullData[targetIndex];
+            targetRow = afterFullData[rowIndex - 1];
           } else if (isDwArrow && rowIndex < afterFullData.length - 1) {
-            targetIndex = rowIndex + step;
-            if (targetIndex > afterFullData.length - 1) {
-              targetIndex = afterFullData.length - 1;
-            }
-            targetRow = afterFullData[targetIndex];
+            targetRow = afterFullData[rowIndex + 1];
           }
         }
   
@@ -233,7 +167,7 @@
         }
       },
       // 处理可编辑方向键移动
-      moveSelected: function moveSelected(args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, isPageUp, isPageDown, evnt) {
+      moveSelected: function moveSelected(args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, evnt) {
         var _this3 = this;
         var params = VueUtil.assign({}, args);
 
@@ -250,43 +184,18 @@
         var afterFullData = this.afterFullData,
             visibleColumn = this.tableColumn,
             hasIndexColumn = this.hasIndexColumn;
-
-        var pageSize;
-        if(isPageUp || isPageDown) {
-          pageSize = this.getPageSize();
-        }
-        if (isPageUp) isUpArrow = true;
-        if (isPageDown) isDwArrow = true;
         
         var visibleIndex = this.getVisibleIndexFromColumnIndex(params.columnIndex);
         evnt.preventDefault();
-        var targetIndex;
-
+  
         if (isUpArrow && params.rowIndex) {
-          targetIndex = params.rowIndex - (pageSize || 1);
-
-          if (targetIndex < 0) {
-            targetIndex = 0;
-          }
-
-          params.rowIndex = targetIndex;
+          params.rowIndex -= 1;
           params.row = afterFullData[params.rowIndex];
           params.$rowIndex = params.row.$rowIndex;
-        } else if (isDwArrow) {
-          if (params.rowIndex < afterFullData.length - 1) {
-
-            targetIndex = params.rowIndex + (pageSize || 1);
-
-            if (targetIndex > afterFullData.length -1) {
-              targetIndex = afterFullData.length -1;
-            }
-
-            params.rowIndex = targetIndex;
-            params.row = afterFullData[params.rowIndex];
-            params.$rowIndex = params.row.$rowIndex;
-          } else {
-            _this3.handleSelected({}, evnt);
-          }
+        } else if (isDwArrow && params.rowIndex < afterFullData.length - 1) {
+          params.rowIndex += params.cell.rowSpan;
+          params.row = afterFullData[params.rowIndex];
+          params.$rowIndex = params.row.$rowIndex;
         } else if (isLeftArrow && visibleIndex) {
           for (var len = visibleIndex - 1; len >= 0; len--) {
             if (!hasIndexColumn(visibleColumn[len])) {
@@ -467,10 +376,8 @@
               var headerList = elemStore['main-header-list'].children;
               var cellLastElementChild = cell.parentNode.lastElementChild;
               var cellFirstElementChild = cell.parentNode.firstElementChild;
-
-              var headStartId = cell.dataset.colid;
-              var headStart = tools.DomTools.getCellById(headerList[0], headStartId);
-
+              var colIndex = [].indexOf.call(cell.parentNode.children, cell);
+              var headStart = headerList[0].children[colIndex];
               var updateEvent = VueUtil._throttle(function (evnt) {
                 evnt.preventDefault();
   
@@ -490,9 +397,10 @@
                     handleIndexChecked(tools.DomTools.getRowNodes(bodyList, tools.DomTools.getCellNodeIndex(firstCell), tools.DomTools.getCellNodeIndex(cell)));
                   } else if (!tools.DomTools.hasClass(targetElem, 'col--index')) {
   
+                    var _colIndex = [].indexOf.call(targetElem.parentNode.children, targetElem);
+  
                     if(headerList.length == 1) {
-                      var headId = targetElem.dataset.colid;
-                      var head = tools.DomTools.getCellById(headerList[0], headId);
+                      var head = headerList[0].children[_colIndex];
                       handleHeaderChecked(tools.DomTools.getRowNodes(headerList, tools.DomTools.getCellNodeIndex(head), tools.DomTools.getCellNodeIndex(headStart)));
                     } else if(headerList.length > 1) {
                       
@@ -554,7 +462,7 @@
               this.closeMenu();
             } else if (mouseConfig.selected) {
               // 除了双击其他都没有选中状态
-              if (editConfig.trigger === 'dblclick' || editConfig.trigger === 'manual' ) {
+              if (editConfig.trigger === 'dblclick') {
                 // 如果不在所有选中的范围之内则重新选中
                 if (!checked.rowNodes || !checked.rowNodes.some(function (list) {
                   return VueUtil.includes(list, cell);
@@ -877,12 +785,7 @@
           rowNodes = editStore.selected.args && [[editStore.selected.args.cell]] ;
         }
 
-        var selection = window.getSelection();
-        var isTextSelected = selection.anchorNode && !selection.isCollapsed && this.$el.contains(selection.anchorNode);
-        if(isTextSelected){
-          document.execCommand('copy');
-          return;
-        } else if (!rowNodes) {
+        if (!rowNodes) {
           return;
         }
 
@@ -899,7 +802,8 @@
   
           var _DomTools$getCellNode = tools.DomTools.getCellNodeIndex(firstRows[0]),
               rowIndex = _DomTools$getCellNode.rowIndex,
-              columnIndex = VueUtil.findIndex(tableColumn , function(col) { return col.id === firstRows[0].dataset.colid;});
+              columnIndex = _DomTools$getCellNode.columnIndex;
+  
           columns = tableColumn.slice(columnIndex, columnIndex + firstRows.length);
           rows = tableData.slice(rowIndex, rowIndex + rowNodes.length);
         }
@@ -963,13 +867,11 @@
       /**
        * 处理粘贴
        */
-      handlePaste: function handlePaste(evnt, copyData) {
+      handlePaste: function handlePaste(evnt) {
         var table = this;
-        var data = copyData || this.getClipboardData(evnt);
+        var data = this.getClipboardData(evnt);
         var tableData = this.tableData,
-            tableFullColumn = this.tableFullColumn,
-            _this$mouseConfig3 = this.mouseConfig,
-            mouseConfig = _this$mouseConfig3 === void 0 ? {} : _this$mouseConfig3,
+            visibleColumn = this.visibleColumn,
             editStore = this.editStore,
             elemStore = this.elemStore;
         var copyed = editStore.copyed,
@@ -977,96 +879,50 @@
         var cut = copyed.cut,
             rows = data.rows,
             columns = data.columns;
-
-        var rowNodes;
-
-        if (this.mouseConfig.checked) {
-          rowNodes = editStore.checked.rowNodes;
-        } else if(this.mouseConfig.selected) {
-          rowNodes = editStore.selected.args && [[editStore.selected.args.cell]] ;
-        }
   
         if (rows.length && columns.length && selected.row && selected.column) {
           var _selected$args = selected.args,
               rowIndex = _selected$args.$rowIndex,
               columnIndex = _selected$args.columnIndex;
-
-              if (this.mouseConfig.checked) {
-                var checkedData = table.getMouseCheckeds();
-                rowIndex = checkedData.rows[0].$rowIndex;
-                columnIndex = table.getColumnIndex(checkedData.columns[0]);
-              }
-
-          var times = parseInt(rowNodes.length / rows.length) || 1;
-          for (var time = 0; time < times; time++) {
-
-            VueUtil.loop(rows, function (row, rIndex) {
-              var offsetRow = table.afterFullData[rowIndex + rIndex + (time * rows.length)];
+          VueUtil.loop(rows, function (row, rIndex) {
+            var offsetRow = tableData[rowIndex + rIndex];
   
-              if (offsetRow) {
-                VueUtil.loop(columns, function (column, cIndex) {
-                  var timesForSingleColumns = (columns.length === 1 && rowNodes[0].length > 1) ? rowNodes[0].length : 1;
+            if (offsetRow) {
+              VueUtil.loop(columns, function (column, cIndex) {
+                var offsetColumn = visibleColumn[columnIndex + cIndex];
 
-                  for (var timesForSingleColumn = 0; timesForSingleColumn < timesForSingleColumns; timesForSingleColumn++) {
+                if (offsetColumn) {
 
-                    var offsetColumn = tableFullColumn[columnIndex + cIndex + timesForSingleColumn];
-
-                    if (offsetColumn && !offsetColumn.visible) {
-                      timesForSingleColumns++;
-                    }
-                    if (offsetColumn && offsetColumn.visible) {
-                      if (table.isCellEditable({row: offsetRow, column: offsetColumn})) {
-                        var val = tools.UtilTools.getCellValue(row, column);
-                        var formattedVal = table.getFormattedVal(val, offsetRow, offsetColumn, 'paste');
-                        tools.UtilTools.setCellValue(offsetRow, offsetColumn, formattedVal, table);
-                      }
-                    }
+                  if (table.isCellEditable({row: offsetRow, column: offsetColumn})) {
+                    var val = tools.UtilTools.getCellValue(row, column);
+                    var formattedVal = table.getFormattedVal(val, offsetRow, offsetColumn, 'paste');
+                    tools.UtilTools.setCellValue(offsetRow, offsetColumn, formattedVal);
                   }
-    
-                  if (cut) {
-                    var oldRow = copyed.rows[rIndex];
-                    var oldCol = copyed.columns[cIndex];
-                    if (table.isCellEditable({row: oldRow, column: oldCol})) {
-                      tools.UtilTools.setCellValue(oldRow, oldCol, null, table);
-                    }
+                }
+  
+                if (cut) {
+                  var oldRow = copyed.rows[rIndex];
+                  var oldCol = copyed.columns[cIndex];
+                  if (table.isCellEditable({row: oldRow, column: oldCol})) {
+                    tools.UtilTools.setCellValue(oldRow, oldCol, null);
                   }
-                });
-              }
-            });
-
-          }
-
+                }
+              });
+            }
+          });
+  
           if (cut) {
             this.clearCopyed();
           }
   
           var bodyList = elemStore['main-body-list'].children;
-
-          var cell;
-
-          if (this.mouseConfig.checked) {
-            cell = tools.DomTools.getCell(this, {
-              row: checkedData.rows[0],
-              column: checkedData.columns[0]
-            });
-          } else {
-            cell = selected.args.cell;
-          }
-
+          var cell = selected.args.cell;
           var trElem = cell.parentNode;
           var colIndex = VueUtil.arrayIndexOfVal(trElem.children, cell);
           var rIndex = VueUtil.arrayIndexOfVal(bodyList, trElem);
-          var targetTrElem = bodyList[Math.min(rIndex + (times * rows.length) - 1, bodyList.length - 1)];
-          var targetCell = targetTrElem.children[Math.min(colIndex + (columns.length > 1 ? columns.length : rowNodes[0].length) - 1, targetTrElem.children.length - 1)];
-
-          if (mouseConfig.checked) {
-            this.handleChecked(tools.DomTools.getRowNodes(bodyList, tools.DomTools.getCellNodeIndex(cell), tools.DomTools.getCellNodeIndex(targetCell)));
-          } else if(mouseConfig.selected) {
-            this.$nextTick(function() {
-              table.addColSdCls();
-            });
-          }
-          this.updateFooter();
+          var targetTrElem = bodyList[rIndex + rows.length - 1];
+          var targetCell = targetTrElem.children[colIndex + columns.length - 1];
+          this.handleChecked(tools.DomTools.getRowNodes(bodyList, tools.DomTools.getCellNodeIndex(cell), tools.DomTools.getCellNodeIndex(targetCell)));
         }
       },
 

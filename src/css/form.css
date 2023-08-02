@@ -6,9 +6,6 @@
 .vue-form--label-left .vue-form-item__label {
 	text-align: left;
 }
-.vue-form--label-right .vue-form-item__label {
-	text-align: right;
-}
 .vue-form--label-top .vue-form-item__label {
 	float: none;
 	display: inline-block;
@@ -64,8 +61,8 @@
 	float: left;
 	font-size: 14px;
 	color: #48576a;
-	line-height: 36px;
-	padding: 0 12px 0 0;
+	line-height: 1;
+	padding: 11px 12px 11px 0;
 }
 .vue-form-item__content {
 	line-height: 36px;
@@ -94,25 +91,4 @@
 	.vue-form--inline .vue-form-item__content {
 		display: block;
 	}
-}
-
-.vue-form-item--large .vue-form-item__label {
-	line-height: 42px;
-}
-.vue-form-item--large .vue-form-item__content {
-	line-height: 42px;
-}
-
-.vue-form-item--small .vue-form-item__label {
-	line-height: 30px;
-}
-.vue-form-item--small .vue-form-item__content {
-	line-height: 30px;
-}
-
-.vue-form-item--mini .vue-form-item__label {
-	line-height: 22px;
-}
-.vue-form-item--mini .vue-form-item__content {
-	line-height: 22px;
 }

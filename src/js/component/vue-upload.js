@@ -42,37 +42,34 @@
   };
   var UploadList = {
     template: '<transition-group tag="ul" :class="[\'vue-upload-list\', \'vue-upload-list--\' + listType, {\'is-disabled\': disabled}]" name="vue-list">\
-                <li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file.uid" @click="$emit(\'click\', file)">\
-                  <slot :file="file" :is-mobile="isMobile" >\
+                <li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file.uid">\
                   <img class="vue-upload-list__item-thumbnail" v-if="!isMobile && file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1"\
                    :src="file.url" :alt="file.name"/>\
-                  <a v-if="!isMobile" class="vue-upload-list__item-name" @click.stop="handleClick(file, index, files)">\
+                  <a v-if="!isMobile" class="vue-upload-list__item-name" @click="handleClick(file, index, files)">\
                    <i class="vue-icon-document"></i>{{file.name}}</a>\
                   <label v-if="!isMobile" class="vue-upload-list__item-status-label">\
-                    <i v-if="file.status !== \'fail\'" :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
-                    <i v-else  :class="{\'vue-icon-upload-fail\': true}">!</i>\
+                    <i :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
                   </label>\
-                  <i class="vue-icon-close" v-if="!isMobile && !disabled" @click.stop="$emit(\'remove\', file)"></i>\
+                  <i class="vue-icon-close" v-if="!isMobile && !disabled" @click="$emit(\'remove\', file)"></i>\
                   <vue-progress v-if="!isMobile && file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" :stroke-width="listType === \'picture-card\' ? 6 : 2" \
                   :percentage="parsePercentage(file.percentage)"></vue-progress>\
                   <span class="vue-upload-list__item-actions" v-if="!isMobile && listType === \'picture-card\'">\
-                    <span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click.stop="handlePreview(file,index,files)">\
+                    <span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click="handlePreview(file,index,files)">\
                       <i class="vue-icon-view"></i>\
                     </span>\
-                    <span v-if="!disabled" class="vue-upload-list__item-delete" @click.stop="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span>\
-                    <span v-if="showDownload" class="vue-upload-list__item-download" @click.stop="$emit(\'download\', file)"><i class="vue-icon-download2"></i></span>\
+                    <span v-if="!disabled" class="vue-upload-list__item-delete" @click="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span>\
                   </span>\
                   <div v-if="isMobile" style="position:relative;overflow:hidden;width:100%;height:100%;">\
                     <img class="vue-upload-list__item-thumbnail" v-if="file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1" \
-                        :src="file.url" :alt="listType === \'picture-card\'?file.name:\'load failed\'" @click.stop="handlePreview(file,index,files)" />\
-                    <a class="vue-upload-list__item-name" @click.stop="handleClick(file,index,files)"><i class="vue-icon-document"></i>{{file.name}}</a>\
+                        :src="file.url" :alt="listType === \'picture-card\'?file.name:\'load failed\'" @click="handlePreview(file,index,files)" />\
+                    <a class="vue-upload-list__item-name" @click="handleClick(file,index,files)"><i class="vue-icon-document"></i>{{file.name}}</a>\
                     <label class="vue-upload-list__item-status-label">\
                       <i :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
                     </label>\
                     <vue-progress v-if="file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" \
                     :stroke-width="listType === \'picture-card\' ? 6 : 2" :percentage="parsePercentage(file.percentage)"></vue-progress>\
                   </div>\
-                  <i v-if="isMobile && !disabled" class="vue-icon-error" @click.stop="$emit(\'remove\', file)"></i></slot>\
+                  <i v-if="isMobile && !disabled" class="vue-icon-error" @click="$emit(\'remove\', file)"></i>\
                 </li></transition-group>',
     props: {
       files: {
@@ -82,7 +79,6 @@
         }
       },
       disabled: Boolean,
-      showDownload: Boolean,
       handlePreview: Function,
       listType: String
     },
@@ -121,7 +117,6 @@
       multiple: Boolean,
       max: Number,
       accept: String,
-      capture: String,
       onStart: Function,
       onProgress: Function,
       onSuccess: Function,
@@ -160,11 +155,7 @@
               formData.append(key, option.data[key]);
             });
           }
-          if (option.file instanceof Blob) {
-            formData.append(option.filename, option.file, option.file.name);
-          } else {
-            formData.append(option.filename, option.file);
-          }
+          formData.append(option.filename, option.file);
           this.$http.post(option.action, formData, httpOption).then(function(reqponse) {
             option.onSuccess(reqponse);
           }, function(reqponse) {
@@ -222,7 +213,7 @@
         var before = self.beforeUpload(rawFile);
         if (before && before.then) {
           before.then(function(processedFile) {
-            if (VueUtil.isFile(processedFile) || processedFile instanceof Blob) {
+            if (VueUtil.isFile(processedFile)) {
               self.post(processedFile);
             } else {
               self.post(rawFile);
@@ -292,7 +283,6 @@
       var handleChange = this.handleChange;
       var multiple = this.multiple;
       var accept = this.accept;
-      var capture = this.capture;
       var listType = this.listType;
       var uploadFiles = this.uploadFiles;
       var disabled = this.disabled;
@@ -317,7 +307,7 @@
         }
       };
       data.class['vue-upload--' + listType] = true;
-      return createElement('div', data, [drag ? createElement('upload-dragger', {attrs: {disabled: disabled}, on: {'file': uploadFiles}}, [this.$slots.default]) : this.$slots.default, createElement('input', {class: 'vue-upload__input', attrs: {type: 'file', name: name, multiple: multiple, accept: accept, capture: capture}, ref: 'input', on: {'change': handleChange}}, [])]);
+      return createElement('div', data, [drag ? createElement('upload-dragger', {attrs: {disabled: disabled}, on: {'file': uploadFiles}}, [this.$slots.default]) : this.$slots.default, createElement('input', {class: 'vue-upload__input', attrs: {type: 'file', name: name, multiple: multiple, accept: accept}, ref: 'input', on: {'change': handleChange}}, [])]);
     }
   };
   var IframeUpload = {
@@ -337,7 +327,6 @@
       },
       withCredentials: Boolean,
       accept: String,
-      capture: String,
       onStart: Function,
       onProgress: Function,
       onSuccess: Function,
@@ -439,7 +428,7 @@
       var disabled = this.disabled;
       var oClass = {'vue-upload': true};
       oClass['vue-upload--' + listType] = true;
-      return createElement('div', {'class': oClass, on: {'click': this.handleClick}, nativeOn: {'drop': this.onDrop, 'dragover': this.handleDragover, 'dragleave': this.handleDragleave}}, [createElement('iframe', {on: {'load': this.onload}, ref: 'iframe', attrs: {name: frameName}}, []), createElement('form', {ref: 'form', attrs: {action: this.action, target: frameName, enctype: 'multipart/form-data', method: 'POST'}}, [createElement('input', {'class': 'vue-upload__input', attrs: {type: 'file', name: 'file', accept: this.accept, capture: this.capture}, ref: 'input', on: {'change': this.handleChange}}, []), createElement('input', {attrs: {type: 'hidden', name: 'documentDomain', value: document.domain}}, []), createElement('span', {ref: 'data'}, [])]), drag ? createElement('upload-dragger', {on: {'file': uploadFiles}, attrs: {disabled: disabled}}, [this.$slots.default]) : this.$slots.default]);
+      return createElement('div', {'class': oClass, on: {'click': this.handleClick}, nativeOn: {'drop': this.onDrop, 'dragover': this.handleDragover, 'dragleave': this.handleDragleave}}, [createElement('iframe', {on: {'load': this.onload}, ref: 'iframe', attrs: {name: frameName}}, []), createElement('form', {ref: 'form', attrs: {action: this.action, target: frameName, enctype: 'multipart/form-data', method: 'POST'}}, [createElement('input', {'class': 'vue-upload__input', attrs: {type: 'file', name: 'file', accept: this.accept}, ref: 'input', on: {'change': this.handleChange}}, []), createElement('input', {attrs: {type: 'hidden', name: 'documentDomain', value: document.domain}}, []), createElement('span', {ref: 'data'}, [])]), drag ? createElement('upload-dragger', {on: {'file': uploadFiles}, attrs: {disabled: disabled}}, [this.$slots.default]) : this.$slots.default]);
     }
   };
   var migrating = {
@@ -457,15 +446,6 @@
   };
   var VueUpload = {
     name: 'VueUpload',
-    model: {
-      event: 'input',
-      prop: 'fileList',
-    },
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     mixins: [migrating],
     components: {
       UploadList: UploadList,
@@ -504,7 +484,6 @@
         default: true
       },
       accept: String,
-      capture: String,
       type: {
         type: String,
         default: 'select'
@@ -512,12 +491,6 @@
       beforeUpload: Function,
       beforeRemove: Function,
       onRemove: {
-        type: Function,
-        default: function() {}
-      },
-      beforeDownload: Function,
-      download: Function,
-      onDownload: {
         type: Function,
         default: function() {}
       },
@@ -556,12 +529,7 @@
       },
       httpRequest: Function,
       disabled: Boolean,
-      showDownload: Boolean,
       clickable: {
-        type: Boolean,
-        default: true
-      },
-      autoRemoveFail: {
         type: Boolean,
         default: true
       }
@@ -574,11 +542,6 @@
         tempIndex: 1
       };
     },
-    computed: {
-      uploadDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
-      }
-    },
     watch: {
       fileList: {
         immediate: true,
@@ -587,12 +550,11 @@
           self.uploadFiles = VueUtil.map(fileList, function(item) {
             item.uid = item.uid || (Date.now() + self.tempIndex++);
             item.status = self.autoUpload ? 'success' : 'ready';
-            item.status = item.status || 'success';
             return item;
           });
         }
       },
-      uploadDisabled: function(val) {
+      disabled: function(val) {
         VueUtil.loop(this.$el.querySelectorAll('button'), function(buttonNote) {
           if (val) {
             VueUtil.addClass(buttonNote, 'is-disabled');
@@ -620,7 +582,6 @@
         }
         this.uploadFiles.push(file);
         this.onChange(file, this.uploadFiles);
-        this.$emit('input', this.uploadFiles);
       },
       handleProgress: function(ev, rawFile) {
         var file = this.getFile(rawFile);
@@ -635,17 +596,15 @@
           file.response = res;
           this.onSuccess(res, file, this.uploadFiles);
           this.onChange(file, this.uploadFiles);
-          this.$emit('input', this.uploadFiles);
         }
       },
       handleError: function(err, rawFile) {
         var file = this.getFile(rawFile);
         var fileList = this.uploadFiles;
         file.status = 'fail';
-        this.autoRemoveFail && fileList.splice(fileList.indexOf(file), 1);
+        fileList.splice(fileList.indexOf(file), 1);
         this.onError(err, file, this.uploadFiles);
         this.onChange(file, this.uploadFiles);
-        this.$emit('input', this.uploadFiles);
       },
       handleRemove: function(file, raw) {
         if (raw) {
@@ -657,7 +616,6 @@
           self.abort(file);
           var fileList = self.uploadFiles;
           fileList.splice(fileList.indexOf(file), 1);
-          self.$emit('input', fileList);
           self.onRemove(file, fileList);
         }
 
@@ -674,37 +632,6 @@
           }
         }
       },
-      handleDownload: function(file, raw) {
-        var self = this;
-        if (raw) {
-          file = this.getFile(raw);
-        }
-
-        function doDownload() {
-          if (self.download) {
-            self.download(file, self.uploadFiles);
-          } else {
-            VueUtil.saveAs(file.raw || file.url, file.name);
-          }
-          self.onDownload(file);
-        }
-
-        if (!this.beforeDownload) {
-          doDownload();
-        } else if (typeof this.beforeDownload === 'function') {
-          var before = this.beforeDownload(file);
-          if (before && before.then) {
-            before.then(function() {
-              doDownload();
-            }, noop);
-          } else if (before !== false) {
-            doDownload();
-          }
-        }
-      },
-      handleClick: function(file) {
-        this.$emit('list-click', file);
-      },
       getFile: function(rawFile) {
         var fileList = this.uploadFiles;
         var target;
@@ -719,7 +646,6 @@
       },
       clearFiles: function() {
         this.uploadFiles = [];
-        this.$emit('input', this.uploadFiles);
       },
       submit: function() {
         var self = this;
@@ -741,20 +667,8 @@
     },
     render: function(createElement) {
       var uploadList;
-      var self = this;
       if (this.showFileList) {
-        uploadList = createElement('UploadList', {attrs: {disabled: this.uploadDisabled, showDownload: this.showDownload, listType: this.listType, files: this.uploadFiles, handlePreview: this.onPreview}, on: {'remove': this.handleRemove, 'download': this.handleDownload, 'click': this.handleClick}}, [
-
-          function (props) {
-            if (self.$scopedSlots.file) {
-              return self.$scopedSlots.file({
-                file: props.file,
-                isMobile: props.isMobile
-              });
-            }
-          }
-
-        ]);
+        uploadList = createElement('UploadList', {attrs: {disabled: this.disabled, listType: this.listType, files: this.uploadFiles, handlePreview: this.onPreview}, on: {'remove': this.handleRemove}}, []);
       }
       var uploadData = {
         directives: [{
@@ -773,11 +687,10 @@
           name: this.name,
           data: this.data,
           accept: this.accept,
-          capture: this.capture,
           fileList: this.uploadFiles,
           autoUpload: this.autoUpload,
           listType: this.listType,
-          disabled: this.uploadDisabled,
+          disabled: this.disabled,
           clickable: this.clickable,
           'on-start': this.handleStart,
           'on-progress': this.handleProgress,

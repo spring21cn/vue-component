@@ -454,8 +454,7 @@
       filters: {},
       expandRows: [],
       aggregates: [],
-      defaultExpandAll: false,
-      dataChangedSorting: false
+      defaultExpandAll: false
     };
     VueUtil.merge(this.states, initialState);
   };
@@ -515,11 +514,7 @@
         this.table.setCurrentRow(null);
       }
 
-      if (self.states.dataChangedSorting === true) {
-        self.states.dataChangedSorting = false;
-      } else {
-        self.table.$emit('sort-change', self.states.sortingColumns);
-      }
+      self.table.$emit('sort-change', self.states.sortingColumns);
       Vue.nextTick(function() {
         self.table.updateScrollY();
         self.table.resizeZone();
@@ -730,7 +725,7 @@
       resultMap.label = '';
       resultMap.property = column.property;
       if (typeof column.aggregate == 'function') {
-        resultMap.label = column.aggregate.call(null, column, data);
+        resultMap.label = column.aggregate.call(column.property);
         aggregates.push(resultMap);
         return;
       }
@@ -2883,7 +2878,6 @@
           });
 
           if (store.states.sortingColumns.length > 0) {
-            store.states.dataChangedSorting = true;
             this.$nextTick(function() {
               store.commit('changeSortCondition');
             });
@@ -2922,7 +2916,7 @@
       }
     },
     data: function() {
-      var store = new TableStore(this, {defaultExpandAll: this.defaultExpandAll});
+      var store = new TableStore(this, {defaultExpandAll: self.defaultExpandAll});
       var layout = new TableLayout({
         store: store,
         table: this,

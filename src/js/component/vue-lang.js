@@ -5,22 +5,14 @@
   } else {
     context.VueLang = definition(context.Vue, context.VueUtil);
     delete context.VueLang;
+    delete context.VuePopper;
     delete context.VuePopup;
-    setTimeout(function() {
-      delete context.VuePopper;
-    }, 300);
   }
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueLang = {
     zh: {
       vue: {
-        attachment: {
-          view: {
-              directory: '导航',
-              loading: '正在加载,请稍等'
-          }
-        },
         colorpicker: {
           confirm: '确定',
           clear: '清空'
@@ -138,11 +130,6 @@
         image:{
           error: '加载失败'
         },
-        cardList:{
-          addButton: '追加数据',
-          deleteButton: '删除数据',
-          noData: '暂无数据',
-        },
         xtable: {
           error: {
             groupFixed: '如果使用分组表头，固定列必须在左右两侧',
@@ -198,7 +185,6 @@
             xml: 'XML 数据(*.xml)',
             txt: '文本文件(制表符分隔)(*.txt)',
             xlsx: 'Excel 工作簿(*.xlsx)',
-            xls: 'Excel 工作簿(*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -231,27 +217,12 @@
             addRow: '新增行',
             insertRow: '插入行',
             delRow: '删除行',
-            fixed: '固定列',
-            setting: '显示/隐藏列',
           }
-        },
-        dateformat: {
-          dayNamesShort: '周日_周一_周二_周三_周四_周五_周六',
-          dayNames: '星期日_星期一_星期二_星期三_星期四_星期五_星期六',
-          monthNamesShort: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
-          monthNames: '一月_二月_三月_四月_五月_六月_七月_八月_九月_十月_十一月_十二月',
-          amPm: '上午_下午',
         }
       }
     },
     ja: {
       vue: {
-        attachment: {
-          view: {
-              directory: 'ナビゲーション',
-              loading: '読み込み中、しばらくお待ちください。'
-          }
-        },
         colorpicker: {
           confirm: 'はい',
           clear: 'クリア'
@@ -369,11 +340,6 @@
         image: {
           error: '読み込みに失敗しました'
         },
-        cardList:{
-          addButton: 'データを追加',
-          deleteButton: 'データを削除',
-          noData: 'データなし',
-        },
         xtable: {
           error: {
             groupFixed: 'Grouping headersが使われている場合、fixed columnsは左右になくてはなりません',
@@ -429,7 +395,6 @@
             xml: 'XML データ(*.xml)',
             txt: 'テキスト(タブ区切り)(*.txt)',
             xlsx: 'Excel ワークブック(*.xlsx)',
-            xls: 'Excel ワークブック(*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -462,27 +427,12 @@
             addRow: '行追加',
             insertRow: '行挿入',
             delRow: '行削除',
-            fixed: '固定列',
-            setting: '表示／非表示列',
-          },
-        },
-        dateformat: {
-          dayNamesShort: '日_月_火_水_木_金_土',
-          dayNames: '日曜日_月曜日_火曜日_水曜日_木曜日_金曜日_土曜日',
-          monthNamesShort: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
-          monthNames: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
-          amPm: '午前_午後',
+          }
         }
       }
     },
     en: {
       vue: {
-        attachment: {
-          view: {
-              directory: 'Navigation',
-              loading: 'Loading, please wait.'
-          }
-        },
         colorpicker: {
           confirm: 'OK',
           clear: 'Clear'
@@ -600,11 +550,6 @@
         image:{
           error: 'Failed to load'
         },
-        cardList:{
-          addButton: 'Add Data',
-          deleteButton: 'Delete Data',
-          noData: 'No Data',
-        },
         xtable: {
           error: {
             groupFixed: 'If grouping headers are used, fixed columns must be on the left and right sides.',
@@ -660,7 +605,6 @@
             xml: 'XML Data(*.xml)',
             txt: 'Text (Tab delimited) (*.txt)',
             xlsx: 'Excel Workbook (*.xlsx)',
-            xls: 'Excel Workbook (*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -693,8 +637,6 @@
             addRow: 'Add Row',
             insertRow: 'Insert Row',
             delRow: 'Delete Row',
-            fixed: 'Fix Column',
-            setting: 'Show/Hide Column',
           }
         }
       }

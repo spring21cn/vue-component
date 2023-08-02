@@ -9,7 +9,7 @@
 })(this, function(Vue) {
   'use strict';
   var VueNote = {
-    template: '<div :class="[\'vue-note\', typeClass, typeBox]"><div class="vue-note__content"><span class="vue-note__title is-bold" v-if="title">{{title}}</span><div v-if="$slots.default" class="vue-note__description"><slot></slot></div></div></div>',
+    template: '<div :class="[\'vue-note\', typeClass, typeBox]"><div class="vue-note__content"><span class="vue-note__title is-bold" v-if="title">{{title}}</span><div class="vue-note__description"><slot></slot></div></div></div>',
     name: 'VueNote',
     props: {
       title: {

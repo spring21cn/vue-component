@@ -574,14 +574,23 @@
       var isRequired;
   
       if (editRules) {
-        if(VueUtil.isArray(params.column.property)){
-          params.column.property.some(function (item) {
-            isRequired = $table.getIsRequiredByOne(item);
-            if(isRequired){ return true; }
-          });
-        }else{
-          isRequired = $table.getIsRequiredByOne(params.column.property);
-        }
+        function getIsRequiredByOne(property){
+            var columnRules = VueUtil.get(editRules, property);
+
+            if (columnRules) {
+              isRequired = columnRules.some(function (rule) {
+                return rule.required;
+              });
+            }
+		}
+		if(VueUtil.isArray(params.column.property)){
+			params.column.property.some(function (item) {
+				getIsRequiredByOne(item);
+				if(isRequired){ return true; }
+			});
+		}else{
+			getIsRequiredByOne(params.column.property);
+		}
       }
   
       return [isRequired ? h('i', {

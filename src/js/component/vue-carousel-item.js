@@ -73,8 +73,7 @@
               </div>',
     name: 'VueCarouselItem',
     props: {
-      name: String,
-      interval: Number,
+      name: String
     },
     data: function() {
       return {

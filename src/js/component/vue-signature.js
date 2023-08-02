@@ -50,10 +50,6 @@
         type: String,
         default: 'image/png'
       },
-      saveQuality: {
-        type: Number,
-        default: 0.8
-      },
       options: {
         type: Object,
         default: function () {
@@ -72,6 +68,7 @@
         signaturePad: {},
         cacheImages: [],
         signatureData: TRANSPARENT_PNG,
+        onResizeHandler: null
       };
     },
     mounted: function() {
@@ -80,11 +77,16 @@
       var signaturePad = new SignaturePad(canvas, VueUtil.merge({}, DEFAULT_OPTIONS, options));
       this.signaturePad = signaturePad;
   
-      VueUtil.addResizeListener(this.$el, this.resizeCanvas);
+      this.onResizeHandler = this.resizeCanvas.bind(this);
+  
+      window.addEventListener('resize', this.onResizeHandler, false);
+  
       this.resizeCanvas();
     },
     beforeDestroy: function() {
-      VueUtil.removeResizeListener(this.$el, this.resizeCanvas);
+      if (this.onResizeHandler) {
+        window.removeEventListener('resize', this.onResizeHandler, false);
+      }
     },
     methods: {
       resizeCanvas: function() {
@@ -102,7 +104,7 @@
         var signaturePad = this.signaturePad;
         var saveType = this.saveType;
   
-        if (['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'].indexOf(saveType) == -1) {
+        if (['image/png', 'image/jpeg', 'image/svg+xml'].indexOf(saveType) == -1) {
           throw new Error('Image type is incorrect!');
         }
   
@@ -112,7 +114,7 @@
             isEmpty: true
           };
         } else {
-          this.signatureData = signaturePad.toDataURL(saveType, this.saveQuality);
+          this.signatureData = signaturePad.toDataURL(saveType);
   
           return {
             isEmpty: false,

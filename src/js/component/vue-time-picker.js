@@ -40,7 +40,6 @@
     '      <vue-scrollbar'+
     '        @mouseenter.native="emitSelectRange(\'hours\')"'+
     '        @mousemove.native="adjustCurrentSpinner(\'hours\')"'+
-    '        @touchend.native="adjustCurrentSpinner(\'hours\')"'+
     '        class="vue-time-spinner__wrapper"'+
     '        wrap-style="max-height: inherit;"'+
     '        view-class="vue-time-spinner__list"'+
@@ -57,7 +56,6 @@
     '      <vue-scrollbar'+
     '        @mouseenter.native="emitSelectRange(\'minutes\')"'+
     '        @mousemove.native="adjustCurrentSpinner(\'minutes\')"'+
-    '        @touchend.native="adjustCurrentSpinner(\'minutes\')"'+
     '        class="vue-time-spinner__wrapper"'+
     '        wrap-style="max-height: inherit;"'+
     '        view-class="vue-time-spinner__list"'+
@@ -75,7 +73,6 @@
     '        v-show="showSeconds"'+
     '        @mouseenter.native="emitSelectRange(\'seconds\')"'+
     '        @mousemove.native="adjustCurrentSpinner(\'seconds\')"'+
-    '        @touchend.native="adjustCurrentSpinner(\'seconds\')"'+
     '        class="vue-time-spinner__wrapper"'+
     '        wrap-style="max-height: inherit;"'+
     '        view-class="vue-time-spinner__list"'+
@@ -448,9 +445,7 @@
         }
       },
       selectableRange: function (val) {
-        this.$nextTick(function() {
-          this.$refs.spinner.selectableRange = val;
-        });
+        this.$refs.spinner.selectableRange = val;
       },
       defaultValue: function (val) {
         if (!isDate(this.value)) {

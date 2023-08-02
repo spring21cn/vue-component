@@ -87,21 +87,18 @@
     copyFormatter: [Function, Array, String],
     // 黏贴时值的格式化方法
     pasteFormatter: [Function, Array, String],
-    // 值的format缓存key
-    formatterKey: [Function, Array, String],
     // 额外的参数
     params: Object,
     visible: {
       type: Boolean,
       default: true
-    },
-    excelExportConfig: Function
+    }
   };
   var watch = {};
   VueUtil.keys(props).forEach(function (name) {
     watch[name] = function (value) {
       this.columnConfig.update(name, value);
-      this.$table.refreshColumn(false);
+      this.$table.refreshColumn();
     };
   });
   var VueXtableColumn = {

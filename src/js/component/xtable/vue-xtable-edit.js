@@ -72,11 +72,6 @@
         }
 
         [].unshift.apply(editStore.insertList, newRecords);
-
-        var scrollY = this.optimizeOpts.scrollY;
-        this.scrollYLoad = scrollY && scrollY.gt && scrollY.gt < tableFullData.length;
-
-        this.addOrderIndex();
         this.handleTableData();
         this.updateCache();
         this.checkSelectionStatus();
@@ -87,7 +82,7 @@
 
         return this.$nextTick().then(function () {
           _this.recalculate();
-          _this.updateFooter();
+
           return {
             row: newRecords.length ? newRecords[newRecords.length - 1] : null,
             rows: newRecords
@@ -160,7 +155,6 @@
         VueUtil.remove(insertList, function (row) {
           return rows.indexOf(row) > -1;
         });
-        this.addOrderIndex();
         this.handleTableData();
         this.updateCache();
         this.checkSelectionStatus();
@@ -171,7 +165,7 @@
 
         return this.$nextTick().then(function () {
           _this2.recalculate();
-          _this2.updateFooter();
+
           return {
             row: rows && rows.length ? rows[rows.length - 1] : null,
             rows: rest
@@ -366,7 +360,7 @@
             // 判断是否禁用编辑
             var type = 'edit-disabled';
 
-            if (!activeMethod || activeMethod(params) || editConfig.mode === 'row') {
+            if (!activeMethod || activeMethod(params)) {
               if (this.keyboardConfig || this.mouseConfig) {
                 this.clearCopyed(evnt);
                 this.clearChecked();
@@ -382,14 +376,7 @@
               actived.column = column;
 
               this.currentActiveRowOldValue = VueUtil.cloneDeep(row);
-              if (clearColumn) {
-                if (Array.isArray(clearColumn.property)) {
-                  // property 绑定多个字段时， 按键输入激活前清空第一个字段值
-                  tools.UtilTools.setCellValue(row, {property: clearColumn.property[0]}, null, _this4);
-                } else {
-                  tools.UtilTools.setCellValue(row, clearColumn, null, _this4);
-                }
-              }
+              if (clearColumn) tools.UtilTools.setCellValue(row, clearColumn, null);
               if (editConfig.mode === 'row') {
                 tableColumn.forEach(function (column) {
                   return _this4._getColumnModel(row, column);
@@ -401,8 +388,6 @@
               this.$nextTick(function () {
                 _this4.handleFocus(params, evnt);
               });
-            } else {
-              this.clearActived(evnt);
             }
 
             tools.UtilTools.emitEvent(this, type, [params, evnt]);
@@ -413,7 +398,7 @@
               var oldModel = oldColumn.model;
 
               if (oldModel.update) {
-                tools.UtilTools.setCellValue(row, oldColumn, oldModel.value, _this4);
+                tools.UtilTools.setCellValue(row, oldColumn, oldModel.value);
               }
 
               this.clearValidate();
@@ -440,12 +425,11 @@
         }
       },
       _setColumnModel: function _setColumnModel(row, column) {
-        var self = this;
         var model = column.model,
             editRender = column.editRender;
 
         if (editRender && model.update) {
-          tools.UtilTools.setCellValue(row, column, model.value, self);
+          tools.UtilTools.setCellValue(row, column, model.value);
 
           model.update = false;
           model.value = null;
@@ -484,7 +468,7 @@
         actived.args = null;
         actived.row = null;
         actived.column = null;
-        return (baseTable._valid ? this.clearValidate() : this.$nextTick()).then(this.recalculateAfterClearActived === false ? undefined : this.recalculate);
+        return (baseTable._valid ? this.clearValidate() : this.$nextTick()).then(this.recalculate);
       },
       _getActiveRow: function _getActiveRow() {
         var $el = this.$el,
@@ -527,18 +511,12 @@
         if (editRender) {
           var compRender = baseTable.Renderer.get(editRender.name);
 
-          var autofocus = editRender.autofocus || 'input:not([disabled]):not([tabindex=\'-1\']),select:not([disabled]):not([tabindex=\'-1\']),textarea:not([disabled]):not([tabindex=\'-1\']),button:not([disabled]):not([tabindex=\'-1\']),[tabindex]:not([tabindex=\'-1\'])',
+          var autofocus = editRender.autofocus,
               autoselect = editRender.autoselect;
           var inputElem; // 如果指定了聚焦 class
 
           if (autofocus) {
-            // 如果cell有多个可focus对象，focus第一个，shift tab 回退时 focus最后一个
-            if (evnt && evnt.shiftKey) {
-              var inputElems = cell.querySelectorAll(autofocus);
-              inputElem = inputElems[inputElems.length- 1];
-            } else {
-              inputElem = cell.querySelector(autofocus);
-            }
+            inputElem = cell.querySelector(autofocus);
           } // 渲染器的聚焦处理
 
 
@@ -625,22 +603,18 @@
             visibleColumn = this.visibleColumn;
 
         if (!VueUtil.isDef(field)) field = 0;
-        var column;
-        if(typeof field === 'number') {
-          column = visibleColumn[field];
-        } else {
-          column = VueUtil.find(visibleColumn, function (column) {
-            return column.property === field;
-          });
-        }
-        var rowIndex = tableData.indexOf(row);
+        if (row && (!editConfig || editConfig.trigger === 'dblclick')) {
+          var column;
+          if(typeof field === 'number') {
+            column = visibleColumn[field];
+          } else {
+            column = VueUtil.find(visibleColumn, function (column) {
+              return column.property === field;
+            });
+          }
+          var rowIndex = tableData.indexOf(row);
 
-        if (rowIndex > -1 && column) {
-
-          this.setCurrentRow(row, column);
-          this.isActivated = true;
-
-          if (row && (!editConfig || editConfig.trigger === 'dblclick' || editConfig.trigger === 'manual')) {
+          if (rowIndex > -1 && column) {
             var cell = tools.DomTools.getCell(this, {
               row: row,
               rowIndex: rowIndex,
@@ -654,6 +628,9 @@
               columnIndex: visibleColumn.indexOf(column),
               cell: cell
             };
+
+            this.setCurrentRow(row, column);
+            this.isActivated = true;
             this.handleSelected(params, {});
           }
         }
@@ -679,13 +656,7 @@
             cell = params.cell;
 
         var selectMethod = function selectMethod() {
-          if (selected.row !== row || selected.column !== column) {
-
-            if (!(mouseConfig.selected || mouseConfig.checked)) {
-              _this7._clearActived(evnt);
-              return _this7.$nextTick();
-            }
-
+          if ((mouseConfig.selected || mouseConfig.checked) && (selected.row !== row || selected.column !== column)) {
             if (actived.row !== row || (editConfig.mode === 'cell' ? actived.column !== column : false)) {
               if (_this7.keyboardConfig) {
                 _this7.clearChecked(evnt);
@@ -697,10 +668,6 @@
                 _this7.clearSelected(evnt);
               }
 
-              if (VueUtil.isIE && document.activeElement && actived.args.cell && actived.args.cell.contains(document.activeElement)) {
-                document.activeElement.blur();
-              }
-              
               _this7.clearActived(evnt);
 
               selected.args = params;
@@ -712,7 +679,7 @@
               } // 如果配置了批量选中功能，则为批量选中状态
 
 
-              if (mouseConfig.checked && cell) {
+              if (mouseConfig.checked) {
                 var headerElem = elemStore['main-header-list'];
 
                 _this7.handleChecked([[cell]]);

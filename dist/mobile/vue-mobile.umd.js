@@ -824,7 +824,7 @@ module.exports = exports;
 var ___CSS_LOADER_API_IMPORT___ = __webpack_require__("24fb");
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
-exports.push([module.i, ".vue-dialog__wrapper{background-color:rgba(0,0,0,.8)}.vue-dialog__body{max-height:90vh;overflow-y:auto}@media screen and (max-width:767px){.vue-dialog--large,.vue-dialog--small,.vue-dialog--tiny{width:80%;left:10%}}", ""]);
+exports.push([module.i, ".vue-dialog__wrapper{background-color:rgba(0,0,0,.8)}.vue-dialog{-webkit-transform:translate3d(-50%,0,0)}.vue-dialog--tiny{width:420px;max-width:80%;top:35%!important}.vue-dialog--small{width:500px;max-width:80%;top:30%!important}.vue-dialog--large{width:600px;max-width:90%;top:20%!important}.vue-dialog--full{width:100%;top:10%!important}", ""]);
 // Exports
 module.exports = exports;
 
@@ -866,7 +866,7 @@ module.exports = exports;
 var ___CSS_LOADER_API_IMPORT___ = __webpack_require__("24fb");
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
-exports.push([module.i, ".vue-select{width:100%}.vue-select-dropdown{position:absolute!important;width:100%!important;border:0;text-align:center;margin:0;top:0;right:0;bottom:0;left:0;box-shadow:0 0 0 0;background-color:transparent;-webkit-overflow-scrolling:touch;touch-action:pan-y;z-index:unset!important}.vue-select-dropdown_list_main,.vue-select-dropdown_main{width:100%;list-style:none;bottom:0;left:0;background-color:#fff}.vue-select-dropdown_main{max-height:90vh;position:static!important}.vue-select-dropdown .vue-aside-bottom{z-index:9999}.vue-select-dropdown .vue-aside__wrapper{z-index:9998}.vue-select-dropdown_main .vue-aside.vue-aside-bottom{border-radius:4px 4px 0 0}.vue-select-dropdown_list_main{overflow:hidden;max-height:40vh;min-height:40vh;padding:10px 5px}.vue-select-dropdown__list{max-height:calc(40vh - 10px)}.vue-select-dropdown__item{font-size:16px;padding:8px 10px;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#48576a;height:40px;line-height:1.5;cursor:pointer;border-bottom:1px solid hsla(0,0%,88.2%,.6)}.vue-select-group__title{text-align:left;padding-left:20px;padding-top:10px;font-size:15px;color:#999;height:30px;line-height:30px;font-weight:700;margin-bottom:6px}.vue-select-group__wrap{list-style:none;margin:0;padding:0;border-bottom:1px solid rgba(25,137,250,.3)}.vue-select-dropdown_main .vue-input{background-color:#fff;padding:10px}.vue-select-dropdown_main input{border:1px solid rgba(25,137,250,.5);padding:6px;border-radius:4px}.vue-select-dropdown .vue-input__icon{height:40px;right:10px;top:10px;padding:3px}.vue-select-dropdown .is-all-select{color:#409eff}.vue-select:hover .vue-select-dropdown .vue-input__inner{border:1px solid rgba(25,137,250,.5)}.vue-select-dropdown .vue-input__inner:focus,.vue-select-dropdown .vue-input__inner:hover{border:1px solid rgba(25,137,250,.8)}.tag_view{overflow:auto;-webkit-overflow-scrolling:touch;width:calc(100% - 20px);min-height:0;max-height:90px;text-align:left;margin:10px}.tag_view .vue-tag{margin:3px}.vue-select__input.filter-vue-input{margin-left:auto;height:50px;margin:5px 0}.vue-select-dropdown.is-multiple .vue-select-dropdown__item.selected:after{right:22px}.vue-select-dropdown .vue-recycle-scroller{max-height:calc(40vh - 10px)}", ""]);
+exports.push([module.i, ".vue-select{position:absolute;width:100%}.vue-select-dropdown{position:absolute!important;width:100%!important;border:0;text-align:center;margin:0;top:0;right:0;bottom:0;left:0;box-shadow:0 0 0 0;background-color:transparent;-webkit-overflow-scrolling:touch;touch-action:pan-y;z-index:unset!important}.vue-select-dropdown_list_main,.vue-select-dropdown_main{width:100%;list-style:none;bottom:0;left:0;background-color:#fff}.vue-select-dropdown_main{max-height:90vh;position:static!important}.vue-select-dropdown .vue-aside-bottom{z-index:9999}.vue-select-dropdown .vue-aside__wrapper{z-index:9998}.vue-select-dropdown_main .vue-aside.vue-aside-bottom{border-radius:4px 4px 0 0}.vue-select-dropdown_list_main{overflow:hidden;max-height:40vh;min-height:40vh;padding:10px 5px}.vue-select-dropdown__list{max-height:calc(40vh - 10px)}.vue-select-dropdown__item{font-size:16px;padding:8px 10px;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#48576a;height:40px;line-height:1.5;cursor:pointer;border-bottom:1px solid hsla(0,0%,88.2%,.6)}.vue-select-group__title{text-align:left;padding-left:20px;padding-top:10px;font-size:15px;color:#999;height:30px;line-height:30px;font-weight:700;margin-bottom:6px}.vue-select-group__wrap{list-style:none;margin:0;padding:0;border-bottom:1px solid rgba(25,137,250,.3)}.vue-select-dropdown_main .vue-input{background-color:#fff;padding:10px}.vue-select-dropdown_main input{border:1px solid rgba(25,137,250,.5);padding:6px;border-radius:4px}.vue-select-dropdown .vue-input__icon{height:40px;right:10px;top:10px;padding:3px}.vue-select-dropdown .is-all-select{color:#409eff}.vue-select:hover .vue-select-dropdown .vue-input__inner{border:1px solid rgba(25,137,250,.5)}.vue-select-dropdown .vue-input__inner:focus,.vue-select-dropdown .vue-input__inner:hover{border:1px solid rgba(25,137,250,.8)}.tag_view{overflow:auto;-webkit-overflow-scrolling:touch;width:calc(100% - 20px);min-height:0;max-height:90px;text-align:left;margin:10px}.tag_view .vue-tag{margin:3px}.vue-select__input.filter-vue-input{margin-left:auto;height:50px;margin:5px 0}.vue-select-dropdown.is-multiple .vue-select-dropdown__item.selected:after{right:22px}", ""]);
 // Exports
 module.exports = exports;
 
@@ -1456,7 +1456,7 @@ var SlotsMixin = external_Vue_default.a.extend({
 
 
 
-function component_install(Vue) {
+function install(Vue) {
   var name = this.name;
   Vue.component(name, this);
   Vue.component(camelize("-".concat(name)), this);
@@ -1500,7 +1500,7 @@ function createComponent(name) {
     }
 
     sfc.name = name;
-    sfc.install = component_install;
+    sfc.install = install;
     return sfc;
   };
 }
@@ -3991,12 +3991,12 @@ var nav_bar_createNamespace = createNamespace('nav-bar'),
 // EXTERNAL MODULE: ./packages/nav-bar/index.less
 var packages_nav_bar = __webpack_require__("598a");
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"a9e78e98-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/cascader/cascader.vue?vue&type=template&id=0bf4be9e&
-var cascadervue_type_template_id_0bf4be9e_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('vue-input',{attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"autofocus":_vm.autofocus,"placeholder":_vm.placeholder,"text-align":_vm.textAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.disabled ? null : _vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.onClick($event)}}}),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('picker',{ref:"picker",class:_vm.popperClass,attrs:{"columns":_vm.columns,"title":_vm.title,"loading":_vm.loading,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"value-key":_vm.valueKey,"value-prop":_vm.valueProp,"value-disabled":_vm.valueDisabled,"show-toolbar":true,"toolbar-position":_vm.toolbarPosition,"allow-html":_vm.allowHtml,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.onConfirm,"cancel":_vm.onCancel,"change":_vm.onChange},scopedSlots:_vm._u([{key:"default",fn:function(){return [_vm._t("default")]},proxy:true},{key:"title",fn:function(){return [_vm._t("title")]},proxy:true},{key:"columns-top",fn:function(){return [_vm._t("columns-top")]},proxy:true},{key:"columns-bottom",fn:function(){return [_vm._t("columns-bottom")]},proxy:true}],null,true)})],1)],1)}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"621eda33-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/cascader/cascader.vue?vue&type=template&id=032fdbd2&
+var cascadervue_type_template_id_032fdbd2_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('vue-input',{attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"autofocus":_vm.autofocus,"placeholder":_vm.placeholder,"text-align":_vm.textAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.onClick($event)}}}),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('picker',{ref:"picker",class:_vm.popperClass,attrs:{"columns":_vm.columns,"title":_vm.title,"loading":_vm.loading,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"value-key":_vm.valueKey,"value-prop":_vm.valueProp,"value-disabled":_vm.valueDisabled,"show-toolbar":true,"toolbar-position":_vm.toolbarPosition,"allow-html":_vm.allowHtml,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.onConfirm,"cancel":_vm.onCancel,"change":_vm.onChange},scopedSlots:_vm._u([{key:"default",fn:function(){return [_vm._t("default")]},proxy:true},{key:"title",fn:function(){return [_vm._t("title")]},proxy:true},{key:"columns-top",fn:function(){return [_vm._t("columns-top")]},proxy:true},{key:"columns-bottom",fn:function(){return [_vm._t("columns-bottom")]},proxy:true}],null,true)})],1)],1)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./packages/cascader/cascader.vue?vue&type=template&id=0bf4be9e&
+// CONCATENATED MODULE: ./packages/cascader/cascader.vue?vue&type=template&id=032fdbd2&
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--12-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/cascader/cascader.vue?vue&type=script&lang=js&
 //
@@ -4150,8 +4150,7 @@ var staticRenderFns = []
     }
   },
   mounted: function mounted() {
-    this.showPicker = false; //默认值的初始化配对
-
+    this.showPicker = false;
     this.setValues(this.value);
   },
   data: function data() {
@@ -4161,45 +4160,11 @@ var staticRenderFns = []
     };
   },
   methods: {
-    manualMatchValue: function manualMatchValue(values) {
-      var labels = [];
-      var matchOptions = this.options;
-
-      for (var i = 0; i < values.length; i++) {
-        var tmpValue = values[i];
-
-        for (var j = 0; j < matchOptions.length; j++) {
-          var tmpValue2 = matchOptions[j].value;
-
-          if (tmpValue == tmpValue2) {
-            labels.push(matchOptions[j].label);
-
-            if (matchOptions[j].children) {
-              matchOptions = matchOptions[j].children;
-              continue;
-            } else {
-              break;
-            }
-          }
-        }
-      }
-
-      if (labels.length > 0) {
-        this.fieldValue = this.formatLabel(labels);
-      }
-    },
     setValues: function setValues(values) {
-      var _this = this;
-
-      setTimeout(function () {
-        if (values && values.length > 0 && _this.getPicker()) {
-          _this.getPicker().setValues(values);
-
-          _this.fieldValue = _this.formatLabel(_this.getTexts());
-        } else if (values && values.length > 0) {
-          _this.manualMatchValue(values);
-        }
-      }, 50);
+      if (values && values.length > 0) {
+        this.getPicker().setValues(values);
+        this.fieldValue = this.getTexts().toString();
+      }
     },
     getPicker: function getPicker() {
       return this.$refs.picker;
@@ -4207,7 +4172,6 @@ var staticRenderFns = []
     onClick: function onClick() {
       if (!this.disabled) {
         this.showPicker = true;
-        this.setValues(this.value);
       }
     },
     onConfirm: function onConfirm(value, index) {
@@ -4223,12 +4187,12 @@ var staticRenderFns = []
       this.$emit('change', picker, values, index);
     },
     getTexts: function getTexts() {
-      var _this2 = this;
+      var _this = this;
 
       if (this.getPicker().dataType === 'cascade') {
         return this.getPicker().children.map(function (child) {
           var v = child.getValue();
-          return v[_this2.valueKey];
+          return v[_this.valueKey];
         });
       }
 
@@ -4237,16 +4201,9 @@ var staticRenderFns = []
       });
     },
     handleClickIcon: function handleClickIcon(event) {
-      if (this.disabled) {
-        return;
-      }
-
       this.fieldValue = '';
       event.stopPropagation();
       this.$emit('input', null);
-    },
-    formatLabel: function formatLabel(labelArr) {
-      return labelArr.join(' > ');
     }
   },
   watch: {
@@ -4383,7 +4340,7 @@ function normalizeComponent (
 
 var component = normalizeComponent(
   cascader_cascadervue_type_script_lang_js_,
-  cascadervue_type_template_id_0bf4be9e_render,
+  cascadervue_type_template_id_032fdbd2_render,
   staticRenderFns,
   false,
   null,
@@ -6805,17 +6762,17 @@ var index_bar_createNamespace = createNamespace('index-bar'),
 // EXTERNAL MODULE: ./packages/index-bar/index.less
 var packages_index_bar = __webpack_require__("dc76");
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"a9e78e98-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/index.vue?vue&type=template&id=0862f2a9&
-var scroll_viewvue_type_template_id_0862f2a9_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-scroll-view",on:{"touchstart":_vm.onScrollerTouchStart,"touchmove":_vm.onScrollerTouchMove,"touchend":_vm.onScrollerTouchEnd,"touchcancel":_vm.onScrollerTouchEnd,"mousedown":_vm.onScrollerMouseDown,"mousemove":_vm.onScrollerMouseMove,"mouseup":_vm.onScrollerMouseUp,"mouseleave":_vm.onScrollerMouseUp}},[(_vm.$slots.header)?_c('div',{staticClass:"scroll-view-header"},[_vm._t("header")],2):_vm._e(),_c('div',{staticClass:"scroll-view-container",class:{
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"621eda33-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/index.vue?vue&type=template&id=cb734c28&
+var scroll_viewvue_type_template_id_cb734c28_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-scroll-view",on:{"touchstart":_vm.onScrollerTouchStart,"touchmove":_vm.onScrollerTouchMove,"touchend":_vm.onScrollerTouchEnd,"touchcancel":_vm.onScrollerTouchEnd,"mousedown":_vm.onScrollerMouseDown,"mousemove":_vm.onScrollerMouseMove,"mouseup":_vm.onScrollerMouseUp,"mouseleave":_vm.onScrollerMouseUp}},[(_vm.$slots.header)?_c('div',{staticClass:"scroll-view-header"},[_vm._t("header")],2):_vm._e(),_c('div',{staticClass:"scroll-view-container",class:{
       'horizon': _vm.scrollingX && !_vm.scrollingY
     },attrs:{"scroll-wrapper":""}},[(_vm.hasRefresher)?_c('div',{staticClass:"scroll-view-refresh",class:{
         'refreshing': _vm.isRefreshing,
         'refresh-active': _vm.isRefreshActive,
       }},[_vm._t("refresh",null,{"scrollTop":_vm.scrollY,"isRefreshing":_vm.isRefreshing,"isRefreshActive":_vm.isRefreshActive})],2):_vm._e(),_vm._t("default"),(_vm.hasMore)?_c('div',{staticClass:"scroll-view-more",class:{active: _vm.isEndReachingStart || _vm.isEndReaching}},[_vm._t("more",null,{"isEndReaching":_vm.isEndReachingStart || _vm.isEndReaching})],2):_vm._e()],2),(_vm.$slots.footer)?_c('div',{staticClass:"scroll-view-footer"},[_vm._t("footer")],2):_vm._e()])}
-var scroll_viewvue_type_template_id_0862f2a9_staticRenderFns = []
+var scroll_viewvue_type_template_id_cb734c28_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./packages/scroll-view/index.vue?vue&type=template&id=0862f2a9&
+// CONCATENATED MODULE: ./packages/scroll-view/index.vue?vue&type=template&id=cb734c28&
 
 // EXTERNAL MODULE: ./packages/scroll-view/_util/env.js
 var env = __webpack_require__("cfe9");
@@ -8451,13 +8408,19 @@ var render_render = function (global) {
       this.scroller = scroller;
       this.reflowScroller(true);
       this.autoReflow && this.initAutoReflow();
-      this.endReachedHandler = VueUtil._debounce(function () {
-        _this.isEndReaching = true;
 
-        _this.$emit('endReached');
+      this.endReachedHandler = function () {
+        var _this2 = this;
 
-        _this.$emit('end-reached');
-      }, 150);
+        setTimeout(function () {
+          _this2.isEndReaching = true;
+
+          _this2.$emit('endReached');
+
+          _this2.$emit('end-reached');
+        }, 50);
+      };
+
       setTimeout(function () {
         _this.isInitialed = true;
       }, 50);
@@ -8467,11 +8430,11 @@ var render_render = function (global) {
       }
     },
     initAutoReflow: function initAutoReflow() {
-      var _this2 = this;
+      var _this3 = this;
 
       this.destroyAutoReflow();
       this.reflowTimer = setInterval(function () {
-        _this2.reflowScroller();
+        _this3.reflowScroller();
       }, 100);
     },
     destroyAutoReflow: function destroyAutoReflow() {
@@ -8626,10 +8589,10 @@ var render_render = function (global) {
       });
     },
     init: function init() {
-      var _this3 = this;
+      var _this4 = this;
 
       this.$nextTick(function () {
-        _this3.initScroller();
+        _this4.initScroller();
       });
     },
     scrollTo: function scrollTo(left, top) {
@@ -8654,7 +8617,7 @@ var render_render = function (global) {
       return this.scroller.getValues();
     },
     reflowScroller: function reflowScroller() {
-      var _this4 = this;
+      var _this5 = this;
 
       var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       var container = this.container;
@@ -8671,13 +8634,13 @@ var render_render = function (global) {
         var contentW = content.offsetWidth;
         var contentH = content.offsetHeight;
 
-        if (force || _this4.containerW !== containerW || _this4.containerH !== containerH || _this4.contentW !== contentW || _this4.contentH !== contentH) {
-          _this4.scroller.setDimensions(container.clientWidth, container.clientHeight, content.offsetWidth, content.offsetHeight);
+        if (force || _this5.containerW !== containerW || _this5.containerH !== containerH || _this5.contentW !== contentW || _this5.contentH !== contentH) {
+          _this5.scroller.setDimensions(container.clientWidth, container.clientHeight, content.offsetWidth, content.offsetHeight);
 
-          _this4.containerW = containerW;
-          _this4.containerH = containerH;
-          _this4.contentW = contentW;
-          _this4.contentH = contentH;
+          _this5.containerW = containerW;
+          _this5.containerH = containerH;
+          _this5.contentW = contentW;
+          _this5.contentH = contentH;
         }
       });
     },
@@ -8697,14 +8660,6 @@ var render_render = function (global) {
 
       this.scroller.finishPullToRefresh();
       this.reflowScroller();
-    },
-    triggerLoadMore: function triggerLoadMore() {
-      //触发触底加载更多数据的方法
-      if (!this.scroller) {
-        return;
-      }
-
-      this.endReachedHandler();
     },
     finishLoadMore: function finishLoadMore() {
       /* istanbul ignore if */
@@ -8734,8 +8689,8 @@ var scroll_viewvue_type_style_index_0_lang_css_ = __webpack_require__("e8a5");
 
 var scroll_view_component = normalizeComponent(
   packages_scroll_viewvue_type_script_lang_js_,
-  scroll_viewvue_type_template_id_0862f2a9_render,
-  scroll_viewvue_type_template_id_0862f2a9_staticRenderFns,
+  scroll_viewvue_type_template_id_cb734c28_render,
+  scroll_viewvue_type_template_id_cb734c28_staticRenderFns,
   false,
   null,
   null,
@@ -8744,12 +8699,12 @@ var scroll_view_component = normalizeComponent(
 )
 
 /* harmony default export */ var scroll_view = (scroll_view_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"a9e78e98-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/more.vue?vue&type=template&id=3e23cb61&
-var morevue_type_template_id_3e23cb61_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-scroll-view-more"},[(!_vm.isFinished)?[_vm._v(" "+_vm._s(_vm.loadingText || _vm.$t('vue.scrollViewMore.loadingText'))+" ")]:[_vm._v(" "+_vm._s(_vm.finishedText || _vm.$t('vue.scrollViewMore.finishedText'))+" ")]],2)}
-var morevue_type_template_id_3e23cb61_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"621eda33-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/more.vue?vue&type=template&id=5b8db774&
+var morevue_type_template_id_5b8db774_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-scroll-view-more"},[(!_vm.isFinished)?[_vm._v(" "+_vm._s(_vm.loadingText)+" ")]:[_vm._v(" "+_vm._s(_vm.finishedText)+" ")]],2)}
+var morevue_type_template_id_5b8db774_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./packages/scroll-view/more.vue?vue&type=template&id=3e23cb61&
+// CONCATENATED MODULE: ./packages/scroll-view/more.vue?vue&type=template&id=5b8db774&
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--12-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/more.vue?vue&type=script&lang=js&
 //
@@ -8767,10 +8722,12 @@ var morevue_type_template_id_3e23cb61_staticRenderFns = []
   name: 'vue-scroll-view-more',
   props: {
     loadingText: {
-      type: String
+      type: String,
+      default: '更多加载中...'
     },
     finishedText: {
-      type: String
+      type: String,
+      default: '全部已加载'
     },
     isFinished: {
       type: Boolean,
@@ -8794,8 +8751,8 @@ var morevue_type_style_index_0_lang_css_ = __webpack_require__("af92");
 
 var more_component = normalizeComponent(
   scroll_view_morevue_type_script_lang_js_,
-  morevue_type_template_id_3e23cb61_render,
-  morevue_type_template_id_3e23cb61_staticRenderFns,
+  morevue_type_template_id_5b8db774_render,
+  morevue_type_template_id_5b8db774_staticRenderFns,
   false,
   null,
   null,
@@ -8829,14 +8786,14 @@ var scroll_view_more_component = normalizeComponent(
 )
 
 /* harmony default export */ var scroll_view_more = (scroll_view_more_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"a9e78e98-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/refresh.vue?vue&type=template&id=5058841f&
-var refreshvue_type_template_id_5058841f_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-scroll-view-refresh"},[_c('vue-activity-indicator-rolling',{attrs:{"process":!_vm.isRefreshing ? _vm.process : undefined,"width":4,"color":_vm.rollerColor}}),_c('p',{staticClass:"refresh-tip"},[_vm._v(_vm._s(_vm.refreshTip))])],1)}
-var refreshvue_type_template_id_5058841f_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"621eda33-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/refresh.vue?vue&type=template&id=72f0c476&
+var refreshvue_type_template_id_72f0c476_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-scroll-view-refresh"},[_c('vue-activity-indicator-rolling',{attrs:{"process":!_vm.isRefreshing ? _vm.process : undefined,"width":4,"color":_vm.rollerColor}}),_c('p',{staticClass:"refresh-tip"},[_vm._v(_vm._s(_vm.refreshTip))])],1)}
+var refreshvue_type_template_id_72f0c476_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./packages/scroll-view/refresh.vue?vue&type=template&id=5058841f&
+// CONCATENATED MODULE: ./packages/scroll-view/refresh.vue?vue&type=template&id=72f0c476&
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"a9e78e98-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/roller.vue?vue&type=template&id=4f32b9b8&
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"621eda33-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/scroll-view/roller.vue?vue&type=template&id=4f32b9b8&
 var rollervue_type_template_id_4f32b9b8_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-activity-indicator-rolling"},[_c('div',{staticClass:"rolling-container"},[_c('svg',{staticClass:"vue-activity-indicator-svg rolling",style:({width: (_vm.size + "px"), height: (_vm.size + "px"), transform: ("rotateZ(" + _vm.rotate + "deg)")}),attrs:{"viewBox":("0 0 " + _vm.viewBoxSize + " " + _vm.viewBoxSize),"preserveAspectRatio":"xMidYMid"}},[_c('circle',{attrs:{"fill":"none","stroke":_vm.borderColor,"stroke-width":_vm.strokeWidth,"cx":_vm.viewBoxSize/2,"cy":_vm.viewBoxSize/2,"r":_vm.radius}}),(!_vm.$slots.circle)?_c('g',{staticClass:"circle"},[(_vm.isAutoAnimation || _vm.process > 0)?_c('circle',{staticClass:"stroke",attrs:{"cx":_vm.viewBoxSize/2,"cy":_vm.viewBoxSize/2,"fill":_vm.fill,"stroke":_vm.color,"stroke-width":_vm.strokeWidth,"stroke-dasharray":_vm.isAutoAnimation ? ("" + (110 * _vm.circlePerimeter / 125)) : _vm.strokeDasharray,"stroke-linecap":_vm.linecap,"r":_vm.radius}},[(_vm.isAutoAnimation)?_c('animate',{attrs:{"attributeName":"stroke-dashoffset","values":((360 * _vm.circlePerimeter / 125) + ";" + (140 * _vm.circlePerimeter / 125)),"dur":"2.2s","keyTimes":"0;1","calcMode":"spline","fill":"freeze","keySplines":"0.41,0.314,0.8,0.54","repeatCount":"indefinite","begin":"0"}}):_vm._e(),(_vm.isAutoAnimation)?_c('animateTransform',{attrs:{"dur":(_vm.duration + "s"),"values":("0 " + (_vm.viewBoxSize/2) + " " + (_vm.viewBoxSize/2) + ";360 " + (_vm.viewBoxSize/2) + " " + (_vm.viewBoxSize/2)),"attributeName":"transform","type":"rotate","calcMode":"linear","keyTimes":"0;1","begin":"0","repeatCount":"indefinite"}}):_vm._e()],1):_vm._e()]):_vm._t("circle"),_vm._t("defs")],2),_c('div',{staticClass:"content"},[_vm._t("default")],2)])])}
 var rollervue_type_template_id_4f32b9b8_staticRenderFns = []
 
@@ -9031,13 +8988,16 @@ function refreshvue_type_script_lang_js_defineProperty(obj, key, value) { if (ke
       default: true
     },
     refreshText: {
-      type: String
+      type: String,
+      default: '下拉刷新'
     },
     refreshActiveText: {
-      type: String
+      type: String,
+      default: '释放刷新'
     },
     refreshingText: {
-      type: String
+      type: String,
+      default: '刷新中...'
     },
     rollerColor: {
       type: String,
@@ -9062,11 +9022,11 @@ function refreshvue_type_script_lang_js_defineProperty(obj, key, value) { if (ke
     },
     refreshTip: function refreshTip() {
       if (this.isRefreshing) {
-        return this.refreshingText || this.$t('vue.scrollViewRefresh.refreshingText');
+        return this.refreshingText;
       } else if (this.isRefreshActive) {
-        return this.refreshActiveText || this.$t('vue.scrollViewRefresh.refreshActiveText');
+        return this.refreshActiveText;
       } else {
-        return this.refreshText || this.$t('vue.scrollViewRefresh.refreshText');
+        return this.refreshText;
       }
     }
   }
@@ -9087,8 +9047,8 @@ var refreshvue_type_style_index_0_lang_css_ = __webpack_require__("5078");
 
 var refresh_component = normalizeComponent(
   scroll_view_refreshvue_type_script_lang_js_,
-  refreshvue_type_template_id_5058841f_render,
-  refreshvue_type_template_id_5058841f_staticRenderFns,
+  refreshvue_type_template_id_72f0c476_render,
+  refreshvue_type_template_id_72f0c476_staticRenderFns,
   false,
   null,
   null,
@@ -9177,12 +9137,12 @@ var datetimePicker_component = normalizeComponent(
 )
 
 /* harmony default export */ var datetimePicker = (datetimePicker_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"a9e78e98-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/datetime-picker/datetimePickerMobile.vue?vue&type=template&id=27403015&
-var datetimePickerMobilevue_type_template_id_27403015_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(!_vm.isRange)?_c('div',[_c('vue-input',{attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"placeholder":_vm.placeholder,"text-align":_vm.actualTextAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.onClick($event)}}},[_c('i',{class:['vue-input__icon',_vm.triggerClass],attrs:{"slot":"prefix"},slot:"prefix"})]),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('datetime-picker',{ref:"picker",class:_vm.popperClass,attrs:{"format":_vm.format,"value-format":_vm.valueFormat,"formatter":_vm.actualFormatter,"filter":_vm.filter,"position":"bottom","title":_vm.title,"value":_vm.value,"type":_vm.type,"min-date":_vm.mMinDate,"max-date":_vm.mMaxDate,"default-pick":_vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration,"picker-options":_vm.pickerOptions},on:{"confirm":_vm.onConfirm,"cancel":_vm.onCancel}})],1)],1):_c('div',{staticStyle:{"background-color":"#fff"}},[_c('vue-input',{staticStyle:{"width":"48%"},attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"placeholder":_vm.startPlaceholder || _vm.$t('vue.datepicker.startPlaceholder'),"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"text-align":_vm.actualTextAlign},nativeOn:{"click":function($event){return _vm.onClick($event)}}},[_c('i',{class:['vue-input__icon',_vm.triggerClass],attrs:{"slot":"prefix"},slot:"prefix"})]),_c('span',[_vm._v(_vm._s(_vm.rangeSeparator))]),_c('vue-input',{staticStyle:{"width":"48%"},attrs:{"value":_vm.endFieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"placeholder":_vm.endPlaceholder || _vm.$t('vue.datepicker.endPlaceholder'),"text-align":_vm.actualTextAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.endOnClick($event)}}}),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('datetime-picker',{ref:"picker",class:_vm.popperClass,attrs:{"format":_vm.format,"value-format":_vm.valueFormat,"formatter":_vm.actualFormatter,"filter":_vm.filter,"position":"bottom","title":_vm.startTitle || _vm.$t('vue.datepicker.startDate'),"placeholder":_vm.startPlaceholder || _vm.$t('vue.datepicker.startPlaceholder'),"value":_vm.startValue,"type":_vm.type,"min-date":_vm.mMinDate,"max-date":_vm.mMaxDate,"default-pick":_vm.isArray(_vm.actualDefaultPick) ? _vm.actualDefaultPick[0] : _vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.startOnConfirm,"cancel":_vm.startOnCancel,"change":_vm.startOnChange}})],1),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.endShowPicker),callback:function ($$v) {_vm.endShowPicker=$$v},expression:"endShowPicker"}},[_c('datetime-picker',{ref:"endPicker",class:_vm.popperClass,attrs:{"format":_vm.format,"value-format":_vm.valueFormat,"formatter":_vm.actualFormatter,"filter":_vm.filter,"position":"bottom","title":_vm.endTitle || _vm.$t('vue.datepicker.endDate'),"placeholder":_vm.endPlaceholder || _vm.$t('vue.datepicker.endPlaceholder'),"value":_vm.endValue,"type":_vm.type,"min-date":_vm.mMinDate2,"max-date":_vm.mMaxDate2,"default-pick":_vm.isArray(_vm.actualDefaultPick) ? _vm.actualDefaultPick[1] : _vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.endOnConfirm,"cancel":_vm.endOnCancel,"change":_vm.endOnChange}})],1)],1)])}
-var datetimePickerMobilevue_type_template_id_27403015_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"621eda33-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/datetime-picker/datetimePickerMobile.vue?vue&type=template&id=7ec5719c&
+var datetimePickerMobilevue_type_template_id_7ec5719c_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(!_vm.isRange)?_c('div',[_c('vue-input',{attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"placeholder":_vm.placeholder,"text-align":_vm.actualTextAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.onClick($event)}}},[_c('i',{class:['vue-input__icon',_vm.triggerClass],attrs:{"slot":"prefix"},slot:"prefix"})]),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('datetime-picker',{ref:"picker",class:_vm.popperClass,attrs:{"format":_vm.format,"value-format":_vm.valueFormat,"formatter":_vm.actualFormatter,"filter":_vm.filter,"position":"bottom","title":_vm.title,"value":_vm.value,"type":_vm.type,"min-date":_vm.mMinDate,"max-date":_vm.mMaxDate,"default-pick":_vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration,"picker-options":_vm.pickerOptions},on:{"confirm":_vm.onConfirm,"cancel":_vm.onCancel,"change":_vm.onChange}})],1)],1):_c('div',{staticStyle:{"background-color":"#fff"}},[_c('vue-input',{staticStyle:{"width":"48%"},attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"placeholder":_vm.startPlaceholder || _vm.$t('vue.datepicker.startPlaceholder'),"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"text-align":_vm.actualTextAlign},nativeOn:{"click":function($event){return _vm.onClick($event)}}},[_c('i',{class:['vue-input__icon',_vm.triggerClass],attrs:{"slot":"prefix"},slot:"prefix"})]),_c('span',[_vm._v(_vm._s(_vm.rangeSeparator))]),_c('vue-input',{staticStyle:{"width":"48%"},attrs:{"value":_vm.endFieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"placeholder":_vm.endPlaceholder || _vm.$t('vue.datepicker.endPlaceholder'),"text-align":_vm.actualTextAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.endOnClick($event)}}}),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('datetime-picker',{ref:"picker",class:_vm.popperClass,attrs:{"format":_vm.format,"value-format":_vm.valueFormat,"formatter":_vm.actualFormatter,"filter":_vm.filter,"position":"bottom","title":_vm.startTitle || _vm.$t('vue.datepicker.startDate'),"placeholder":_vm.startPlaceholder || _vm.$t('vue.datepicker.startPlaceholder'),"value":_vm.startValue,"type":_vm.type,"min-date":_vm.mMinDate,"max-date":_vm.mMaxDate,"default-pick":_vm.isArray(_vm.actualDefaultPick) ? _vm.actualDefaultPick[0] : _vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.startOnConfirm,"cancel":_vm.startOnCancel,"change":_vm.startOnChange}})],1),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.endShowPicker),callback:function ($$v) {_vm.endShowPicker=$$v},expression:"endShowPicker"}},[_c('datetime-picker',{ref:"endPicker",class:_vm.popperClass,attrs:{"format":_vm.format,"value-format":_vm.valueFormat,"formatter":_vm.actualFormatter,"filter":_vm.filter,"position":"bottom","title":_vm.endTitle || _vm.$t('vue.datepicker.endDate'),"placeholder":_vm.endPlaceholder || _vm.$t('vue.datepicker.endPlaceholder'),"value":_vm.endValue,"type":_vm.type,"min-date":_vm.mMinDate2,"max-date":_vm.mMaxDate2,"default-pick":_vm.isArray(_vm.actualDefaultPick) ? _vm.actualDefaultPick[1] : _vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.endOnConfirm,"cancel":_vm.endOnCancel,"change":_vm.endOnChange}})],1)],1)])}
+var datetimePickerMobilevue_type_template_id_7ec5719c_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./packages/datetime-picker/datetimePickerMobile.vue?vue&type=template&id=27403015&
+// CONCATENATED MODULE: ./packages/datetime-picker/datetimePickerMobile.vue?vue&type=template&id=7ec5719c&
 
 // CONCATENATED MODULE: ./packages/datetime-picker/utils.ts
 
@@ -9286,9 +9246,6 @@ var sharedProps = shared_objectSpread({}, pickerProps, {
       //周起始日,可选值: 1~7
       type: Number,
       default: 7
-    },
-    selectableRange: {
-      type: [String, Array]
     }
   },
   defaultPick: {
@@ -9367,9 +9324,6 @@ var TimePickerMixin = {
     },
     onCancel: function onCancel() {
       this.$emit('cancel');
-    },
-    actualFirstDayOfWeek: function actualFirstDayOfWeek() {
-      return this.pickerOptions == undefined || this.pickerOptions.firstDayOfWeek == undefined ? 7 : this.pickerOptions.firstDayOfWeek % 7;
     }
   },
   render: function render() {
@@ -9447,25 +9401,6 @@ function getMonthWeekNumByDate(str, actualFirstDayOfWeek) {
 
 
   return week;
-} //获取选中周并属于当月的范围内的该周的第一天
-
-function getFirstDayOfWeekActualDay(year, month, weekNum, actualFirstDayOfWeek) {
-  var date = new Date(); // 该月第一天
-
-  date.setFullYear(year, month - 1, 1); //获取月份第一天是周几，周日为0
-
-  var w1 = date.getDay(); // 该月天数
-
-  date.setFullYear(year, month, 0); // 第一个星期日
-
-  var d1 = 7 - w1 + 1;
-  var firstDay = d1 + (weekNum - 2) * 7;
-  firstDay = Math.max(firstDay, 1); //比较两者取其大
-
-  firstDay = Math.min(firstDay, 31); //比较两者取其小
-
-  var actualDay = firstDay + (actualFirstDayOfWeek + 1) % 7;
-  return actualDay;
 }
 // CONCATENATED MODULE: ./packages/datetime-picker/TimePicker.js
 function TimePicker_ownKeys(object, enumerableOnly) {
@@ -9584,60 +9519,39 @@ var TimePicker_createNamespace = createNamespace('time-picker'),
     TimePicker_createNamespace2 = TimePicker_slicedToArray(TimePicker_createNamespace, 1),
     TimePicker_createComponent = TimePicker_createNamespace2[0];
 
-var rangeStringToArr = function rangeStringToArr(range, format) {
-  if (typeof range === 'string') {
-    if (range.indexOf('-') > -1) {
-      return range.split('-').map(function (time) {
-        return VueUtil.parseDate(time.trim(), format);
-      });
-    } else {
-      return VueUtil.parseDate(range.trim(), format);
-    }
-  }
-
-  return range;
-};
-
 /* harmony default export */ var TimePicker = (TimePicker_createComponent({
   mixins: [TimePickerMixin],
-  data: function data() {
-    return {
-      minHour: 0,
-      maxHour: 23,
-      minMinute: 0,
-      maxMinute: 59,
-      minSecond: 0,
-      maxSecond: 59
-    };
-  },
   props: TimePicker_objectSpread({}, sharedProps, {
+    minHour: {
+      type: [Number, String],
+      default: 0
+    },
+    maxHour: {
+      type: [Number, String],
+      default: 23
+    },
+    minMinute: {
+      type: [Number, String],
+      default: 0
+    },
+    maxMinute: {
+      type: [Number, String],
+      default: 59
+    },
+    minSecond: {
+      type: [Number, String],
+      default: 0
+    },
+    maxSecond: {
+      type: [Number, String],
+      default: 59
+    },
     format: {
       type: String,
       default: "HH:mm:ss"
     }
   }),
   computed: {
-    selectable: function selectable() {
-      var _this = this;
-
-      if (this.pickerOptions.selectableRange) {
-        if (typeof this.pickerOptions.selectableRange == 'string') {
-          return rangeStringToArr(this.pickerOptions.selectableRange, this.format);
-        }
-
-        return this.pickerOptions.selectableRange.map(function (r) {
-          return rangeStringToArr(r, _this.format);
-        });
-      }
-
-      return [];
-    },
-    minTime: function minTime() {
-      return this.selectable[0] ? this.selectable[0] : VueUtil.parseDate('00:00:00', 'HH:mm:ss');
-    },
-    maxTime: function maxTime() {
-      return this.selectable[1] ? this.selectable[1] : VueUtil.parseDate('23:59:59', 'HH:mm:ss');
-    },
     ranges: function ranges() {
       var hourRange = {
         type: 'hour',
@@ -9666,12 +9580,6 @@ var rangeStringToArr = function rangeStringToArr(range, format) {
     maxMinute: 'updateInnerValue',
     minSecond: 'updateInnerValue',
     maxSecond: 'updateInnerValue',
-    pickerOptions: {
-      deep: true,
-      handler: function handler() {
-        this.updateInnerValue();
-      }
-    },
     value: function value(val) {
       // 清空后值为null，不重新设置picker的选中项
       if (val === null) return;
@@ -9703,9 +9611,9 @@ var rangeStringToArr = function rangeStringToArr(range, format) {
           minute = _value$split2[1],
           second = _value$split2[2];
 
-      hour = hour ? padZero(range(hour, this.minHour || 0, this.maxHour || 23)) : undefined;
-      minute = minute ? padZero(range(minute, this.minMinute || 0, this.maxMinute || 59)) : undefined;
-      second = second ? padZero(range(second, this.minSecond || 0, this.maxSecond || 59)) : undefined;
+      hour = hour ? padZero(range(hour, this.minHour, this.maxHour)) : undefined;
+      minute = minute ? padZero(range(minute, this.minMinute, this.maxMinute)) : undefined;
+      second = second ? padZero(range(second, this.minSecond, this.maxSecond)) : undefined;
       var result = hour ? "".concat(hour) : "";
       result += minute ? ":".concat(minute) : "";
       result += second ? ":".concat(second) : "";
@@ -9715,12 +9623,6 @@ var rangeStringToArr = function rangeStringToArr(range, format) {
       var hour,
           minute,
           second = undefined;
-      this.minHour = 0;
-      this.maxHour = 23;
-      this.minMinute = 0;
-      this.maxMinute = 59;
-      this.minSecond = 0;
-      this.maxSecond = 59;
 
       for (var i = 0; i < this.originColumns.length; i++) {
         var tmpType = this.originColumns[i].type;
@@ -9728,26 +9630,8 @@ var rangeStringToArr = function rangeStringToArr(range, format) {
 
         if (tmpType == "hour") {
           hour = tmpVal;
-          this.maxHour = this.maxTime.getHours();
-          this.minHour = this.minTime.getHours();
-
-          if (parseInt(hour) <= this.minHour) {
-            this.minMinute = this.minTime.getMinutes();
-          }
-
-          if (parseInt(hour) >= this.maxHour) {
-            this.maxMinute = this.maxTime.getMinutes();
-          }
         } else if (tmpType == "minute") {
           minute = tmpVal;
-
-          if (parseInt(hour) <= this.minHour && parseInt(minute) <= this.minMinute) {
-            this.minSecond = this.minTime.getSeconds();
-          }
-
-          if (parseInt(hour) >= this.maxHour && parseInt(minute) >= this.maxMinute) {
-            this.maxSecond = this.maxTime.getSeconds();
-          }
         } else if (tmpType == "second") {
           second = tmpVal;
         }
@@ -9760,17 +9644,17 @@ var rangeStringToArr = function rangeStringToArr(range, format) {
       this.updateColumnValue();
     },
     onChange: function onChange(picker) {
-      var _this2 = this;
+      var _this = this;
 
       this.updateInnerValue();
       this.$nextTick(function () {
-        _this2.$nextTick(function () {
-          _this2.$emit('change', picker);
+        _this.$nextTick(function () {
+          _this.$emit('change', picker);
         });
       });
     },
     updateColumnValue: function updateColumnValue() {
-      var _this3 = this;
+      var _this2 = this;
 
       var formatter = this.formatter;
       var pair = this.innerValue.split(':');
@@ -9779,7 +9663,7 @@ var rangeStringToArr = function rangeStringToArr(range, format) {
       if (pair[1]) values.push(formatter('minute', pair[1], pair));
       if (pair[2]) values.push(formatter('second', pair[2], pair));
       this.$nextTick(function () {
-        _this3.getPicker().setValues(values);
+        _this2.getPicker().setValues(values);
       });
     }
   }
@@ -9790,6 +9674,22 @@ function isDate(val) {
   return Object.prototype.toString.call(val) === '[object Date]' && !number_isNaN(val.getTime());
 }
 // CONCATENATED MODULE: ./packages/datetime-picker/DatePicker.js
+function DatePicker_typeof(obj) {
+  "@babel/helpers - typeof";
+
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    DatePicker_typeof = function _typeof(obj) {
+      return typeof obj;
+    };
+  } else {
+    DatePicker_typeof = function _typeof(obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
+
+  return DatePicker_typeof(obj);
+}
+
 function DatePicker_ownKeys(object, enumerableOnly) {
   var keys = Object.keys(object);
 
@@ -9953,6 +9853,9 @@ var DatePicker_createNamespace = createNamespace('date-picker'),
     }
   },
   computed: {
+    actualFirstDayOfWeek: function actualFirstDayOfWeek() {
+      return this.pickerOptions == undefined || this.pickerOptions.firstDayOfWeek == undefined ? 7 : this.pickerOptions.firstDayOfWeek % 7;
+    },
     ranges: function ranges() {
       var _this$getBoundary = this.getBoundary('max', this.innerValue),
           maxYear = _this$getBoundary.maxYear,
@@ -10026,22 +9929,7 @@ var DatePicker_createNamespace = createNamespace('date-picker'),
   },
   methods: {
     formatValue: function formatValue(value) {
-      if (!value || typeof value == "string" && VueUtil.isEmpty(value)) {
-        value = new Date();
-      } else if (value && typeof value == "string" && !VueUtil.isEmpty(value)) {
-        if (this.type == "week" && this.valueFormat) {
-          var vals = value.match(/\d+/g);
-          var date = VueUtil.parseDate(value, this.valueFormat);
-          var year = date.getFullYear();
-          var month = date.getMonth();
-          var weekNum = vals[vals.length - 1];
-          var day = getFirstDayOfWeekActualDay(year, month, weekNum, this.actualFirstDayOfWeek());
-          value = new Date(year, month, day);
-        } else {
-          value = VueUtil.parseDate(value, this.valueFormat);
-        }
-      }
-
+      value = DatePicker_typeof(value) == "object" && VueUtil.isDate(value) ? value : !value || typeof value == "string" && VueUtil.isEmpty(value) ? new Date() : VueUtil.parseDate(value, this.valueFormat);
       value = Math.max(value, this.minDate.getTime()); //比较两者取其大
 
       value = Math.min(value, this.maxDate.getTime()); //比较两者取其小
@@ -10119,7 +10007,7 @@ var DatePicker_createNamespace = createNamespace('date-picker'),
         } else if (tmpType == "week") {
           week = tmpVal;
           var weekNum = this.getMonthWeekCount(year, month);
-          day = getFirstDayOfWeekActualDay(year, month, week > weekNum ? weekNum : week, this.actualFirstDayOfWeek());
+          day = this.getFirstDayOfWeekActualDay(year, month, week > weekNum ? weekNum : week);
         }
       }
 
@@ -10149,7 +10037,7 @@ var DatePicker_createNamespace = createNamespace('date-picker'),
 
       if (this.type === 'week') {
         initValues.push({
-          week: formatter('week', getMonthWeekNumByDate(value, this.actualFirstDayOfWeek()), value)
+          week: formatter('week', getMonthWeekNumByDate(value, this.actualFirstDayOfWeek), value)
         });
       } else if (this.type !== 'month' && this.type !== 'monthrange') {
         initValues.push({
@@ -10194,6 +10082,25 @@ var DatePicker_createNamespace = createNamespace('date-picker'),
       this.$nextTick(function () {
         _this2.getPicker().setValues(values);
       });
+    },
+    //获取选中周并属于当月的范围内的该周的第一天
+    getFirstDayOfWeekActualDay: function getFirstDayOfWeekActualDay(year, month, weekNum) {
+      var date = new Date(); // 该月第一天
+
+      date.setFullYear(year, month - 1, 1); //获取月份第一天是周几，周日为0
+
+      var w1 = date.getDay(); // 该月天数
+
+      date.setFullYear(year, month, 0); // 第一个星期日
+
+      var d1 = 7 - w1 + 1;
+      var firstDay = d1 + (weekNum - 2) * 7;
+      firstDay = Math.max(firstDay, 1); //比较两者取其大
+
+      firstDay = Math.min(firstDay, 31); //比较两者取其小
+      // const actualDay = firstDay+(this.actualFirstDayOfWeek+1)%7;
+
+      return firstDay;
     },
     getMonthWeekCount: function getMonthWeekCount(year, month) {
       var date = new Date(); // 该月第一天
@@ -10485,7 +10392,7 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
 //
 //
 //
-
+//
 
 
 
@@ -10527,7 +10434,6 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
       type: String
     },
     popperClass: {
-      //下拉框类名
       type: String
     },
     rangeSeparator: {
@@ -10542,7 +10448,7 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
     pickerOptions: {},
     value: {
       //选择器当前选中值(通过v-model双向绑定使用)
-      type: [Date, String, Number, Array]
+      type: [Number, String, Date, Array]
     },
     textAlign: {
       //输入框文字水平对齐方式,当为区间类型时文本默认居中对齐，否则默认居左对齐
@@ -10627,16 +10533,11 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
   },
   methods: {
     handleClickIcon: function handleClickIcon(event) {
-      if (this.disabled) {
-        return;
-      }
-
       this.fieldValue = '';
       this.endFieldValue = '';
       this.startValue = null;
       this.endValue = null;
       event.stopPropagation();
-      this.$emit('change', null);
       this.$emit('input', null);
     },
     actualFormatter: function actualFormatter(type, val, date) {
@@ -10662,29 +10563,21 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
     onConfirm: function onConfirm(value, index) {
       this.showPicker = false;
       var actualValue = this.valueFormat && VueUtil.isDate(value) ? VueUtil.formatDate(value, this.valueFormat) : value;
-
-      if (this.type === 'week' && VueUtil.isDate(value) && this.valueFormat) {
-        actualValue = this.formatWeekValueByDate(value);
-      }
-
       this.$emit('input', actualValue);
-      this.$emit('change', actualValue);
       this.$emit('confirm', value, index);
     },
     onCancel: function onCancel(value, index) {
       this.showPicker = false;
       this.$emit('cancel', value, index);
     },
+    onChange: function onChange(picker, value, index) {
+      this.$emit('change', picker, value, index);
+    },
     endOnClick: function endOnClick() {
       if (!this.disabled) {
         if (this.fieldValue) this.mMinDate2 = VueUtil.parseDate(this.fieldValue, this.actualFormat);else this.mMinDate2 = this.minDate;
         this.mMaxDate2 = this.maxDate;
         this.endShowPicker = true;
-      }
-    },
-    emitRangeChange: function emitRangeChange(value) {
-      if (value[0] && value[1]) {
-        this.$emit('change', value);
       }
     },
     startOnConfirm: function startOnConfirm(value, index) {
@@ -10696,7 +10589,6 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
       this.showPicker = false;
       var actualValue = this.valueFormat && VueUtil.isDate(value) ? [VueUtil.formatDate(value, this.valueFormat), this.endValue] : [value, this.endValue];
       this.$emit('input', actualValue);
-      this.emitRangeChange(actualValue);
       this.$emit('start-confirm', value, index);
     },
     startOnCancel: function startOnCancel(value, index) {
@@ -10715,7 +10607,6 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
       this.endShowPicker = false;
       var actualValue = this.valueFormat && VueUtil.isDate(value) ? [this.startValue, VueUtil.formatDate(value, this.valueFormat)] : [this.startValue, value];
       this.$emit('input', actualValue);
-      this.emitRangeChange(actualValue);
       this.$emit('end-confirm', value, index);
     },
     endOnCancel: function endOnCancel(value, index) {
@@ -10724,25 +10615,6 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
     },
     endOnChange: function endOnChange(picker, value, index) {
       this.$emit('end-change', picker, value, index);
-    },
-    formatWeekValueByDate: function formatWeekValueByDate(val) {
-      var date = val;
-      var year = date.getFullYear();
-      var str = "";
-      var yearWeekNum = VueUtil.getWeekNumber(date);
-
-      if (this.valueFormat.indexOf('MM') >= 0 && this.valueFormat.indexOf('ww') >= 0) {
-        var month = padZero(date.getMonth() + 1);
-        var monthWeekNum = getMonthWeekNumByDate(date, this.actualFirstDayOfWeek);
-        str = this.valueFormat.replace('yyyy', year);
-        str = this.valueFormat.indexOf('yyyy') >= 0 ? str.replace('MM', month) : this.valueFormat.replace('MM', month);
-        str = this.valueFormat.indexOf('MM') >= 0 ? str.replace('ww', monthWeekNum) : this.valueFormat.replace('ww', monthWeekNum);
-      } else {
-        str = this.valueFormat.replace('yyyy', year);
-        str = this.valueFormat.indexOf('yyyy') >= 0 ? str.replace('WW', yearWeekNum) : this.valueFormat.replace('WW', yearWeekNum);
-      }
-
-      return str;
     },
     isArray: Array.isArray
   },
@@ -10775,64 +10647,35 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
           } else {
             this.endFieldValue = endVal;
           }
-        } else if (this.type === 'week') {
-          var str = val;
+        } else {
+          val = this.valueFormat && val && !VueUtil.isDate(val) ? VueUtil.parseDate(val, this.valueFormat) : val;
+          var str = VueUtil.formatDate(val, this.actualFormat);
 
-          if (VueUtil.isDate(val)) {
+          if (this.type === 'week' && VueUtil.isDate(val)) {
             var year = val.getFullYear();
             var yearWeekNum = VueUtil.getWeekNumber(val);
 
             if (this.format) {
               if (this.format.indexOf('MM') >= 0 && this.format.indexOf('ww') >= 0) {
                 var month = val.getMonth() + 1;
-                var monthWeekNum = getMonthWeekNumByDate(val, this.actualFirstDayOfWeek);
-
-                if (this.format.indexOf('yy') >= 0) {
-                  if (this.format.indexOf('yyyy') >= 0) {
-                    str = this.format.replace('yyyy', year);
-                  } else {
-                    str = this.format.replace('yy', String(year).substr(2));
-                  }
-                }
-
-                str = str.replace('MM', month);
-                this.fieldValue = str.replace('ww', monthWeekNum);
+                var monthWeekNum = getMonthWeekNumByDate(str, this.actualFirstDayOfWeek);
+                str = this.format.replace('yyyy', year);
+                str = this.format.indexOf('yyyy') >= 0 ? str.replace('MM', month) : this.format.replace('MM', month);
+                str = str.replace('ww', monthWeekNum);
               } else {
-                str = this.format.indexOf('yy') >= 0 && this.format.indexOf('yyyy') < 0 ? this.format.replace('yy', String(year).substr(2)) : this.format.replace('yyyy', year);
-                this.fieldValue = str.replace('WW', yearWeekNum);
+                str = this.format.replace('yyyy', year);
+                str = this.format.indexOf('yyyy') >= 0 ? str.replace('WW', yearWeekNum) : this.format.replace('WW', yearWeekNum);
               }
             } else {
-              this.fieldValue = this.$t('vue.datepicker.defaultWeekFormat', {
+              var time = this.$t('vue.datepicker.defaultWeekFormat', {
                 year: year,
                 yearWeekNum: yearWeekNum
               });
+              str = time;
             }
-          } else if (val && this.format && this.valueFormat && this.format != this.valueFormat) {
-            var vals = val.match(/\d+/g);
-            var date = VueUtil.parseDate(val, this.valueFormat);
-
-            var _year = date.getFullYear();
-
-            var _month = date.getMonth() + 1;
-
-            var weekNum = vals[vals.length - 1];
-
-            if (this.format.indexOf('yy') >= 0) {
-              if (this.format.indexOf('yyyy') >= 0) {
-                str = this.format.replace('yyyy', _year);
-              } else {
-                str = this.format.replace('yy', String(_year).substr(2));
-              }
-            }
-
-            str = str.replace('MM', _month);
-            this.fieldValue = str && this.format.indexOf('ww') >= 0 ? str.replace('ww', weekNum) : str && this.format.indexOf('WW') >= 0 ? str.replace('WW', weekNum) : str;
-          } else {
-            this.fieldValue = val;
           }
-        } else {
-          val = this.valueFormat && val && !VueUtil.isDate(val) ? VueUtil.parseDate(val, this.valueFormat) : val;
-          this.fieldValue = VueUtil.formatDate(val, this.actualFormat);
+
+          this.fieldValue = str;
         }
       },
       immediate: true
@@ -10840,9 +10683,6 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
   },
   computed: {
     showClose: function showClose() {
-      if (this.disabled) return false;
-      if (!this.clearable) return false;
-
       if (VueUtil.isArray(this.value)) {
         return this.value && this.value.length > 0;
       }
@@ -10919,8 +10759,8 @@ var datetime_picker_createNamespace = createNamespace('datetime-picker'),
 
 var datetimePickerMobile_component = normalizeComponent(
   datetime_picker_datetimePickerMobilevue_type_script_lang_js_,
-  datetimePickerMobilevue_type_template_id_27403015_render,
-  datetimePickerMobilevue_type_template_id_27403015_staticRenderFns,
+  datetimePickerMobilevue_type_template_id_7ec5719c_render,
+  datetimePickerMobilevue_type_template_id_7ec5719c_staticRenderFns,
   false,
   null,
   null,
@@ -10985,14 +10825,29 @@ var timePicker_component = normalizeComponent(
 )
 
 /* harmony default export */ var timePicker = (timePicker_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"a9e78e98-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/datetime-picker/timePickerMobile.vue?vue&type=template&id=6355098f&
-var timePickerMobilevue_type_template_id_6355098f_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(!_vm.isRange)?_c('div',[_c('vue-input',{attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"placeholder":_vm.placeholder,"text-align":_vm.actualTextAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.onClick($event)}}},[_c('i',{class:['vue-input__icon',_vm.triggerClass],attrs:{"slot":"prefix"},slot:"prefix"})]),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('time-picker',{ref:"picker",class:_vm.popperClass,attrs:{"format":_vm.format,"formatter":_vm.formatter,"filter":_vm.filter,"position":"bottom","title":_vm.title,"value":_vm.actualValue,"type":"time","default-pick":_vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration,"picker-options":_vm.pickerOptions},on:{"confirm":_vm.onConfirm,"cancel":_vm.onCancel,"change":_vm.onChange}})],1)],1):_c('div',{staticStyle:{"background-color":"#fff"}},[_c('vue-input',{staticStyle:{"width":"48%"},attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"placeholder":_vm.startPlaceholder || _vm.$t('vue.datepicker.startPlaceholder'),"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"text-align":_vm.actualTextAlign},nativeOn:{"click":function($event){return _vm.onClick($event)}}},[_c('i',{class:['vue-input__icon',_vm.triggerClass],attrs:{"slot":"prefix"},slot:"prefix"})]),_c('span',[_vm._v(_vm._s(_vm.rangeSeparator))]),_c('vue-input',{staticStyle:{"width":"48%"},attrs:{"value":_vm.endFieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"placeholder":_vm.endPlaceholder || _vm.$t('vue.datepicker.endPlaceholder'),"text-align":_vm.actualTextAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.endOnClick($event)}}}),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('time-picker',{ref:"picker",class:_vm.popperClass,attrs:{"format":_vm.format,"formatter":_vm.formatter,"filter":_vm.filter,"position":"bottom","title":_vm.startTitle || _vm.$t('vue.datepicker.startTime'),"placeholder":_vm.startPlaceholder || _vm.$t('vue.datepicker.startPlaceholder'),"value":_vm.startValue,"type":"time","default-pick":_vm.isArray(_vm.actualDefaultPick) ? _vm.actualDefaultPick[0] : _vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration,"picker-options":_vm.startPickerOptions},on:{"confirm":_vm.startOnConfirm,"cancel":_vm.startOnCancel,"change":_vm.startOnChange}})],1),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.endShowPicker),callback:function ($$v) {_vm.endShowPicker=$$v},expression:"endShowPicker"}},[_c('time-picker',{ref:"endPicker",class:_vm.popperClass,attrs:{"format":_vm.format,"formatter":_vm.formatter,"filter":_vm.filter,"position":"bottom","title":_vm.endTitle || _vm.$t('vue.datepicker.endTime'),"placeholder":_vm.endPlaceholder || _vm.$t('vue.datepicker.endPlaceholder'),"value":_vm.endValue,"type":"time","default-pick":_vm.isArray(_vm.actualDefaultPick) ? _vm.actualDefaultPick[1] : _vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration,"picker-options":_vm.endPickerOptions},on:{"confirm":_vm.endOnConfirm,"cancel":_vm.endOnCancel,"change":_vm.endOnChange}})],1)],1)])}
-var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"621eda33-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/datetime-picker/timePickerMobile.vue?vue&type=template&id=0600dee6&
+var timePickerMobilevue_type_template_id_0600dee6_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(!_vm.isRange)?_c('div',[_c('vue-input',{attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"placeholder":_vm.placeholder,"text-align":_vm.actualTextAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.onClick($event)}}},[_c('i',{class:['vue-input__icon',_vm.triggerClass],attrs:{"slot":"prefix"},slot:"prefix"})]),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('time-picker',{ref:"picker",class:_vm.popperClass,attrs:{"format":_vm.format,"formatter":_vm.formatter,"filter":_vm.filter,"position":"bottom","title":_vm.title,"value":_vm.actualValue,"type":"time","min-hour":_vm.mMinHour,"max-hour":_vm.mMaxHour,"min-minute":_vm.mMinMinute,"max-minute":_vm.mMaxMinute,"min-second":_vm.mMinSecond,"max-second":_vm.mMaxSecond,"default-pick":_vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.onConfirm,"cancel":_vm.onCancel,"change":_vm.onChange}})],1)],1):_c('div',{staticStyle:{"background-color":"#fff"}},[_c('vue-input',{staticStyle:{"width":"48%"},attrs:{"value":_vm.fieldValue,"readonly":true,"disabled":_vm.disabled,"placeholder":_vm.startPlaceholder || _vm.$t('vue.datepicker.startPlaceholder'),"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"text-align":_vm.actualTextAlign},nativeOn:{"click":function($event){return _vm.onClick($event)}}},[_c('i',{class:['vue-input__icon',_vm.triggerClass],attrs:{"slot":"prefix"},slot:"prefix"})]),_c('span',[_vm._v(_vm._s(_vm.rangeSeparator))]),_c('vue-input',{staticStyle:{"width":"48%"},attrs:{"value":_vm.endFieldValue,"readonly":true,"disabled":_vm.disabled,"clickable":true,"clearable":_vm.clearable,"size":_vm.size,"placeholder":_vm.endPlaceholder || _vm.$t('vue.datepicker.endPlaceholder'),"text-align":_vm.actualTextAlign,"icon":_vm.showClose ? '' + _vm.clearIcon : '',"on-icon-click":_vm.handleClickIcon},nativeOn:{"click":function($event){return _vm.endOnClick($event)}}}),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.showPicker),callback:function ($$v) {_vm.showPicker=$$v},expression:"showPicker"}},[_c('time-picker',{ref:"picker",class:_vm.popperClass,attrs:{"format":_vm.format,"formatter":_vm.formatter,"filter":_vm.filter,"position":"bottom","title":_vm.startTitle || _vm.$t('vue.datepicker.startTime'),"placeholder":_vm.startPlaceholder || _vm.$t('vue.datepicker.startPlaceholder'),"value":_vm.startValue,"type":"time","min-hour":_vm.mMinHour,"max-hour":_vm.mMaxHour,"min-minute":_vm.mMinMinute,"max-minute":_vm.mMaxMinute,"min-second":_vm.mMinSecond,"max-second":_vm.mMaxSecond,"default-pick":_vm.isArray(_vm.actualDefaultPick) ? _vm.actualDefaultPick[0] : _vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.startOnConfirm,"cancel":_vm.startOnCancel,"change":_vm.startOnChange}})],1),_c('popup',{attrs:{"position":"bottom"},model:{value:(_vm.endShowPicker),callback:function ($$v) {_vm.endShowPicker=$$v},expression:"endShowPicker"}},[_c('time-picker',{ref:"endPicker",class:_vm.popperClass,attrs:{"format":_vm.format,"formatter":_vm.formatter,"filter":_vm.filter,"position":"bottom","title":_vm.endTitle || _vm.$t('vue.datepicker.endTime'),"placeholder":_vm.endPlaceholder || _vm.$t('vue.datepicker.endPlaceholder'),"value":_vm.endValue,"type":"time","min-hour":_vm.mMinHour2,"max-hour":_vm.mMaxHour2,"min-minute":_vm.mMinMinute2,"max-minute":_vm.mMaxMinute2,"min-second":_vm.mMinSecond2,"max-second":_vm.mMaxSecond2,"default-pick":_vm.isArray(_vm.actualDefaultPick) ? _vm.actualDefaultPick[1] : _vm.actualDefaultPick,"confirm-button-text":_vm.confirmButtonText,"cancel-button-text":_vm.cancelButtonText,"show-toolbar":true,"item-height":_vm.itemHeight,"visible-item-count":_vm.visibleItemCount,"swipe-duration":_vm.swipeDuration},on:{"confirm":_vm.endOnConfirm,"cancel":_vm.endOnCancel,"change":_vm.endOnChange}})],1)],1)])}
+var timePickerMobilevue_type_template_id_0600dee6_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./packages/datetime-picker/timePickerMobile.vue?vue&type=template&id=6355098f&
+// CONCATENATED MODULE: ./packages/datetime-picker/timePickerMobile.vue?vue&type=template&id=0600dee6&
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--12-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./packages/datetime-picker/timePickerMobile.vue?vue&type=script&lang=js&
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -11177,6 +11032,24 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
     textAlign: {
       type: String
     },
+    minHour: {
+      type: [Number, String]
+    },
+    maxHour: {
+      type: [Number, String]
+    },
+    minMinute: {
+      type: [Number, String]
+    },
+    maxMinute: {
+      type: [Number, String]
+    },
+    minSecond: {
+      type: [Number, String]
+    },
+    maxSecond: {
+      type: [Number, String]
+    },
     prefixIcon: {
       type: String
     },
@@ -11225,8 +11098,7 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
     },
     defaultPick: {
       type: [Date, String, Number, Array]
-    },
-    pickerOptions: {}
+    }
   },
   mounted: function mounted() {//this.showPicker = false;
     //this.endShowPicker = false;
@@ -11240,8 +11112,18 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
       actualValue: '',
       startValue: '',
       endValue: '',
-      minTime: null,
-      maxTime: null
+      mMinHour: this.minHour,
+      mMaxHour: this.maxHour,
+      mMinMinute: this.minMinute,
+      mMaxMinute: this.maxMinute,
+      mMinSecond: this.minSecond,
+      mMaxSecond: this.maxSecond,
+      mMinHour2: this.minHour,
+      mMaxHour2: this.maxHour,
+      mMinMinute2: this.minMinute,
+      mMaxMinute2: this.maxMinute,
+      mMinSecond2: this.minSecond,
+      mMaxSecond2: this.maxSecond
     };
   },
   methods: {
@@ -11255,7 +11137,6 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
       this.startValue = null;
       this.endValue = null;
       event.stopPropagation();
-      this.$emit('change', null);
       this.$emit('input', null);
     },
     onClick: function onClick() {
@@ -11263,7 +11144,23 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
         return;
       }
 
-      this.maxTime = this.endFieldValue;
+      if (this.isRange) {
+        this.mMinHour = this.minHour;
+        this.mMinMinute = this.minMinute;
+        this.mMinSecond = this.minSecond;
+
+        if (this.endFieldValue) {
+          var time = VueUtil.parseDate(this.endFieldValue, this.format);
+          this.mMaxHour = time.getHours();
+          this.mMaxMinute = time.getMinutes();
+          this.mMaxSecond = time.getSeconds();
+        } else {
+          this.mMaxHour = this.maxHour;
+          this.mMaxMinute = this.maxMinute;
+          this.mMaxSecond = this.maxSecond;
+        }
+      }
+
       this.showPicker = true;
     },
     formatInnerValueByValueFormate: function formatInnerValueByValueFormate(val) {
@@ -11295,11 +11192,24 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
         return;
       }
 
-      this.minTime = this.fieldValue;
+      if (this.fieldValue) {
+        var time = VueUtil.parseDate(this.fieldValue, this.format);
+        this.mMinHour2 = time.getHours();
+        this.mMinMinute2 = time.getMinutes();
+        this.mMinSecond2 = time.getSeconds();
+      } else {
+        this.mMinHour2 = this.minHour;
+        this.mMinMinute2 = this.minMinute;
+        this.mMinSecond2 = this.minSecond;
+      }
+
+      this.mMaxHour2 = this.maxHour;
+      this.mMaxMinute2 = this.maxMinute;
+      this.mMaxSecond2 = this.maxSecond;
       this.endShowPicker = true;
     },
     startOnConfirm: function startOnConfirm(value, index) {
-      if (this.endValue && this.formatInnerValueByValueFormate(value) > this.formatInnerValueByValueFormate(this.endValue)) {
+      if (this.endValue && value > this.endValue) {
         console.error('The start time cannot be later than the end time!');
         return;
       }
@@ -11317,7 +11227,7 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
       this.$emit('start-change', picker, value, index);
     },
     endOnConfirm: function endOnConfirm(value, index) {
-      if (this.startValue && this.formatInnerValueByValueFormate(value) < this.formatInnerValueByValueFormate(this.startValue)) {
+      if (this.startValue && value < this.startValue) {
         console.error('The end time cannot be earlier than the start time!');
         return;
       }
@@ -11371,9 +11281,6 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
   },
   computed: {
     showClose: function showClose() {
-      if (this.disabled) return false;
-      if (!this.clearable) return false;
-
       if (VueUtil.isArray(this.value)) {
         return this.value && this.value.length > 0;
       }
@@ -11402,16 +11309,6 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
       }
 
       return this.defaultPick;
-    },
-    startPickerOptions: function startPickerOptions() {
-      return VueUtil.merge({}, this.pickerOptions, {
-        selectableRange: [null, this.formatInnerValueByValueFormate(this.maxTime)]
-      });
-    },
-    endPickerOptions: function endPickerOptions() {
-      return VueUtil.merge({}, this.pickerOptions, {
-        selectableRange: [this.formatInnerValueByValueFormate(this.minTime), null]
-      });
     }
   }
 });
@@ -11427,8 +11324,8 @@ var timePickerMobilevue_type_template_id_6355098f_staticRenderFns = []
 
 var timePickerMobile_component = normalizeComponent(
   datetime_picker_timePickerMobilevue_type_script_lang_js_,
-  timePickerMobilevue_type_template_id_6355098f_render,
-  timePickerMobilevue_type_template_id_6355098f_staticRenderFns,
+  timePickerMobilevue_type_template_id_0600dee6_render,
+  timePickerMobilevue_type_template_id_0600dee6_staticRenderFns,
   false,
   null,
   null,
@@ -11449,15 +11346,6 @@ var timePickerMobile_component = normalizeComponent(
       defaultWeekFormat: '{year}w{yearWeekNum}',
       startPlaceholder: '开始',
       endPlaceholder: '结束'
-    },
-    scrollViewMore: {
-      finishedText: '全部已加载',
-      loadingText: '更多加载中...'
-    },
-    scrollViewRefresh: {
-      refreshText: '下拉刷新',
-      refreshActiveText: '释放刷新',
-      refreshingText: '刷新中...'
     }
   }
 });
@@ -11473,15 +11361,6 @@ var timePickerMobile_component = normalizeComponent(
       defaultWeekFormat: '{year}w{yearWeekNum}',
       startPlaceholder: 'Start',
       endPlaceholder: 'End'
-    },
-    scrollViewMore: {
-      finishedText: 'All loaded',
-      loadingText: 'Loading...'
-    },
-    scrollViewRefresh: {
-      refreshText: 'Pull to refresh',
-      refreshActiveText: 'Release to refresh',
-      refreshingText: 'Refreshing...'
     }
   }
 });
@@ -11497,15 +11376,6 @@ var timePickerMobile_component = normalizeComponent(
       defaultWeekFormat: '{year}w{yearWeekNum}',
       startPlaceholder: '開始',
       endPlaceholder: '終了'
-    },
-    scrollViewMore: {
-      finishedText: 'すべてロード済み',
-      loadingText: 'より多くの読み込み...'
-    },
-    scrollViewRefresh: {
-      refreshText: 'プルダウンリフレッシュ',
-      refreshActiveText: 'リリースリフレッシュ',
-      refreshingText: 'リフレッシュ中...'
     }
   }
 });
@@ -11573,39 +11443,39 @@ function packages_defineProperty(obj, key, value) { if (key in obj) { Object.def
 
 
 
-var installed = false; // 所有组件列表
+VueUtil.setLocale('zh', zh);
+VueUtil.setLocale('en', en);
+VueUtil.setLocale('ja', ja); // 所有组件列表
 
 var components = [packages_loading, picker, action_sheet, nav_bar, tabbar, tabbar_item, cell_layout, cell_layout_item, // Icon,
 text_icon, stepper, swipe_cell, skeleton, index_anchor, index_bar, scroll_view, scroll_view_more, scroll_view_refresh];
+VueUtil.getSystemInfo().isLoadMobileJs = true;
+
+if (VueUtil.getSystemInfo().device == 'Mobile') {
+  var copyViyComponents = function getViyComponents(Vue) {
+    var ary = [];
+    var copyComps = ['VueDatePicker', 'VueTimePicker'];
+    copyComps.map(function (component) {
+      var ops = Vue.component(component).options;
+      ops.name = ops.name + 'Viy';
+      ary.push(ops);
+    });
+    return ary;
+  };
+
+  components = components.concat(copyViyComponents(window.Vue));
+  components.push(cascader);
+  components.push(datetimePicker);
+  components.push(datetimePickerMobile);
+  components.push(timePicker);
+  components.push(timePickerMobile);
+  MobileCssLoader.use();
+}
+
+var installed = false;
 
 var packages_install = function install(Vue) {
-  VueUtil.setLocale('zh', zh);
-  VueUtil.setLocale('en', en);
-  VueUtil.setLocale('ja', ja);
   if (installed) return;
-  VueUtil.getSystemInfo().isLoadMobileJs = true;
-
-  if (VueUtil.getSystemInfo().device == 'Mobile') {
-    var copyViyComponents = function getViyComponents(Vue) {
-      var ary = [];
-      var copyComps = ['VueDatePicker', 'VueTimePicker'];
-      copyComps.map(function (component) {
-        var ops = Vue.component(component).options;
-        ops.name = ops.name + 'Viy';
-        ary.push(ops);
-      });
-      return ary;
-    };
-
-    components = components.concat(copyViyComponents(window.Vue));
-    components.push(cascader);
-    components.push(datetimePicker);
-    components.push(datetimePickerMobile);
-    components.push(timePicker);
-    components.push(timePickerMobile);
-    MobileCssLoader.use();
-  }
-
   installed = true;
   components.map(function (component) {
     return Vue.component(component.name, component);
@@ -11618,13 +11488,7 @@ if (typeof window !== 'undefined' && window.Vue) {
 
 /* harmony default export */ var packages_0 = (packages_objectSpread({
   install: packages_install
-}, components, {
-  lang: {
-    zh: zh,
-    en: en,
-    ja: ja
-  }
-}));
+}, components));
 // CONCATENATED MODULE: ./node_modules/@vue/cli-service/lib/commands/build/entry-lib.js
 
 
@@ -11636,3 +11500,4 @@ if (typeof window !== 'undefined' && window.Vue) {
 
 /******/ });
 });
+//# sourceMappingURL=vue-mobile.umd.js.map

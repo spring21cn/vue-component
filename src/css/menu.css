@@ -70,38 +70,8 @@
 	line-height: 60px;
 	border-bottom: 5px solid transparent;
 }
-.vue-menu--horizontal .vue-submenu .vue-submenu {
-	width: 100%;
-	position: relative;
-	float: none;
-}
-.vue-menu--horizontal .vue-submenu .vue-submenu .vue-submenu__title {
-	height: 36px;
-	line-height: 36px;
-	padding: 0 10px;
-	color: #48576a;
-	border-bottom: 0;
-}
-.vue-menu--horizontal .vue-submenu .vue-submenu:hover>.vue-submenu__title {
-	background-color: #d1dbe5;
-}
-
-.vue-menu--horizontal .vue-submenu.is-active>.vue-submenu__title {
-	color: #409eff;
-	border-bottom: 0;
-}
-
-.vue-menu--horizontal .vue-submenu .vue-submenu .vue-submenu__icon-arrow {
-	position: absolute;
-	right: 5px;
-}
-
-.vue-menu--horizontal .vue-submenu .vue-submenu .vue-menu {
-	top: 0;
-	min-width: 200px;
-}
-
 .vue-menu--horizontal .vue-submenu .vue-menu-item {
+	background-color: #fff;
 	float: none;
 	height: 36px;
 	line-height: 36px;
@@ -119,7 +89,8 @@
 	background-color: #eef1f6;
 }
 .vue-menu--horizontal>.vue-menu-item:hover,
-.vue-menu--horizontal>.vue-submenu:hover>.vue-submenu__title {
+.vue-menu--horizontal>.vue-submenu.is-active .vue-submenu__title,
+.vue-menu--horizontal>.vue-submenu:hover .vue-submenu__title {
 	border-bottom: 5px solid #409eff;
 }
 .vue-menu--horizontal.vue-menu--dark .vue-menu-item:hover,

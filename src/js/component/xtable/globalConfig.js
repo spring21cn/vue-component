@@ -20,7 +20,6 @@
     // resizable: false,
     // stripe: false,
     // border: false,
-    getVisibleSelect: false,
     fit: true,
     emptyCell: '　',
     showHeader: true,

@@ -9,14 +9,9 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueRadio = {
-    template: '<label v-show="isDisplay ? model === label : true" role="radio" @keydown.space.stop.prevent="model = isDisabled ? model : label" :tabindex="tabIndex" class="vue-radio" :class="[{\'is-disabled\': isDisabled}]"><span :class="[\'vue-radio__input\', {\'is-disabled\': isDisabled, \'is-checked\': model === label, \'is-focus\': isFocus}]"><span class="vue-radio__inner"></span><input class="vue-radio__original" :value="label" type="radio" v-model="model" @focus="isFocus=true" @blur="isFocus=false" :name="name" :disabled="isDisabled" tabindex="-1"></span><span class="vue-radio__label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
+    template: '<label role="radio" @keydown.space.stop.prevent="model = isDisabled ? model : label" :tabindex="tabIndex" class="vue-radio" :class="[{\'is-disabled\': isDisabled}]"><span :class="[\'vue-radio__input\', {\'is-disabled\': isDisabled, \'is-checked\': model === label, \'is-focus\': isFocus}]"><span class="vue-radio__inner"></span><input class="vue-radio__original" :value="label" type="radio" v-model="model" @focus="isFocus=true" @blur="isFocus=false" :name="name" :disabled="isDisabled" tabindex="-1"></span><span class="vue-radio__label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
     name: 'VueRadio',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     props: {
       value: {},
       label: {},
@@ -58,12 +53,7 @@
         }
       },
       isDisabled: function() {
-        return this.isGroup 
-        ? this._radioGroup.disabled || this.disabled || (this.vueForm || {}).disabled
-        : this.disabled || (this.vueForm || {}).disabled;
-      },
-      isDisplay: function() {
-        return this.isDisabled && (this.vueForm || {}).display;
+        return this.isGroup ? this._radioGroup.disabled || this.disabled : this.disabled;
       },
       tabIndex: function() {
         return (this.isDisabled || (this.isGroup && this.model !== this.label)) ? -1 : this.isGroup ? this._radioGroup.tabindex : this.tabindex;

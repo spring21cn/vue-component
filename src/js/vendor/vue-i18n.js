@@ -121,8 +121,8 @@ var Override = function (Vue, langVM) {
   };
 
   // override _destroy
-  var destroy = Vue.prototype.$destroy;
-  Vue.prototype.$destroy = function () {
+  var destroy = Vue.prototype._destroy;
+  Vue.prototype._destroy = function () {
     if (!this.$parent && this._langUnwatch) {
       this._langUnwatch();
       this._langUnwatch = null;

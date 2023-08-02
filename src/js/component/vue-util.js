@@ -106,35 +106,6 @@
     var decimals = parts[1] ? dsep + parts[1] : '';
     return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + tsep) + decimals;
   };
-
-  function DoFn(D) {
-    return D;
-  }
-  var dateI18n = {};
-
-  function getDateI18n() {
-    var lang = Vue.config.lang;
-    if (dateI18n.hasOwnProperty(lang)) {
-      return dateI18n[lang];
-    } else {
-      var i18n = {
-        dayNamesShort: Vue.t('vue.dateformat.dayNamesShort').split('_'),
-        dayNames: Vue.t('vue.dateformat.dayNames').split('_'),
-        monthNamesShort: Vue.t('vue.dateformat.monthNamesShort').split('_'),
-        monthNames: Vue.t('vue.dateformat.monthNames').split('_'),
-        amPm: Vue.t('vue.dateformat.amPm').split('_'),
-        DoFn: window.DoFn || DoFn,
-      };
-
-      // 当取到星期长度不为7，证明多语言中没取到，返回undefined，按照英文显示
-      if (i18n.dayNames.length != 7) {
-        i18n = undefined;
-      }
-      dateI18n[lang] = i18n;
-      return i18n;
-    }
-  }
-  
   var formatDate = function(date, format) {
     date = toDate(date);
     if (!isDef(date)) return null;
@@ -142,7 +113,7 @@
     if(format == 'timestamp'){
       return date.getTime();
     }
-    return DateUtil.format(date, format || 'yyyy-MM-dd', getDateI18n());
+    return DateUtil.format(date, format || 'yyyy-MM-dd');
   };
   var range = function a(n) {
     // see https://stackoverflow.com/questions/3746725/create-a-javascript-array-containing-1-n
@@ -217,12 +188,10 @@
       str = formatDate(string, format);
     } else if(!format && string.indexOf('GMT') > -1) {
       return new Date(string);
-    } else if (!format && /\d{4}-\d{2}-\d{2}T/.test(string)) {
-      return new Date(string);
     }
 
     if (!isDef(str)) str = string;
-    return DateUtil.parse(str, format || 'yyyy-MM-dd', getDateI18n());
+    return DateUtil.parse(str, format || 'yyyy-MM-dd');
   };
   var getDayCountOfMonth = function(year, month) {
     isDef(year) && (year = year*1);
@@ -308,10 +277,11 @@
   };
   var getWeekNumber = function(date) {
     date = toDate(date);
+    if (!isDate(date)) return null;
     date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-    var week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    date.setTime((date.getTime() + (6 - date.getDay()) * 86400000));
+    var firstDate = new Date(date.getFullYear(), 0, 1);
+    return Math.ceil(((date.getTime() - firstDate.getTime()) / 86400000) / 7);
   };
 
   var getRangeHours = function (ranges) {
@@ -1187,23 +1157,10 @@ function toArrayTree (array, options) {
         }
         return parent;
       },
-      level: function() {
-        var parent = this.$parent;
-        var level = 1;
-      
-        while (parent && parent.$options.name !== 'VueMenu') {
-          if (parent.$options.name === 'VueSubmenu') {
-            level++;
-          }
-          parent = parent.$parent;
-        }
-
-        return level;
-      },
       paddingStyle: function() {
         if (this.rootMenu.mode !== 'vertical') return {};
-        var paddingSize = this.parentMenu.indentSizeVal || 20;
-        var padding = paddingSize;
+        var padding = 20;
+        var parent = this.$parent;
 
         if (this.rootMenu.collapse) {
           return {
@@ -1211,13 +1168,19 @@ function toArrayTree (array, options) {
             paddingRight: '20px'
           };
         } else {
+          while (parent && parent.$options.name !== 'VueMenu') {
+            if (parent.$options.name === 'VueSubmenu') {
+              padding += 20;
+            }
+            parent = parent.$parent;
+          }
+
           return {
-            paddingLeft: this.rootMenu.indentMethod? this.rootMenu.indentMethod(this.level) + 'px' : padding * this.level + 'px'
+            paddingLeft: padding + 'px'
           };
         }
-      },
-      indentSizeVal: function() {
-        return this.indentSize || this.parentMenu.indentSizeVal;
+
+        
       }
     }
   };
@@ -1226,9 +1189,6 @@ function toArrayTree (array, options) {
     render: function(createElement, obj) {
       var vueComponent = obj.parent;
       var children = obj.children;
-      if (obj.props && obj.props.disabled === true) {
-        return createElement('transition',{}, children);
-      }
       var data = {
         on: {
           'beforeEnter': function(el) {
@@ -1336,20 +1296,16 @@ function toArrayTree (array, options) {
             }
             
           if (isDef(binding.expression) && isFunction(vnode.context[binding.expression])) {
-            vnode.context[binding.expression](mouseup,mousedown);
+            vnode.context[binding.expression]();
           } else {
             isFunction(binding.value) && binding.value();
           }
         });
       };
-
-      var isMobile = VueUtil.getSystemInfo().device == 'Mobile';
-      var startEvent = isMobile ? 'touchstart' : 'mousedown';
-      var endEvent = isMobile ? 'touchend' : 'mouseup';
-      on(document, startEvent, function(e) {
+      on(document, 'mousedown', function(e) {
         startClick = e;
       });
-      on(document, endEvent, function(e) {
+      on(document, 'mouseup', function(e) {
         clickOutSideFn(e, startClick);
       });
     }
@@ -1383,14 +1339,11 @@ function toArrayTree (array, options) {
   var scrollingMethods = [];
   document.addEventListener('scroll', lodash.debounce(function(e) {
 
+    if (VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs) return;
     var className = e.target.className || '';
     if(className.indexOf('contract-trigger') > -1 || className.indexOf('expand-trigger') > -1) return;
 
     scrollingMethods.forEach(function(obj) {
-      if (!obj.force) {
-        if (VueUtil.getSystemInfo().device == 'Mobile' && (VueUtil.getSystemInfo().isLoadMobileJs || VueUtil.disableScrollDirective) ) return;
-      }
-
 
       if (e.target !== obj.el && e.target.contains(obj.el)) {
         if(typeof obj.method == 'function') {
@@ -1412,7 +1365,6 @@ function toArrayTree (array, options) {
       };
       el.__scrollingNodes__ = bindingObj;
       bindingObj.method = binding.value;
-      bindingObj.force = binding.modifiers.force;
       if(scrollingMethods.indexOf(bindingObj) == -1) {
         scrollingMethods.push(bindingObj);
       }
@@ -1423,8 +1375,6 @@ function toArrayTree (array, options) {
       if(index > -1) {
         scrollingMethods.splice(index, 1);
       }
-      el.__scrollingNodes__ = null;
-      bindingObj = null;
     }
   };
 
@@ -1622,7 +1572,7 @@ function toArrayTree (array, options) {
   
   var noop = function noop() {};
   
-  var getKeyMap = function getKeyMap(key, bind, original) {
+  var getKeyMap = function getKeyMap(key, bind) {
       var result = {};
       var keyup = bind.keyup;
       var keydown = bind.keydown;
@@ -1636,7 +1586,6 @@ function toArrayTree (array, options) {
             break;
   
           default:
-            result.keyName = keyName;
             result.keyCode = keyCode(keyName);
         }
       });
@@ -1644,13 +1593,7 @@ function toArrayTree (array, options) {
         keydown: keydown || (keyup ? noop : bind),
         keyup: keyup || noop
       };
-
-      if(original) {
-        original.push(result);
-        return original;
-      } else {
-        return [result];
-      }
+      return result;
   };
 
   function isElementTopLayer(el) {
@@ -1674,14 +1617,7 @@ function toArrayTree (array, options) {
         }, 0);
       }
     },
-    focusClick: function (e, el) {
-      if(isElementTopLayer(el)) {
-        hotkeyHandlers.focus(e, el); // 点击动作执行前，先focus到对应的位置
-        setTimeout(function() {
-          el.click();
-        }, 0);
-      }
-    },
+
     focus: function (e, el) {
       if(isElementTopLayer(el)) {
         setTimeout(function() {
@@ -1709,16 +1645,11 @@ function toArrayTree (array, options) {
     }
     if(!handler) return;
 
-    el._keymap = getKeyMap(key, handler, el._keymap);
-    if (el._binded) return;
-
-    el._binded = true;
+    el._keymap = getKeyMap(key, handler);
     var allow = binding.modifiers.allow || false;
 
     el._keyHandler = function (e) {
-        var hotkey = VueUtil.find(el._keymap, function(hotkey) {
-          return hotkey.keyCode === e.keyCode;
-        }) || {};
+        var hotkey = el._keymap;
         var callback = hotkey.keyCode === e.keyCode &&
           !!hotkey.ctrl === e.ctrlKey &&
           !!hotkey.alt === e.altKey &&
@@ -1739,21 +1670,15 @@ function toArrayTree (array, options) {
 
         if(!callback || callback === noop) return;
         
-        // 获取最顶层容器，如aside,dialog等等
-        var topContainer = Array.prototype.filter.call(document.querySelectorAll('.vue-dialog, .vue-aside, .vue-message-box'), function(container) {
+        // 获取最顶层aside,dialog
+        var topContainer = Array.prototype.filter.call(document.querySelectorAll('.vue-dialog, .vue-aside'), function(container) {
           return isElementTopLayer(container);
         });
 
-        // 如果存在顶层容器，且当前元素不在最顶层的容器里，结束
+        // 判断当前元素是不是在顶层容器里
         if (topContainer.length > 0 && !(topContainer[topContainer.length - 1].contains(el) )) {
-          var vm = el.__vue__;
-          //VueDropdownItem下拉展开后，下次展开会append到aside外层的div，所以找到对应的父VueDropdown，判断它的el是不是在顶层aside下,如果不是，就跳过
-          if(vm && vm.$options && vm.$options.name == 'VueDropdownItem') { 
-            var parentVueDropdown = getParentComp(vm, 'VueDropdown');
-            if (parentVueDropdown && !(topContainer[topContainer.length - 1].contains(parentVueDropdown.$el) )) {
-              return;
-            }
-          } else {
+          var parentAside = getParentAside(el.__vue__);
+          if((!parentAside) || (!parentAside.$el.contains(topContainer[topContainer.length - 1]))){
             return;
           }
         }
@@ -1766,15 +1691,7 @@ function toArrayTree (array, options) {
         if(!currentElm.__vue__ || currentElm.__vue__._inactive) {
           return;
         }
-
-        var parent = getNearestParent(el.__vue__, function(parent){
-          return VueUtil.isFunction(parent.beforeHotkeyHandler);
-        });
-
-        if (parent && parent.beforeHotkeyHandler(hotkey) === false) {
-          return;
-        }
-
+        
         if (callback.prototype) {
           callback.call(vnode.context, e, el);
         } else {
@@ -1789,31 +1706,18 @@ function toArrayTree (array, options) {
   function unbindEvent(el) {
     document.removeEventListener('keydown', el._keyHandler);
     document.removeEventListener('keyup', el._keyHandler);
-    el._binded = undefined;
-    el._keyHandler = undefined;
-    el._keymap = undefined;
   }
 
-  function getParentComp(vm, names){
-
-    if(!vm) {
-      return;
-    }
-
-    if (!names) names = [];
-    if (typeof names == 'string') {
-      names = [names];
-    }
-
+  function getParentAside(vm){
     if((!vm.$parent) || (!vm.$parent.$options.name)){
      return null;
-    }else if(names.indexOf(vm.$parent.$options.name) > -1){
+    }else if(vm.$parent.$options.name === 'VueAside' || vm.$parent.$options.name === 'VueDialog'){
         return vm.$parent;
     }else {
-        return getParentComp(vm.$parent, names);
+        return getParentAside(vm.$parent);
     }
   }
-
+  
   Vue.directive('hotkey', {
     bind: function (el, binding, vnode) {
       bindEvent.call(this, el, binding, vnode);
@@ -1919,9 +1823,7 @@ function toArrayTree (array, options) {
   }
 
   var closest = function (element, selector) {
-    if (element.closest) {
-      return element.closest(selector);
-    }
+
     while (element && element.nodeType === 1) {
       if (element.matches(selector)) {
         return element;
@@ -1931,212 +1833,8 @@ function toArrayTree (array, options) {
 
     return null;
   };
-
-  // 多列排序方法 github.com/Teun/thenBy.js
-  var firstBy = (function () {
-    function identity(v) { return v; }
-
-    function ignoreCase(v) { return typeof (v) === 'string' ? v.toLowerCase() : v; }
-
-    function makeCompareFunction(f, opt) {
-      opt = typeof (opt) === 'number' ? { direction: opt } : opt || {};
-      if (typeof (f) != 'function') {
-        var prop = f;
-        // make unary function
-        f = function (v1) { var value = VueUtil.get(v1, prop); return value ? value : ''; };
-      }
-      if (f.length === 1) {
-        // f is a unary function mapping a single item to its sort score
-        var uf = f;
-        var preprocess = opt.ignoreCase ? ignoreCase : identity;
-        var cmp = opt.cmp || function (v1, v2) { return v1 < v2 ? -1 : v1 > v2 ? 1 : 0; };
-        f = function (v1, v2) { return cmp(preprocess(uf(v1)), preprocess(uf(v2))); };
-      }
-      if (opt.direction === -1) return function (v1, v2) { return -f(v1, v2); };
-      return f;
-    }
-    function tb(func, opt) {
-      var x = (typeof (this) == 'function' && !this.firstBy) ? this : false;
-      var y = makeCompareFunction(func, opt);
-      var f = x ? function (a, b) {
-        return x(a, b) || y(a, b);
-      }
-        : y;
-      f.thenBy = tb;
-      return f;
-    }
-    tb.firstBy = tb;
-    return tb;
-  })();
-
-  function sortByKeys(sortAry, data) {
-    if (!sortAry || sortAry.length === 0) {
-      return data;
-    }
-    var sortFunc = firstBy(sortAry[0].prop || sortAry[0].property, sortAry[0].order === 'desc' ? -1 : undefined);
-    for (var index = 1; index < sortAry.length; index++) {
-      sortFunc = sortFunc.thenBy(sortAry[index].prop || sortAry[index].property, sortAry[index].order === 'desc' ? -1 : undefined);
-    }
-    data = data.sort(sortFunc);
-    return data;
-  }
-
-  function getNearestParent(vm, func) {
-    if (!vm) return;
-    var parent = vm.$parent || vm.$root;
-    while (parent) {
-      if(func(parent)){
-        return parent;
-      }
-      parent = parent.$parent;
-    }
-  }
-
-  function compressImage(file, option) {
-    return new Promise(function(res, rej) {
-
-      var opts = {
-        strict: false,
-        checkOrientation: false,
-        success: function(result) {
-          if (file.uid) {
-            result.uid = file.uid;
-          }
-          res(result);
-        },
-        err: rej
-      };
-      new ImgCompressor(file, VueUtil.merge(opts, option));
-    });
-  }
-
-function containItem(containers, item) {
-  for (var i = 0; i < containers.length; i++) {
-    var container = containers[i];
-    if (container.contains(item)) {
-      return true;
-    }
-  }
-  return false;
-}
-function trapFocus(element, options) {
-  var KEYCODE_TAB = 9;
-
-  element.addEventListener('keydown', function(e) {
-    var isTabPressed = (e.key === 'Tab' || e.keyCode === KEYCODE_TAB);
-
-    if (!isTabPressed) { 
-      return; 
-    }
-
-    var focusableEls = element.querySelectorAll('a[href]:not([disabled]), button:not([disabled]), textarea:not([disabled]), input[type="text"]:not([disabled]), input[type="radio"]:not([disabled]), input[type="checkbox"]:not([disabled]), select:not([disabled])');
-    var offsetPanels = Array.prototype.slice.call(element.querySelectorAll('.vue-tab-pane-no-hide'));
-    
-    options = (options && typeof options === 'object') ? options : {};
-
-    focusableEls = Array.prototype.slice.call(focusableEls).filter(options.filterFunc || function (item) {
-      return item.offsetParent !== null && !containItem(offsetPanels, item);
-    });
-
-    options.filter && (focusableEls = focusableEls.filter(options.filter));
-
-    var firstFocusableEl = options.first ? element.querySelector(options.first) : focusableEls[0];
-    var lastFocusableEl = options.last ? element.querySelector(options.last) : focusableEls[focusableEls.length - 1];
-
-    if ( e.shiftKey ) /* shift + tab */ {
-      if (document.activeElement === firstFocusableEl) {
-        lastFocusableEl.focus();
-          e.preventDefault();
-        }
-      } else /* tab */ {
-      if (document.activeElement === lastFocusableEl) {
-        firstFocusableEl.focus();
-          e.preventDefault();
-        }
-      }
-  });
-}
-
-function numberWithCommas(x) {
-  var parts = x.toString().split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
-}
-
-function download (url, name, opts) {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', url);
-  xhr.responseType = 'blob';
-  xhr.onload = function () {
-    saveAs(xhr.response, name, opts);
-  };
-  xhr.onerror = function () {
-    console.error('could not download file');
-  };
-  xhr.send();
-}
-
-function click (node) {
-  try {
-    node.dispatchEvent(new MouseEvent('click'));
-  } catch (e) {
-    var evt = document.createEvent('MouseEvents');
-    evt.initMouseEvent('click', true, true, window, 0, 0, 0, 80,
-                          20, false, false, false, false, 0, null);
-    node.dispatchEvent(evt);
-  }
-}
-function saveAs (blob, name, opts) {
-
-  var URL = window.URL || window.webkitURL;
-  // Namespace is used to prevent conflict w/ Chrome Poper Blocker extension (Issue #561)
-  var a = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
-  name = name || blob.name || 'download';
-
-  a.download = name;
-  a.rel = 'noopener'; // tabnabbing
-
-  // TODO: detect chrome extensions & packaged apps
-  // a.target = '_blank'
-
-  if (typeof blob === 'string') {
-    // Support regular links
-    a.href = blob;
-    if (a.origin !== location.origin && opts && opts.corsEnabled === false) {
-      click(a, a.target = '_blank');
-    } else if (a.origin !== location.origin || !('download' in HTMLAnchorElement.prototype)) {
-      download(blob, name, opts);
-    } else {
-      click(a);
-    }
-  } else {
-    if (navigator.msSaveOrOpenBlob) {
-      navigator.msSaveOrOpenBlob(blob, name);
-      return;
-    }
-    // Support blobs
-    a.href = URL.createObjectURL(blob);
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4E4); // 40s
-    setTimeout(function () { a.click(); }, 0);
-  }
-}
-
-function getUrlVars(search) {
-    var vars = {};
-    search = search || window.location.search;
-    var hashes = search.slice(search.indexOf('?') + 1).split('&');
-    for(var i = 0; i < hashes.length; i++)
-    {
-        var hash = hashes[i].split('=');
-        var key = hash[0];
-        var value = hash[1];
-        if (key) {
-          vars[key] = value ? decodeURIComponent(value) : value;
-        }
-    }
-    return vars;
-}
-
+  
+  
   var VueUtil = {
     isNull: isNull,
     isUndefined: isUndefined,
@@ -2238,7 +1936,6 @@ function getUrlVars(search) {
     getSystemInfo: getSystemInfo,
     setLang: setLang,
     setLocale: setLocale,
-    getParentComp:getParentComp,
     config: config,
     nextZIndex: popupManager.nextZIndex,
     setZIndex: popupManager.setZindex,
@@ -2262,14 +1959,6 @@ function getUrlVars(search) {
     },
     hotkeyHandlers: hotkeyHandlers,
     clipboard: clipboard,
-    sortByKeys:sortByKeys,
-    firstBy: firstBy,
-    getNearestParent: getNearestParent,
-    compressImage: compressImage,
-    trapFocus:trapFocus,
-    numberWithCommas:numberWithCommas,
-    saveAs:saveAs,
-    getUrlVars:getUrlVars,
   };
 
   Object.keys(lodash).forEach(function(funcName) {

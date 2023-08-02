@@ -12,7 +12,10 @@
     // template: '<li :style="paddingStyle" @click="handleClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave" :class="[\'vue-menu-item\', {\'is-active\': active, \'is-disabled\': disabled}]"><template v-else><slot></slot></template></li>',
     template: '<li class="vue-menu-item"'
     + '    :style="[paddingStyle]"'
-    + '    :class="itemClass"'
+    + '    :class="{'
+    + '      \'is-active\': active,'
+    + '      \'is-disabled\': disabled'
+    + '    }"'
     + '    @click="handleClick"'
     + '  >'
     + '    <vue-tooltip'
@@ -40,24 +43,11 @@
         type: Object,
         required: false
       },
-      disabled: Boolean,
-      indentSize: {
-        type: Number
-      }
+      disabled: Boolean
     },
     computed: {
       active: function() {
         return this.index === this.rootMenu.activedIndex;
-      },
-      itemClass: function() {
-        var classNames = {
-          'is-active': this.active,
-          'is-disabled': this.disabled,
-        };
-
-        classNames['vue-menu-level-' + this.level] = true;
-        
-        return classNames;
       }
     },
     methods: {

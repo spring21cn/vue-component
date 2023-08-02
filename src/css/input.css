@@ -38,7 +38,7 @@
 	color: #1f2d3d;
 	display: inline-block;
 	height: 36px;
-	line-height: 36px;
+	line-height: 1;
 	outline: 0;
 	padding: 3px 10px;
 	width: 100%;
@@ -91,21 +91,18 @@
 }
 .vue-input--large .vue-input__inner {
 	height: 42px;
-	line-height: 42px;
 }
 .vue-input--small {
 	font-size: 13px;
 }
 .vue-input--small .vue-input__inner {
 	height: 30px;
-	line-height: 30px;
 }
 .vue-input--mini {
 	font-size: 12px;
 }
 .vue-input--mini .vue-input__inner {
 	height: 22px;
-	line-height: 22px;
 }
 .vue-input-group {
 	line-height: normal;

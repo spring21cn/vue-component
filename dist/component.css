@@ -22,8 +22,63 @@
 [v-cloak] {
 	display: none;
 }
-.vue-icon-theme:before {
-  content: "\e913";
+
+.vue-icon-add-row:before {
+  content: "\e90a";
+}
+.vue-icon-insert-row:before {
+  content: "\e90e";
+}
+.vue-icon-del-row:before {
+  content: "\e90b";
+}
+.vue-icon-import-file:before {
+  content: "\e90c";
+}
+.vue-icon-export-file:before {
+  content: "\e90d";
+}
+.vue-icon-dock-top:before {
+  content: "\e90f";
+}
+.vue-icon-look:before {
+  content: "\e910";
+}
+.vue-icon-helpbook:before {
+  content: "\e904";
+}
+.vue-icon-language:before {
+  content: "\e903";
+}
+.vue-icon-undo:before {
+  content: "\e905";
+}
+.vue-icon-rotate-left:before {
+  content: "\e905";
+}
+.vue-icon-repeat:before {
+  content: "\e906";
+}
+.vue-icon-rotate-right:before {
+  content: "\e906";
+}
+.vue-icon-zoom-out:before {
+  content: "\e907";
+}
+.vue-icon-edit-crop:before {
+  content: "\e908";
+}
+.vue-icon-external:before {
+  content: "\e900";
+}
+.vue-icon-keyboard:before {
+  content: "\e901";
+}
+.vue-icon-key:before {
+  content: "\e902";
+}
+.vue-icon-pj:before {
+  content: "\e909";
 }
 .vue-icon-arrow-down:before {
   content: "\e800";
@@ -355,81 +410,16 @@
 .vue-icon-scan:before {
   content: "\e86c";
 }
-.vue-icon-external:before {
-  content: "\e900";
-}
-.vue-icon-keyboard:before {
-  content: "\e901";
-}
-.vue-icon-key:before {
-  content: "\e902";
-}
-.vue-icon-language:before {
-  content: "\e903";
-}
-.vue-icon-helpbook:before {
-  content: "\e904";
-}
-.vue-icon-undo:before {
-  content: "\e905";
-}
-.vue-icon-rotate-left:before {
-  content: "\e905";
-}
-.vue-icon-repeat:before {
-  content: "\e906";
-}
-.vue-icon-rotate-right:before {
-  content: "\e906";
-}
-.vue-icon-zoom-out:before {
-  content: "\e907";
-}
-.vue-icon-edit-crop:before {
-  content: "\e908";
-}
-.vue-icon-pj:before {
-  content: "\e909";
-}
-.vue-icon-add-row:before {
-  content: "\e90a";
-}
-.vue-icon-insert-row:before {
-  content: "\e90e";
-}
-.vue-icon-del-row:before {
-  content: "\e90b";
-}
-.vue-icon-import-file:before {
-  content: "\e90c";
-}
-.vue-icon-export-file:before {
-  content: "\e90d";
-}
-.vue-icon-dock-top:before {
-  content: "\e90f";
-}
-.vue-icon-look:before {
-  content: "\e910";
-}
-.vue-icon-repair:before {
-  content: "\e911";
-}
-.vue-icon-motorcycle-circle:before {
-  content: "\e912";
-}
-.vue-icon-motorcycle:before {
-  content: "\e86d";
-}
-
 .vue-icon-loading {
 	animation: rotating 1s linear infinite;
 }
 .vue-icon--right {
   margin-left: 10px;
+  vertical-align: bottom;
 }
 .vue-icon--left {
   margin-right: 10px;
+  vertical-align: bottom;
 }
 .collapse-transition {
 	transition: height .3s,padding-top .3s,padding-bottom .3s;
@@ -475,33 +465,12 @@
 
 /* aside在ios下无法滚动的问题， _::-webkit-full-page-media, _:future, :root的意思是只在Safari生效 */
 _::-webkit-full-page-media, _:future, :root .vue-aside,.vue-form {
+  -webkit-overflow-scrolling: touch; 
 }
 
 _::-webkit-full-page-media, _:future, :root .resize-triggers{
   height: 0;
 }
-
-.tiny-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.tiny-scrollbar::-webkit-scrollbar-track {
-  background: transparent
-}
-
-.tiny-scrollbar::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background: rgba(0,0,0,.1);
-}
-
-.tiny-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0,0,0,.3)
-}
-
-.tiny-scrollbar::-webkit-scrollbar-thumb:active {
-  background: rgba(0,0,0,.6)
-}
-
 .vue-alert {
 	width: 100%;
 	padding: 8px 16px;
@@ -795,231 +764,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	to {
 		transform: translate3d(0, -110%, 0);
 	}
-}
-
-.vue-attachment-view {
-  overflow: hidden;
-}
-
-.vue-attachment-view .v-flex {
-  display: flex;
-  align-items: center;
-}
-
-.vue-attachment-view .text-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap
-}
-
-.vue-attachment-view .v-hr {
-  margin: 0 4px;
-  width: 1px;
-  height: 16px;
-  background: #B6B6B6;
-}
-
-.vue-attachment-view.is-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100vh;
-  background-color: white;
-  z-index: 2;
-}
-
-.vue-attachment-view .tools {
-  border-bottom: 1px solid #BEBEBE;
-  padding: 0 4px;
-}
-
-.vue-attachment-view .tools .left-tools {
-  min-width: 24%;
-}
-
-.vue-attachment-view .tools .center-tools {
-  justify-content: center;
-}
-
-.vue-attachment-view .tools .center-tools .vue-icon-sort {
-  transform: rotateZ(90deg);
-}
-
-.vue-attachment-view .tools .right-tools {
-  justify-content: flex-end;
-}
-
-.vue-attachment-view .tools .v-button {
-  padding: 0 8px;
-  margin-left: 0;
-  height: 36px;
-  color: #363636;
-}
-
-.vue-attachment-view .tools .v-button i {
-  line-height: 36px;
-}
-
-.vue-attachment-view .tools .v-button:hover:enabled, .vue-attachment-view .tools .v-button:hover {
-  background-color: #EAEAEA;
-}
-
-.vue-attachment-view .tools .vue-col {
-  height: 40px;
-}
-
-.vue-attachment-view .tools .pageselector-container {
-}
-
-.vue-attachment-view .tools .pageselector-container .page-length {
-  margin: 0 8px 0 10px;
-  font-size: 12px;
-  line-height: 16px;
-}
-
-.vue-attachment-view .tools .page-no {
-  width: 40px;
-}
-
-.vue-attachment-view .tools .page-no .vue-input__inner {
-  text-align: center;
-  padding-left: 4px;
-  border-radius: 2px;
-  padding-right: 4px;
-  font-size: 12px;
-  line-height: 16px;
-  margin: 0;
-  box-sizing: border-box;
-  transition: all 0.2s ease-in-out;
-  font-family: inherit;
-  font-weight: 400;
-  background: #F7F7F7;
-  border: 1px solid #B6B6B6;
-  height: 28px;
-}
-
-.vue-attachment-view .file-body {
-  position: relative;
-  width: 100%;
-  background-color: #E6E6E6;
-  height: calc(100% - 41px);
-  overflow: auto;
-}
-
-.vue-attachment-view .contents-flyout {
-  background-color: #fff;
-  float: left;
-  width: 200px;
-  border-right: 1px solid #B6B6B6;
-  height: 100%;
-  display: none;
-  box-shadow: 0 2px 4px 0 rgba(0,0,0,.12),0 0 6px 0 rgba(0,0,0,.04);
-}
-
-.vue-attachment-view .contents-flyout.is-display {
-  display: block;
-}
-
-.vue-attachment-view .contents-flyout .flyout-title, .vue-attachment-view .contents-flyout .flyout-view {
-  align-items: center;
-  margin: 16px;
-}
-
-.vue-attachment-view .contents-flyout .flyout-view {
-  height: calc(100% - 68px);
-  overflow: auto;
-  margin: 16px 0;
-}
-
-.vue-attachment-view .contents-flyout .flyout-title {
-  border-bottom: 1px solid #E2E2E2;
-  margin: 8px 16px;
-  height: 36px;
-}
-
-.vue-attachment-view .contents-flyout .flyout-view .page-no {
-  text-align: center;
-}
-
-.vue-attachment-view .contents-flyout .flyout-view .item {
-  text-align: center;
-}
-
-.vue-attachment-view .contents-flyout .flyout-view .item+.item {
-  margin-top: 16px;
-}
-
-.vue-attachment-view .contents-flyout .flyout-view .item:hover .vue-image {
-  outline: 1px solid #0078D4;
-}
-
-.vue-attachment-view .contents-flyout .flyout-view .item .vue-image.is-selected {
-  outline: 1px solid #0078D4;
-  outline-width: 4px;
-  margin-top: 4px;
-}
-
-.vue-attachment-view .contents-flyout .flyout-view img {
-  width: 120px;
-  height: 160px;
-}
-
-.vue-attachment-view .contents {
-  height: 100%;
-  overflow: auto;
-  position: relative;
-}
-
-.vue-attachment-view .contents .content-view {
-  text-align: center;
-  height: 100%;
-  transform-origin: left top;
-  margin: auto;
-}
-
-.vue-attachment-view .contents .content-view .item {
-  padding: 8px;
-  transition: all 0.5s;
-  margin: auto;
-}
-
-.vue-attachment-view .contents .content-view .item.is-rotate .vue-image {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-}
-
-.vue-attachment-view .contents .content-view .item .vue-image {
-  width: 100%;
-  min-height: auto;
-  height: 100%;
-}
-
-.vue-attachment-view .contents .content-view .item .vue-image .image-slot, .vue-attachment-view .contents .content-view .item .vue-image .vue-image__error {
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #c0c4cc;
-  min-width: 100%;
-}
-
-.vue-attachment-view .contents .content-view .item.is-width {
-  width: 100%;
-  height: max-content;
-}
-
-.vue-attachment-view .contents .content-view img {
-  /* max-width: 100%; */
-  /* height: auto; */
-  /* max-height: 100%; */
-  transition: all 0.2s;
-}
-
-.vue-attachment-view .contents .content-view .item.is-width img {
-  width: 100%;
-  height: max-content;
 }
 
 .vue-autocomplete-suggestion.is-loading li:after {
@@ -1693,501 +1437,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-full-calendar-header .vue-picker-panel__icon-btn{
 	margin-top: 4px;
 }
-.vue-card-list {
-	overflow: hidden;
-	width: 100%;
-	max-width: 100%;
-	font-size: 14px;
-	display: flex;
-	flex-direction: column;
-}
-.vue-card-list-content {
-	position: relative;
-	display: grid;
-	gap: 8px;
-	grid-auto-rows: max-content;
-	flex: 1;
-	overflow: auto;
-}
-
-@media (max-width: 768px) {
-	/* xs */
-	.vue-card-list-content.xs-1 {
-		grid-template-columns: repeat(1, 1fr);
-	}
-	.vue-card-list-content.xs-2 {
-		grid-template-columns: repeat(2, 1fr);
-	}
-	.vue-card-list-content.xs-3 {
-		grid-template-columns: repeat(3, 1fr);
-	}
-	.vue-card-list-content.xs-4 {
-		grid-template-columns: repeat(4, 1fr);
-	}
-	.vue-card-list-content.xs-5 {
-		grid-template-columns: repeat(5, 1fr);
-	}
-	.vue-card-list-content.xs-6 {
-		grid-template-columns: repeat(6, 1fr);
-	}
-}
-
-@media (min-width: 768px) {
-	/* sm */
-	.vue-card-list-content.sm-1 {
-		grid-template-columns: repeat(1, 1fr);
-	}
-	.vue-card-list-content.sm-2 {
-		grid-template-columns: repeat(2, 1fr);
-	}
-	.vue-card-list-content.sm-3 {
-		grid-template-columns: repeat(3, 1fr);
-	}
-	.vue-card-list-content.sm-4 {
-		grid-template-columns: repeat(4, 1fr);
-	}
-	.vue-card-list-content.sm-5 {
-		grid-template-columns: repeat(5, 1fr);
-	}
-	.vue-card-list-content.sm-6 {
-		grid-template-columns: repeat(6, 1fr);
-	}
-}
-
-@media (min-width: 992px) {
-	/* md */
-	.vue-card-list-content.md-1 {
-		grid-template-columns: repeat(1, 1fr);
-	}
-	.vue-card-list-content.md-2 {
-		grid-template-columns: repeat(2, 1fr);
-	}
-	.vue-card-list-content.md-3 {
-		grid-template-columns: repeat(3, 1fr);
-	}
-	.vue-card-list-content.md-4 {
-		grid-template-columns: repeat(4, 1fr);
-	}
-	.vue-card-list-content.md-5 {
-		grid-template-columns: repeat(5, 1fr);
-	}
-	.vue-card-list-content.md-6 {
-		grid-template-columns: repeat(6, 1fr);
-	}
-}
-
-@media (min-width: 1200px) {
-	/* lg */
-	.vue-card-list-content.lg-1 {
-		grid-template-columns: repeat(1, 1fr);
-	}
-	.vue-card-list-content.lg-2 {
-		grid-template-columns: repeat(2, 1fr);
-	}
-	.vue-card-list-content.lg-3 {
-		grid-template-columns: repeat(3, 1fr);
-	}
-	.vue-card-list-content.lg-4 {
-		grid-template-columns: repeat(4, 1fr);
-	}
-	.vue-card-list-content.lg-5 {
-		grid-template-columns: repeat(5, 1fr);
-	}
-	.vue-card-list-content.lg-6 {
-		grid-template-columns: repeat(6, 1fr);
-	}
-}
-
-@media only screen and (min-width: 1900px) {
-	/* xl */
-	.vue-card-list-content.xl-1 {
-		grid-template-columns: repeat(1, 1fr);
-	}
-	.vue-card-list-content.xl-2 {
-		grid-template-columns: repeat(2, 1fr);
-	}
-	.vue-card-list-content.xl-3 {
-		grid-template-columns: repeat(3, 1fr);
-	}
-	.vue-card-list-content.xl-4 {
-		grid-template-columns: repeat(4, 1fr);
-	}
-	.vue-card-list-content.xl-5 {
-		grid-template-columns: repeat(5, 1fr);
-	}
-	.vue-card-list-content.xl-6 {
-		grid-template-columns: repeat(6, 1fr);
-	}
-}
-
-.vue-card-list-item {
-	border: 1px solid #dfe6ec;
-	border-radius: 3px;
-	position: relative;
-	transform: unset !important;
-	display: flex;
-	flex-direction: row;
-}
-
-.vue-card-list-item.current {
-	background-color: #e6f7ff;
-	z-index: 1;
-}
-
-.vue-card-list-item-wrapper {
-	padding: 8px;
-	flex: 1;
-}
-
-.vue-card-list-item-pre-wrapper {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: 30px;
-}
-
-.sortable-chosen .vue-card-list-item-action {
-	opacity: 0;
-}
-
-.vue-card-list-item-action {
-	position: fixed;
-	display: none;
-	top: -50px;
-	right: 20px;
-	border-radius: 8px;
-	height: 44px;
-	cursor: pointer;
-	border: 1px solid #dfe6ec;
-	background-color: #fff;
-	box-shadow: 0 0 15px 0px #eee;
-	padding: 0 7px;
-	-webkit-tap-highlight-color: transparent;
-}
-
-.vue-card-list-item-action.bottom-action {
-	top: unset;
-	bottom: -50px;
-}
-
-.vue-card-list-item-action::before {
-	top: 100%;
-	left: 50%;
-	border: solid transparent;
-	content: "";
-	height: 0;
-	width: 0;
-	position: absolute;
-	pointer-events: none;
-	border-color: rgba(0, 0, 0, 0);
-	border-width: 6px;
-	border-top-color: #dfe6ec;
-	margin-left: -6px;
-	box-shadow: 0 0 0px;
-}
-
-.vue-card-list-item-action::after {
-	top: 100%;
-	left: 50%;
-	border: solid transparent;
-	content: "";
-	height: 0;
-	width: 0;
-	position: absolute;
-	pointer-events: none;
-	border-color: rgba(0, 0, 0, 0);
-	border-width: 5px;
-	border-top-color: white;
-	margin-left: -5px;
-}
-
-.vue-card-list-item-action.bottom-action::before {
-	bottom: 100%;
-	top: initial;
-	border-bottom-color: #dfe6ec;
-	border-top: 0;
-}
-
-.vue-card-list-item-action.bottom-action::after {
-	bottom: 100%;
-	top: initial;
-	border-bottom-color: white;
-	border-top: 0;
-}
-
-.vue-card-list-item-action > i {
-	color: #989b9f;
-	font-size: 20px;
-	padding: 11px;
-}
-
-.vue-card-list-item-action > i:hover {
-	filter: brightness(1.3);
-}
-
-.vue-card-list-item-action >.vue-card-list-item-drag {
-	transform: rotate(45deg);
-	font-size: 14px;
-}
-.vue-card-list-item-action > .vue-card-list-item-edit {
-	font-size: 22px;
-}
-
-.vue-card-list-item.current .vue-card-list-item-action {
-	display: flex;
-	align-items: center;
-}
-
-.vue-card-list-header {
-	border: 1px solid #dfe6ec;
-	border-radius: 3px;
-	display: flex;
-	flex-direction: row;
-}
-
-.vue-card-list-header .vue-card-list-item-pre-wrapper {
-	cursor: initial;
-}
-
-.vue-card-list-footer {
-	text-align: center;
-	margin-top: 10px;
-}
-
-.vue-card-list-item-wrapper .escort-vue-text, .vue-card-list-item .escort-vue-text {
-	padding: 10px 0;
-	min-height: 36px;
-}
-
-.vue-card-list-header {
-	background-color: #f7f7f7;
-}
-
-.vue-card-list-header .vue-col .escort-vue-text {
-	text-overflow: ellipsis;
-	overflow: hidden;
-}
-
-.vue-card-list-empty-wrapper {
-	height: 100%;
-	width: 100%;
-	min-height: 60px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 14px;
-	color: #606266;
-}
-
-.vue-card-list-item-overlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
-	background-color: rgba(0, 0, 0, .15);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-}
-
-.vue-card-list-item-overlay .vue-icon-plus{
-	font-size: 30px;
-	color: rgb(0, 0, 0);
-	opacity: .1;
-}
-
-.vue-card-list-item-overlay:hover .vue-icon-plus {
-	opacity: .3;
-}
-
-/* list mode */
-.vue-card-list.list-mode .vue-card-list-content {
-	overflow: auto;
-}
-.vue-card-list.list-mode .vue-card-list-header {
-	border: 1px solid #dfe6ec;
-	border-bottom: 0;
-}
-.vue-card-list.list-mode .vue-card-list-content {
-	border: 1px solid #dfe6ec;
-	padding: 4px 6px;
-	display: block;
-}
-.vue-card-list.list-mode .vue-card-list-item {
-	border: 1px solid transparent;
-	border-radius: 5px;
-}
-.vue-card-list.list-mode .vue-card-list-header {
-	border-radius: 0;
-}
-
-.vue-card-list.list-mode .vue-card-list-item.current {
-	border: 1px solid #dfe6ec;
-	background-color: #fff;
-	box-shadow: 0 0 15px 0px #eee;
-}
-
-.vue-card-list.list-mode .vue-card-list-header .vue-card-list-item-wrapper {
-	padding: 6px 16px;
-}
-
-/* list mode hide header show label when mobile */
-@media (max-width: 768px) {
-	.vue-card-list.list-mode.label-responsive .vue-card-list-header {
-		display: none;
-	}
-	.vue-card-list.list-mode.label-responsive .vue-card-list-content {
-		border-top: 1px solid #dfe6ec;
-	}
-}
-@media (min-width: 769px) {
-	.vue-card-list.list-mode.label-responsive .vue-form-item__label {
-		display: none;
-	}
-	.vue-card-list.list-mode.label-responsive .vue-form-item__content {
-		margin-left: 0 !important;
-	}
-}
-/* style sub component for not editing mode */
-.list-mode .vue-card-list-item.not-editing .vue-input.is-disabled .vue-input__inner {
-	background: transparent;
-	border: 0;
-	color: black;
-	cursor: text;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-textarea.is-disabled .vue-textarea__inner {
-	background: transparent;
-	border: 0;
-	font-size: 14px;
-	color: black;
-	cursor: initial;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-textarea.is-disabled .vue-textarea__inner::-webkit-resizer {
-	display: none;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-icon-arrow-up {
-	display: none;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-input.is-disabled .vue-input__inner::placeholder {
-	visibility: hidden;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-checkbox__input {
-	display: none;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-checkbox__input.is-disabled+.vue-checkbox__label {
-	color: black;
-	font-size: 14px;
-	cursor: initial;
-	user-select: text;
-	padding-left: 10px;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-radio__input {
-	display: none;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-radio__input.is-disabled+.vue-radio__label {
-	color: black;
-	font-size: 14px;
-	cursor: initial;
-	user-select: text;
-	padding-left: 10px;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-checkbox-button:not(.is-checked) {
-	display: none;
-}
-.list-mode .vue-card-list-item.not-editing .vue-checkbox-button.is-checked .vue-checkbox-button__inner{
-	border: none !important;
-	color: black !important;
-	box-shadow: none !important;
-	cursor: initial;
-	user-select: text;
-	background-color: transparent !important;
-	padding: 0;
-	font-size: 14px;
-	vertical-align: baseline;
-	padding-left: 10px;
-	margin-right: 10px;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-radio-button:not(.is-active) {
-	display: none;
-}
-.list-mode .vue-card-list-item.not-editing .vue-radio-button.is-active .vue-radio-button__inner{
-	border: none !important;
-	color: black !important;
-	box-shadow: none !important;
-	cursor: initial;
-	user-select: text;
-	background-color: transparent !important;
-	padding: 0;
-	font-size: 14px;
-	vertical-align: baseline;
-	padding-left: 10px;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-date-editor.is-disabled .vue-input__inner {
-	padding-left: 10px;
-}
-.list-mode .vue-card-list-item.not-editing .vue-date-editor.is-disabled .vue-input__prefix {
-	display: none;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-number-input.is-disabled .vue-number-input__decrease {
-	display: none;
-}
-.list-mode .vue-card-list-item.not-editing .vue-number-input.is-disabled .vue-number-input__increase {
-	display: none;
-}
-.list-mode .vue-card-list-item.not-editing .vue-number-input.is-disabled .vue-input__inner {
-	padding: 3px 10px;
-	text-align: left;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-code-input.is-disabled {
-	background: transparent;
-	border-color: transparent;
-	color: #000;
-	cursor: text;
-}
-
-.list-mode .vue-card-list-item.not-editing .valuelist-button {
-	display: none;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-input-group__append,.list-mode .vue-card-list-item.not-editing .vue-input-group__prepend {
-	border: 0;
-	background: initial;
-	color: #000;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-range-editor.is-disabled {
-	border: 0;
-	background: initial;
-	color: #000;
-	cursor: not-allowed;
-	cursor: initial;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-range-editor.is-disabled input {
-	background: transparent;
-	border: 0;
-	color: black;
-	cursor: text;
-}
-
-.list-mode .vue-card-list-item.not-editing .vue-range-editor.is-disabled .vue-range__icon {
-	display: none;
-}
 .vue-card {
 	border: 1px solid #d1dbe5;
 	border-radius: 4px;
@@ -2631,30 +1880,16 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	content: "";
 	top: 0; right: 0; bottom: 0; left: 0;  
 	background: rgba(0, 0, 0, 0.1);
-	z-index: 1;
-	box-shadow: 0 0 0 2px rgba(155, 155, 155, 1);
-}
-
-.vue-checkbox-button.is-focus:first-child .vue-checkbox-button__inner:before {
-	border-top-left-radius: 4px;
-	border-bottom-left-radius: 4px;
-}
-.vue-checkbox-button.is-focus:last-child .vue-checkbox-button__inner:before {
-	border-top-right-radius: 4px;
-	border-bottom-right-radius: 4px;
 }
 
 .vue-checkbox-button:first-child .vue-checkbox-button__inner {
 	border-left: 1px solid #bfcbd9;
+	border-radius: 4px 0 0 4px;
 	box-shadow: none!important;
-	border-top-left-radius: 4px;
-	border-bottom-left-radius: 4px;
 }
 .vue-checkbox-button:last-child .vue-checkbox-button__inner {
-	border-top-right-radius: 4px;
-	border-bottom-right-radius: 4px;
+	border-radius: 0 4px 4px 0;
 }
-
 .vue-checkbox-button__inner {
 	line-height: 1;
 	vertical-align: middle;
@@ -2707,226 +1942,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	border-radius: 0;
 }
 
-.vue-checkbox-group.check-style .vue-checkbox-button.is-checked .vue-checkbox-button__inner {
-	background-color: #fff;
-	border-color: #0AC172;
-	color: #0AC172;
-	box-shadow: none;
-}
-
-.vue-checkbox-group.check-style .vue-checkbox-button.is-checked .vue-checkbox-button__inner::after {
-	bottom: 0px;
-	content: "✔";
-	color: rgb(255, 255, 255);
-	display: block;
-	font-size: 12px;
-	height: 0px;
-	line-height: 6px;
-	position: absolute;
-	right: 0px;
-	width: 0px;
-	border-width: 10px;
-	border-style: solid;
-	border-image: initial;
-	border-color: transparent rgb(10, 193, 114) rgb(10, 193, 114) transparent;
-}
-
-
-.vue-checkbox-group.is-split .vue-checkbox-button{
-	margin-right: 10px;
-}
-
-.vue-checkbox-group.is-split .vue-checkbox-button .vue-checkbox-button__inner{
-	border-radius: 4px;
-	border-left: 1px solid #bfcbd9;
-}
-
-.vue-checkbox-group.is-split .vue-checkbox-button:last-child .vue-checkbox-button__inner{
-	margin-right: 0px;
-}
-
-.vue-checkbox-group.is-split .vue-checkbox-button.is-focus .vue-checkbox-button__inner:before {
-	border-radius: 4px;
-}
-.vue-code-input {
-  background-color: #fff;
-  border-radius: 4px;
-  border: 1px solid #bfcbd9;
-  color: #1f2d3d;
-  display: inline-block;
-  line-height: 1;
-  outline: 0;
-  padding-left: 10px;
-  padding-right: 9px;
-  width: 100%;
-  cursor: text;
-}
-
-.vue-code-input:focus {
-    border-color: #409eff;
-}
-
-.vue-code-input>.vue-code-input__content {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    height: 100%;
-    white-space: nowrap;
-    position: relative;
-    padding-right: 1px;
-}
-
-.vue-code-input>.vue-code-input__content>span {
-    vertical-align: middle;
-    position: relative;
-}
-
-.vue-code-input>.vue-code-input__content::-webkit-scrollbar {
-  height: 0;
-  width: 0;
-}
-
-.vue-code-input.end-active.not-select .vue-code-input__content::after {
-  content: "";
-  border-left: 1px solid #000;
-  height: calc(1em + 2px);
-  animation: typeblink 0.5s infinite alternate;
-  visibility: hidden;
-  position: absolute;
-  top: 1px;
-}
-
-.vue-code-input.end-active.not-select:not(.is-readonly):focus .vue-code-input__content::after {
-  visibility: visible;
-}
-
-.vue-code-input .vue-code-input__content span {
-  position: relative;
-}
-
-.vue-code-input.not-select:not(.is-readonly):focus .vue-code-input__content span.active::before {
-  content: "";
-  border-left: 1px solid #000;
-  height: calc(1em + 2px);
-  animation: typeblink 0.5s infinite alternate;
-  position: absolute;
-  top: 2px;
-}
-
-.vue-code-input .vue-code-input__content:empty::before {
-  content: attr(placeholder);
-  color: #97a8be;
-  display: inline-block;
-  width: 0;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-.vue-code-input.is-disabled .vue-code-input__content:empty::before {
-  color: #bfd2e6;
-}
-
-.vue-form-item.is-error .vue-code-input {
-    border-color: #fb5555;
-}
-
-.vue-code-input.is-disabled {
-  background-color: #eef1f6;
-  border-color: #d1dbe5;
-  color: #bbb;
-  cursor: not-allowed;
-}
-
-@keyframes typeblink {
-  0% {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.vue-code-input__suffix {
-  text-align: center;
-  color: #bfcbd9;
-}
-
-.vue-code-input__icon.is-clickable {
-  cursor: pointer;
-}
-
-.vue-code-input {
-  display: flex;
-  align-items: center;
-}
-.vue-code-input>.vue-code-input__content {
-  flex: 1;
-}
-
-.vue-code-input.has-icon{
-  padding-right: 0;
-}
-
-.vue-code-input__clear {
-  cursor: pointer;
-}
-
-/* size */
-.vue-code-input {
-  height: 36px;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  font-size: 14px;
-}
-
-.vue-code-input.vue-code-input--large {
-  height: 42px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  font-size: 16px;
-}
-
-.vue-code-input.vue-code-input--small {
-  height: 30px;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  font-size: 13px;
-}
-
-.vue-code-input.vue-code-input--mini {
-  height: 22px;
-  padding-top: 1px;
-  padding-bottom: 1px;
-  font-size: 12px;
-}
-
-.vue-code-input__suffix {
-  height: 36px;
-  line-height: 36px;
-}
-
-.vue-code-input__icon {
-  width: 26px;
-}
-
-.vue-code-input.vue-code-input--large+.vue-code-input__suffix {
-  height: 42px;
-  line-height: 42px;
-}
-
-.vue-code-input.vue-code-input--small+.vue-code-input__suffix {
-  height: 30px;
-  line-height: 30px;
-}
-
-.vue-code-input.vue-code-input--mini+.vue-code-input__suffix {
-  height: 22px;
-  line-height: 22px;
-}
-
-.vue-code-input.vue-code-input--mini+.vue-code-input__suffix .vue-code-input__icon{
-  width: 22px;
-}
 .vue-col-pull-1,
 .vue-col-pull-10,
 .vue-col-pull-11,
@@ -2975,10 +1990,10 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-col-push-7,
 .vue-col-push-8,
 .vue-col-push-9 {
-  position: relative;
+	position: relative;
 }
 .vue-col-0 {
-  display: none;
+	display: none;
 }
 .vue-col-1,
 .vue-col-10,
@@ -3004,2100 +2019,1647 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-col-7,
 .vue-col-8,
 .vue-col-9 {
-  float: left;
+	float: left;
 }
 .vue-col-1 {
-  width: 4.16667%;
+	width: 4.16667%;
 }
 .vue-col-offset-1 {
-  margin-left: 4.16667%;
+	margin-left: 4.16667%;
 }
 .vue-col-pull-1 {
-  right: 4.16667%;
+	right: 4.16667%;
 }
 .vue-col-push-1 {
-  left: 4.16667%;
+	left: 4.16667%;
 }
 .vue-col-2 {
-  width: 8.33333%;
+	width: 8.33333%;
 }
 .vue-col-offset-2 {
-  margin-left: 8.33333%;
+	margin-left: 8.33333%;
 }
 .vue-col-pull-2 {
-  right: 8.33333%;
+	right: 8.33333%;
 }
 .vue-col-push-2 {
-  left: 8.33333%;
+	left: 8.33333%;
 }
 .vue-col-3 {
-  width: 12.5%;
+	width: 12.5%;
 }
 .vue-col-offset-3 {
-  margin-left: 12.5%;
+	margin-left: 12.5%;
 }
 .vue-col-pull-3 {
-  right: 12.5%;
+	right: 12.5%;
 }
 .vue-col-push-3 {
-  left: 12.5%;
+	left: 12.5%;
 }
 .vue-col-4 {
-  width: 16.66667%;
+	width: 16.66667%;
 }
 .vue-col-offset-4 {
-  margin-left: 16.66667%;
+	margin-left: 16.66667%;
 }
 .vue-col-pull-4 {
-  right: 16.66667%;
+	right: 16.66667%;
 }
 .vue-col-push-4 {
-  left: 16.66667%;
+	left: 16.66667%;
 }
 .vue-col-5 {
-  width: 20.83333%;
+	width: 20.83333%;
 }
 .vue-col-offset-5 {
-  margin-left: 20.83333%;
+	margin-left: 20.83333%;
 }
 .vue-col-pull-5 {
-  right: 20.83333%;
+	right: 20.83333%;
 }
 .vue-col-push-5 {
-  left: 20.83333%;
+	left: 20.83333%;
 }
 .vue-col-6 {
-  width: 25%;
+	width: 25%;
 }
 .vue-col-offset-6 {
-  margin-left: 25%;
+	margin-left: 25%;
 }
 .vue-col-pull-6 {
-  right: 25%;
+	right: 25%;
 }
 .vue-col-push-6 {
-  left: 25%;
+	left: 25%;
 }
 .vue-col-7 {
-  width: 29.16667%;
+	width: 29.16667%;
 }
 .vue-col-offset-7 {
-  margin-left: 29.16667%;
+	margin-left: 29.16667%;
 }
 .vue-col-pull-7 {
-  right: 29.16667%;
+	right: 29.16667%;
 }
 .vue-col-push-7 {
-  left: 29.16667%;
+	left: 29.16667%;
 }
 .vue-col-8 {
-  width: 33.33333%;
+	width: 33.33333%;
 }
 .vue-col-offset-8 {
-  margin-left: 33.33333%;
+	margin-left: 33.33333%;
 }
 .vue-col-pull-8 {
-  right: 33.33333%;
+	right: 33.33333%;
 }
 .vue-col-push-8 {
-  left: 33.33333%;
+	left: 33.33333%;
 }
 .vue-col-9 {
-  width: 37.5%;
+	width: 37.5%;
 }
 .vue-col-offset-9 {
-  margin-left: 37.5%;
+	margin-left: 37.5%;
 }
 .vue-col-pull-9 {
-  right: 37.5%;
+	right: 37.5%;
 }
 .vue-col-push-9 {
-  left: 37.5%;
+	left: 37.5%;
 }
 .vue-col-10 {
-  width: 41.66667%;
+	width: 41.66667%;
 }
 .vue-col-offset-10 {
-  margin-left: 41.66667%;
+	margin-left: 41.66667%;
 }
 .vue-col-pull-10 {
-  right: 41.66667%;
+	right: 41.66667%;
 }
 .vue-col-push-10 {
-  left: 41.66667%;
+	left: 41.66667%;
 }
 .vue-col-11 {
-  width: 45.83333%;
+	width: 45.83333%;
 }
 .vue-col-offset-11 {
-  margin-left: 45.83333%;
+	margin-left: 45.83333%;
 }
 .vue-col-pull-11 {
-  right: 45.83333%;
+	right: 45.83333%;
 }
 .vue-col-push-11 {
-  left: 45.83333%;
+	left: 45.83333%;
 }
 .vue-col-12 {
-  width: 50%;
+	width: 50%;
 }
 .vue-col-offset-12 {
-  margin-left: 50%;
+	margin-left: 50%;
 }
 .vue-col-pull-12 {
-  right: 50%;
+	right: 50%;
 }
 .vue-col-push-12 {
-  left: 50%;
+	left: 50%;
 }
 .vue-col-13 {
-  width: 54.16667%;
+	width: 54.16667%;
 }
 .vue-col-offset-13 {
-  margin-left: 54.16667%;
+	margin-left: 54.16667%;
 }
 .vue-col-pull-13 {
-  right: 54.16667%;
+	right: 54.16667%;
 }
 .vue-col-push-13 {
-  left: 54.16667%;
+	left: 54.16667%;
 }
 .vue-col-14 {
-  width: 58.33333%;
+	width: 58.33333%;
 }
 .vue-col-offset-14 {
-  margin-left: 58.33333%;
+	margin-left: 58.33333%;
 }
 .vue-col-pull-14 {
-  right: 58.33333%;
+	right: 58.33333%;
 }
 .vue-col-push-14 {
-  left: 58.33333%;
+	left: 58.33333%;
 }
 .vue-col-15 {
-  width: 62.5%;
+	width: 62.5%;
 }
 .vue-col-offset-15 {
-  margin-left: 62.5%;
+	margin-left: 62.5%;
 }
 .vue-col-pull-15 {
-  right: 62.5%;
+	right: 62.5%;
 }
 .vue-col-push-15 {
-  left: 62.5%;
+	left: 62.5%;
 }
 .vue-col-16 {
-  width: 66.66667%;
+	width: 66.66667%;
 }
 .vue-col-offset-16 {
-  margin-left: 66.66667%;
+	margin-left: 66.66667%;
 }
 .vue-col-pull-16 {
-  right: 66.66667%;
+	right: 66.66667%;
 }
 .vue-col-push-16 {
-  left: 66.66667%;
+	left: 66.66667%;
 }
 .vue-col-17 {
-  width: 70.83333%;
+	width: 70.83333%;
 }
 .vue-col-offset-17 {
-  margin-left: 70.83333%;
+	margin-left: 70.83333%;
 }
 .vue-col-pull-17 {
-  right: 70.83333%;
+	right: 70.83333%;
 }
 .vue-col-push-17 {
-  left: 70.83333%;
+	left: 70.83333%;
 }
 .vue-col-18 {
-  width: 75%;
+	width: 75%;
 }
 .vue-col-offset-18 {
-  margin-left: 75%;
+	margin-left: 75%;
 }
 .vue-col-pull-18 {
-  right: 75%;
+	right: 75%;
 }
 .vue-col-push-18 {
-  left: 75%;
+	left: 75%;
 }
 .vue-col-19 {
-  width: 79.16667%;
+	width: 79.16667%;
 }
 .vue-col-offset-19 {
-  margin-left: 79.16667%;
+	margin-left: 79.16667%;
 }
 .vue-col-pull-19 {
-  right: 79.16667%;
+	right: 79.16667%;
 }
 .vue-col-push-19 {
-  left: 79.16667%;
+	left: 79.16667%;
 }
 .vue-col-20 {
-  width: 83.33333%;
+	width: 83.33333%;
 }
 .vue-col-offset-20 {
-  margin-left: 83.33333%;
+	margin-left: 83.33333%;
 }
 .vue-col-pull-20 {
-  right: 83.33333%;
+	right: 83.33333%;
 }
 .vue-col-push-20 {
-  left: 83.33333%;
+	left: 83.33333%;
 }
 .vue-col-21 {
-  width: 87.5%;
+	width: 87.5%;
 }
 .vue-col-offset-21 {
-  margin-left: 87.5%;
+	margin-left: 87.5%;
 }
 .vue-col-pull-21 {
-  right: 87.5%;
+	right: 87.5%;
 }
 .vue-col-push-21 {
-  left: 87.5%;
+	left: 87.5%;
 }
 .vue-col-22 {
-  width: 91.66667%;
+	width: 91.66667%;
 }
 .vue-col-offset-22 {
-  margin-left: 91.66667%;
+	margin-left: 91.66667%;
 }
 .vue-col-pull-22 {
-  right: 91.66667%;
+	right: 91.66667%;
 }
 .vue-col-push-22 {
-  left: 91.66667%;
+	left: 91.66667%;
 }
 .vue-col-23 {
-  width: 95.83333%;
+	width: 95.83333%;
 }
 .vue-col-offset-23 {
-  margin-left: 95.83333%;
+	margin-left: 95.83333%;
 }
 .vue-col-pull-23 {
-  right: 95.83333%;
+	right: 95.83333%;
 }
 .vue-col-push-23 {
-  left: 95.83333%;
+	left: 95.83333%;
 }
 .vue-col-24 {
-  width: 100%;
+	width: 100%;
 }
 .vue-col-offset-24 {
-  margin-left: 100%;
+	margin-left: 100%;
 }
 .vue-col-pull-24 {
-  right: 100%;
+	right: 100%;
 }
 .vue-col-push-24 {
-  left: 100%;
+	left: 100%;
 }
 @media (max-width: 768px) {
-  .vue-col-xs-1 {
-    width: 4.16667%;
-  }
-  .vue-col-xs-offset-1 {
-    margin-left: 4.16667%;
-  }
-  .vue-col-xs-pull-1 {
-    position: relative;
-    right: 4.16667%;
-  }
-  .vue-col-xs-push-1 {
-    position: relative;
-    left: 4.16667%;
-  }
-  .vue-col-xs-2 {
-    width: 8.33333%;
-  }
-  .vue-col-xs-offset-2 {
-    margin-left: 8.33333%;
-  }
-  .vue-col-xs-pull-2 {
-    position: relative;
-    right: 8.33333%;
-  }
-  .vue-col-xs-push-2 {
-    position: relative;
-    left: 8.33333%;
-  }
-  .vue-col-xs-3 {
-    width: 12.5%;
-  }
-  .vue-col-xs-offset-3 {
-    margin-left: 12.5%;
-  }
-  .vue-col-xs-pull-3 {
-    position: relative;
-    right: 12.5%;
-  }
-  .vue-col-xs-push-3 {
-    position: relative;
-    left: 12.5%;
-  }
-  .vue-col-xs-4 {
-    width: 16.66667%;
-  }
-  .vue-col-xs-offset-4 {
-    margin-left: 16.66667%;
-  }
-  .vue-col-xs-pull-4 {
-    position: relative;
-    right: 16.66667%;
-  }
-  .vue-col-xs-push-4 {
-    position: relative;
-    left: 16.66667%;
-  }
-  .vue-col-xs-5 {
-    width: 20.83333%;
-  }
-  .vue-col-xs-offset-5 {
-    margin-left: 20.83333%;
-  }
-  .vue-col-xs-pull-5 {
-    position: relative;
-    right: 20.83333%;
-  }
-  .vue-col-xs-push-5 {
-    position: relative;
-    left: 20.83333%;
-  }
-  .vue-col-xs-6 {
-    width: 25%;
-  }
-  .vue-col-xs-offset-6 {
-    margin-left: 25%;
-  }
-  .vue-col-xs-pull-6 {
-    position: relative;
-    right: 25%;
-  }
-  .vue-col-xs-push-6 {
-    position: relative;
-    left: 25%;
-  }
-  .vue-col-xs-7 {
-    width: 29.16667%;
-  }
-  .vue-col-xs-offset-7 {
-    margin-left: 29.16667%;
-  }
-  .vue-col-xs-pull-7 {
-    position: relative;
-    right: 29.16667%;
-  }
-  .vue-col-xs-push-7 {
-    position: relative;
-    left: 29.16667%;
-  }
-  .vue-col-xs-8 {
-    width: 33.33333%;
-  }
-  .vue-col-xs-offset-8 {
-    margin-left: 33.33333%;
-  }
-  .vue-col-xs-pull-8 {
-    position: relative;
-    right: 33.33333%;
-  }
-  .vue-col-xs-push-8 {
-    position: relative;
-    left: 33.33333%;
-  }
-  .vue-col-xs-9 {
-    width: 37.5%;
-  }
-  .vue-col-xs-offset-9 {
-    margin-left: 37.5%;
-  }
-  .vue-col-xs-pull-9 {
-    position: relative;
-    right: 37.5%;
-  }
-  .vue-col-xs-push-9 {
-    position: relative;
-    left: 37.5%;
-  }
-  .vue-col-xs-10 {
-    width: 41.66667%;
-  }
-  .vue-col-xs-offset-10 {
-    margin-left: 41.66667%;
-  }
-  .vue-col-xs-pull-10 {
-    position: relative;
-    right: 41.66667%;
-  }
-  .vue-col-xs-push-10 {
-    position: relative;
-    left: 41.66667%;
-  }
-  .vue-col-xs-11 {
-    width: 45.83333%;
-  }
-  .vue-col-xs-offset-11 {
-    margin-left: 45.83333%;
-  }
-  .vue-col-xs-pull-11 {
-    position: relative;
-    right: 45.83333%;
-  }
-  .vue-col-xs-push-11 {
-    position: relative;
-    left: 45.83333%;
-  }
-  .vue-col-xs-12 {
-    width: 50%;
-  }
-  .vue-col-xs-offset-12 {
-    margin-left: 50%;
-  }
-  .vue-col-xs-pull-12 {
-    position: relative;
-    right: 50%;
-  }
-  .vue-col-xs-push-12 {
-    position: relative;
-    left: 50%;
-  }
-  .vue-col-xs-13 {
-    width: 54.16667%;
-  }
-  .vue-col-xs-offset-13 {
-    margin-left: 54.16667%;
-  }
-  .vue-col-xs-pull-13 {
-    position: relative;
-    right: 54.16667%;
-  }
-  .vue-col-xs-push-13 {
-    position: relative;
-    left: 54.16667%;
-  }
-  .vue-col-xs-14 {
-    width: 58.33333%;
-  }
-  .vue-col-xs-offset-14 {
-    margin-left: 58.33333%;
-  }
-  .vue-col-xs-pull-14 {
-    position: relative;
-    right: 58.33333%;
-  }
-  .vue-col-xs-push-14 {
-    position: relative;
-    left: 58.33333%;
-  }
-  .vue-col-xs-15 {
-    width: 62.5%;
-  }
-  .vue-col-xs-offset-15 {
-    margin-left: 62.5%;
-  }
-  .vue-col-xs-pull-15 {
-    position: relative;
-    right: 62.5%;
-  }
-  .vue-col-xs-push-15 {
-    position: relative;
-    left: 62.5%;
-  }
-  .vue-col-xs-16 {
-    width: 66.66667%;
-  }
-  .vue-col-xs-offset-16 {
-    margin-left: 66.66667%;
-  }
-  .vue-col-xs-pull-16 {
-    position: relative;
-    right: 66.66667%;
-  }
-  .vue-col-xs-push-16 {
-    position: relative;
-    left: 66.66667%;
-  }
-  .vue-col-xs-17 {
-    width: 70.83333%;
-  }
-  .vue-col-xs-offset-17 {
-    margin-left: 70.83333%;
-  }
-  .vue-col-xs-pull-17 {
-    position: relative;
-    right: 70.83333%;
-  }
-  .vue-col-xs-push-17 {
-    position: relative;
-    left: 70.83333%;
-  }
-  .vue-col-xs-18 {
-    width: 75%;
-  }
-  .vue-col-xs-offset-18 {
-    margin-left: 75%;
-  }
-  .vue-col-xs-pull-18 {
-    position: relative;
-    right: 75%;
-  }
-  .vue-col-xs-push-18 {
-    position: relative;
-    left: 75%;
-  }
-  .vue-col-xs-19 {
-    width: 79.16667%;
-  }
-  .vue-col-xs-offset-19 {
-    margin-left: 79.16667%;
-  }
-  .vue-col-xs-pull-19 {
-    position: relative;
-    right: 79.16667%;
-  }
-  .vue-col-xs-push-19 {
-    position: relative;
-    left: 79.16667%;
-  }
-  .vue-col-xs-20 {
-    width: 83.33333%;
-  }
-  .vue-col-xs-offset-20 {
-    margin-left: 83.33333%;
-  }
-  .vue-col-xs-pull-20 {
-    position: relative;
-    right: 83.33333%;
-  }
-  .vue-col-xs-push-20 {
-    position: relative;
-    left: 83.33333%;
-  }
-  .vue-col-xs-21 {
-    width: 87.5%;
-  }
-  .vue-col-xs-offset-21 {
-    margin-left: 87.5%;
-  }
-  .vue-col-xs-pull-21 {
-    position: relative;
-    right: 87.5%;
-  }
-  .vue-col-xs-push-21 {
-    position: relative;
-    left: 87.5%;
-  }
-  .vue-col-xs-22 {
-    width: 91.66667%;
-  }
-  .vue-col-xs-offset-22 {
-    margin-left: 91.66667%;
-  }
-  .vue-col-xs-pull-22 {
-    position: relative;
-    right: 91.66667%;
-  }
-  .vue-col-xs-push-22 {
-    position: relative;
-    left: 91.66667%;
-  }
-  .vue-col-xs-23 {
-    width: 95.83333%;
-  }
-  .vue-col-xs-offset-23 {
-    margin-left: 95.83333%;
-  }
-  .vue-col-xs-pull-23 {
-    position: relative;
-    right: 95.83333%;
-  }
-  .vue-col-xs-push-23 {
-    position: relative;
-    left: 95.83333%;
-  }
-  .vue-col-xs-24 {
-    width: 100%;
-  }
-  .vue-col-xs-offset-24 {
-    margin-left: 100%;
-  }
-  .vue-col-xs-pull-24 {
-    position: relative;
-    right: 100%;
-  }
-  .vue-col-xs-push-24 {
-    position: relative;
-    left: 100%;
-  }
+	.vue-col-xs-1 {
+		width:4.16667%;
+	}
+	.vue-col-xs-offset-1 {
+		margin-left: 4.16667%;
+	}
+	.vue-col-xs-pull-1 {
+		position: relative;
+		right: 4.16667%;
+	}
+	.vue-col-xs-push-1 {
+		position: relative;
+		left: 4.16667%;
+	}
+	.vue-col-xs-2 {
+		width: 8.33333%;
+	}
+	.vue-col-xs-offset-2 {
+		margin-left: 8.33333%;
+	}
+	.vue-col-xs-pull-2 {
+		position: relative;
+		right: 8.33333%;
+	}
+	.vue-col-xs-push-2 {
+		position: relative;
+		left: 8.33333%;
+	}
+	.vue-col-xs-3 {
+		width: 12.5%;
+	}
+	.vue-col-xs-offset-3 {
+		margin-left: 12.5%;
+	}
+	.vue-col-xs-pull-3 {
+		position: relative;
+		right: 12.5%;
+	}
+	.vue-col-xs-push-3 {
+		position: relative;
+		left: 12.5%;
+	}
+	.vue-col-xs-4 {
+		width: 16.66667%;
+	}
+	.vue-col-xs-offset-4 {
+		margin-left: 16.66667%;
+	}
+	.vue-col-xs-pull-4 {
+		position: relative;
+		right: 16.66667%;
+	}
+	.vue-col-xs-push-4 {
+		position: relative;
+		left: 16.66667%;
+	}
+	.vue-col-xs-5 {
+		width: 20.83333%;
+	}
+	.vue-col-xs-offset-5 {
+		margin-left: 20.83333%;
+	}
+	.vue-col-xs-pull-5 {
+		position: relative;
+		right: 20.83333%;
+	}
+	.vue-col-xs-push-5 {
+		position: relative;
+		left: 20.83333%;
+	}
+	.vue-col-xs-6 {
+		width: 25%;
+	}
+	.vue-col-xs-offset-6 {
+		margin-left: 25%;
+	}
+	.vue-col-xs-pull-6 {
+		position: relative;
+		right: 25%;
+	}
+	.vue-col-xs-push-6 {
+		position: relative;
+		left: 25%;
+	}
+	.vue-col-xs-7 {
+		width: 29.16667%;
+	}
+	.vue-col-xs-offset-7 {
+		margin-left: 29.16667%;
+	}
+	.vue-col-xs-pull-7 {
+		position: relative;
+		right: 29.16667%;
+	}
+	.vue-col-xs-push-7 {
+		position: relative;
+		left: 29.16667%;
+	}
+	.vue-col-xs-8 {
+		width: 33.33333%;
+	}
+	.vue-col-xs-offset-8 {
+		margin-left: 33.33333%;
+	}
+	.vue-col-xs-pull-8 {
+		position: relative;
+		right: 33.33333%;
+	}
+	.vue-col-xs-push-8 {
+		position: relative;
+		left: 33.33333%;
+	}
+	.vue-col-xs-9 {
+		width: 37.5%;
+	}
+	.vue-col-xs-offset-9 {
+		margin-left: 37.5%;
+	}
+	.vue-col-xs-pull-9 {
+		position: relative;
+		right: 37.5%;
+	}
+	.vue-col-xs-push-9 {
+		position: relative;
+		left: 37.5%;
+	}
+	.vue-col-xs-10 {
+		width: 41.66667%;
+	}
+	.vue-col-xs-offset-10 {
+		margin-left: 41.66667%;
+	}
+	.vue-col-xs-pull-10 {
+		position: relative;
+		right: 41.66667%;
+	}
+	.vue-col-xs-push-10 {
+		position: relative;
+		left: 41.66667%;
+	}
+	.vue-col-xs-11 {
+		width: 45.83333%;
+	}
+	.vue-col-xs-offset-11 {
+		margin-left: 45.83333%;
+	}
+	.vue-col-xs-pull-11 {
+		position: relative;
+		right: 45.83333%;
+	}
+	.vue-col-xs-push-11 {
+		position: relative;
+		left: 45.83333%;
+	}
+	.vue-col-xs-12 {
+		width: 50%;
+	}
+	.vue-col-xs-offset-12 {
+		margin-left: 50%;
+	}
+	.vue-col-xs-pull-12 {
+		position: relative;
+		right: 50%;
+	}
+	.vue-col-xs-push-12 {
+		position: relative;
+		left: 50%;
+	}
+	.vue-col-xs-13 {
+		width: 54.16667%;
+	}
+	.vue-col-xs-offset-13 {
+		margin-left: 54.16667%;
+	}
+	.vue-col-xs-pull-13 {
+		position: relative;
+		right: 54.16667%;
+	}
+	.vue-col-xs-push-13 {
+		position: relative;
+		left: 54.16667%;
+	}
+	.vue-col-xs-14 {
+		width: 58.33333%;
+	}
+	.vue-col-xs-offset-14 {
+		margin-left: 58.33333%;
+	}
+	.vue-col-xs-pull-14 {
+		position: relative;
+		right: 58.33333%;
+	}
+	.vue-col-xs-push-14 {
+		position: relative;
+		left: 58.33333%;
+	}
+	.vue-col-xs-15 {
+		width: 62.5%;
+	}
+	.vue-col-xs-offset-15 {
+		margin-left: 62.5%;
+	}
+	.vue-col-xs-pull-15 {
+		position: relative;
+		right: 62.5%;
+	}
+	.vue-col-xs-push-15 {
+		position: relative;
+		left: 62.5%;
+	}
+	.vue-col-xs-16 {
+		width: 66.66667%;
+	}
+	.vue-col-xs-offset-16 {
+		margin-left: 66.66667%;
+	}
+	.vue-col-xs-pull-16 {
+		position: relative;
+		right: 66.66667%;
+	}
+	.vue-col-xs-push-16 {
+		position: relative;
+		left: 66.66667%;
+	}
+	.vue-col-xs-17 {
+		width: 70.83333%;
+	}
+	.vue-col-xs-offset-17 {
+		margin-left: 70.83333%;
+	}
+	.vue-col-xs-pull-17 {
+		position: relative;
+		right: 70.83333%;
+	}
+	.vue-col-xs-push-17 {
+		position: relative;
+		left: 70.83333%;
+	}
+	.vue-col-xs-18 {
+		width: 75%;
+	}
+	.vue-col-xs-offset-18 {
+		margin-left: 75%;
+	}
+	.vue-col-xs-pull-18 {
+		position: relative;
+		right: 75%;
+	}
+	.vue-col-xs-push-18 {
+		position: relative;
+		left: 75%;
+	}
+	.vue-col-xs-19 {
+		width: 79.16667%;
+	}
+	.vue-col-xs-offset-19 {
+		margin-left: 79.16667%;
+	}
+	.vue-col-xs-pull-19 {
+		position: relative;
+		right: 79.16667%;
+	}
+	.vue-col-xs-push-19 {
+		position: relative;
+		left: 79.16667%;
+	}
+	.vue-col-xs-20 {
+		width: 83.33333%;
+	}
+	.vue-col-xs-offset-20 {
+		margin-left: 83.33333%;
+	}
+	.vue-col-xs-pull-20 {
+		position: relative;
+		right: 83.33333%;
+	}
+	.vue-col-xs-push-20 {
+		position: relative;
+		left: 83.33333%;
+	}
+	.vue-col-xs-21 {
+		width: 87.5%;
+	}
+	.vue-col-xs-offset-21 {
+		margin-left: 87.5%;
+	}
+	.vue-col-xs-pull-21 {
+		position: relative;
+		right: 87.5%;
+	}
+	.vue-col-xs-push-21 {
+		position: relative;
+		left: 87.5%;
+	}
+	.vue-col-xs-22 {
+		width: 91.66667%;
+	}
+	.vue-col-xs-offset-22 {
+		margin-left: 91.66667%;
+	}
+	.vue-col-xs-pull-22 {
+		position: relative;
+		right: 91.66667%;
+	}
+	.vue-col-xs-push-22 {
+		position: relative;
+		left: 91.66667%;
+	}
+	.vue-col-xs-23 {
+		width: 95.83333%;
+	}
+	.vue-col-xs-offset-23 {
+		margin-left: 95.83333%;
+	}
+	.vue-col-xs-pull-23 {
+		position: relative;
+		right: 95.83333%;
+	}
+	.vue-col-xs-push-23 {
+		position: relative;
+		left: 95.83333%;
+	}
+	.vue-col-xs-24 {
+		width: 100%;
+	}
+	.vue-col-xs-offset-24 {
+		margin-left: 100%;
+	}
+	.vue-col-xs-pull-24 {
+		position: relative;
+		right: 100%;
+	}
+	.vue-col-xs-push-24 {
+		position: relative;
+		left: 100%;
+	}
 }
 @media (min-width: 768px) {
-  .vue-col-sm-1 {
-    width: 4.16667%;
-  }
-  .vue-col-sm-offset-1 {
-    margin-left: 4.16667%;
-  }
-  .vue-col-sm-pull-1 {
-    position: relative;
-    right: 4.16667%;
-  }
-  .vue-col-sm-push-1 {
-    position: relative;
-    left: 4.16667%;
-  }
-  .vue-col-sm-2 {
-    width: 8.33333%;
-  }
-  .vue-col-sm-offset-2 {
-    margin-left: 8.33333%;
-  }
-  .vue-col-sm-pull-2 {
-    position: relative;
-    right: 8.33333%;
-  }
-  .vue-col-sm-push-2 {
-    position: relative;
-    left: 8.33333%;
-  }
-  .vue-col-sm-3 {
-    width: 12.5%;
-  }
-  .vue-col-sm-offset-3 {
-    margin-left: 12.5%;
-  }
-  .vue-col-sm-pull-3 {
-    position: relative;
-    right: 12.5%;
-  }
-  .vue-col-sm-push-3 {
-    position: relative;
-    left: 12.5%;
-  }
-  .vue-col-sm-4 {
-    width: 16.66667%;
-  }
-  .vue-col-sm-offset-4 {
-    margin-left: 16.66667%;
-  }
-  .vue-col-sm-pull-4 {
-    position: relative;
-    right: 16.66667%;
-  }
-  .vue-col-sm-push-4 {
-    position: relative;
-    left: 16.66667%;
-  }
-  .vue-col-sm-5 {
-    width: 20.83333%;
-  }
-  .vue-col-sm-offset-5 {
-    margin-left: 20.83333%;
-  }
-  .vue-col-sm-pull-5 {
-    position: relative;
-    right: 20.83333%;
-  }
-  .vue-col-sm-push-5 {
-    position: relative;
-    left: 20.83333%;
-  }
-  .vue-col-sm-6 {
-    width: 25%;
-  }
-  .vue-col-sm-offset-6 {
-    margin-left: 25%;
-  }
-  .vue-col-sm-pull-6 {
-    position: relative;
-    right: 25%;
-  }
-  .vue-col-sm-push-6 {
-    position: relative;
-    left: 25%;
-  }
-  .vue-col-sm-7 {
-    width: 29.16667%;
-  }
-  .vue-col-sm-offset-7 {
-    margin-left: 29.16667%;
-  }
-  .vue-col-sm-pull-7 {
-    position: relative;
-    right: 29.16667%;
-  }
-  .vue-col-sm-push-7 {
-    position: relative;
-    left: 29.16667%;
-  }
-  .vue-col-sm-8 {
-    width: 33.33333%;
-  }
-  .vue-col-sm-offset-8 {
-    margin-left: 33.33333%;
-  }
-  .vue-col-sm-pull-8 {
-    position: relative;
-    right: 33.33333%;
-  }
-  .vue-col-sm-push-8 {
-    position: relative;
-    left: 33.33333%;
-  }
-  .vue-col-sm-9 {
-    width: 37.5%;
-  }
-  .vue-col-sm-offset-9 {
-    margin-left: 37.5%;
-  }
-  .vue-col-sm-pull-9 {
-    position: relative;
-    right: 37.5%;
-  }
-  .vue-col-sm-push-9 {
-    position: relative;
-    left: 37.5%;
-  }
-  .vue-col-sm-10 {
-    width: 41.66667%;
-  }
-  .vue-col-sm-offset-10 {
-    margin-left: 41.66667%;
-  }
-  .vue-col-sm-pull-10 {
-    position: relative;
-    right: 41.66667%;
-  }
-  .vue-col-sm-push-10 {
-    position: relative;
-    left: 41.66667%;
-  }
-  .vue-col-sm-11 {
-    width: 45.83333%;
-  }
-  .vue-col-sm-offset-11 {
-    margin-left: 45.83333%;
-  }
-  .vue-col-sm-pull-11 {
-    position: relative;
-    right: 45.83333%;
-  }
-  .vue-col-sm-push-11 {
-    position: relative;
-    left: 45.83333%;
-  }
-  .vue-col-sm-12 {
-    width: 50%;
-  }
-  .vue-col-sm-offset-12 {
-    margin-left: 50%;
-  }
-  .vue-col-sm-pull-12 {
-    position: relative;
-    right: 50%;
-  }
-  .vue-col-sm-push-12 {
-    position: relative;
-    left: 50%;
-  }
-  .vue-col-sm-13 {
-    width: 54.16667%;
-  }
-  .vue-col-sm-offset-13 {
-    margin-left: 54.16667%;
-  }
-  .vue-col-sm-pull-13 {
-    position: relative;
-    right: 54.16667%;
-  }
-  .vue-col-sm-push-13 {
-    position: relative;
-    left: 54.16667%;
-  }
-  .vue-col-sm-14 {
-    width: 58.33333%;
-  }
-  .vue-col-sm-offset-14 {
-    margin-left: 58.33333%;
-  }
-  .vue-col-sm-pull-14 {
-    position: relative;
-    right: 58.33333%;
-  }
-  .vue-col-sm-push-14 {
-    position: relative;
-    left: 58.33333%;
-  }
-  .vue-col-sm-15 {
-    width: 62.5%;
-  }
-  .vue-col-sm-offset-15 {
-    margin-left: 62.5%;
-  }
-  .vue-col-sm-pull-15 {
-    position: relative;
-    right: 62.5%;
-  }
-  .vue-col-sm-push-15 {
-    position: relative;
-    left: 62.5%;
-  }
-  .vue-col-sm-16 {
-    width: 66.66667%;
-  }
-  .vue-col-sm-offset-16 {
-    margin-left: 66.66667%;
-  }
-  .vue-col-sm-pull-16 {
-    position: relative;
-    right: 66.66667%;
-  }
-  .vue-col-sm-push-16 {
-    position: relative;
-    left: 66.66667%;
-  }
-  .vue-col-sm-17 {
-    width: 70.83333%;
-  }
-  .vue-col-sm-offset-17 {
-    margin-left: 70.83333%;
-  }
-  .vue-col-sm-pull-17 {
-    position: relative;
-    right: 70.83333%;
-  }
-  .vue-col-sm-push-17 {
-    position: relative;
-    left: 70.83333%;
-  }
-  .vue-col-sm-18 {
-    width: 75%;
-  }
-  .vue-col-sm-offset-18 {
-    margin-left: 75%;
-  }
-  .vue-col-sm-pull-18 {
-    position: relative;
-    right: 75%;
-  }
-  .vue-col-sm-push-18 {
-    position: relative;
-    left: 75%;
-  }
-  .vue-col-sm-19 {
-    width: 79.16667%;
-  }
-  .vue-col-sm-offset-19 {
-    margin-left: 79.16667%;
-  }
-  .vue-col-sm-pull-19 {
-    position: relative;
-    right: 79.16667%;
-  }
-  .vue-col-sm-push-19 {
-    position: relative;
-    left: 79.16667%;
-  }
-  .vue-col-sm-20 {
-    width: 83.33333%;
-  }
-  .vue-col-sm-offset-20 {
-    margin-left: 83.33333%;
-  }
-  .vue-col-sm-pull-20 {
-    position: relative;
-    right: 83.33333%;
-  }
-  .vue-col-sm-push-20 {
-    position: relative;
-    left: 83.33333%;
-  }
-  .vue-col-sm-21 {
-    width: 87.5%;
-  }
-  .vue-col-sm-offset-21 {
-    margin-left: 87.5%;
-  }
-  .vue-col-sm-pull-21 {
-    position: relative;
-    right: 87.5%;
-  }
-  .vue-col-sm-push-21 {
-    position: relative;
-    left: 87.5%;
-  }
-  .vue-col-sm-22 {
-    width: 91.66667%;
-  }
-  .vue-col-sm-offset-22 {
-    margin-left: 91.66667%;
-  }
-  .vue-col-sm-pull-22 {
-    position: relative;
-    right: 91.66667%;
-  }
-  .vue-col-sm-push-22 {
-    position: relative;
-    left: 91.66667%;
-  }
-  .vue-col-sm-23 {
-    width: 95.83333%;
-  }
-  .vue-col-sm-offset-23 {
-    margin-left: 95.83333%;
-  }
-  .vue-col-sm-pull-23 {
-    position: relative;
-    right: 95.83333%;
-  }
-  .vue-col-sm-push-23 {
-    position: relative;
-    left: 95.83333%;
-  }
-  .vue-col-sm-24 {
-    width: 100%;
-  }
-  .vue-col-sm-offset-24 {
-    margin-left: 100%;
-  }
-  .vue-col-sm-pull-24 {
-    position: relative;
-    right: 100%;
-  }
-  .vue-col-sm-push-24 {
-    position: relative;
-    left: 100%;
-  }
+	.vue-col-sm-1 {
+		width:4.16667%;
+	}
+	.vue-col-sm-offset-1 {
+		margin-left: 4.16667%;
+	}
+	.vue-col-sm-pull-1 {
+		position: relative;
+		right: 4.16667%;
+	}
+	.vue-col-sm-push-1 {
+		position: relative;
+		left: 4.16667%;
+	}
+	.vue-col-sm-2 {
+		width: 8.33333%;
+	}
+	.vue-col-sm-offset-2 {
+		margin-left: 8.33333%;
+	}
+	.vue-col-sm-pull-2 {
+		position: relative;
+		right: 8.33333%;
+	}
+	.vue-col-sm-push-2 {
+		position: relative;
+		left: 8.33333%;
+	}
+	.vue-col-sm-3 {
+		width: 12.5%;
+	}
+	.vue-col-sm-offset-3 {
+		margin-left: 12.5%;
+	}
+	.vue-col-sm-pull-3 {
+		position: relative;
+		right: 12.5%;
+	}
+	.vue-col-sm-push-3 {
+		position: relative;
+		left: 12.5%;
+	}
+	.vue-col-sm-4 {
+		width: 16.66667%;
+	}
+	.vue-col-sm-offset-4 {
+		margin-left: 16.66667%;
+	}
+	.vue-col-sm-pull-4 {
+		position: relative;
+		right: 16.66667%;
+	}
+	.vue-col-sm-push-4 {
+		position: relative;
+		left: 16.66667%;
+	}
+	.vue-col-sm-5 {
+		width: 20.83333%;
+	}
+	.vue-col-sm-offset-5 {
+		margin-left: 20.83333%;
+	}
+	.vue-col-sm-pull-5 {
+		position: relative;
+		right: 20.83333%;
+	}
+	.vue-col-sm-push-5 {
+		position: relative;
+		left: 20.83333%;
+	}
+	.vue-col-sm-6 {
+		width: 25%;
+	}
+	.vue-col-sm-offset-6 {
+		margin-left: 25%;
+	}
+	.vue-col-sm-pull-6 {
+		position: relative;
+		right: 25%;
+	}
+	.vue-col-sm-push-6 {
+		position: relative;
+		left: 25%;
+	}
+	.vue-col-sm-7 {
+		width: 29.16667%;
+	}
+	.vue-col-sm-offset-7 {
+		margin-left: 29.16667%;
+	}
+	.vue-col-sm-pull-7 {
+		position: relative;
+		right: 29.16667%;
+	}
+	.vue-col-sm-push-7 {
+		position: relative;
+		left: 29.16667%;
+	}
+	.vue-col-sm-8 {
+		width: 33.33333%;
+	}
+	.vue-col-sm-offset-8 {
+		margin-left: 33.33333%;
+	}
+	.vue-col-sm-pull-8 {
+		position: relative;
+		right: 33.33333%;
+	}
+	.vue-col-sm-push-8 {
+		position: relative;
+		left: 33.33333%;
+	}
+	.vue-col-sm-9 {
+		width: 37.5%;
+	}
+	.vue-col-sm-offset-9 {
+		margin-left: 37.5%;
+	}
+	.vue-col-sm-pull-9 {
+		position: relative;
+		right: 37.5%;
+	}
+	.vue-col-sm-push-9 {
+		position: relative;
+		left: 37.5%;
+	}
+	.vue-col-sm-10 {
+		width: 41.66667%;
+	}
+	.vue-col-sm-offset-10 {
+		margin-left: 41.66667%;
+	}
+	.vue-col-sm-pull-10 {
+		position: relative;
+		right: 41.66667%;
+	}
+	.vue-col-sm-push-10 {
+		position: relative;
+		left: 41.66667%;
+	}
+	.vue-col-sm-11 {
+		width: 45.83333%;
+	}
+	.vue-col-sm-offset-11 {
+		margin-left: 45.83333%;
+	}
+	.vue-col-sm-pull-11 {
+		position: relative;
+		right: 45.83333%;
+	}
+	.vue-col-sm-push-11 {
+		position: relative;
+		left: 45.83333%;
+	}
+	.vue-col-sm-12 {
+		width: 50%;
+	}
+	.vue-col-sm-offset-12 {
+		margin-left: 50%;
+	}
+	.vue-col-sm-pull-12 {
+		position: relative;
+		right: 50%;
+	}
+	.vue-col-sm-push-12 {
+		position: relative;
+		left: 50%;
+	}
+	.vue-col-sm-13 {
+		width: 54.16667%;
+	}
+	.vue-col-sm-offset-13 {
+		margin-left: 54.16667%;
+	}
+	.vue-col-sm-pull-13 {
+		position: relative;
+		right: 54.16667%;
+	}
+	.vue-col-sm-push-13 {
+		position: relative;
+		left: 54.16667%;
+	}
+	.vue-col-sm-14 {
+		width: 58.33333%;
+	}
+	.vue-col-sm-offset-14 {
+		margin-left: 58.33333%;
+	}
+	.vue-col-sm-pull-14 {
+		position: relative;
+		right: 58.33333%;
+	}
+	.vue-col-sm-push-14 {
+		position: relative;
+		left: 58.33333%;
+	}
+	.vue-col-sm-15 {
+		width: 62.5%;
+	}
+	.vue-col-sm-offset-15 {
+		margin-left: 62.5%;
+	}
+	.vue-col-sm-pull-15 {
+		position: relative;
+		right: 62.5%;
+	}
+	.vue-col-sm-push-15 {
+		position: relative;
+		left: 62.5%;
+	}
+	.vue-col-sm-16 {
+		width: 66.66667%;
+	}
+	.vue-col-sm-offset-16 {
+		margin-left: 66.66667%;
+	}
+	.vue-col-sm-pull-16 {
+		position: relative;
+		right: 66.66667%;
+	}
+	.vue-col-sm-push-16 {
+		position: relative;
+		left: 66.66667%;
+	}
+	.vue-col-sm-17 {
+		width: 70.83333%;
+	}
+	.vue-col-sm-offset-17 {
+		margin-left: 70.83333%;
+	}
+	.vue-col-sm-pull-17 {
+		position: relative;
+		right: 70.83333%;
+	}
+	.vue-col-sm-push-17 {
+		position: relative;
+		left: 70.83333%;
+	}
+	.vue-col-sm-18 {
+		width: 75%;
+	}
+	.vue-col-sm-offset-18 {
+		margin-left: 75%;
+	}
+	.vue-col-sm-pull-18 {
+		position: relative;
+		right: 75%;
+	}
+	.vue-col-sm-push-18 {
+		position: relative;
+		left: 75%;
+	}
+	.vue-col-sm-19 {
+		width: 79.16667%;
+	}
+	.vue-col-sm-offset-19 {
+		margin-left: 79.16667%;
+	}
+	.vue-col-sm-pull-19 {
+		position: relative;
+		right: 79.16667%;
+	}
+	.vue-col-sm-push-19 {
+		position: relative;
+		left: 79.16667%;
+	}
+	.vue-col-sm-20 {
+		width: 83.33333%;
+	}
+	.vue-col-sm-offset-20 {
+		margin-left: 83.33333%;
+	}
+	.vue-col-sm-pull-20 {
+		position: relative;
+		right: 83.33333%;
+	}
+	.vue-col-sm-push-20 {
+		position: relative;
+		left: 83.33333%;
+	}
+	.vue-col-sm-21 {
+		width: 87.5%;
+	}
+	.vue-col-sm-offset-21 {
+		margin-left: 87.5%;
+	}
+	.vue-col-sm-pull-21 {
+		position: relative;
+		right: 87.5%;
+	}
+	.vue-col-sm-push-21 {
+		position: relative;
+		left: 87.5%;
+	}
+	.vue-col-sm-22 {
+		width: 91.66667%;
+	}
+	.vue-col-sm-offset-22 {
+		margin-left: 91.66667%;
+	}
+	.vue-col-sm-pull-22 {
+		position: relative;
+		right: 91.66667%;
+	}
+	.vue-col-sm-push-22 {
+		position: relative;
+		left: 91.66667%;
+	}
+	.vue-col-sm-23 {
+		width: 95.83333%;
+	}
+	.vue-col-sm-offset-23 {
+		margin-left: 95.83333%;
+	}
+	.vue-col-sm-pull-23 {
+		position: relative;
+		right: 95.83333%;
+	}
+	.vue-col-sm-push-23 {
+		position: relative;
+		left: 95.83333%;
+	}
+	.vue-col-sm-24 {
+		width: 100%;
+	}
+	.vue-col-sm-offset-24 {
+		margin-left: 100%;
+	}
+	.vue-col-sm-pull-24 {
+		position: relative;
+		right: 100%;
+	}
+	.vue-col-sm-push-24 {
+		position: relative;
+		left: 100%;
+	}
 }
 @media (min-width: 992px) {
-  .vue-col-md-1 {
-    width: 4.16667%;
-  }
-  .vue-col-md-offset-1 {
-    margin-left: 4.16667%;
-  }
-  .vue-col-md-pull-1 {
-    position: relative;
-    right: 4.16667%;
-  }
-  .vue-col-md-push-1 {
-    position: relative;
-    left: 4.16667%;
-  }
-  .vue-col-md-2 {
-    width: 8.33333%;
-  }
-  .vue-col-md-offset-2 {
-    margin-left: 8.33333%;
-  }
-  .vue-col-md-pull-2 {
-    position: relative;
-    right: 8.33333%;
-  }
-  .vue-col-md-push-2 {
-    position: relative;
-    left: 8.33333%;
-  }
-  .vue-col-md-3 {
-    width: 12.5%;
-  }
-  .vue-col-md-offset-3 {
-    margin-left: 12.5%;
-  }
-  .vue-col-md-pull-3 {
-    position: relative;
-    right: 12.5%;
-  }
-  .vue-col-md-push-3 {
-    position: relative;
-    left: 12.5%;
-  }
-  .vue-col-md-4 {
-    width: 16.66667%;
-  }
-  .vue-col-md-offset-4 {
-    margin-left: 16.66667%;
-  }
-  .vue-col-md-pull-4 {
-    position: relative;
-    right: 16.66667%;
-  }
-  .vue-col-md-push-4 {
-    position: relative;
-    left: 16.66667%;
-  }
-  .vue-col-md-5 {
-    width: 20.83333%;
-  }
-  .vue-col-md-offset-5 {
-    margin-left: 20.83333%;
-  }
-  .vue-col-md-pull-5 {
-    position: relative;
-    right: 20.83333%;
-  }
-  .vue-col-md-push-5 {
-    position: relative;
-    left: 20.83333%;
-  }
-  .vue-col-md-6 {
-    width: 25%;
-  }
-  .vue-col-md-offset-6 {
-    margin-left: 25%;
-  }
-  .vue-col-md-pull-6 {
-    position: relative;
-    right: 25%;
-  }
-  .vue-col-md-push-6 {
-    position: relative;
-    left: 25%;
-  }
-  .vue-col-md-7 {
-    width: 29.16667%;
-  }
-  .vue-col-md-offset-7 {
-    margin-left: 29.16667%;
-  }
-  .vue-col-md-pull-7 {
-    position: relative;
-    right: 29.16667%;
-  }
-  .vue-col-md-push-7 {
-    position: relative;
-    left: 29.16667%;
-  }
-  .vue-col-md-8 {
-    width: 33.33333%;
-  }
-  .vue-col-md-offset-8 {
-    margin-left: 33.33333%;
-  }
-  .vue-col-md-pull-8 {
-    position: relative;
-    right: 33.33333%;
-  }
-  .vue-col-md-push-8 {
-    position: relative;
-    left: 33.33333%;
-  }
-  .vue-col-md-9 {
-    width: 37.5%;
-  }
-  .vue-col-md-offset-9 {
-    margin-left: 37.5%;
-  }
-  .vue-col-md-pull-9 {
-    position: relative;
-    right: 37.5%;
-  }
-  .vue-col-md-push-9 {
-    position: relative;
-    left: 37.5%;
-  }
-  .vue-col-md-10 {
-    width: 41.66667%;
-  }
-  .vue-col-md-offset-10 {
-    margin-left: 41.66667%;
-  }
-  .vue-col-md-pull-10 {
-    position: relative;
-    right: 41.66667%;
-  }
-  .vue-col-md-push-10 {
-    position: relative;
-    left: 41.66667%;
-  }
-  .vue-col-md-11 {
-    width: 45.83333%;
-  }
-  .vue-col-md-offset-11 {
-    margin-left: 45.83333%;
-  }
-  .vue-col-md-pull-11 {
-    position: relative;
-    right: 45.83333%;
-  }
-  .vue-col-md-push-11 {
-    position: relative;
-    left: 45.83333%;
-  }
-  .vue-col-md-12 {
-    width: 50%;
-  }
-  .vue-col-md-offset-12 {
-    margin-left: 50%;
-  }
-  .vue-col-md-pull-12 {
-    position: relative;
-    right: 50%;
-  }
-  .vue-col-md-push-12 {
-    position: relative;
-    left: 50%;
-  }
-  .vue-col-md-13 {
-    width: 54.16667%;
-  }
-  .vue-col-md-offset-13 {
-    margin-left: 54.16667%;
-  }
-  .vue-col-md-pull-13 {
-    position: relative;
-    right: 54.16667%;
-  }
-  .vue-col-md-push-13 {
-    position: relative;
-    left: 54.16667%;
-  }
-  .vue-col-md-14 {
-    width: 58.33333%;
-  }
-  .vue-col-md-offset-14 {
-    margin-left: 58.33333%;
-  }
-  .vue-col-md-pull-14 {
-    position: relative;
-    right: 58.33333%;
-  }
-  .vue-col-md-push-14 {
-    position: relative;
-    left: 58.33333%;
-  }
-  .vue-col-md-15 {
-    width: 62.5%;
-  }
-  .vue-col-md-offset-15 {
-    margin-left: 62.5%;
-  }
-  .vue-col-md-pull-15 {
-    position: relative;
-    right: 62.5%;
-  }
-  .vue-col-md-push-15 {
-    position: relative;
-    left: 62.5%;
-  }
-  .vue-col-md-16 {
-    width: 66.66667%;
-  }
-  .vue-col-md-offset-16 {
-    margin-left: 66.66667%;
-  }
-  .vue-col-md-pull-16 {
-    position: relative;
-    right: 66.66667%;
-  }
-  .vue-col-md-push-16 {
-    position: relative;
-    left: 66.66667%;
-  }
-  .vue-col-md-17 {
-    width: 70.83333%;
-  }
-  .vue-col-md-offset-17 {
-    margin-left: 70.83333%;
-  }
-  .vue-col-md-pull-17 {
-    position: relative;
-    right: 70.83333%;
-  }
-  .vue-col-md-push-17 {
-    position: relative;
-    left: 70.83333%;
-  }
-  .vue-col-md-18 {
-    width: 75%;
-  }
-  .vue-col-md-offset-18 {
-    margin-left: 75%;
-  }
-  .vue-col-md-pull-18 {
-    position: relative;
-    right: 75%;
-  }
-  .vue-col-md-push-18 {
-    position: relative;
-    left: 75%;
-  }
-  .vue-col-md-19 {
-    width: 79.16667%;
-  }
-  .vue-col-md-offset-19 {
-    margin-left: 79.16667%;
-  }
-  .vue-col-md-pull-19 {
-    position: relative;
-    right: 79.16667%;
-  }
-  .vue-col-md-push-19 {
-    position: relative;
-    left: 79.16667%;
-  }
-  .vue-col-md-20 {
-    width: 83.33333%;
-  }
-  .vue-col-md-offset-20 {
-    margin-left: 83.33333%;
-  }
-  .vue-col-md-pull-20 {
-    position: relative;
-    right: 83.33333%;
-  }
-  .vue-col-md-push-20 {
-    position: relative;
-    left: 83.33333%;
-  }
-  .vue-col-md-21 {
-    width: 87.5%;
-  }
-  .vue-col-md-offset-21 {
-    margin-left: 87.5%;
-  }
-  .vue-col-md-pull-21 {
-    position: relative;
-    right: 87.5%;
-  }
-  .vue-col-md-push-21 {
-    position: relative;
-    left: 87.5%;
-  }
-  .vue-col-md-22 {
-    width: 91.66667%;
-  }
-  .vue-col-md-offset-22 {
-    margin-left: 91.66667%;
-  }
-  .vue-col-md-pull-22 {
-    position: relative;
-    right: 91.66667%;
-  }
-  .vue-col-md-push-22 {
-    position: relative;
-    left: 91.66667%;
-  }
-  .vue-col-md-23 {
-    width: 95.83333%;
-  }
-  .vue-col-md-offset-23 {
-    margin-left: 95.83333%;
-  }
-  .vue-col-md-pull-23 {
-    position: relative;
-    right: 95.83333%;
-  }
-  .vue-col-md-push-23 {
-    position: relative;
-    left: 95.83333%;
-  }
-  .vue-col-md-24 {
-    width: 100%;
-  }
-  .vue-col-md-offset-24 {
-    margin-left: 100%;
-  }
-  .vue-col-md-pull-24 {
-    position: relative;
-    right: 100%;
-  }
-  .vue-col-md-push-24 {
-    position: relative;
-    left: 100%;
-  }
+	.vue-col-md-1 {
+		width:4.16667%;
+	}
+	.vue-col-md-offset-1 {
+		margin-left: 4.16667%;
+	}
+	.vue-col-md-pull-1 {
+		position: relative;
+		right: 4.16667%;
+	}
+	.vue-col-md-push-1 {
+		position: relative;
+		left: 4.16667%;
+	}
+	.vue-col-md-2 {
+		width: 8.33333%;
+	}
+	.vue-col-md-offset-2 {
+		margin-left: 8.33333%;
+	}
+	.vue-col-md-pull-2 {
+		position: relative;
+		right: 8.33333%;
+	}
+	.vue-col-md-push-2 {
+		position: relative;
+		left: 8.33333%;
+	}
+	.vue-col-md-3 {
+		width: 12.5%;
+	}
+	.vue-col-md-offset-3 {
+		margin-left: 12.5%;
+	}
+	.vue-col-md-pull-3 {
+		position: relative;
+		right: 12.5%;
+	}
+	.vue-col-md-push-3 {
+		position: relative;
+		left: 12.5%;
+	}
+	.vue-col-md-4 {
+		width: 16.66667%;
+	}
+	.vue-col-md-offset-4 {
+		margin-left: 16.66667%;
+	}
+	.vue-col-md-pull-4 {
+		position: relative;
+		right: 16.66667%;
+	}
+	.vue-col-md-push-4 {
+		position: relative;
+		left: 16.66667%;
+	}
+	.vue-col-md-5 {
+		width: 20.83333%;
+	}
+	.vue-col-md-offset-5 {
+		margin-left: 20.83333%;
+	}
+	.vue-col-md-pull-5 {
+		position: relative;
+		right: 20.83333%;
+	}
+	.vue-col-md-push-5 {
+		position: relative;
+		left: 20.83333%;
+	}
+	.vue-col-md-6 {
+		width: 25%;
+	}
+	.vue-col-md-offset-6 {
+		margin-left: 25%;
+	}
+	.vue-col-md-pull-6 {
+		position: relative;
+		right: 25%;
+	}
+	.vue-col-md-push-6 {
+		position: relative;
+		left: 25%;
+	}
+	.vue-col-md-7 {
+		width: 29.16667%;
+	}
+	.vue-col-md-offset-7 {
+		margin-left: 29.16667%;
+	}
+	.vue-col-md-pull-7 {
+		position: relative;
+		right: 29.16667%;
+	}
+	.vue-col-md-push-7 {
+		position: relative;
+		left: 29.16667%;
+	}
+	.vue-col-md-8 {
+		width: 33.33333%;
+	}
+	.vue-col-md-offset-8 {
+		margin-left: 33.33333%;
+	}
+	.vue-col-md-pull-8 {
+		position: relative;
+		right: 33.33333%;
+	}
+	.vue-col-md-push-8 {
+		position: relative;
+		left: 33.33333%;
+	}
+	.vue-col-md-9 {
+		width: 37.5%;
+	}
+	.vue-col-md-offset-9 {
+		margin-left: 37.5%;
+	}
+	.vue-col-md-pull-9 {
+		position: relative;
+		right: 37.5%;
+	}
+	.vue-col-md-push-9 {
+		position: relative;
+		left: 37.5%;
+	}
+	.vue-col-md-10 {
+		width: 41.66667%;
+	}
+	.vue-col-md-offset-10 {
+		margin-left: 41.66667%;
+	}
+	.vue-col-md-pull-10 {
+		position: relative;
+		right: 41.66667%;
+	}
+	.vue-col-md-push-10 {
+		position: relative;
+		left: 41.66667%;
+	}
+	.vue-col-md-11 {
+		width: 45.83333%;
+	}
+	.vue-col-md-offset-11 {
+		margin-left: 45.83333%;
+	}
+	.vue-col-md-pull-11 {
+		position: relative;
+		right: 45.83333%;
+	}
+	.vue-col-md-push-11 {
+		position: relative;
+		left: 45.83333%;
+	}
+	.vue-col-md-12 {
+		width: 50%;
+	}
+	.vue-col-md-offset-12 {
+		margin-left: 50%;
+	}
+	.vue-col-md-pull-12 {
+		position: relative;
+		right: 50%;
+	}
+	.vue-col-md-push-12 {
+		position: relative;
+		left: 50%;
+	}
+	.vue-col-md-13 {
+		width: 54.16667%;
+	}
+	.vue-col-md-offset-13 {
+		margin-left: 54.16667%;
+	}
+	.vue-col-md-pull-13 {
+		position: relative;
+		right: 54.16667%;
+	}
+	.vue-col-md-push-13 {
+		position: relative;
+		left: 54.16667%;
+	}
+	.vue-col-md-14 {
+		width: 58.33333%;
+	}
+	.vue-col-md-offset-14 {
+		margin-left: 58.33333%;
+	}
+	.vue-col-md-pull-14 {
+		position: relative;
+		right: 58.33333%;
+	}
+	.vue-col-md-push-14 {
+		position: relative;
+		left: 58.33333%;
+	}
+	.vue-col-md-15 {
+		width: 62.5%;
+	}
+	.vue-col-md-offset-15 {
+		margin-left: 62.5%;
+	}
+	.vue-col-md-pull-15 {
+		position: relative;
+		right: 62.5%;
+	}
+	.vue-col-md-push-15 {
+		position: relative;
+		left: 62.5%;
+	}
+	.vue-col-md-16 {
+		width: 66.66667%;
+	}
+	.vue-col-md-offset-16 {
+		margin-left: 66.66667%;
+	}
+	.vue-col-md-pull-16 {
+		position: relative;
+		right: 66.66667%;
+	}
+	.vue-col-md-push-16 {
+		position: relative;
+		left: 66.66667%;
+	}
+	.vue-col-md-17 {
+		width: 70.83333%;
+	}
+	.vue-col-md-offset-17 {
+		margin-left: 70.83333%;
+	}
+	.vue-col-md-pull-17 {
+		position: relative;
+		right: 70.83333%;
+	}
+	.vue-col-md-push-17 {
+		position: relative;
+		left: 70.83333%;
+	}
+	.vue-col-md-18 {
+		width: 75%;
+	}
+	.vue-col-md-offset-18 {
+		margin-left: 75%;
+	}
+	.vue-col-md-pull-18 {
+		position: relative;
+		right: 75%;
+	}
+	.vue-col-md-push-18 {
+		position: relative;
+		left: 75%;
+	}
+	.vue-col-md-19 {
+		width: 79.16667%;
+	}
+	.vue-col-md-offset-19 {
+		margin-left: 79.16667%;
+	}
+	.vue-col-md-pull-19 {
+		position: relative;
+		right: 79.16667%;
+	}
+	.vue-col-md-push-19 {
+		position: relative;
+		left: 79.16667%;
+	}
+	.vue-col-md-20 {
+		width: 83.33333%;
+	}
+	.vue-col-md-offset-20 {
+		margin-left: 83.33333%;
+	}
+	.vue-col-md-pull-20 {
+		position: relative;
+		right: 83.33333%;
+	}
+	.vue-col-md-push-20 {
+		position: relative;
+		left: 83.33333%;
+	}
+	.vue-col-md-21 {
+		width: 87.5%;
+	}
+	.vue-col-md-offset-21 {
+		margin-left: 87.5%;
+	}
+	.vue-col-md-pull-21 {
+		position: relative;
+		right: 87.5%;
+	}
+	.vue-col-md-push-21 {
+		position: relative;
+		left: 87.5%;
+	}
+	.vue-col-md-22 {
+		width: 91.66667%;
+	}
+	.vue-col-md-offset-22 {
+		margin-left: 91.66667%;
+	}
+	.vue-col-md-pull-22 {
+		position: relative;
+		right: 91.66667%;
+	}
+	.vue-col-md-push-22 {
+		position: relative;
+		left: 91.66667%;
+	}
+	.vue-col-md-23 {
+		width: 95.83333%;
+	}
+	.vue-col-md-offset-23 {
+		margin-left: 95.83333%;
+	}
+	.vue-col-md-pull-23 {
+		position: relative;
+		right: 95.83333%;
+	}
+	.vue-col-md-push-23 {
+		position: relative;
+		left: 95.83333%;
+	}
+	.vue-col-md-24 {
+		width: 100%;
+	}
+	.vue-col-md-offset-24 {
+		margin-left: 100%;
+	}
+	.vue-col-md-pull-24 {
+		position: relative;
+		right: 100%;
+	}
+	.vue-col-md-push-24 {
+		position: relative;
+		left: 100%;
+	}
 }
 @media (min-width: 1200px) {
-  .vue-col-lg-1 {
-    width: 4.16667%;
-  }
-  .vue-col-lg-offset-1 {
-    margin-left: 4.16667%;
-  }
-  .vue-col-lg-pull-1 {
-    position: relative;
-    right: 4.16667%;
-  }
-  .vue-col-lg-push-1 {
-    position: relative;
-    left: 4.16667%;
-  }
-  .vue-col-lg-2 {
-    width: 8.33333%;
-  }
-  .vue-col-lg-offset-2 {
-    margin-left: 8.33333%;
-  }
-  .vue-col-lg-pull-2 {
-    position: relative;
-    right: 8.33333%;
-  }
-  .vue-col-lg-push-2 {
-    position: relative;
-    left: 8.33333%;
-  }
-  .vue-col-lg-3 {
-    width: 12.5%;
-  }
-  .vue-col-lg-offset-3 {
-    margin-left: 12.5%;
-  }
-  .vue-col-lg-pull-3 {
-    position: relative;
-    right: 12.5%;
-  }
-  .vue-col-lg-push-3 {
-    position: relative;
-    left: 12.5%;
-  }
-  .vue-col-lg-4 {
-    width: 16.66667%;
-  }
-  .vue-col-lg-offset-4 {
-    margin-left: 16.66667%;
-  }
-  .vue-col-lg-pull-4 {
-    position: relative;
-    right: 16.66667%;
-  }
-  .vue-col-lg-push-4 {
-    position: relative;
-    left: 16.66667%;
-  }
-  .vue-col-lg-5 {
-    width: 20.83333%;
-  }
-  .vue-col-lg-offset-5 {
-    margin-left: 20.83333%;
-  }
-  .vue-col-lg-pull-5 {
-    position: relative;
-    right: 20.83333%;
-  }
-  .vue-col-lg-push-5 {
-    position: relative;
-    left: 20.83333%;
-  }
-  .vue-col-lg-6 {
-    width: 25%;
-  }
-  .vue-col-lg-offset-6 {
-    margin-left: 25%;
-  }
-  .vue-col-lg-pull-6 {
-    position: relative;
-    right: 25%;
-  }
-  .vue-col-lg-push-6 {
-    position: relative;
-    left: 25%;
-  }
-  .vue-col-lg-7 {
-    width: 29.16667%;
-  }
-  .vue-col-lg-offset-7 {
-    margin-left: 29.16667%;
-  }
-  .vue-col-lg-pull-7 {
-    position: relative;
-    right: 29.16667%;
-  }
-  .vue-col-lg-push-7 {
-    position: relative;
-    left: 29.16667%;
-  }
-  .vue-col-lg-8 {
-    width: 33.33333%;
-  }
-  .vue-col-lg-offset-8 {
-    margin-left: 33.33333%;
-  }
-  .vue-col-lg-pull-8 {
-    position: relative;
-    right: 33.33333%;
-  }
-  .vue-col-lg-push-8 {
-    position: relative;
-    left: 33.33333%;
-  }
-  .vue-col-lg-9 {
-    width: 37.5%;
-  }
-  .vue-col-lg-offset-9 {
-    margin-left: 37.5%;
-  }
-  .vue-col-lg-pull-9 {
-    position: relative;
-    right: 37.5%;
-  }
-  .vue-col-lg-push-9 {
-    position: relative;
-    left: 37.5%;
-  }
-  .vue-col-lg-10 {
-    width: 41.66667%;
-  }
-  .vue-col-lg-offset-10 {
-    margin-left: 41.66667%;
-  }
-  .vue-col-lg-pull-10 {
-    position: relative;
-    right: 41.66667%;
-  }
-  .vue-col-lg-push-10 {
-    position: relative;
-    left: 41.66667%;
-  }
-  .vue-col-lg-11 {
-    width: 45.83333%;
-  }
-  .vue-col-lg-offset-11 {
-    margin-left: 45.83333%;
-  }
-  .vue-col-lg-pull-11 {
-    position: relative;
-    right: 45.83333%;
-  }
-  .vue-col-lg-push-11 {
-    position: relative;
-    left: 45.83333%;
-  }
-  .vue-col-lg-12 {
-    width: 50%;
-  }
-  .vue-col-lg-offset-12 {
-    margin-left: 50%;
-  }
-  .vue-col-lg-pull-12 {
-    position: relative;
-    right: 50%;
-  }
-  .vue-col-lg-push-12 {
-    position: relative;
-    left: 50%;
-  }
-  .vue-col-lg-13 {
-    width: 54.16667%;
-  }
-  .vue-col-lg-offset-13 {
-    margin-left: 54.16667%;
-  }
-  .vue-col-lg-pull-13 {
-    position: relative;
-    right: 54.16667%;
-  }
-  .vue-col-lg-push-13 {
-    position: relative;
-    left: 54.16667%;
-  }
-  .vue-col-lg-14 {
-    width: 58.33333%;
-  }
-  .vue-col-lg-offset-14 {
-    margin-left: 58.33333%;
-  }
-  .vue-col-lg-pull-14 {
-    position: relative;
-    right: 58.33333%;
-  }
-  .vue-col-lg-push-14 {
-    position: relative;
-    left: 58.33333%;
-  }
-  .vue-col-lg-15 {
-    width: 62.5%;
-  }
-  .vue-col-lg-offset-15 {
-    margin-left: 62.5%;
-  }
-  .vue-col-lg-pull-15 {
-    position: relative;
-    right: 62.5%;
-  }
-  .vue-col-lg-push-15 {
-    position: relative;
-    left: 62.5%;
-  }
-  .vue-col-lg-16 {
-    width: 66.66667%;
-  }
-  .vue-col-lg-offset-16 {
-    margin-left: 66.66667%;
-  }
-  .vue-col-lg-pull-16 {
-    position: relative;
-    right: 66.66667%;
-  }
-  .vue-col-lg-push-16 {
-    position: relative;
-    left: 66.66667%;
-  }
-  .vue-col-lg-17 {
-    width: 70.83333%;
-  }
-  .vue-col-lg-offset-17 {
-    margin-left: 70.83333%;
-  }
-  .vue-col-lg-pull-17 {
-    position: relative;
-    right: 70.83333%;
-  }
-  .vue-col-lg-push-17 {
-    position: relative;
-    left: 70.83333%;
-  }
-  .vue-col-lg-18 {
-    width: 75%;
-  }
-  .vue-col-lg-offset-18 {
-    margin-left: 75%;
-  }
-  .vue-col-lg-pull-18 {
-    position: relative;
-    right: 75%;
-  }
-  .vue-col-lg-push-18 {
-    position: relative;
-    left: 75%;
-  }
-  .vue-col-lg-19 {
-    width: 79.16667%;
-  }
-  .vue-col-lg-offset-19 {
-    margin-left: 79.16667%;
-  }
-  .vue-col-lg-pull-19 {
-    position: relative;
-    right: 79.16667%;
-  }
-  .vue-col-lg-push-19 {
-    position: relative;
-    left: 79.16667%;
-  }
-  .vue-col-lg-20 {
-    width: 83.33333%;
-  }
-  .vue-col-lg-offset-20 {
-    margin-left: 83.33333%;
-  }
-  .vue-col-lg-pull-20 {
-    position: relative;
-    right: 83.33333%;
-  }
-  .vue-col-lg-push-20 {
-    position: relative;
-    left: 83.33333%;
-  }
-  .vue-col-lg-21 {
-    width: 87.5%;
-  }
-  .vue-col-lg-offset-21 {
-    margin-left: 87.5%;
-  }
-  .vue-col-lg-pull-21 {
-    position: relative;
-    right: 87.5%;
-  }
-  .vue-col-lg-push-21 {
-    position: relative;
-    left: 87.5%;
-  }
-  .vue-col-lg-22 {
-    width: 91.66667%;
-  }
-  .vue-col-lg-offset-22 {
-    margin-left: 91.66667%;
-  }
-  .vue-col-lg-pull-22 {
-    position: relative;
-    right: 91.66667%;
-  }
-  .vue-col-lg-push-22 {
-    position: relative;
-    left: 91.66667%;
-  }
-  .vue-col-lg-23 {
-    width: 95.83333%;
-  }
-  .vue-col-lg-offset-23 {
-    margin-left: 95.83333%;
-  }
-  .vue-col-lg-pull-23 {
-    position: relative;
-    right: 95.83333%;
-  }
-  .vue-col-lg-push-23 {
-    position: relative;
-    left: 95.83333%;
-  }
-  .vue-col-lg-24 {
-    width: 100%;
-  }
-  .vue-col-lg-offset-24 {
-    margin-left: 100%;
-  }
-  .vue-col-lg-pull-24 {
-    position: relative;
-    right: 100%;
-  }
-  .vue-col-lg-push-24 {
-    position: relative;
-    left: 100%;
-  }
-}
-
-@media only screen and (min-width: 1900px) {
-  .vue-col-xl-0 {
-    display: none;
-    width: 0;
-  }
-
-  .vue-col-xl-offset-0 {
-    margin-left: 0;
-  }
-
-  .vue-col-xl-pull-0 {
-    position: relative;
-    right: 0;
-  }
-
-  .vue-col-xl-push-0 {
-    position: relative;
-    left: 0;
-  }
-
-  .vue-col-xl-1 {
-    width: 4.1666666667%;
-  }
-
-  .vue-col-xl-offset-1 {
-    margin-left: 4.1666666667%;
-  }
-
-  .vue-col-xl-pull-1 {
-    position: relative;
-    right: 4.1666666667%;
-  }
-
-  .vue-col-xl-push-1 {
-    position: relative;
-    left: 4.1666666667%;
-  }
-
-  .vue-col-xl-2 {
-    width: 8.3333333333%;
-  }
-
-  .vue-col-xl-offset-2 {
-    margin-left: 8.3333333333%;
-  }
-
-  .vue-col-xl-pull-2 {
-    position: relative;
-    right: 8.3333333333%;
-  }
-
-  .vue-col-xl-push-2 {
-    position: relative;
-    left: 8.3333333333%;
-  }
-
-  .vue-col-xl-3 {
-    width: 12.5%;
-  }
-
-  .vue-col-xl-offset-3 {
-    margin-left: 12.5%;
-  }
-
-  .vue-col-xl-pull-3 {
-    position: relative;
-    right: 12.5%;
-  }
-
-  .vue-col-xl-push-3 {
-    position: relative;
-    left: 12.5%;
-  }
-
-  .vue-col-xl-4 {
-    width: 16.6666666667%;
-  }
-
-  .vue-col-xl-offset-4 {
-    margin-left: 16.6666666667%;
-  }
-
-  .vue-col-xl-pull-4 {
-    position: relative;
-    right: 16.6666666667%;
-  }
-
-  .vue-col-xl-push-4 {
-    position: relative;
-    left: 16.6666666667%;
-  }
-
-  .vue-col-xl-5 {
-    width: 20.8333333333%;
-  }
-
-  .vue-col-xl-offset-5 {
-    margin-left: 20.8333333333%;
-  }
-
-  .vue-col-xl-pull-5 {
-    position: relative;
-    right: 20.8333333333%;
-  }
-
-  .vue-col-xl-push-5 {
-    position: relative;
-    left: 20.8333333333%;
-  }
-
-  .vue-col-xl-6 {
-    width: 25%;
-  }
-
-  .vue-col-xl-offset-6 {
-    margin-left: 25%;
-  }
-
-  .vue-col-xl-pull-6 {
-    position: relative;
-    right: 25%;
-  }
-
-  .vue-col-xl-push-6 {
-    position: relative;
-    left: 25%;
-  }
-
-  .vue-col-xl-7 {
-    width: 29.1666666667%;
-  }
-
-  .vue-col-xl-offset-7 {
-    margin-left: 29.1666666667%;
-  }
-
-  .vue-col-xl-pull-7 {
-    position: relative;
-    right: 29.1666666667%;
-  }
-
-  .vue-col-xl-push-7 {
-    position: relative;
-    left: 29.1666666667%;
-  }
-
-  .vue-col-xl-8 {
-    width: 33.3333333333%;
-  }
-
-  .vue-col-xl-offset-8 {
-    margin-left: 33.3333333333%;
-  }
-
-  .vue-col-xl-pull-8 {
-    position: relative;
-    right: 33.3333333333%;
-  }
-
-  .vue-col-xl-push-8 {
-    position: relative;
-    left: 33.3333333333%;
-  }
-
-  .vue-col-xl-9 {
-    width: 37.5%;
-  }
-
-  .vue-col-xl-offset-9 {
-    margin-left: 37.5%;
-  }
-
-  .vue-col-xl-pull-9 {
-    position: relative;
-    right: 37.5%;
-  }
-
-  .vue-col-xl-push-9 {
-    position: relative;
-    left: 37.5%;
-  }
-
-  .vue-col-xl-10 {
-    width: 41.6666666667%;
-  }
-
-  .vue-col-xl-offset-10 {
-    margin-left: 41.6666666667%;
-  }
-
-  .vue-col-xl-pull-10 {
-    position: relative;
-    right: 41.6666666667%;
-  }
-
-  .vue-col-xl-push-10 {
-    position: relative;
-    left: 41.6666666667%;
-  }
-
-  .vue-col-xl-11 {
-    width: 45.8333333333%;
-  }
-
-  .vue-col-xl-offset-11 {
-    margin-left: 45.8333333333%;
-  }
-
-  .vue-col-xl-pull-11 {
-    position: relative;
-    right: 45.8333333333%;
-  }
-
-  .vue-col-xl-push-11 {
-    position: relative;
-    left: 45.8333333333%;
-  }
-
-  .vue-col-xl-12 {
-    width: 50%;
-  }
-
-  .vue-col-xl-offset-12 {
-    margin-left: 50%;
-  }
-
-  .vue-col-xl-pull-12 {
-    position: relative;
-    right: 50%;
-  }
-
-  .vue-col-xl-push-12 {
-    position: relative;
-    left: 50%;
-  }
-
-  .vue-col-xl-13 {
-    width: 54.1666666667%;
-  }
-
-  .vue-col-xl-offset-13 {
-    margin-left: 54.1666666667%;
-  }
-
-  .vue-col-xl-pull-13 {
-    position: relative;
-    right: 54.1666666667%;
-  }
-
-  .vue-col-xl-push-13 {
-    position: relative;
-    left: 54.1666666667%;
-  }
-
-  .vue-col-xl-14 {
-    width: 58.3333333333%;
-  }
-
-  .vue-col-xl-offset-14 {
-    margin-left: 58.3333333333%;
-  }
-
-  .vue-col-xl-pull-14 {
-    position: relative;
-    right: 58.3333333333%;
-  }
-
-  .vue-col-xl-push-14 {
-    position: relative;
-    left: 58.3333333333%;
-  }
-
-  .vue-col-xl-15 {
-    width: 62.5%;
-  }
-
-  .vue-col-xl-offset-15 {
-    margin-left: 62.5%;
-  }
-
-  .vue-col-xl-pull-15 {
-    position: relative;
-    right: 62.5%;
-  }
-
-  .vue-col-xl-push-15 {
-    position: relative;
-    left: 62.5%;
-  }
-
-  .vue-col-xl-16 {
-    width: 66.6666666667%;
-  }
-
-  .vue-col-xl-offset-16 {
-    margin-left: 66.6666666667%;
-  }
-
-  .vue-col-xl-pull-16 {
-    position: relative;
-    right: 66.6666666667%;
-  }
-
-  .vue-col-xl-push-16 {
-    position: relative;
-    left: 66.6666666667%;
-  }
-
-  .vue-col-xl-17 {
-    width: 70.8333333333%;
-  }
-
-  .vue-col-xl-offset-17 {
-    margin-left: 70.8333333333%;
-  }
-
-  .vue-col-xl-pull-17 {
-    position: relative;
-    right: 70.8333333333%;
-  }
-
-  .vue-col-xl-push-17 {
-    position: relative;
-    left: 70.8333333333%;
-  }
-
-  .vue-col-xl-18 {
-    width: 75%;
-  }
-
-  .vue-col-xl-offset-18 {
-    margin-left: 75%;
-  }
-
-  .vue-col-xl-pull-18 {
-    position: relative;
-    right: 75%;
-  }
-
-  .vue-col-xl-push-18 {
-    position: relative;
-    left: 75%;
-  }
-
-  .vue-col-xl-19 {
-    width: 79.1666666667%;
-  }
-
-  .vue-col-xl-offset-19 {
-    margin-left: 79.1666666667%;
-  }
-
-  .vue-col-xl-pull-19 {
-    position: relative;
-    right: 79.1666666667%;
-  }
-
-  .vue-col-xl-push-19 {
-    position: relative;
-    left: 79.1666666667%;
-  }
-
-  .vue-col-xl-20 {
-    width: 83.3333333333%;
-  }
-
-  .vue-col-xl-offset-20 {
-    margin-left: 83.3333333333%;
-  }
-
-  .vue-col-xl-pull-20 {
-    position: relative;
-    right: 83.3333333333%;
-  }
-
-  .vue-col-xl-push-20 {
-    position: relative;
-    left: 83.3333333333%;
-  }
-
-  .vue-col-xl-21 {
-    width: 87.5%;
-  }
-
-  .vue-col-xl-offset-21 {
-    margin-left: 87.5%;
-  }
-
-  .vue-col-xl-pull-21 {
-    position: relative;
-    right: 87.5%;
-  }
-
-  .vue-col-xl-push-21 {
-    position: relative;
-    left: 87.5%;
-  }
-
-  .vue-col-xl-22 {
-    width: 91.6666666667%;
-  }
-
-  .vue-col-xl-offset-22 {
-    margin-left: 91.6666666667%;
-  }
-
-  .vue-col-xl-pull-22 {
-    position: relative;
-    right: 91.6666666667%;
-  }
-
-  .vue-col-xl-push-22 {
-    position: relative;
-    left: 91.6666666667%;
-  }
-
-  .vue-col-xl-23 {
-    width: 95.8333333333%;
-  }
-
-  .vue-col-xl-offset-23 {
-    margin-left: 95.8333333333%;
-  }
-
-  .vue-col-xl-pull-23 {
-    position: relative;
-    right: 95.8333333333%;
-  }
-
-  .vue-col-xl-push-23 {
-    position: relative;
-    left: 95.8333333333%;
-  }
-
-  .vue-col-xl-24 {
-    width: 100%;
-  }
-
-  .vue-col-xl-offset-24 {
-    margin-left: 100%;
-  }
-
-  .vue-col-xl-pull-24 {
-    position: relative;
-    right: 100%;
-  }
-
-  .vue-col-xl-push-24 {
-    position: relative;
-    left: 100%;
-  }
+	.vue-col-lg-1 {
+		width:4.16667%;
+	}
+	.vue-col-lg-offset-1 {
+		margin-left: 4.16667%;
+	}
+	.vue-col-lg-pull-1 {
+		position: relative;
+		right: 4.16667%;
+	}
+	.vue-col-lg-push-1 {
+		position: relative;
+		left: 4.16667%;
+	}
+	.vue-col-lg-2 {
+		width: 8.33333%;
+	}
+	.vue-col-lg-offset-2 {
+		margin-left: 8.33333%;
+	}
+	.vue-col-lg-pull-2 {
+		position: relative;
+		right: 8.33333%;
+	}
+	.vue-col-lg-push-2 {
+		position: relative;
+		left: 8.33333%;
+	}
+	.vue-col-lg-3 {
+		width: 12.5%;
+	}
+	.vue-col-lg-offset-3 {
+		margin-left: 12.5%;
+	}
+	.vue-col-lg-pull-3 {
+		position: relative;
+		right: 12.5%;
+	}
+	.vue-col-lg-push-3 {
+		position: relative;
+		left: 12.5%;
+	}
+	.vue-col-lg-4 {
+		width: 16.66667%;
+	}
+	.vue-col-lg-offset-4 {
+		margin-left: 16.66667%;
+	}
+	.vue-col-lg-pull-4 {
+		position: relative;
+		right: 16.66667%;
+	}
+	.vue-col-lg-push-4 {
+		position: relative;
+		left: 16.66667%;
+	}
+	.vue-col-lg-5 {
+		width: 20.83333%;
+	}
+	.vue-col-lg-offset-5 {
+		margin-left: 20.83333%;
+	}
+	.vue-col-lg-pull-5 {
+		position: relative;
+		right: 20.83333%;
+	}
+	.vue-col-lg-push-5 {
+		position: relative;
+		left: 20.83333%;
+	}
+	.vue-col-lg-6 {
+		width: 25%;
+	}
+	.vue-col-lg-offset-6 {
+		margin-left: 25%;
+	}
+	.vue-col-lg-pull-6 {
+		position: relative;
+		right: 25%;
+	}
+	.vue-col-lg-push-6 {
+		position: relative;
+		left: 25%;
+	}
+	.vue-col-lg-7 {
+		width: 29.16667%;
+	}
+	.vue-col-lg-offset-7 {
+		margin-left: 29.16667%;
+	}
+	.vue-col-lg-pull-7 {
+		position: relative;
+		right: 29.16667%;
+	}
+	.vue-col-lg-push-7 {
+		position: relative;
+		left: 29.16667%;
+	}
+	.vue-col-lg-8 {
+		width: 33.33333%;
+	}
+	.vue-col-lg-offset-8 {
+		margin-left: 33.33333%;
+	}
+	.vue-col-lg-pull-8 {
+		position: relative;
+		right: 33.33333%;
+	}
+	.vue-col-lg-push-8 {
+		position: relative;
+		left: 33.33333%;
+	}
+	.vue-col-lg-9 {
+		width: 37.5%;
+	}
+	.vue-col-lg-offset-9 {
+		margin-left: 37.5%;
+	}
+	.vue-col-lg-pull-9 {
+		position: relative;
+		right: 37.5%;
+	}
+	.vue-col-lg-push-9 {
+		position: relative;
+		left: 37.5%;
+	}
+	.vue-col-lg-10 {
+		width: 41.66667%;
+	}
+	.vue-col-lg-offset-10 {
+		margin-left: 41.66667%;
+	}
+	.vue-col-lg-pull-10 {
+		position: relative;
+		right: 41.66667%;
+	}
+	.vue-col-lg-push-10 {
+		position: relative;
+		left: 41.66667%;
+	}
+	.vue-col-lg-11 {
+		width: 45.83333%;
+	}
+	.vue-col-lg-offset-11 {
+		margin-left: 45.83333%;
+	}
+	.vue-col-lg-pull-11 {
+		position: relative;
+		right: 45.83333%;
+	}
+	.vue-col-lg-push-11 {
+		position: relative;
+		left: 45.83333%;
+	}
+	.vue-col-lg-12 {
+		width: 50%;
+	}
+	.vue-col-lg-offset-12 {
+		margin-left: 50%;
+	}
+	.vue-col-lg-pull-12 {
+		position: relative;
+		right: 50%;
+	}
+	.vue-col-lg-push-12 {
+		position: relative;
+		left: 50%;
+	}
+	.vue-col-lg-13 {
+		width: 54.16667%;
+	}
+	.vue-col-lg-offset-13 {
+		margin-left: 54.16667%;
+	}
+	.vue-col-lg-pull-13 {
+		position: relative;
+		right: 54.16667%;
+	}
+	.vue-col-lg-push-13 {
+		position: relative;
+		left: 54.16667%;
+	}
+	.vue-col-lg-14 {
+		width: 58.33333%;
+	}
+	.vue-col-lg-offset-14 {
+		margin-left: 58.33333%;
+	}
+	.vue-col-lg-pull-14 {
+		position: relative;
+		right: 58.33333%;
+	}
+	.vue-col-lg-push-14 {
+		position: relative;
+		left: 58.33333%;
+	}
+	.vue-col-lg-15 {
+		width: 62.5%;
+	}
+	.vue-col-lg-offset-15 {
+		margin-left: 62.5%;
+	}
+	.vue-col-lg-pull-15 {
+		position: relative;
+		right: 62.5%;
+	}
+	.vue-col-lg-push-15 {
+		position: relative;
+		left: 62.5%;
+	}
+	.vue-col-lg-16 {
+		width: 66.66667%;
+	}
+	.vue-col-lg-offset-16 {
+		margin-left: 66.66667%;
+	}
+	.vue-col-lg-pull-16 {
+		position: relative;
+		right: 66.66667%;
+	}
+	.vue-col-lg-push-16 {
+		position: relative;
+		left: 66.66667%;
+	}
+	.vue-col-lg-17 {
+		width: 70.83333%;
+	}
+	.vue-col-lg-offset-17 {
+		margin-left: 70.83333%;
+	}
+	.vue-col-lg-pull-17 {
+		position: relative;
+		right: 70.83333%;
+	}
+	.vue-col-lg-push-17 {
+		position: relative;
+		left: 70.83333%;
+	}
+	.vue-col-lg-18 {
+		width: 75%;
+	}
+	.vue-col-lg-offset-18 {
+		margin-left: 75%;
+	}
+	.vue-col-lg-pull-18 {
+		position: relative;
+		right: 75%;
+	}
+	.vue-col-lg-push-18 {
+		position: relative;
+		left: 75%;
+	}
+	.vue-col-lg-19 {
+		width: 79.16667%;
+	}
+	.vue-col-lg-offset-19 {
+		margin-left: 79.16667%;
+	}
+	.vue-col-lg-pull-19 {
+		position: relative;
+		right: 79.16667%;
+	}
+	.vue-col-lg-push-19 {
+		position: relative;
+		left: 79.16667%;
+	}
+	.vue-col-lg-20 {
+		width: 83.33333%;
+	}
+	.vue-col-lg-offset-20 {
+		margin-left: 83.33333%;
+	}
+	.vue-col-lg-pull-20 {
+		position: relative;
+		right: 83.33333%;
+	}
+	.vue-col-lg-push-20 {
+		position: relative;
+		left: 83.33333%;
+	}
+	.vue-col-lg-21 {
+		width: 87.5%;
+	}
+	.vue-col-lg-offset-21 {
+		margin-left: 87.5%;
+	}
+	.vue-col-lg-pull-21 {
+		position: relative;
+		right: 87.5%;
+	}
+	.vue-col-lg-push-21 {
+		position: relative;
+		left: 87.5%;
+	}
+	.vue-col-lg-22 {
+		width: 91.66667%;
+	}
+	.vue-col-lg-offset-22 {
+		margin-left: 91.66667%;
+	}
+	.vue-col-lg-pull-22 {
+		position: relative;
+		right: 91.66667%;
+	}
+	.vue-col-lg-push-22 {
+		position: relative;
+		left: 91.66667%;
+	}
+	.vue-col-lg-23 {
+		width: 95.83333%;
+	}
+	.vue-col-lg-offset-23 {
+		margin-left: 95.83333%;
+	}
+	.vue-col-lg-pull-23 {
+		position: relative;
+		right: 95.83333%;
+	}
+	.vue-col-lg-push-23 {
+		position: relative;
+		left: 95.83333%;
+	}
+	.vue-col-lg-24 {
+		width: 100%;
+	}
+	.vue-col-lg-offset-24 {
+		margin-left: 100%;
+	}
+	.vue-col-lg-pull-24 {
+		position: relative;
+		right: 100%;
+	}
+	.vue-col-lg-push-24 {
+		position: relative;
+		left: 100%;
+	}
 }
 
 .vue-collapse {
@@ -5258,35 +3820,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	display: table;
 	clear: both;
 }
-
-.vue-color-dropdown__colors-wrapper {
-	margin-top: 6px;
-	line-height: 0;
-}
-
-.vue-color-dropdown__colors-block {
-	width: 15px;
-	height: 15px;
-	display: inline-block;
-	margin-left: 5px;
-	transition: all .2s ease;
-	cursor: pointer;
-}
-.vue-color-dropdown__colors-block.is-alpha {
-	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==);
-}
-
-.vue-color-dropdown__colors-block>div {
-	height: 100%;
-}
-
-.vue-color-dropdown__colors-block:hover {
-	-webkit-box-shadow: 0 0 5px rgb(0 0 0 / 40%);
-	box-shadow: 0 0 5px rgb(0 0 0 / 40%);
-	-webkit-transform: scale(1.3);
-	transform: scale(1.3);
-}
-
 .vue-color-dropdown__btns {
 	margin-top: 6px;
 	text-align: right;
@@ -5369,9 +3902,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	box-shadow: 0 2px 4px 0 rgba(0,0,0,.12),0 0 6px 0 rgba(0,0,0,.04);
 }
 
-.vue-color-panel {
-	width: 300px;
-}
 .vue-date-table {
   font-size: 12px;
   user-select: none;
@@ -6524,26 +5054,24 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 }
 .vue-dialog {
 	position: fixed;
+	left: 50%;
+	transform: translate3d(-50%, 0, 0);
 	background-color: #fff;
 	border-radius: 2px;
 	box-shadow: 0 2px 4px 0 rgba(0,0,0,.12),0 0 6px 0 rgba(0,0,0,.04);
 }
 .vue-dialog--tiny {
 	width: 30%;
-	left: 35%;
 }
 .vue-dialog--small {
 	width: 50%;
-	left: 25%;
 }
 .vue-dialog--large {
 	width: 90%;
-	left: 5%;
 }
 .vue-dialog--full {
 	width: 100%;
 	top: 0;
-	left: 0;
 	height: 100%;
 	overflow: auto;
 }
@@ -6597,20 +5125,24 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 }
 @keyframes dialog-fade-in {
 	0% {
-		transform: scale3d(.5,.5,.5);
+		transform-origin: 0;
+		transform: scale3d(.5,.5,.5) translate3d(-50%, 0, 0);
 	}
 	to {
-		transform: scale3d(1,1,1);
+		transform-origin: 0;
+		transform: scale3d(1,1,1) translate3d(-50%, 0, 0);
 	}
 }
 @keyframes dialog-fade-out {
 	0% {
 		opacity: 1;
-		transform: scale3d(1,1,1);
+		transform-origin: 0;
+		transform: scale3d(1,1,1) translate3d(-50%, 0, 0);
 	}
 	to {
 		opacity: 0;
-		transform: scale3d(.5,.5,.5);
+		transform-origin: 0;
+		transform: scale3d(.5,.5,.5) translate3d(-50%, 0, 0);
 	}
 }
 
@@ -6706,9 +5238,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-form--label-left .vue-form-item__label {
 	text-align: left;
 }
-.vue-form--label-right .vue-form-item__label {
-	text-align: right;
-}
 .vue-form--label-top .vue-form-item__label {
 	float: none;
 	display: inline-block;
@@ -6764,8 +5293,8 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	float: left;
 	font-size: 14px;
 	color: #48576a;
-	line-height: 36px;
-	padding: 0 12px 0 0;
+	line-height: 1;
+	padding: 11px 12px 11px 0;
 }
 .vue-form-item__content {
 	line-height: 36px;
@@ -6794,27 +5323,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	.vue-form--inline .vue-form-item__content {
 		display: block;
 	}
-}
-
-.vue-form-item--large .vue-form-item__label {
-	line-height: 42px;
-}
-.vue-form-item--large .vue-form-item__content {
-	line-height: 42px;
-}
-
-.vue-form-item--small .vue-form-item__label {
-	line-height: 30px;
-}
-.vue-form-item--small .vue-form-item__content {
-	line-height: 30px;
-}
-
-.vue-form-item--mini .vue-form-item__label {
-	line-height: 22px;
-}
-.vue-form-item--mini .vue-form-item__content {
-	line-height: 22px;
 }
 
 .vue-image-viewer__btn {
@@ -6949,12 +5457,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
     border-radius: 22px
 }
 
-.vue-image-viewer__wrapper.preview .vue-image-viewer__actions {
-    bottom: 80px;
-}
-
-
-
 .vue-image-viewer__actions__inner {
     width: 100%;
     height: 100%;
@@ -7036,41 +5538,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
     align-items: center;
     justify-content: center;
 }
-
-.vue-image-viewer__preview {
-    width: 100%;
-    bottom: 0;
-    height: 60px;
-    background: rgba(0,0,0, 0.4);
-    border-radius: 0;
-    cursor: default;
-    display: -ms-flexbox;
-    display: block;
-    opacity: 1;
-}
-
-.vue-image-viewer__preview__img {
-    height: 60px;
-    min-width: 35px;
-    opacity: .5;
-    transition: opacity .15s;
-    cursor: pointer;
-}
-
-.vue-image-viewer__preview__img.active, .vue-image-viewer__preview__img:hover {
-    opacity: .95;
-}
-
-.vue-image-viewer__preview__scroll {
-    overflow: hidden;
-    width: 100%;
-    white-space: nowrap;
-    text-align: center;
-}
-
-.vue-image-viewer__preview__scroll .vue-scrollbar__thumb {
-    background: rgba(0,0,0, 0.4);
-}
 .vue-input__inner,
 .vue-textarea__inner {
 	background-image: none;
@@ -7111,7 +5578,7 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	color: #1f2d3d;
 	display: inline-block;
 	height: 36px;
-	line-height: 36px;
+	line-height: 1;
 	outline: 0;
 	padding: 3px 10px;
 	width: 100%;
@@ -7164,21 +5631,18 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 }
 .vue-input--large .vue-input__inner {
 	height: 42px;
-	line-height: 42px;
 }
 .vue-input--small {
 	font-size: 13px;
 }
 .vue-input--small .vue-input__inner {
 	height: 30px;
-	line-height: 30px;
 }
 .vue-input--mini {
 	font-size: 12px;
 }
 .vue-input--mini .vue-input__inner {
 	height: 22px;
-	line-height: 22px;
 }
 .vue-input-group {
 	line-height: normal;
@@ -7465,38 +5929,8 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	line-height: 60px;
 	border-bottom: 5px solid transparent;
 }
-.vue-menu--horizontal .vue-submenu .vue-submenu {
-	width: 100%;
-	position: relative;
-	float: none;
-}
-.vue-menu--horizontal .vue-submenu .vue-submenu .vue-submenu__title {
-	height: 36px;
-	line-height: 36px;
-	padding: 0 10px;
-	color: #48576a;
-	border-bottom: 0;
-}
-.vue-menu--horizontal .vue-submenu .vue-submenu:hover>.vue-submenu__title {
-	background-color: #d1dbe5;
-}
-
-.vue-menu--horizontal .vue-submenu.is-active>.vue-submenu__title {
-	color: #409eff;
-	border-bottom: 0;
-}
-
-.vue-menu--horizontal .vue-submenu .vue-submenu .vue-submenu__icon-arrow {
-	position: absolute;
-	right: 5px;
-}
-
-.vue-menu--horizontal .vue-submenu .vue-submenu .vue-menu {
-	top: 0;
-	min-width: 200px;
-}
-
 .vue-menu--horizontal .vue-submenu .vue-menu-item {
+	background-color: #fff;
 	float: none;
 	height: 36px;
 	line-height: 36px;
@@ -7514,7 +5948,8 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	background-color: #eef1f6;
 }
 .vue-menu--horizontal>.vue-menu-item:hover,
-.vue-menu--horizontal>.vue-submenu:hover>.vue-submenu__title {
+.vue-menu--horizontal>.vue-submenu.is-active .vue-submenu__title,
+.vue-menu--horizontal>.vue-submenu:hover .vue-submenu__title {
 	border-bottom: 5px solid #409eff;
 }
 .vue-menu--horizontal.vue-menu--dark .vue-menu-item:hover,
@@ -8021,156 +6456,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-notification__icon + .vue-notification__group .vue-notification__content {
 	max-width: 238px;
 }
-.vue-number-input {
-  position: relative;
-  display: inline-block;
-  width: 180px;
-  line-height: 34px;
-}
-.vue-number-input .vue-input {
-  display: block;
-}
-.vue-number-input .vue-input__inner {
-  -webkit-appearance: none;
-  padding-left: 50px;
-  padding-right: 50px;
-  text-align: center;
-}
-.vue-number-input__increase, .vue-number-input__decrease {
-  position: absolute;
-  z-index: 1;
-  top: 1px;
-  width: 40px;
-  height: auto;
-  text-align: center;
-  background: #F5F7FA;
-  color: #606266;
-  cursor: pointer;
-  font-size: 13px;
-}
-.vue-number-input__increase:hover, .vue-number-input__decrease:hover {
-  color: #409EFF;
-}
-.vue-number-input__increase:hover:not(.is-disabled) ~ .vue-input .vue-input__inner:not(.is-disabled), .vue-number-input__decrease:hover:not(.is-disabled) ~ .vue-input .vue-input__inner:not(.is-disabled) {
-  border-color: #409EFF;
-}
-.vue-number-input__increase.is-disabled, .vue-number-input__decrease.is-disabled {
-  color: #C0C4CC;
-  cursor: not-allowed;
-}
-
-.vue-number-input__increase {
-  right: 1px;
-  border-radius: 0 4px 4px 0;
-  border-left: 1px solid #DCDFE6;
-}
-
-.vue-number-input__decrease {
-  left: 1px;
-  border-radius: 4px 0 0 4px;
-  border-right: 1px solid #DCDFE6;
-}
-
-.vue-number-input.is-disabled .vue-number-input__increase, .vue-number-input.is-disabled .vue-number-input__decrease {
-  border-color: #E4E7ED;
-  color: #E4E7ED;
-}
-.vue-number-input.is-disabled .vue-number-input__increase:hover, .vue-number-input.is-disabled .vue-number-input__decrease:hover {
-  color: #E4E7ED;
-  cursor: not-allowed;
-}
-
-.vue-number-input--large {
-  width: 200px;
-  line-height: 40px;
-}
-.vue-number-input--large .vue-number-input__increase, .vue-number-input--large .vue-number-input__decrease {
-  width: 36px;
-  font-size: 14px;
-}
-
-.vue-number-input--large .vue-input__inner {
-  padding-left: 43px;
-  padding-right: 43px;
-}
-
-.vue-number-input--small {
-  width: 130px;
-  line-height: 28px;
-}
-.vue-number-input--small .vue-number-input__increase, .vue-number-input--small .vue-number-input__decrease {
-  width: 32px;
-  font-size: 13px;
-}
-.vue-number-input--small .vue-number-input__increase [class*=vue-icon], .vue-number-input--small .vue-number-input__decrease [class*=vue-icon] {
-  transform: scale(0.9);
-}
-
-.vue-number-input--small .vue-input__inner {
-  padding-left: 39px;
-  padding-right: 39px;
-}
-
-.vue-number-input--mini {
-  width: 130px;
-  line-height: 20px;
-}
-.vue-number-input--mini .vue-number-input__increase, .vue-number-input--mini .vue-number-input__decrease {
-  width: 28px;
-  font-size: 12px;
-}
-.vue-number-input--mini .vue-number-input__increase [class*=vue-icon], .vue-number-input--mini .vue-number-input__decrease [class*=vue-icon] {
-  transform: scale(0.8);
-}
-
-.vue-number-input--mini .vue-input__inner {
-  padding-left: 35px;
-  padding-right: 35px;
-}
-
-.vue-number-input.is-without-controls .vue-input__inner {
-  padding-left: 15px;
-  padding-right: 15px;
-}
-
-.vue-number-input.is-controls-right .vue-input__inner {
-  padding-left: 15px;
-  padding-right: 50px;
-}
-.vue-number-input.is-controls-right .vue-number-input__increase, .vue-number-input.is-controls-right .vue-number-input__decrease {
-  height: auto;
-  line-height: 17px;
-}
-.vue-number-input.is-controls-right .vue-number-input__increase [class*=vue-icon], .vue-number-input.is-controls-right .vue-number-input__decrease [class*=vue-icon] {
-  transform: scale(0.8);
-}
-
-.vue-number-input.is-controls-right .vue-number-input__increase {
-  border-radius: 0 4px 0 0;
-  border-bottom: 1px solid #DCDFE6;
-}
-
-.vue-number-input.is-controls-right .vue-number-input__decrease {
-  right: 1px;
-  bottom: 1px;
-  top: auto;
-  left: auto;
-  border-right: none;
-  border-left: 1px solid #DCDFE6;
-  border-radius: 0 0 4px 0;
-}
-
-.vue-number-input.is-controls-right[class*=large] [class*=increase], .vue-number-input.is-controls-right[class*=large] [class*=decrease] {
-  line-height: 20px;
-}
-.vue-number-input.is-controls-right[class*=small] [class*=increase], .vue-number-input.is-controls-right[class*=small] [class*=decrease] {
-  line-height: 13px;
-}
-.vue-number-input.is-controls-right[class*=mini] [class*=increase], .vue-number-input.is-controls-right[class*=mini] [class*=decrease] {
-  line-height: 10px;
-  height: 10px;
-}
-
 .vue-pager li,
 .vue-pagination__editor {
 	text-align: center;
@@ -8761,8 +7046,8 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	font-size: 12px;
 	box-shadow: 0 2px 4px 0 rgba(0,0,0,.12),0 0 6px 0 rgba(0,0,0,.04);
 }
-.vue-popover>.popper__arrow,
-.vue-popover>.popper__arrow::after {
+.vue-popover .popper__arrow,
+.vue-popover .popper__arrow::after {
 	position: absolute;
 	display: block;
 	width: 0;
@@ -8770,10 +7055,10 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	border-color: transparent;
 	border-style: solid;
 }
-.vue-popover>.popper__arrow {
+.vue-popover .popper__arrow {
 	border-width: 6px;
 }
-.vue-popover>.popper__arrow::after {
+.vue-popover .popper__arrow::after {
 	content: '';
 	border-width: 6px;
 }
@@ -8783,14 +7068,14 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-popover[x-placement^=top].no-arrow {
 	margin-bottom: 5px;
 }
-.vue-popover[x-placement^=top]>.popper__arrow {
+.vue-popover[x-placement^=top] .popper__arrow {
 	bottom: -6px;
 	left: 50%;
 	margin-right: 3px;
 	border-top-color: #d1dbe5;
 	border-bottom-width: 0;
 }
-.vue-popover[x-placement^=top]>.popper__arrow::after {
+.vue-popover[x-placement^=top] .popper__arrow::after {
 	bottom: 1px;
 	margin-left: -6px;
 	border-top-color: #fff;
@@ -8802,14 +7087,14 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-popover[x-placement^=bottom].no-arrow {
 	margin-top: 5px;
 }
-.vue-popover[x-placement^=bottom]>.popper__arrow {
+.vue-popover[x-placement^=bottom] .popper__arrow {
 	top: -6px;
 	left: 50%;
 	margin-right: 3px;
 	border-top-width: 0;
 	border-bottom-color: #d1dbe5;
 }
-.vue-popover[x-placement^=bottom]>.popper__arrow::after {
+.vue-popover[x-placement^=bottom] .popper__arrow::after {
 	top: 1px;
 	margin-left: -6px;
 	border-top-width: 0;
@@ -8821,14 +7106,14 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-popover[x-placement^=right].no-arrow {
 	margin-left: 5px;
 }
-.vue-popover[x-placement^=right]>.popper__arrow {
+.vue-popover[x-placement^=right] .popper__arrow {
 	top: 50%;
 	left: -6px;
 	margin-bottom: 3px;
 	border-right-color: #d1dbe5;
 	border-left-width: 0;
 }
-.vue-popover[x-placement^=right]>.popper__arrow::after {
+.vue-popover[x-placement^=right] .popper__arrow::after {
 	bottom: -6px;
 	left: 1px;
 	border-right-color: #fff;
@@ -8840,14 +7125,14 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-popover[x-placement^=left].no-arrow {
 	margin-right: 5px;
 }
-.vue-popover[x-placement^=left]>.popper__arrow {
+.vue-popover[x-placement^=left] .popper__arrow {
 	top: 50%;
 	right: -6px;
 	margin-bottom: 3px;
 	border-right-width: 0;
 	border-left-color: #d1dbe5;
 }
-.vue-popover[x-placement^=left]>.popper__arrow::after {
+.vue-popover[x-placement^=left] .popper__arrow::after {
 	right: 1px;
 	bottom: -6px;
 	margin-left: -6px;
@@ -9082,28 +7367,15 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	content: "";
 	top: 0; right: 0; bottom: 0; left: 0;  
 	background: rgba(0, 0, 0, 0.1);
-	z-index: 1;
-	box-shadow: 0 0 0 2px rgba(155, 155, 155, 1);
-}
-
-.vue-radio-button:first-child .vue-radio-button__inner:before {
-	border-top-left-radius: 4px;
-	border-bottom-left-radius: 4px;
-}
-.vue-radio-button:last-child .vue-radio-button__inner:before {
-	border-top-right-radius: 4px;
-	border-bottom-right-radius: 4px;
 }
 
 .vue-radio-button:first-child .vue-radio-button__inner {
 	border-left: 1px solid #bfcbd9;
+	border-radius: 4px 0 0 4px;
 	box-shadow: none!important;
-	border-top-left-radius: 4px;
-	border-bottom-left-radius: 4px;
 }
 .vue-radio-button:last-child .vue-radio-button__inner {
-	border-top-right-radius: 4px;
-	border-bottom-right-radius: 4px;
+	border-radius: 0 4px 4px 0;
 }
 .vue-radio-button__inner {
 	line-height: 1;
@@ -9170,48 +7442,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	border-radius: 0;
 }
 
-.vue-radio-group.check-style .vue-radio-button.is-active .vue-radio-button__inner {
-	background-color: #fff;
-	border-color: #0AC172;
-	color: #0AC172;
-	box-shadow: none;
-}
-
-.vue-radio-group.check-style .vue-radio-button.is-active .vue-radio-button__inner::after {
-	bottom: 0px;
-	content: "✔";
-	color: rgb(255, 255, 255);
-	display: block;
-	font-size: 12px;
-	height: 0px;
-	line-height: 6px;
-	position: absolute;
-	right: 0px;
-	width: 0px;
-	border-width: 10px;
-	border-style: solid;
-	border-image: initial;
-	border-color: transparent rgb(10, 193, 114) rgb(10, 193, 114) transparent;
-}
-
-
-.vue-radio-group.is-split .vue-radio-button{
-	margin-right: 10px;
-}
-
-.vue-radio-group.is-split .vue-radio-button .vue-radio-button__inner{
-	border-radius: 4px;
-	border-left: 1px solid #bfcbd9;
-}
-
-.vue-radio-group.is-split .vue-radio-button:last-child .vue-radio-button__inner{
-	margin-right: 0px;
-}
-
-.vue-radio-group.is-split .vue-radio-button.is-focus .vue-radio-button__inner:before,
-.vue-radio-group.is-split .vue-radio-button:focus .vue-radio-button__inner:before {
-	border-radius: 4px;
-}
 .vue-rate {
 	height: 20px;
 	line-height: 1;
@@ -9427,11 +7657,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-select>.vue-input {
 	display: block;
 }
-
-.vue-select>.vue-input.focusing .vue-input__inner{
-	outline: 0;
-	border-color: #409eff;
-}
 .vue-select .vue-tag {
 	margin: 6px 0 6px 6px;
 }
@@ -9465,11 +7690,12 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-select__tags {
 	position: absolute;
 	height: 100%;
-	line-height: 34px;
+	line-height: 36px;
 	white-space: normal;
 	z-index: 1000;
 }
 .vue-select__tags.no-reset-height {
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
 }
@@ -9503,7 +7729,8 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 }
 .vue-select-dropdown.is-multiple .vue-select-dropdown__item.selected.hover,
 .vue-select-dropdown.is-multiple .vue-select-dropdown__item.selected:hover,
-.vue-select-dropdown__item.hover{
+.vue-select-dropdown__item.hover,
+.vue-select-dropdown__item:hover {
 	background-color: #e4e8f1;
 }
 .vue-select-dropdown.is-multiple .vue-select-dropdown__item.selected::after {
@@ -9558,13 +7785,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	background-color: #fff;
 }
 
-.vue-select-tooltip-content .vue-tag {
-	margin: 6px 6px 6px 0px;
-}
-
-.vue-select-tooltip-content .vue-tag:last-child {
-	margin-right: 0px;
-}
 .vue-slider:after,
 .vue-slider:before {
 	display: table;
@@ -9682,129 +7902,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	transform: translate3d(0, 50%, 0);
 }
 
-.vue-split-panes {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-.vue-split-panes--vertical {
-  flex-direction: row;
-}
-.vue-split-panes--horizontal {
-  flex-direction: column;
-}
-.vue-split-panes--dragging * {
-  user-select: none;
-}
-.vue-split-panes__pane {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-.vue-split-panes--vertical .vue-split-panes__pane {
-  transition: width 0.2s ease-out;
-}
-.vue-split-panes--horizontal .vue-split-panes__pane {
-  transition: height 0.2s ease-out;
-}
-.vue-split-panes--dragging .vue-split-panes__pane {
-  transition: none;
-}
-.vue-split-panes__splitter {
-  touch-action: none;
-}
-.vue-split-panes--vertical > .vue-split-panes__splitter {
-  min-width: 1px;
-  cursor: col-resize;
-}
-.vue-split-panes--horizontal > .vue-split-panes__splitter {
-  min-height: 1px;
-  cursor: row-resize;
-}
-
-.vue-split-panes.default-theme .vue-split-panes__splitter {
-  background-color: #fff;
-  box-sizing: border-box;
-  position: relative;
-  flex-shrink: 0;
-}
-.vue-split-panes.default-theme .vue-split-panes__splitter:before, .vue-split-panes.default-theme .vue-split-panes__splitter:after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  background-color: rgba(0, 0, 0, 0.15);
-  transition: background-color 0.3s;
-}
-.vue-split-panes.default-theme .vue-split-panes__splitter:hover:before, .vue-split-panes.default-theme .vue-split-panes__splitter:hover:after {
-  background-color: rgba(0, 0, 0, 0.25);
-}
-.vue-split-panes.default-theme .vue-split-panes__splitter:first-child {
-  cursor: auto;
-}
-
-.default-theme.vue-split-panes .vue-split-panes .vue-split-panes__splitter {
-  z-index: 1;
-}
-.default-theme.vue-split-panes--vertical > .vue-split-panes__splitter,
-.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter {
-  width: 7px;
-  /* border-left: 1px solid #f2f2f2; */
-  background-color: #f2f2f2;
-  /* margin-left: -1px; */
-}
-.default-theme.vue-split-panes--vertical > .vue-split-panes__splitter:before, .default-theme.vue-split-panes--vertical > .vue-split-panes__splitter:after,
-.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter:before,
-.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter:after {
-  transform: translateY(-50%);
-  width: 1px;
-  height: 30px;
-}
-.default-theme.vue-split-panes--vertical > .vue-split-panes__splitter:before,
-.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter:before {
-  margin-left: -2px;
-}
-.default-theme.vue-split-panes--vertical > .vue-split-panes__splitter:after,
-.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter:after {
-  margin-left: 1px;
-}
-.default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter,
-.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter {
-  height: 7px;
-  /* border-top: 1px solid #f2f2f2; */
-  background-color: #f2f2f2;
-  /* margin-top: -1px; */
-}
-.default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:before, .default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:after,
-.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:before,
-.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:after {
-  transform: translateX(-50%);
-  width: 30px;
-  height: 1px;
-}
-.default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:before,
-.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:before {
-  margin-top: -2px;
-}
-.default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:after,
-.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:after {
-  margin-top: 1px;
-}
-
-.line-theme .vue-split-panes__splitter {background-color: #ccc;position: relative;}
-.line-theme .vue-split-panes__splitter:before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  opacity: 0;
-  z-index: 1;
-}
-.line-theme.vue-split-panes--vertical > .vue-split-panes__splitter:before, 
-.line-theme .vue-split-panes--vertical > .vue-split-panes__splitter:before {left: -5px;right: -5px;height: 100%;}
-
-.line-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:before,
-.line-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:before {top: -5px;bottom: -5px;width: 100%;}
 .vue-steps {
 	font-size: 0;
 }
@@ -9979,27 +8076,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 }
 .vue-step__description.is-process {
 	color: #8391a5;
-}
-.vue-step.is-vertical {
-	white-space: nowrap;
-}
-.vue-svg-icon {
-  width: 1em;
-  height: 1em;
-  vertical-align: -0.15em;
-  fill: currentColor;
-  overflow: hidden;
-}
-
-.vue-svg-external-icon {
-  background-color: currentColor;
-	mask-size: cover !important;
-	-webkit-mask-size: cover !important;
-  display: inline-block;
-}
-
-.vue-button .vue-svg-icon+span {
-  margin-left: 10px;
 }
 
 .vue-switch__core,
@@ -10556,7 +8632,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
     width: 100%;
     position: fixed;
     bottom: 0;
-    top: auto !important;
   }
 
   .vue-time-panel__footer .vue-time-panel__btn{
@@ -10605,7 +8680,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 	z-index: 2000;
 	font-size: 12px;
 	line-height: 1.2;
-	left: 0;
 }
 .vue-tooltip__popper .popper__arrow,
 .vue-tooltip__popper .popper__arrow::after {
@@ -10805,16 +8879,6 @@ _::-webkit-full-page-media, _:future, :root .resize-triggers{
 .vue-tree--highlight-current .vue-tree-node.is-current>.vue-tree-node__content {
 	background-color: #ebf5ff;
 }
-
-span.vue-tree-node__expand-icon::after {
-	content: "";
-	height: 25px;
-	width: 25px;
-	display: block;
-	position: absolute;
-	top: -12px;
-	left: -15px;
-}
 .vue-upload-cover__title,
 .vue-upload-list__item-name {
 	overflow: hidden;
@@ -10956,10 +9020,6 @@ span.vue-tree-node__expand-icon::after {
 .vue-upload-list__item .vue-icon-upload-success {
 	color: #67c23a;
 }
-.vue-upload-list__item .vue-icon-upload-fail {
-	color: #ffc1c1;
-	font-weight: bolder;
-}
 .vue-upload-list__item .vue-icon-close {
 	display:none;
 	position: absolute;
@@ -10983,19 +9043,11 @@ span.vue-tree-node__expand-icon::after {
 .vue-upload-list__item.is-success .vue-upload-list__item-status-label {
 	display: block;
 }
-.vue-upload-list__item.is-fail .vue-upload-list__item-status-label {
-	display: block;
-}
 .vue-upload-list__item.is-success .vue-upload-list__item-name:hover {
 	color: #409eff;
 	cursor: pointer;
 }
-.vue-upload-list__item.is-fail .vue-upload-list__item-name:hover {
-	color: #409eff;
-	cursor: pointer;
-}
 .vue-upload-list__item.is-success:hover .vue-upload-list__item-status-label,
-.vue-upload-list__item.is-fail:hover .vue-upload-list__item-status-label,
 .vue-upload-list__item:hover .vue-progress__text {
 	display: none;
 }
@@ -11072,9 +9124,6 @@ span.vue-tree-node__expand-icon::after {
 	text-align: center;
 	transform: rotate3d(0,0,1,45deg);
 	box-shadow: 0 0 1pc 1px rgba(0,0,0,.2);
-}
-.vue-upload-list--picture-card .is-fail .vue-upload-list__item-status-label {
-	background: #cc2b2b;
 }
 .vue-upload-list--picture-card .vue-upload-list__item-status-label i {
 	font-size: 12px;
@@ -11155,7 +9204,7 @@ span.vue-tree-node__expand-icon::after {
 	line-height: 70px;
 	margin-top: 0;
 }
-.vue-upload-list--picture .vue-upload-list__item .vue-upload-list__item-name i {
+.vue-upload-list--picture .vue-upload-list__item.is-success .vue-upload-list__item-name i {
 	display: none;
 }
 .vue-upload-list--picture .vue-upload-list__item-thumbnail {
@@ -11191,16 +9240,6 @@ span.vue-tree-node__expand-icon::after {
 	transform: rotate3d(0,0,1,45deg);
 	box-shadow: 0 1px 1px #ccc;
 }
-.vue-upload-list--picture .is-fail .vue-upload-list__item-status-label {
-	background: #cc2b2b;
-}
-
-.vue-upload-list--text .vue-icon-upload-fail {
-	border-radius: 50%;
-	background-color: #cc2b2b;
-	padding: 0px 5px;
-}
-
 .vue-upload-list--picture .vue-upload-list__item-status-label i {
 	font-size: 12px;
 	margin-top: 12px;
@@ -11939,25 +9978,6 @@ span.vue-tree-node__expand-icon::after {
   z-index: 1
 }
 
-.vue-xtable-table.t--border-hide-outside {
-  border-left: 0;
-  border-right: 0;
-}
-
-.vue-xtable-table.t--border-hide-outside:after,
-.vue-xtable-table.t--border-hide-outside:before {
-  content: unset;
-}
-
-.vue-xtable-table.t--border-hide-outside .vue-xtable-table--footer-wrapper,
-.vue-xtable-table.t--border-hide-outside .vue-xtable-table--header-wrapper {
-  border-top: 0;
-}
-
-.vue-xtable-table.t--border-hide-outside .vue-xtable-footer--row:last-child .vue-xtable-footer--column{
-  border-bottom: 0;
-}
-
 .vue-xtable-table:before {
   top: 0
 }
@@ -12059,17 +10079,8 @@ span.vue-tree-node__expand-icon::after {
   border-right-color: #e8eaec
 }
 
-.vue-xtable-table.t--border-hide-x .vue-xtable-body--row .vue-xtable-body--column {
-  border-bottom: 0;
-}
-
-.vue-xtable-table.t--border.t--border-hide-x .vue-xtable-footer--column, .vue-xtable-table.t--border.t--border-hide-x .vue-xtable-header--column {
-  border-bottom: 0;
-}
-
-.vue-xtable-table.t--checked
-/* ,.vue-xtable-table.t--selected  */
-{
+.vue-xtable-table.t--checked,
+.vue-xtable-table.t--selected {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -12195,7 +10206,7 @@ span.vue-tree-node__expand-icon::after {
   vertical-align: bottom
 }
 
-.vue-xtable-table tr:not(.sortable-chosen) .fixed--hidden {
+.vue-xtable-table .fixed--hidden {
   visibility: hidden
 }
 
@@ -12397,6 +10408,13 @@ span.vue-tree-node__expand-icon::after {
   padding: 20px
 }
 
+.vue-xtable-table .vue-xtable-body--column.col--ellipsis,
+.vue-xtable-table.vue-xtable-editable .vue-xtable-body--column,
+.vue-xtable-table .vue-xtable-footer--column.col--ellipsis,
+.vue-xtable-table .vue-xtable-header--column.col--ellipsis {
+  line-height: inherit
+}
+
 .vue-xtable-table.virtual--x .col--ellipsis .vue-xtable-cell,
 .vue-xtable-table.virtual--y .col--ellipsis .vue-xtable-cell {
   max-height: 47px
@@ -12456,7 +10474,9 @@ span.vue-tree-node__expand-icon::after {
   box-shadow: inset 0 0 0 2px #409eff
 }
 
-.vue-xtable-table .vue-xtable-body--column {
+.vue-xtable-table .vue-xtable-body--column.col--actived,
+.vue-xtable-table .vue-xtable-body--column.col--dirty,
+.vue-xtable-table .vue-xtable-body--column.col--selected {
   position: relative
 }
 
@@ -12706,7 +10726,7 @@ span.vue-tree-node__expand-icon::after {
   vertical-align: middle;
   display: inline-block;
   line-height: 15px;
-  margin-top: -2px;
+  margin-top: -2px
 }
 
 .vue-xtable-filter-wrapper.is--active .vue-xtable-filter--btn {
@@ -12714,7 +10734,7 @@ span.vue-tree-node__expand-icon::after {
 }
 
 .vue-xtable-filter-wrapper .vue-xtable-filter--btn {
-  font-size: 15px;
+  font-size: 13px;
   color: #c0c4cc;
   cursor: pointer
 }
@@ -13116,28 +11136,14 @@ span.vue-tree-node__expand-icon::after {
   position: relative;
 }
 
-.vue-xtable-toolbar .vue-xtable-custom--wrapper>button {
-  outline: 0;
-  border: none;
-  background: 0 0;
-  padding-left: 0;
-  padding-right: 0;
-  color: unset;
-}
-
 .vue-xtable-toolbar .toolbar-right-btn {
   color: #606266;
   margin-left: 10px;
-  outline: 0;
 }
 .vue-xtable-toolbar .toolbar-right-btn:hover {
   color: #409eff;
 }
-.vue-xtable-toolbar .toolbar-right-btn:focus {
-  color: #8cc5ff;
-}
-
-.vue-xtable-toolbar .toolbar-right-btn>button:focus {
+.vue-xtable-toolbar .toolbar-right-btn:active {
   color: #8cc5ff;
 }
 .vue-xtable-toolbar .toolbar-right-btn:disabled {
@@ -14668,43 +12674,4 @@ span.vue-tree-node__expand-icon::after {
 
 .vue-xtable-chart--wrapper .vue-xtable-chart--panel {
   flex-grow: 1;
-}
-
-th .vue-xtable-cell {
-  position: relative;
-}
-.vue-xtable-table .vue-xtable-sort-wrapper, .vue-xtable-table .vue-xtable-filter-wrapper {
-  display: none;
-  position: absolute;
-}
-.sort--active .vue-xtable-sort-wrapper, .filter--active .vue-xtable-filter-wrapper {
-  display: inline-block;
-}
-th:hover .vue-xtable-sort-wrapper, th:hover .vue-xtable-filter-wrapper {
-  display: inline-block;
-}
-.vue-xtable-sort-wrapper {
-  right: 16px;
-  top: 50%;
-  transform: translate(0, -50%);
-  background-color: #f8f8f9;
-  padding-top: 2px;
-}
-.vue-xtable-sort-wrapper:last-child {
-  right: 0px;
-}
-.vue-xtable-filter-wrapper {
-  right: 0px;
-  top: 50%;
-  background-color: #f8f8f9;
-  margin: auto;
-  transform: translate(0, -50%);
-  padding: 0 2px 2px 2px;
-}
-.vue-xtable-table.column--highlight .vue-xtable-header--column:not(.col--index):hover .vue-xtable-filter-wrapper {
-  background-color: #d7effb;
-}
-
-.vue-xtable-table.column--highlight .vue-xtable-header--column:not(.col--index):hover .vue-xtable-sort-wrapper {
-  background-color: #d7effb;
 }

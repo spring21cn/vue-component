@@ -5,7 +5,6 @@
 	z-index: 2000;
 	font-size: 12px;
 	line-height: 1.2;
-	left: 0;
 }
 .vue-tooltip__popper .popper__arrow,
 .vue-tooltip__popper .popper__arrow::after {

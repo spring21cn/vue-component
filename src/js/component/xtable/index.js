@@ -42,21 +42,18 @@
   context.VueXtable.mixins.push(context.VueXtableEditMixin);
 
   context.baseTable.reg('export');
+  VueUtil.assign(context.baseTable.types, {
+    csv: 1,
+    html: 1,
+    xml: 1,
+    txt: 1
+  });
 
-  Object.defineProperty(baseTable, 'types', {
-    get: function get() {
-      var res = {
-        csv: 1,
-        html: 1,
-        xml: 1,
-        txt: 1
-      };
-
-      if(VueUtil.Excel) {
-        res.xlsx = 1;
-      }
-
-      return res;
+  document.addEventListener('DOMContentLoaded', function() {
+    if(VueUtil.Excel) {
+      VueUtil.assign(baseTable.types, {
+        xlsx: 1
+      });
     }
   });
 

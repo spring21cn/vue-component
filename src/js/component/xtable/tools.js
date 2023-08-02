@@ -42,13 +42,7 @@
     },
     updateCellTitle: function updateCellTitle(evnt) {
       var cellElem = evnt.currentTarget.querySelector('.vue-xtable-cell');
-
-      var content;
-      if (VueUtil.hasClass(cellElem.parentElement, 'col--actived')) {
-        return;
-      } else {
-        content = cellElem.innerText;
-      }
+      var content = cellElem.innerText;
 
       if (cellElem.getAttribute('title') !== content) {
         cellElem.setAttribute('title', content);
@@ -58,26 +52,25 @@
       var bodyElem = $table.$refs.tableBody.$el;
       var trElem = bodyElem.querySelector('[data-rowid="'.concat(UtilTools.getRowid($table, row), '"]'));
 
-      var bodyHeight = bodyElem.clientHeight;
-      var bodySrcollTop = bodyElem.scrollTop;
-      var trOffsetTop;
-      var trHeight;
       if (trElem) {
-        trOffsetTop = trElem.offsetTop + (trElem.offsetParent ? trElem.offsetParent.offsetTop : 0);
-        trHeight = trElem.clientHeight;
-      } else if ($table.scrollYLoad) {
-        // 懒加载
-        trHeight = $table.scrollYStore.rowHeight;
-        trOffsetTop = $table.afterFullData.indexOf(row) * trHeight;
-      }
+        var bodyHeight = bodyElem.clientHeight;
+        var bodySrcollTop = bodyElem.scrollTop;
+        var trOffsetTop = trElem.offsetTop + (trElem.offsetParent ? trElem.offsetParent.offsetTop : 0);
+        var trHeight = trElem.clientHeight; // 检测行是否在可视区中
 
-        if (trOffsetTop < bodySrcollTop) {
+        if (trOffsetTop < bodySrcollTop || trOffsetTop > bodySrcollTop + bodyHeight) {
           // 向上定位
           return $table.scrollTo(null, trOffsetTop);
-        } else if (trOffsetTop > bodyHeight + bodySrcollTop - trHeight) {
+        } else if (trOffsetTop + trHeight >= bodyHeight + bodySrcollTop) {
           // 向下定位
-          return $table.scrollTo(null, trOffsetTop - bodyHeight + trHeight);
+          return $table.scrollTo(null, bodySrcollTop + trHeight);
         }
+      } else {
+        // 如果是虚拟渲染跨行滚动
+        if ($table.scrollYLoad) {
+          return $table.scrollTo(null, ($table.afterFullData.indexOf(row) - 1) * $table.scrollYStore.rowHeight);
+        }
+      }
 
       return Promise.resolve();
     },
@@ -187,23 +180,14 @@
     /**
      * 获取单元格节点索引
      */
-    getCellNodeIndex: function getCellNodeIndex(cell, fullColumnIdData) {
+    getCellNodeIndex: function getCellNodeIndex(cell) {
       var trElem = cell.parentNode;
-
-      var columnIndex = fullColumnIdData ? fullColumnIdData[cell.dataset.colid].index : VueUtil.arrayIndexOfVal(trElem.children, cell);
+      var columnIndex = VueUtil.arrayIndexOfVal(trElem.children, cell);
       var rowIndex = VueUtil.arrayIndexOfVal(trElem.parentNode.children, trElem);
       return {
         columnIndex: columnIndex,
         rowIndex: rowIndex
       };
-    },
-
-    getCellById: function (row, id) {
-      var cell = [].filter.call(row.children, function(el) {
-        return el.dataset.colid === id;
-      });
-      
-      return VueUtil.get(cell,0);
     },
 
     /**
@@ -260,8 +244,7 @@
     },
 
     getTableSpanCell: function($table, params) {
-      var column = params.column;
-      var bodyElem = $table.$refs[''.concat(column.fixed || 'table', 'Body')];
+
       var tableEl = (bodyElem || $table.$refs.tableBody).$el;
       var table = tableEl.querySelector('table');
       var rowIndex = $table.getRowIndex(params.row);
@@ -391,7 +374,7 @@
   document.addEventListener('paste', GlobalEvent.trigger, false);
   window.addEventListener('mousedown', GlobalEvent.trigger, false);
   window.addEventListener('blur', GlobalEvent.trigger, false);
-
+  window.addEventListener('resize', GlobalEvent.trigger, false);
   window.addEventListener(wheelName, GlobalEvent.trigger, false);
 
   //utils.js
@@ -455,7 +438,6 @@
         filterMethod: _vm.filterMethod,
         filterRender: _vm.filterRender,
         copyFormatter: _vm.copyFormatter,
-        formatterKey: _vm.formatterKey,
         pasteFormatter: _vm.pasteFormatter,
         treeNode: _vm.treeNode,
         cellRender: _vm.cellRender,
@@ -479,8 +461,7 @@
         renderData: renderData,
         // 单元格插槽，只对 grid 有效
         slots: _vm.slots,
-        own: _vm,
-        excelExportConfig: _vm.excelExportConfig
+        own: _vm
       });
     }
 
@@ -495,11 +476,6 @@
       value: function update(name, value) {
         // 不支持双向的属性
         if (!VueUtil.includes(['filters'], name)) {
-          if (name == 'field') {
-            this[name] = value;
-            this['property'] = value;
-            return;
-          }
           this[name] = value;
         }
       }
@@ -595,7 +571,6 @@
         var rest, formatData;
         var $table = params.$table;
         var colid = column.id;
-        var formatterKey = column.formatterKey;
         var cacheFormat = $table && $table.fullAllDataRowMap.has(row);
 
         if (cacheFormat) {
@@ -607,20 +582,8 @@
           }
         }
 
-        var formatterKeyResult;
-
-        if (typeof formatterKey == 'function') {
-          formatterKeyResult = formatterKey(row, column, params);
-        } else if (VueUtil.isArray(formatterKey)) {
-          formatterKeyResult = VueUtil.reduce(formatterKey, function(result, field) {
-            return result + '=%=' + row[field];
-          }, '');
-        } else if (typeof formatterKey == 'string') {
-          formatterKeyResult = row[formatterKey];
-        }
-
         if (rest && formatData[colid]) {
-          if (formatData[colid].value === cellValue && formatData[colid].formatterKey === formatterKeyResult) {
+          if (formatData[colid].value === cellValue) {
             return formatData[colid].label;
           }
         }
@@ -637,23 +600,14 @@
         if (formatData) {
           formatData[colid] = {
             value: cellValue,
-            label: cellLabel,
-            formatterKey: formatterKeyResult,
+            label: cellLabel
           };
         }
       }
 
       return cellLabel;
     },
-    setCellValue: function setCellValue(row, column, value, table) {
-
-      // 如果table不为空，尝试触发change事件
-      if (table) {
-        oldVal = VueUtil.get(row, column.property);
-        if (oldVal != value) {
-          table.$emit('cell-change', row, column.property, value, oldVal);
-        }
-      }
+    setCellValue: function setCellValue(row, column, value) {
       return VueUtil.set(row, column.property, value);
     },
     getColumnConfig: function getColumnConfig(_vm, options) {

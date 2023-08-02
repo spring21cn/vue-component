@@ -9,7 +9,7 @@
 })(this, function(Vue, VueUtil, VuePopper) {
   'use strict';
   var VuePopover = {
-    template: '<span><transition :name="transition" @after-leave="destroyPopper"><div :class="[\'vue-popover\', popperClass, {\'no-arrow\': !visibleArrow}]" ref="popper" v-show="!disabled && showPopper" :style="{width: popoverWidth + \'px\', height: popoverHeight}"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{content}}</slot></div></transition><slot name="reference"></slot></span>',
+    template: '<span><transition @after-leave="destroyPopper"><div :class="[\'vue-popover\', popperClass, {\'no-arrow\': !visibleArrow}]" ref="popper" v-show="!disabled && showPopper" :style="{width: popoverWidth + \'px\' \}"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{content}}</slot></div></transition><slot name="reference"></slot></span>',
     name: 'VuePopover',
     mixins: [VuePopper],
     props: {
@@ -26,47 +26,23 @@
       reference: {},
       popperClass: String,
       width: [String, Number],
-      height: [String, Number],
       visibleArrow: {
         type: Boolean,
         default: true
-      },
-      autoClose: Boolean
+      }
     },
     data: function() {
       return {
-        popoverWidth: null,
-        popoverHeight: null
+        popoverWidth: null
       };
     },
     watch: {
       showPopper: function(newVal, oldVal) {
         if (newVal) {
           this.popoverWidth = this.width;
-          var reference = this.reference || this.$refs.reference;
           if (!this.popoverWidth) {
+            var reference = this.reference || this.$refs.reference;
             this.popoverWidth = parseInt(VueUtil.getStyle(reference, 'width'));
-          }
-          
-          if (this.height === 'auto-max') {
-            var placement = this.placement.split('-')[0];
-            var totalHeight = window.innerHeight;
-            if (['top', 'bottom'].indexOf(placement) !== -1) {
-              var rect = reference.getBoundingClientRect();
-              
-              var bottomRemain = totalHeight - rect.bottom;
-              var topRemain = rect.top;
-              var height = Math.max(bottomRemain, topRemain);
-  
-              this.popoverHeight = (height - (this.visibleArrow ? 25 : 20)) + 'px';
-            } else {
-              this.popoverHeight = (totalHeight - 20) + 'px';
-            }
-
-          } else if (this.height) {
-            this.popoverHeight = this.height + 'px';
-          } else {
-            this.popoverHeight = null;
           }
           this.$emit('show');
         } else {
@@ -110,8 +86,6 @@
             VueUtil.on(reference, 'mousedown', self.doShow);
             VueUtil.on(reference, 'mouseup', self.doClose);
           }
-        } else if (self.trigger === 'manual' && this.autoClose) {
-          VueUtil.on(document, 'click', self.documentClick);
         }
       },
       unBindEvents: function() {
@@ -149,8 +123,6 @@
             VueUtil.off(reference, 'mousedown', self.doShow);
             VueUtil.off(reference, 'mouseup', self.doClose);
           }
-        } else if (self.trigger === 'manual' && this.autoClose) {
-          VueUtil.off(document, 'click', self.documentClick);
         }
       },
       doToggle: function() {
@@ -186,7 +158,6 @@
       this.bindEvents();
     },
     destroyed: function() {
-      this.$refs.popper && this.$refs.popper.parentElement && this.$refs.popper.parentElement.removeChild(this.$refs.popper);
       this.unBindEvents();
     }
   };

@@ -123,42 +123,12 @@
           align = this.align,
           border = this.border,
           background = this.background,
-          perfect = this.perfect,
-          $scopedSlots = this.$scopedSlots,
-          $grid = this.$grid;
-
-      var $left = $scopedSlots.left;
-      var $right = $scopedSlots.right;
-
-      var childNodes = [];
-
-      if($left){
-        childNodes.push(
-          h('span', {
-            class: 'vue-xtable-pager--left-wrapper'
-          }, [
-            $left.call(this, { $grid: $grid })
-          ])
-        );
-      }
-
-      childNodes = childNodes.concat(layouts.map(function (name) {
-        return _this['render'.concat(name)](h);
-      }));
-
-      if($right){
-        childNodes.push(
-          h('span', {
-            class: 'vue-xtable-pager--right-wrapper'
-          }, [
-            $right.call(this, { $grid: $grid })
-          ])
-        );
-      }
-
+          perfect = this.perfect;
       return h('div', {
         class: ['vue-xtable-pager', (_ref = {}, tools.UtilTools.defineProperty(_ref, 'size--'.concat(vSize), vSize), tools.UtilTools.defineProperty(_ref, 'align--'.concat(align), align), tools.UtilTools.defineProperty(_ref, 'p--border', border), tools.UtilTools.defineProperty(_ref, 'p--background', background), tools.UtilTools.defineProperty(_ref, 'p--perfect', perfect), tools.UtilTools.defineProperty(_ref, 'is--loading', loading), _ref)]
-      }, childNodes);
+      }, layouts.map(function (name) {
+        return _this['render'.concat(name)](h);
+      }));
     },
     methods: {
       // 上一页

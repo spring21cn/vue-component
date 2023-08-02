@@ -1,4 +1,3 @@
-/* eslint-disable no-inner-declarations */
 (function(context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
@@ -7,13 +6,50 @@
     context.VueXtable = definition(context.baseTable, context.tools, context.cell);
   }
 })(this, function(baseTable, tools, cell) {
+  // 多列排序方法 github.com/Teun/thenBy.js
+  var firstBy = (function () {
+    function identity(v) { return v; }
+
+    function ignoreCase(v) { return typeof (v) === 'string' ? v.toLowerCase() : v; }
+
+    function makeCompareFunction(f, opt) {
+      opt = typeof (opt) === 'number' ? { direction: opt } : opt || {};
+      if (typeof (f) != 'function') {
+        var prop = f;
+        // make unary function
+        f = function (v1) { return v1[prop] ? v1[prop] : ''; };
+      }
+      if (f.length === 1) {
+        // f is a unary function mapping a single item to its sort score
+        var uf = f;
+        var preprocess = opt.ignoreCase ? ignoreCase : identity;
+        var cmp = opt.cmp || function (v1, v2) { return v1 < v2 ? -1 : v1 > v2 ? 1 : 0; };
+        f = function (v1, v2) { return cmp(preprocess(uf(v1)), preprocess(uf(v2))); };
+      }
+      if (opt.direction === -1) return function (v1, v2) { return -f(v1, v2); };
+      return f;
+    }
+
+    function tb(func, opt) {
+      var x = (typeof (this) == 'function' && !this.firstBy) ? this : false;
+      var y = makeCompareFunction(func, opt);
+      var f = x ? function (a, b) {
+        return x(a, b) || y(a, b);
+      }
+        : y;
+      f.thenBy = tb;
+      return f;
+    }
+    tb.firstBy = tb;
+    return tb;
+  })();
   
   // methods.js
   var mod = {};
   (function() {
     var rowUniqueId = 0;
     var isWebkit = !!document.documentElement['webkitMatchesSelector'] && !VueUtil.isEdge;
-    var debounceScrollYDuration = VueUtil.isIE ? 60 : 40; // 分组表头的属性
+    var debounceScrollYDuration = VueUtil.isIE ? 40 : 20; // 分组表头的属性
     
     var headerProps = {
       children: 'children'
@@ -66,7 +102,6 @@
         this.clearRowExpand();
         this.clearTreeExpand();
         this.clearActived();
-        this.clearOrderIndex();
     
         if (baseTable._filter) {
           this.clearFilter();
@@ -107,6 +142,12 @@
         return this.handleTableData(true).then(this.updateFooter).then(this.recalculate);
       },
       handleTableData: function handleTableData(force) {
+        if (this.keyboardConfig || this.mouseConfig) {
+          this.clearIndexChecked();
+          this.clearHeaderChecked();
+          this.clearChecked();
+          this.clearCopyed();
+        }
         
         var scrollYLoad = this.scrollYLoad,
             scrollYStore = this.scrollYStore;
@@ -159,7 +200,7 @@
         if (scrollYLoad) {
           rest = this.computeScrollLoad();
         }
-        
+    
         return rest.then(function () {
           // 是否加载了数据
           _this2.isLoadData = true;
@@ -176,7 +217,7 @@
             rest = rest.then(_this2.recalculate);
           }
     
-          return rest.then();
+          return rest.then(_this2.refreshScroll);
         });
       },
     
@@ -508,7 +549,6 @@
         var tableFullData = this.tableFullData,
             visibleColumn = this.visibleColumn;
     
-        var self = this;
         if (!arguments.length) {
           rows = tableFullData;
         } else if (rows && !VueUtil.isArray(rows)) {
@@ -523,7 +563,7 @@
           rows.forEach(function (row) {
             visibleColumn.forEach(function (column) {
               if (column.property) {
-                tools.UtilTools.setCellValue(row, column, null, self);
+                tools.UtilTools.setCellValue(row, column, null);
               }
             });
           });
@@ -583,34 +623,34 @@
         }
     
         if (oRow) {
-          function isEqualsByListOrOne(obj, cb) {
-            if (VueUtil.isArray(obj)) {
-              return obj.some(function (item) {
-                if (cb(item)) {
-                  return true;
-                }
-              });
-            } else {
-              return cb(obj);
-            }
-          }
+		  function isEqualsByListOrOne(obj,cb){
+			  if(VueUtil.isArray(obj)){
+				return obj.some(function(item){
+					if(cb(item)){
+						 return true;
+					 }
+				});
+			  }else{
+				return cb(obj);
+			  }
+		  }
           if (arguments.length > 1) {
-            function isEqualByOne(item) {
-              return !VueUtil.isEqual(VueUtil.get(oRow, item), VueUtil.get(row, item));
-            }
-            return isEqualsByListOrOne(field, isEqualByOne);
+            function isEqualByOne(item){
+				 return !VueUtil.isEqual(VueUtil.get(oRow, item), VueUtil.get(row, item));
+			 }
+			 return isEqualsByListOrOne(field,isEqualByOne);
           }
-
+    
           for (var index = 0, len = visibleColumn.length; index < len; index++) {
             property = visibleColumn[index].property;
-            function isEqualByOne(item) {
-              if (property && !VueUtil.isEqual(VueUtil.get(oRow, item), VueUtil.get(row, item))) {
-                return true;
-              }
-            }
-            if (isEqualsByListOrOne(property, isEqualByOne)) {
-              return true;
-            }
+            function isEqualByOne(item){
+				if (property && !VueUtil.isEqual(VueUtil.get(oRow, item), VueUtil.get(row, item))) {
+					return true;
+				}
+			}
+			if(isEqualsByListOrOne(property,isEqualByOne)){
+				return true;
+			}
           }
         }
     
@@ -682,11 +722,8 @@
       /**
        * 用于多选行，获取已选中的数据
        */
-      getSelectRecords: function getSelectRecords(getVisibleSelect) {
-
-        getVisibleSelect = getVisibleSelect != undefined ? getVisibleSelect : GlobalConfig.getVisibleSelect;
-
-        var tableFullData = getVisibleSelect === true ? this.afterFullData : this.tableFullData,
+      getSelectRecords: function getSelectRecords() {
+        var tableFullData = this.tableFullData,
             treeConfig = this.treeConfig; // 在 v3.0 中废弃 selectConfig
     
         var checkboxConfig = this.checkboxConfig || this.selectConfig || {};
@@ -774,9 +811,7 @@
             return true;
           });
         });
-
-        this.currentRow && tableData.indexOf(this.currentRow) == -1 && this.clearCurrentRow(true);
-
+    
         if (this.sortingColumns && this.sortingColumns.length > 0) {
           var iteratees = this.sortingColumns.map(function(column) {
             return column.sortMethod || column.property;
@@ -802,26 +837,24 @@
                   column.sortBy.forEach(function (sortBy) {
                     sortAry.push({
                       prop: sortBy,
-                      order: column.order
+                      order: column.order === 'desc' ? -1 : undefined
                     });
                   });
                 } else {
                   sortAry.push({
                     prop: column.sortMethod || column.property,
-                    order: column.order
+                    order: column.order === 'desc' ? -1 : undefined
                   });
                 }
               });
-
-              tableData = VueUtil.sortByKeys(sortAry, tableData);
+      
+              var sortFunc = firstBy(sortAry[0].prop, sortAry[0].order);
+              for (var index = 1; index < sortAry.length; index++) {
+                sortFunc = sortFunc.thenBy(sortAry[index].prop, sortAry[index].order);
+              }
+              tableData = tableData.sort(sortFunc);
             }
           }
-        }
-
-        if (tableData.length > 0 && tableData[0]._orderIndex !== undefined) {
-          tableData.sort(function(a,b) {
-            return a._orderIndex - b._orderIndex;
-          });
         }
 
         this.afterFullData = tableData;
@@ -866,14 +899,6 @@
       handleDefault: function handleDefault() {
         var _this10 = this;
     
-        this.scrollTo(0,0);
-        if (this.keyboardConfig || this.mouseConfig) {
-          this.clearIndexChecked();
-          this.clearHeaderChecked();
-          this.clearChecked();
-          this.clearCopyed();
-        }
-        
         // 在 v3.0 中废弃 selectConfig
         var checkboxConfig = this.checkboxConfig || this.selectConfig;
     
@@ -968,7 +993,7 @@
           column.fixed = position === false ? undefined : position === 'right' ? position : 'left';
         } else {
           this.tableFullColumn.forEach(function (column) {
-            column.fixed = column.own.fixed;
+            column.fixed = undefined;
           });
         }
         
@@ -993,7 +1018,7 @@
           column.visible = visible;
         } else {
           this.tableFullColumn.forEach(function (column) {
-            column.visible = VueUtil.isDef(column.own.visible) ? column.own.visible : true;
+            column.visible = true;
           });
         }
     
@@ -1026,10 +1051,7 @@
        * 将固定的列左边、右边分别靠边
        * 如果使用了分组表头，固定列必须在左侧或者右侧
        */
-      refreshColumn: function refreshColumn(resetScroll) {
-        if (resetScroll == null) {
-          resetScroll = true;
-        }
+      refreshColumn: function refreshColumn() {
         var _this12 = this;
     
         var isColspan;
@@ -1047,12 +1069,7 @@
         var scrollX = optimizeOpts.scrollX; // 如果是分组表头，如果子列全部被隐藏，则根列也隐藏
     
         if (isGroup) {
-          VueUtil.eachTree(this.collectColumn, function (column, index, items, path, parent) {
-
-            if (parent && parent.fixed) {
-              column.fixed = parent.fixed;
-            }
-            
+          VueUtil.eachTree(this.collectColumn, function (column) {
             if (column.children && column.children.length) {
               column.visible = !!VueUtil.findTree(column.children, function (subColumn) {
                 return subColumn.children && subColumn.children.length ? 0 : subColumn.visible;
@@ -1113,7 +1130,7 @@
           // }
     
     
-          resetScroll && VueUtil.assign(scrollXStore, {
+          VueUtil.assign(scrollXStore, {
             startIndex: 0,
             visibleIndex: 0
           });
@@ -1305,18 +1322,6 @@
             }
           }
         });
-
-        // 没有自动列（未指定宽度的列）时，最后计算一次是否有多余空间，补充给min-width列的最后一列
-        if (autoList.length == 0) {
-          var odiffer = bodyWidth - tableWidth;
-          if (odiffer > 0) {
-            var minList = scaleMinList.concat(pxMinList);
-            if (minList.length > 0) {
-              minList[minList.length - 1].renderWidth += odiffer;
-              tableWidth = bodyWidth;
-            }
-          }
-        }
         var tableHeight = bodyElem.offsetHeight;
         var overflowY = bodyElem.scrollHeight > bodyElem.clientHeight;
         this.scrollbarWidth = overflowY ? bodyElem.offsetWidth - bodyWidth : 0;
@@ -1437,15 +1442,6 @@
               //     thElem.style.width = `${scrollbarWidth}px`
               //   })
               // }
-              if (name === 'main') {
-                var mainHeaderListElem = elemStore['main-header-list']; 
-                if (mainHeaderListElem) {
-                  var gutterInner = mainHeaderListElem.querySelector('.col--gutter-inner');
-                  if (gutterInner) {
-                    gutterInner.style.width = scrollbarWidth + 'px';
-                  }
-                }
-              }
     
             } else if (layout === 'body') {
               var emptyBlockElem = elemStore[''.concat(name, '-').concat(layout, '-emptyBlock')];
@@ -1532,16 +1528,6 @@
               //     thElem.style.width = `${scrollbarWidth}px`
               //   })
               // }
-
-              if (name === 'main') {
-                var mainFooterListElem = elemStore['main-footer-list']; 
-                if (mainFooterListElem) {
-                  var gutterInnerFooter = mainFooterListElem.querySelector('.col--gutter-inner');
-                  if (gutterInnerFooter) {
-                    gutterInnerFooter.style.width = scrollbarWidth + 'px';
-                  }
-                }
-              }
     
             }
     
@@ -1582,10 +1568,9 @@
                   if (listElem) {
                     VueUtil.loop(listElem.querySelectorAll('.'.concat(column.id)), function (thElem) {
                       var cellElem = thElem.querySelector('.vue-xtable-cell');
-
-                      var borderYShow = typeof border === 'object' ? border.y : border;
+    
                       if (cellElem) {
-                        cellElem.style.width = ''.concat(borderYShow ? renderWidth - 1 : renderWidth, 'px');
+                        cellElem.style.width = ''.concat(border ? renderWidth - 1 : renderWidth, 'px');
                       }
                     });
                   }
@@ -1644,9 +1629,6 @@
         if (end) {
           end();
         }
-        if (type.indexOf('event.') == 0) {
-          _this15.$emit(type.replace('event.', ''), args);
-        }
     
         return rest;
       },
@@ -1690,7 +1672,7 @@
                 if (editConfig.mode === 'row') {
                   var rowNode = getEventTargetNode(evnt, $el, 'vue-xtable-body--row'); // row 方式，如果点击了不同行
     
-                  isClear = rowNode.flag ? getRowNode(rowNode.targetElem).item !== getRowNode(actived.args.cell.parentNode).item : (VueUtil.hasClass(evnt.target, 'vue-xtable-table--body-wrapper') ? 1 : 0);
+                  isClear = rowNode.flag ? getRowNode(rowNode.targetElem).item !== getRowNode(actived.args.cell.parentNode).item : 0;
                 } else {
                   // cell 方式，如果是非编辑列
                   isClear = !getEventTargetNode(evnt, $el, 'col--edit', true).flag;
@@ -1764,8 +1746,6 @@
             var isUpArrow = keyCode === 38;
             var isRightArrow = keyCode === 39;
             var isDwArrow = keyCode === 40;
-            var isPageUp = keyCode === 33;
-            var isPageDown = keyCode === 34;
             var isDel = keyCode === 46;
             var isA = keyCode === 65;
             var isC = keyCode === 67;
@@ -1774,18 +1754,10 @@
             var isCtrlKey = evnt.ctrlKey;
             var isShiftKey = evnt.shiftKey;
             var operArrow = isLeftArrow || isUpArrow || isRightArrow || isDwArrow;
-            var isPage = isPageUp || isPageDown;
             var operCtxMenu = isCtxMenu && ctxMenuStore.visible && (isEnter || isSpacebar || operArrow);
             var params;
     
             if (isEsc) {
-              _this17.$emit('esc-key', {
-                $table: _this17,
-                currentRow:currentRow,
-                select: selected,
-                actived: actived
-              }, evnt);
-
               // 如果按下了 Esc 键，关闭快捷菜单、筛选
               _this17.closeMenu();
     
@@ -1806,55 +1778,37 @@
                   });
                 }
               }
-            } else if (isSpacebar) {
-
-              _this17.$emit('space-key', {
-                $table: _this17,
-                currentRow:currentRow,
-                select: selected,
-                actived: actived
-              }, evnt);
-
-                if ((keyboardConfig.isArrow || keyboardConfig.isTab) && selected.row && selected.column && (selected.column.type === 'checkbox' || selected.column.type === 'selection' || selected.column.type === 'radio')) {
-                // 在 v3.0 中废弃 type=selection
-                // 空格键支持选中复选列
-                evnt.preventDefault(); // 在 v3.0 中废弃 type=selection
-      
-                if (selected.column.type === 'checkbox' || selected.column.type === 'selection') {
-                  _this17.handleToggleCheckRowEvent(selected.args, evnt);
-                } else {
-                  _this17.triggerRadioRowEvent(evnt, selected.args);
-                }
+            } else if (isSpacebar && (keyboardConfig.isArrow || keyboardConfig.isTab) && selected.row && selected.column && (selected.column.type === 'checkbox' || selected.column.type === 'selection' || selected.column.type === 'radio')) {
+              // 在 v3.0 中废弃 type=selection
+              // 空格键支持选中复选列
+              evnt.preventDefault(); // 在 v3.0 中废弃 type=selection
+    
+              if (selected.column.type === 'checkbox' || selected.column.type === 'selection') {
+                _this17.handleToggleCheckRowEvent(selected.args, evnt);
+              } else {
+                _this17.triggerRadioRowEvent(evnt, selected.args);
               }
-            } else if (isEnter) {
-              _this17.$emit('enter-key', {
-                $table: _this17,
-                currentRow:currentRow,
-                select: selected,
-                actived: actived
-              }, evnt);
-              if ((keyboardConfig.isArrow || keyboardConfig.isTab) && (selected.row || actived.row || treeConfig && highlightCurrentRow && currentRow)) {
-                // 如果是激活状态，退则出到下一行
-                if (selected.row || actived.row) {
-                  _this17.moveSelected(selected.row ? selected.args : actived.args, isLeftArrow, isUpArrow, isRightArrow, true, isPageUp, isPageDown, evnt);
-                } else if (treeConfig && highlightCurrentRow && currentRow) {
-                  // 如果是树形表格当前行回车移动到子节点
-                  var childrens = currentRow[treeConfig.children];
-      
-                  if (childrens && childrens.length) {
-                    evnt.preventDefault();
-                    var targetRow = childrens[0];
-                    params = {
-                      $table: _this17,
-                      row: targetRow
-                    };
-      
-                    _this17.setTreeExpansion(currentRow, true).then(function () {
-                      return _this17.scrollToRow(targetRow);
-                    }).then(function () {
-                      return _this17.triggerCurrentRowEvent(evnt, params);
-                    });
-                  }
+            } else if (isEnter && (keyboardConfig.isArrow || keyboardConfig.isTab) && (selected.row || actived.row || treeConfig && highlightCurrentRow && currentRow)) {
+              // 如果是激活状态，退则出到下一行
+              if (selected.row || actived.row) {
+                _this17.moveSelected(selected.row ? selected.args : actived.args, isLeftArrow, isUpArrow, isRightArrow, true, evnt);
+              } else if (treeConfig && highlightCurrentRow && currentRow) {
+                // 如果是树形表格当前行回车移动到子节点
+                var childrens = currentRow[treeConfig.children];
+    
+                if (childrens && childrens.length) {
+                  evnt.preventDefault();
+                  var targetRow = childrens[0];
+                  params = {
+                    $table: _this17,
+                    row: targetRow
+                  };
+    
+                  _this17.setTreeExpansion(currentRow, true).then(function () {
+                    return _this17.scrollToRow(targetRow);
+                  }).then(function () {
+                    return _this17.triggerCurrentRowEvent(evnt, params);
+                  });
                 }
               }
             } else if (operCtxMenu) {
@@ -1873,13 +1827,13 @@
     
                 _this17.handleActived(selected.args, evnt);
               }
-            } else if ((operArrow || isPage) && keyboardConfig.isArrow) {
+            } else if (operArrow && keyboardConfig.isArrow) {
               // 如果按下了方向键
               if (selected.row && selected.column) {
-                _this17.moveSelected(selected.args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, isPageUp, isPageDown, evnt);
-              } else if ((isUpArrow || isDwArrow || isPage) && highlightCurrentRow && currentRow) {
+                _this17.moveSelected(selected.args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, evnt);
+              } else if ((isUpArrow || isDwArrow) && highlightCurrentRow && currentRow) {
                 // 当前行按键上下移动
-                _this17.moveCurrentRow(isUpArrow, isDwArrow, isPageUp, isPageDown, evnt);
+                _this17.moveCurrentRow(isUpArrow, isDwArrow, evnt);
               }
             } else if (isTab && keyboardConfig.isTab) {
               // 如果按下了 Tab 键切换
@@ -1891,40 +1845,30 @@
             } else if (isDel || (treeConfig && highlightCurrentRow && currentRow ? isBack && keyboardConfig.isArrow : isBack)) {
               // 如果是删除键
               if (keyboardConfig.isDel && (selected.row || selected.column)) {
-                params = {
-                  $table: _this17,
-                  row: selected.row,
-                  column: selected.column,
-                };
-
-                var selectedCellEditable = _this17.isCellEditable(params);
-
-                if (_this17.mouseConfig.checked && !isBack) {
-
-                  var checkedData = _this17.getMouseCheckeds();
-                  var cRows = checkedData.rows;
-                  var cColumns = checkedData.columns;
-
-                  cRows.forEach(function(cRow) {
-
-                    cColumns.forEach(function(cColumn) {
-
-                      if (_this17.isCellEditable({row: cRow, column: cColumn})) {
-                        tools.UtilTools.setCellValue(cRow, cColumn, null, _this17);
-                      }
-
-                    });
-                  });
-                } else {
-                  if (selectedCellEditable) {
-                    tools.UtilTools.setCellValue(selected.row, selected.column, null, _this17);
-                  }
+                tools.UtilTools.setCellValue(selected.row, selected.column, null);
+    
+                if (isBack) {
+                  _this17.handleActived(selected.args, evnt);
                 }
-
-                if (selectedCellEditable) {
-                  if (isBack) {
-                    _this17.handleActived(selected.args, evnt);
-                  }
+              } else if (isBack && keyboardConfig.isArrow && treeConfig && highlightCurrentRow && currentRow) {
+                // 如果树形表格回退键关闭当前行返回父节点
+                var findTreeData = VueUtil.findTree(_this17.afterFullData, function (item) {
+                  return item === currentRow;
+                }, treeConfig),
+                    parentRow = findTreeData.parent;
+    
+                if (parentRow) {
+                  evnt.preventDefault();
+                  params = {
+                    $table: _this17,
+                    row: parentRow
+                  };
+    
+                  _this17.setTreeExpansion(parentRow, false).then(function () {
+                    return _this17.scrollToRow(parentRow);
+                  }).then(function () {
+                    return _this17.triggerCurrentRowEvent(evnt, params);
+                  });
                 }
               }
             } else if (keyboardConfig.isCut && isCtrlKey && (isA || isX || isC)) {
@@ -1933,18 +1877,7 @@
                 _this17.handleAllChecked(evnt);
               } else if (isX || isC) {
                 if (!editStore.actived.column && !editStore.actived.row) {
-                  if (_this17.beforeCopy) {
-                    var ret = _this17.beforeCopy();
-                    if (ret.then) {
-                      ret.then(function() {
-                        _this17.handleCopyed(isX, evnt);
-                      });
-                    } else if (ret !== false) {
-                      _this17.handleCopyed(isX, evnt);
-                    }
-                  } else {
-                    _this17.handleCopyed(isX, evnt);
-                  }
+                  _this17.handleCopyed(isX, evnt);
                 }
               }
             } else if (keyboardConfig.isEdit && !isCtrlKey && (keyCode >= 48 && keyCode <= 57 || keyCode >= 65 && keyCode <= 90 || keyCode >= 96 && keyCode <= 111 || keyCode >= 186 && keyCode <= 192 || keyCode >= 219 && keyCode <= 222 || keyCode === 32)) {
@@ -1963,25 +1896,12 @@
 
       handleGlobalPaste: function(evnt) {
         if (this.isActivated) {
-          var self = this;
-          if (this.beforePaste) {
-            var data = this.getClipboardData(evnt);
-            var ret = this.beforePaste(evnt, data);
-            if (ret.then) {
-              ret.then(function() {
-                self.handlePaste(evnt, data);
-              });
-            } else if (ret !== false) {
-              this.handlePaste(evnt);
-            }
-          } else {
-            this.handlePaste(evnt);
-          }
+          this.handlePaste(evnt);
         }
       },
-      handleGlobalResizeEvent: VueUtil.throttle(100, function handleGlobalResizeEvent() {
+      handleGlobalResizeEvent: function handleGlobalResizeEvent() {
         this.recalculate();
-      }),
+      },
       handleTooltipLeaveEvent: function handleTooltipLeaveEvent(evnt) {
         var _this18 = this;
     
@@ -2076,17 +1996,9 @@
         var cell = evnt.currentTarget;
         var tooltip = this.$refs.tooltip;
         var wrapperElem = cell.children[0];
-        var content = cell.textContent;
+        var content = cell.innerText;
     
-        var fixedBtn = false;
-
-        if (!row) {
-          if (cell.classList.contains('sort--active') || cell.classList.contains('filter--active')) {
-            fixedBtn = true;
-          }
-        }
-
-        if (content && (fixedBtn || wrapperElem.scrollWidth > wrapperElem.clientWidth)) {
+        if (content && wrapperElem.scrollWidth > wrapperElem.clientWidth) {
           VueUtil.assign(this.tooltipStore, {
             row: row,
             column: column,
@@ -2362,7 +2274,7 @@
        * @param {Boolean} value 是否选中
        */
       setAllSelection: function setAllSelection(value) {
-        var tableFullData = this.afterFullData,
+        var tableFullData = this.tableFullData,
             treeConfig = this.treeConfig,
             selection = this.selection; // 在 v3.0 中废弃 selectConfig
     
@@ -2390,9 +2302,9 @@
             var clearValFn = function clearValFn(row, rowIndex) {
               var _checkMethod2;
     
-              if (!checkMethod || (VueUtil.get(row, property) && checkMethod((_checkMethod2 = {
+              if (!checkMethod || (checkMethod((_checkMethod2 = {
                 row: row
-              }, tools.UtilTools.defineProperty(_checkMethod2, indexKey, rowIndex), tools.UtilTools.defineProperty(_checkMethod2, '$rowIndex', rowIndex), _checkMethod2)))) {
+              }, tools.UtilTools.defineProperty(_checkMethod2, indexKey, rowIndex), tools.UtilTools.defineProperty(_checkMethod2, '$rowIndex', rowIndex), _checkMethod2)) ? 0 : selection.indexOf(row) > -1)) {
                 VueUtil.set(row, property, value);
               }
             };
@@ -2461,7 +2373,7 @@
         this.checkSelectionStatus();
       },
       checkSelectionStatus: function checkSelectionStatus() {
-        var tableFullData = this.afterFullData,
+        var tableFullData = this.tableFullData,
             editStore = this.editStore,
             selection = this.selection,
             treeIndeterminates = this.treeIndeterminates; // 在 v3.0 中废弃 selectConfig
@@ -2494,7 +2406,6 @@
               }
 
             } : function (row) {
-              allDisabled = false;
               return VueUtil.get(row, property);
             }) && !allDisabled;
             this.isIndeterminate = !this.isAllSelected && tableFullData.some(function (row) {
@@ -2516,7 +2427,6 @@
                 return true;
               }
             } : function (row) {
-              allDisabled = false;
               return selection.indexOf(row) > -1;
             }) && !allDisabled;
             this.isIndeterminate = !this.isAllSelected && tableFullData.some(function (row) {
@@ -2698,18 +2608,12 @@
       /**
        * 用于当前行，手动清空当前高亮的状态
        */
-      clearCurrentRow: function clearCurrentRow(triggerEvent) {
-        var oldCurrentRow = this.currentRow;
+      clearCurrentRow: function clearCurrentRow() {
         this.currentRow = null;
         this.hoverRow = null;
         VueUtil.loop(this.$el.querySelectorAll('.row--current'), function (elem) {
           return tools.DomTools.removeClass(elem, 'row--current');
         });
-
-        if(triggerEvent) {
-          this.$emit('current-change', null, oldCurrentRow);
-        }
-        
         return this.$nextTick();
       },
     
@@ -2954,9 +2858,7 @@
           }
         }
     
-          if (!actived.args || evnt.currentTarget !== actived.args.cell) {
-            tools.UtilTools.emitEvent(this, 'cell-dblclick', [params, evnt]);
-          }
+        tools.UtilTools.emitEvent(this, 'cell-dblclick', [params, evnt]);
       },
     
       /**
@@ -2966,7 +2868,6 @@
         var property = column.property;
     
         if (column.sortable || column.remoteSort) {
-          this.clearOrderIndex();
           var evntParams = {
             column: column,
             property: property,
@@ -3000,17 +2901,11 @@
       sort: function sort(field, order) {
         var visibleColumn = this.visibleColumn,
             tableFullColumn = this.tableFullColumn,
-            collectColumn = this.collectColumn,
             remoteSort = this.remoteSort,
             singleSort = this.singleSort;
         var column = VueUtil.find(visibleColumn, function (item) {
           return item.property === field;
         });
-
-        var columns = VueUtil.filterTree(collectColumn, function (item) {
-          return item.property === field;
-        });
-        
         var isRemote = VueUtil.isBoolean(column.remoteSort) ? column.remoteSort : remoteSort;
     
         if (column.sortable || column.remoteSort) {
@@ -3020,15 +2915,12 @@
     
           if (column.order !== order) {
             if(singleSort) {
-              [tableFullColumn.concat(collectColumn)].forEach(function (column) {
+              tableFullColumn.forEach(function (column) {
                   column.order = null;
               });
               this.sortingColumns = [];
             }
             column.order = order; // 如果是服务端排序，则跳过本地排序处理
-            columns.forEach( function(col) {
-              col.order = order;
-            });
             if(this.sortingColumns.indexOf(column) == -1)  this.sortingColumns.push(column); //加入排序顺序数组
 
             if (!isRemote) {
@@ -3055,16 +2947,6 @@
             });
           }
         });
-
-        var columns = VueUtil.filterTree(this.collectColumn, function (item) {
-          return !property || property == item.property;
-        });
-
-        columns.forEach( function(col) {
-          col.order = null;
-        });
-
-
         return this.handleTableData(true);
       },
     
@@ -3569,7 +3451,7 @@
             // 计算 X 逻辑
             if (scrollXLoad) {
               var firstColumn = visibleColumn[0];
-              var cWidth = scrollX.cSize || (firstColumn ? firstColumn.renderWidth : 40);
+              var cWidth = firstColumn ? firstColumn.renderWidth : 40;
               var visibleXSize = (parseFloat(scrollX.vSize || Math.ceil(tableBodyElem.clientWidth / cWidth)) || 0);
               scrollXStore.visibleSize = visibleXSize; // 自动优化
     
@@ -3610,16 +3492,9 @@
               }
     
               var clientHeight = tableBodyElem.clientHeight;
-
               var propsHeight = parseInt(_this26.height);
               var calcHeight = propsHeight ? propsHeight : clientHeight;
-
-              if (typeof _this26.height == 'string' && _this26.height.indexOf('%') > 0) {
-                calcHeight = clientHeight;
-              }
-
               var visibleYSize = (parseFloat(scrollY.vSize || Math.ceil(calcHeight / rHeight)) || 0);
-              
               scrollYStore.visibleSize = visibleYSize;
               scrollYStore.rowHeight = rHeight; // 自动优化
     
@@ -3628,7 +3503,7 @@
               }
     
               if (!scrollY.rSize) {
-                scrollYStore.renderSize = VueUtil.isFirefox ? visibleYSize + 10 : VueUtil.isEdge ? visibleYSize * 15 : isWebkit ? visibleYSize  + 10 : visibleYSize + 10;
+                scrollYStore.renderSize = VueUtil.isFirefox ? visibleYSize * 6 : VueUtil.isEdge ? visibleYSize * 10 : isWebkit ? visibleYSize + 2 : visibleYSize * 6;
               }
     
               _this26.updateScrollYData();
@@ -3641,9 +3516,8 @@
         });
       },
       updateScrollXData: function updateScrollXData() {
-        var scrollXStore = this.scrollXStore,
-            columnStore = this.columnStore,
-            visibleColumn = (columnStore.leftList || []).concat(columnStore.centerList || []).concat(columnStore.rightList || []);
+        var visibleColumn = this.visibleColumn,
+            scrollXStore = this.scrollXStore;
         this.tableColumn = visibleColumn.slice(scrollXStore.startIndex, scrollXStore.startIndex + scrollXStore.renderSize);
         this.updateScrollXSpace();
       },
@@ -3760,6 +3634,7 @@
           if (rightBody) {
             rightBody.$el.scrollTop = scrollTop;
           }
+    
           bodyElem.scrollTop = scrollTop;
         }
     
@@ -3836,6 +3711,7 @@
        */
       clearScroll: function clearScroll() {
         var _this29 = this;
+    
         var $refs = this.$refs;
         var tableBody = $refs.tableBody;
         var tableBodyElem = tableBody ? tableBody.$el : null;
@@ -3874,18 +3750,6 @@
         }
     
         return this.$nextTick();
-      },
-
-      addOrderIndex: function() {
-        this.afterFullData.forEach(function(d, i) {
-          d._orderIndex = i;
-        });
-      },
-
-      clearOrderIndex: function() {
-        this.tableFullData.forEach(function(data) {
-          data._orderIndex = undefined;
-        });
       },
     
       /**
@@ -3936,9 +3800,17 @@
 
               if (hasCellRule) {
                 return _this30.validCellRules(type, row, column, cellValue).then(function () {
+                  if (customVal && validStore.visible) {
+                    tools.UtilTools.setCellValue(row, column, cellValue);
+                  }
+    
                   _this30.clearValidate();
                 }).catch(function (_ref7) {
                   var rule = _ref7.rule;
+    
+                  if (customVal) {
+                    tools.UtilTools.setCellValue(row, column, cellValue);
+                  }
     
                   _this30.showValidTooltip({
                     rule: rule,
@@ -3980,6 +3852,7 @@
           var renderWidth = column.renderWidth;
           var fixed = column.fixed;
           var filters = column.filters;
+          var dragged = column.dragged;
 
           if (property && !visible) {
             setting.hidden.push(property);
@@ -4000,7 +3873,7 @@
               }
             });
           }
-          if (!isGroup && property && table.dragged) {
+          if (!isGroup && property && dragged) {
             setting.drag.push({
               property: property,
               index: this.getColumnIndex(column)
@@ -4010,7 +3883,7 @@
 
         if(isGroup) {
           this.collectColumn.forEach(function(collectColumn, index) {
-            if (table.dragged) {
+            if (collectColumn.dragged) {
               setting.drag.push({
                 property: table.beforeDragColumn.indexOf(collectColumn),
                 index: index
@@ -4048,10 +3921,6 @@
       },
 
       setUserSetting: function(settingStr) {
-        this.resetFixColumn();
-        this.resetCustoms();
-        this.resetResizable();
-        this.clearOrderIndex();
         var setting =  JSON.parse(settingStr);
         var tableFullColumn = this.tableFullColumn;
         var table = this;
@@ -4092,19 +3961,15 @@
             var sortingColumn = table.safeGetColumnByField(orderObj.property);
             table.sortingColumns.push(sortingColumn);
             sortingColumn.order = orderObj.order;
-
-            var columns = VueUtil.filterTree(table.collectColumn, function (item) {
-              return item.property === orderObj.property;
-            });
-
-            columns.forEach( function(col) {
-              col.order = orderObj.order;
-            });
-
           });
         }
 
         var dragColumns = setting.drag;
+        dragColumns.sort(function(a, b) {
+          var aIndex = table.getColumnIndex(table.safeGetColumnByField(a.property));
+          var bIndex = table.getColumnIndex(table.safeGetColumnByField(b.property));
+          return aIndex - bIndex;
+        });
 
         VueUtil.forEach(dragColumns, function(dragObj) {
           var property = dragObj.property;
@@ -4120,7 +3985,7 @@
           var newColumnIndex = index;
 
           var currRow = cols.splice(oldColumnIndex, 1)[0];
-          table.dragged = 'dragged';
+          currRow.dragged = 'dragged';
           cols.splice(newColumnIndex, 0, currRow);
         });
         
@@ -4135,8 +4000,6 @@
 
         this.handleTableData(true);
         this.cacheColumnMap();
-
-        this.$emit('set-user-setting', setting);
         return this.refreshColumn();
       },
 
@@ -4147,13 +4010,7 @@
           if(this.isGroup && !this.beforeDragColumn) {
             this.beforeDragColumn = this.collectColumn.slice(0);
           }
-
-          var el = self.$el.querySelector('.body--wrapper>.vue-xtable-table--header .vue-xtable-header--row');
-
-          if (!el) {
-            return;
-          }
-          self.columnDragSortable = Sortable.create(el, {
+          self.columnDragSortable = Sortable.create(self.$el.querySelector('.body--wrapper>.vue-xtable-table--header .vue-xtable-header--row'), {
             handle: '.vue-xtable-header--column:not(.col--fixed):not(.col--index):not(.col--drag)',
             onEnd: this.onDragEnd,
             onMove: function(evt) {
@@ -4198,7 +4055,7 @@
         var oldColumnIndex = xTable.getColumnIndex(tableColumn[oldIndex]);
         var newColumnIndex = xTable.getColumnIndex(tableColumn[newIndex]); // 移动到目标列
         var currCol = col.splice(oldColumnIndex, 1)[0];
-        xTable.dragged = 'dragged';
+        currCol.dragged = 'dragged';
         col.splice(newColumnIndex, 0, currCol);
         xTable.loadColumn(col);
         xTable.$emit('column-drag', {
@@ -4209,7 +4066,6 @@
       },
 
       resetColumnDrag: function() {
-        this.dragged = false;
         if(this.originColumn) {
           this.loadColumn(this.originColumn);
         }
@@ -4230,71 +4086,19 @@
        *************************/
 
 
-      initRowDrag: function (fixed) {
+      initRowDrag: function () {
         var self = this;
         self.$nextTick(function () {
-          var className = fixed == 'left' ? 'fixed-left--wrapper' : fixed == 'right' ? 'fixed-right--wrapper' : 'body--wrapper';
-          if (!this.overflowX) className = 'body--wrapper';
-          
-          var el = self.$el.querySelector('.' + className + '>.vue-xtable-table--body tbody');
-
-          if (!el) return;
-
-          if (self.rowSortable) {
-
-            if (self.rowSortable.el != el) {
-              self.rowSortable.destroy();
-            } else {
-              return;
-            }
-          }
-
-          self.rowSortable = Sortable.create(el, {
+          self.rowSortable = Sortable.create(self.$el.querySelector('.body--wrapper>.vue-xtable-table--body tbody'), {
             handle: '.col--drag',
-            group: {
-              put: false
-            },
-            onChange: function (evt) {
-              if (!fixed) return;
-              var newIndex = evt.newIndex;
-              var dragingRowId =  document.querySelector('[draggable="true"]').dataset.rowid;
-
-              var mainTr = document.querySelector('.body--wrapper tr[data-rowid="' + dragingRowId + '"]');
-              var container = mainTr.parentElement;
-
-              if(VueUtil.indexOf(container.children, mainTr) < newIndex) {
-
-                container.children[newIndex].insertAdjacentElement('afterend', mainTr);
-              } else {
-                container.insertBefore(mainTr, container.children[newIndex]);
-
-              }
-
-            },
             onEnd: function (obj) {
 
               var newIndex = obj.newIndex,
                 oldIndex = obj.oldIndex;
               var data = self.tableData;
-              var fullData = self.afterFullData;
-              var currRow = data[oldIndex];
-
-              var fullOldIndex = fullData.indexOf(currRow);
-              var fullNewIndex;
-              var beforeRow = data[newIndex - 1];
-              if (beforeRow) {
-                fullNewIndex = fullData.indexOf(beforeRow) + 1;
-              } else {
-                fullNewIndex = 0;
-              }
-
-              var fullCurrRow = fullData.splice(fullOldIndex, 1)[0];
-              fullData.splice(fullNewIndex, 0, fullCurrRow);
-
-              self.addOrderIndex();
-
-              self.updateAfterFullData();
-              self.setCurrentRow(fullCurrRow);
+              var currRow = data.splice(oldIndex, 1)[0];
+              data.splice(newIndex, 0, currRow);
+              self.setCurrentRow(currRow);
 
               self.clearSelected();
               self.clearChecked();
@@ -4305,8 +4109,6 @@
               self.editStore.checked.rowNodes = null;
               self.editStore.selected.args = null;
 
-              self.handleTableData(true);
-              
               self.$emit('row-drag', {
                 newIndex: newIndex,
                 oldIndex: oldIndex,
@@ -4323,24 +4125,7 @@
 
       getColumnIndexFromVisibleIndex: function(visibleIndex) {
         return this.tableFullColumn.indexOf(this.tableColumn[visibleIndex]);
-      },
-
-      getIsRequiredByOne: function(property){
-        var editRules = this.enabledEditRules;
-
-        if (!editRules) {
-          return;
-        }
-        
-        var columnRules = VueUtil.get(editRules, property);
-        var isRequired;
-        if (columnRules) {
-          isRequired = columnRules.some(function (rule) {
-            return rule.required;
-          });
-        }
-        return isRequired;
-      },
+      }
     }; // Module methods
     
     var funcs = 'filter,clearFilter,closeMenu,getMouseSelecteds,getMouseCheckeds,clearCopyed,clearChecked,clearHeaderChecked,clearIndexChecked,clearSelected,insert,insertAt,insertRow,delRow,remove,removeSelecteds,revert,revertData,getRecordset,getInsertRecords,getRemoveRecords,getUpdateRecords,clearActived,getActiveRow,hasActiveRow,isActiveByRow,setActiveRow,setActiveCell,setSelectCell,clearValidate,fullValidate,validate,exportCsv,openExport,exportData,openImport,importData,readFile,importByFile,print'.split(',');
@@ -4372,16 +4157,6 @@
           columnStore = $table.columnStore,
           footerData = $table.footerData;
       var fixedColumn = columnStore[''.concat(fixedType, 'List')];
-
-      $table.$nextTick(function() {
-        var hasDragCol = VueUtil.find($table.tableColumn, function (col) {
-          return col.type === 'drag';
-        });
-        if(hasDragCol) {
-          $table.initRowDrag(hasDragCol.fixed);
-        }
-      });
-
       return h('div', {
         class: 'vue-xtable-table--fixed-'.concat(fixedType, '-wrapper'),
         ref: ''.concat(fixedType, 'Container')
@@ -4450,7 +4225,7 @@
         },
         // 是否带有纵向边框
         border: {
-          type: [Boolean, Object],
+          type: Boolean,
           default: function _default() {
             return GlobalConfig.border;
           }
@@ -4632,10 +4407,6 @@
         editConfig: Object,
         // 校验配置项
         validConfig: Object,
-        // 导出配置项
-        exportConfig: Object,
-        // 导入配置项
-        importConfig: Object,
         // 校验规则配置项
         editRules: Object,
         // 优化配置项
@@ -4644,14 +4415,6 @@
         params: Object,
         //允许列拖拽排序
         columnDrag: Boolean,
-        recalculateAfterClearActived: {
-          type: Boolean,
-          default: true,
-        },
-        // 粘贴前处理
-        beforePaste: Function,
-        // 复制前处理
-        beforeCopy: Function,
       },
       provide: function provide() {
         return {
@@ -4782,9 +4545,7 @@
           validResults: [],
           printUrl: '',
           // 存放排序列顺序
-          sortingColumns: [],
-          //条件处理后
-          afterFullData: [],
+          sortingColumns: []
         };
       },
       computed: {
@@ -4865,7 +4626,7 @@
          * 判断列全选的复选框是否禁用
          */
         isAllCheckboxDisabled: function isAllCheckboxDisabled() {
-          var tableData = this.afterFullData,
+          var tableFullData = this.tableFullData,
               treeConfig = this.treeConfig; // 在 v3.0 中废弃 selectConfig
     
           var checkboxConfig = this.checkboxConfig || this.selectConfig || {};
@@ -4873,13 +4634,13 @@
               checkMethod = checkboxConfig.checkMethod;
     
           if (strict) {
-            if (tableData.length) {
+            if (tableFullData.length) {
               if (checkMethod) {
                 if (treeConfig) {} // 暂时不支持树形结构
                 // 如果所有行都被禁用
     
     
-                return tableData.every(function (row, rowIndex) {
+                return tableFullData.every(function (row, rowIndex) {
                   return !checkMethod({
                     row: row,
                     rowIndex: rowIndex,
@@ -4908,38 +4669,15 @@
             res[result.rowId][result.property].push(result);
           });
           return res;
-        },
-        enabledEditRules: function() {
-          var editRules = this.editRules || {};
-          var resultRules = {};
-          VueUtil.each(editRules, function(rules, prop) {
-            resultRules[prop] = VueUtil.filter(rules, function(rule) {
-              return rule.enabled == null || (VueUtil.isBoolean(rule.enabled) ? rule.enabled : rule.enabled());
-            });
-          });
-
-          return resultRules;
         }
       },
       watch: {
         data: function data(value) {
           if (!this._isUpdateData) {
-            this.editStore.actived.row && this.clearActived();
             this.loadTableData(value, true).then(this.handleDefault);
           }
     
           this._isUpdateData = false;
-        },
-        afterFullData: function(){
-          var children = this.treeConfig && this.treeConfig.children;
-
-          function updateRowIndex(data){
-            data.forEach(function(row, i) {
-              row.$rowIndex = i;
-              children && VueUtil.isArray(row[children]) && (updateRowIndex(row[children]));
-            });
-          }
-          updateRowIndex(this.afterFullData);
         },
         customs: function customs(value) {
           if (!this.isUpdateCustoms) {
@@ -5004,7 +4742,7 @@
           }
         },
         syncResize: function syncResize(value) {
-          if (value !== undefined && value !== null) {
+          if (value) {
             this.$nextTick(this.recalculate);
           }
         },
@@ -5050,8 +4788,9 @@
           // 最后滚动位置
           lastScrollLeft: 0,
           lastScrollTop: 0,
-          // 完整数据
+          // 完整数据、条件处理后
           tableFullData: [],
+          afterFullData: [],
           // 缓存数据集
           fullAllDataRowMap: new Map(),
           fullAllDataRowIdData: {},
@@ -5130,6 +4869,8 @@
 
         tools.GlobalEvent.on(this, 'paste', this.handleGlobalPaste);
     
+        tools.GlobalEvent.on(this, 'resize', this.handleGlobalResizeEvent);
+    
         tools.GlobalEvent.on(this, 'contextmenu', this.handleGlobalContextmenuEvent);
     
         this.preventEvent(null, 'created', {
@@ -5150,11 +4891,10 @@
             return col.type === 'drag';
           });
           if(hasDragCol) {
-            this.initRowDrag(hasDragCol.fixed);
+            this.initRowDrag();
           }
         });
 
-        VueUtil.addResizeListener(this.getParentElem(), this.handleGlobalResizeEvent);
       },
       activated: function activated() {
         this.refreshScroll();
@@ -5163,7 +4903,6 @@
         });
       },
       deactivated: function deactivated() {
-        this.clostTooltip();
         this.preventEvent(null, 'deactivated', {
           $table: this
         });
@@ -5205,12 +4944,7 @@
         tools.GlobalEvent.off(this, 'resize');
     
         tools.GlobalEvent.off(this, 'contextmenu');
-
-        tools.GlobalEvent.off(this, 'paste');
-
-        var parentElem = this.getParentElem();
-        parentElem && VueUtil.removeResizeListener(parentElem, this.handleGlobalResizeEvent);
-
+    
         this.preventEvent(null, 'destroyed', {
           $table: this
         });
@@ -5265,7 +4999,7 @@
         return h('div', {
           class: (_class = {
             'vue-xtable-table': 1
-          }, tools.UtilTools.defineProperty(_class, 'size--'.concat(vSize), vSize), tools.UtilTools.defineProperty(_class, 'vue-xtable-editable', editConfig), tools.UtilTools.defineProperty(_class, 'show--head', showHeader), tools.UtilTools.defineProperty(_class, 'show--foot', showFooter), tools.UtilTools.defineProperty(_class, 'fixed--left', leftList.length), tools.UtilTools.defineProperty(_class, 'fixed--right', rightList.length), tools.UtilTools.defineProperty(_class, 'all-overflow', showOverflow), tools.UtilTools.defineProperty(_class, 'all-head-overflow', showHeaderOverflow), tools.UtilTools.defineProperty(_class, 'c--highlight', highlightCell), tools.UtilTools.defineProperty(_class, 't--animat', optimizeOpts.animat), tools.UtilTools.defineProperty(_class, 't--stripe', stripe), tools.UtilTools.defineProperty(_class, 't--border', typeof border === 'object' ? border.y : border), tools.UtilTools.defineProperty(_class, 't--border-hide-x', typeof border === 'object' ? border.x === false : false),tools.UtilTools.defineProperty(_class, 't--border-hide-outside', typeof border === 'object' ? border.outside === false : false), tools.UtilTools.defineProperty(_class, 't--selected', mouseConfig.selected), tools.UtilTools.defineProperty(_class, 't--checked', mouseConfig.checked), tools.UtilTools.defineProperty(_class, 'row--highlight', highlightHoverRow), tools.UtilTools.defineProperty(_class, 'column--highlight', highlightHoverColumn), tools.UtilTools.defineProperty(_class, 'is--loading', loading), tools.UtilTools.defineProperty(_class, 'scroll--y', overflowY), tools.UtilTools.defineProperty(_class, 'scroll--x', overflowX), tools.UtilTools.defineProperty(_class, 'virtual--x', scrollXLoad), tools.UtilTools.defineProperty(_class, 'virtual--y', scrollYLoad), _class)
+          }, tools.UtilTools.defineProperty(_class, 'size--'.concat(vSize), vSize), tools.UtilTools.defineProperty(_class, 'vue-xtable-editable', editConfig), tools.UtilTools.defineProperty(_class, 'show--head', showHeader), tools.UtilTools.defineProperty(_class, 'show--foot', showFooter), tools.UtilTools.defineProperty(_class, 'fixed--left', leftList.length), tools.UtilTools.defineProperty(_class, 'fixed--right', rightList.length), tools.UtilTools.defineProperty(_class, 'all-overflow', showOverflow), tools.UtilTools.defineProperty(_class, 'all-head-overflow', showHeaderOverflow), tools.UtilTools.defineProperty(_class, 'c--highlight', highlightCell), tools.UtilTools.defineProperty(_class, 't--animat', optimizeOpts.animat), tools.UtilTools.defineProperty(_class, 't--stripe', stripe), tools.UtilTools.defineProperty(_class, 't--border', border), tools.UtilTools.defineProperty(_class, 't--selected', mouseConfig.selected), tools.UtilTools.defineProperty(_class, 't--checked', mouseConfig.checked), tools.UtilTools.defineProperty(_class, 'row--highlight', highlightHoverRow), tools.UtilTools.defineProperty(_class, 'column--highlight', highlightHoverColumn), tools.UtilTools.defineProperty(_class, 'is--loading', loading), tools.UtilTools.defineProperty(_class, 'scroll--y', overflowY), tools.UtilTools.defineProperty(_class, 'scroll--x', overflowX), tools.UtilTools.defineProperty(_class, 'virtual--x', scrollXLoad), tools.UtilTools.defineProperty(_class, 'virtual--y', scrollYLoad), _class)
         }, [
         /**
          * 隐藏列
@@ -5355,7 +5089,7 @@
             filterStore: filterStore
           },
           ref: 'filterWrapper'
-        }) : undefined,
+        }) : _e(),
         /**
          * 快捷菜单
          */

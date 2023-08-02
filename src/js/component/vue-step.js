@@ -27,13 +27,6 @@
     beforeCreate: function() {
       this.$parent.steps.push(this);
     },
-    beforeDestroy: function beforeDestroy() {
-      var steps = this.$parent.steps;
-      var index = steps.indexOf(this);
-      if (index >= 0) {
-        steps.splice(index, 1);
-      }
-    },
     computed: {
       currentStatus: function() {
         return this.status || this.internalStatus;

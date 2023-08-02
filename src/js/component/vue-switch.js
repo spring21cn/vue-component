@@ -9,9 +9,9 @@
 })(this, function(Vue) {
   'use strict';
   var VueSwitch = {
-    template: '<label :tabindex="switchDisabled ? -1 : tabindex" @keydown.space.stop.prevent="toggleCheck" :class="[\'vue-switch\', {\'is-disabled\': switchDisabled, \'vue-switch--wide\': hasText}]">\
-      <div class="vue-switch__mask" v-show="switchDisabled"></div>\
-      <input ref="check" class="vue-switch__input" type="checkbox" @change="handleChange" v-model="_value" :name="name" :disabled="switchDisabled">\
+    template: '<label :tabindex="disabled ? -1 : tabindex" @keydown.space.stop.prevent="toggleCheck" :class="[\'vue-switch\', {\'is-disabled\': disabled, \'vue-switch--wide\': hasText}]">\
+      <div class="vue-switch__mask" v-show="disabled"></div>\
+      <input ref="check" class="vue-switch__input" type="checkbox" @change="handleChange" v-model="_value" :name="name" :disabled="disabled">\
       <span class="vue-switch__core" ref="core" :style="{\'width\': coreWidth + \'px\'}">\
         <span class="vue-switch__button" :style="buttonStyle"></span>\
       </span>\
@@ -25,15 +25,10 @@
       </transition>\
     </label>',
     name: 'VueSwitch',
-    inject: {
-      vueForm: {
-        default: ''
-      },
-    },
     props: {
       value: {
         type: [Boolean, String, Number],
-        default: false
+        default: true
       },
       onValue: {
         type: [Boolean, String, Number],
@@ -100,9 +95,6 @@
         set: function(val) {
           this.$emit('input', val ? this.onValue : this.offValue);
         }
-      },
-      switchDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
       }
     },
     watch: {

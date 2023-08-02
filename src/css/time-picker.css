@@ -203,7 +203,6 @@
     width: 100%;
     position: fixed;
     bottom: 0;
-    top: auto !important;
   }
 
   .vue-time-panel__footer .vue-time-panel__btn{

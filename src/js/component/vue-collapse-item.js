@@ -9,7 +9,7 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCollapseItem = {
-    template: '<div :class="[\'vue-collapse-item\', {\'is-active\': isActive}]"><div :class="[\'vue-collapse-item__header\', {\'header-expand\': headerExpand}]" @click="handleHeaderClick"><i class="vue-collapse-item__header__arrow vue-icon-arrow-right" @click="handleIconClick" v-show="expandOnClick"></i><slot name="title">{{title}}</slot></div><collapse-transition><div class="vue-collapse-item__wrap" v-show="noHide || isActive" :style="itemStyle"><div class="vue-collapse-item__content"><slot v-if="!initAfterOpen || firstActive"></slot></div></div></collapse-transition></div>',
+    template: '<div :class="[\'vue-collapse-item\', {\'is-active\': isActive}]"><div :class="[\'vue-collapse-item__header\', {\'header-expand\': headerExpand}]" @click="handleHeaderClick"><i class="vue-collapse-item__header__arrow vue-icon-arrow-right" @click="handleIconClick" v-show="expandOnClick"></i><slot name="title">{{title}}</slot></div><collapse-transition><div class="vue-collapse-item__wrap" v-show="isActive"><div class="vue-collapse-item__content"><slot></slot></div></div></collapse-transition></div>',
     name: 'VueCollapseItem',
     mixins: [VueUtil.component.emitter],
     components: {
@@ -21,8 +21,7 @@
           height: 'auto',
           display: 'block'
         },
-        contentHeight: 0,
-        firstActive: false,
+        contentHeight: 0
       };
     },
     props: {
@@ -44,37 +43,7 @@
       },
       headerExpand: function() {
         return this.$parent.expandOnClickHeader;
-      },
-      noHide: function() {
-        return this.$parent.noHide;
-      },
-      itemStyle: function() {
-        if (this.noHide && !this.isActive) {
-          return {
-            position: 'absolute',
-            top: '-100000px',
-            visibility: 'hidden'
-          };
-        }
-
-        return undefined;
-      },
-      initAfterOpen: function() {
-        return this.$parent.initAfterOpen;
-      },
-    },
-    watch: {
-      isActive: [{
-        immediate: true,
-        handler: function(val) {
-          this.$parent.$emit(val ? 'open' : 'close', this.$parent.activeNames, this.name);
-          if (val) {
-            this.firstActive = true;
-          }
-        }
-      }, function(val) {
-        this.$parent.$emit('state-change', this.$parent.activeNames, this.name, val ? 'open' : 'close');
-      }]
+      }
     },
     methods: {
       handleIconClick: function() {
@@ -88,10 +57,10 @@
         }
       },
       collapseAfterEnter: function() {
-        this.$parent.$emit('change', this.$parent.activeNames, this.name, 'enter');
+        this.$parent.$emit('change', this.$parent.activeNames);
       },
       collapseAfterLeave: function() {
-        this.$parent.$emit('change', this.$parent.activeNames, this.name, 'leave');
+        this.$parent.$emit('change', this.$parent.activeNames);
       }
     }
   };

@@ -13,7 +13,7 @@
     name: 'VueDropdownItem',
     mixins: [VueUtil.component.emitter],
     props: {
-      command: [String, Object],
+      command: String,
       disabled: Boolean,
       divided: Boolean
     },

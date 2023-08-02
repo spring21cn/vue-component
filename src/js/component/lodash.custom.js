@@ -1,7 +1,7 @@
 /**
  * @license
  * Lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash category="math" include="pad,padEnd,padStart,parseInt,trim,trimEnd,trimStart,clone,cloneDeep,debounce,throttle,countBy,filter,eachRight,find,findLast,includes,groupBy,map,reduce,orderBy,sortBy,some,every,compact,concat,difference,differenceBy,differenceWith,dropWhile,findIndex,findLastIndex,indexOf,intersection,intersectionBy,intersectionWith,join,last,head,pull,pullAll,pullAt,reverse,slice,tail,initial,take,takeRight,takeWhile,union,unionBy,unionWith,uniq,uniqBy,uniqWith,without,xor,xorBy,xorWith,set,isEqual,isEqualWith,mapValues,assign,forEach,isEmpty,uniqueId,pick,pickBy" exports="global"`
+ * Build: `lodash category="math" include="pad,padEnd,padStart,parseInt,trim,trimEnd,trimStart,clone,cloneDeep,debounce,throttle,countBy,filter,eachRight,find,findLast,includes,groupBy,map,reduce,orderBy,sortBy,some,every,compact,concat,difference,differenceBy,differenceWith,dropWhile,findIndex,findLastIndex,indexOf,intersection,intersectionBy,intersectionWith,join,last,head,pull,pullAll,pullAt,reverse,slice,tail,initial,take,takeRight,takeWhile,union,unionBy,unionWith,uniq,uniqBy,uniqWith,without,xor,xorBy,xorWith,set,isEqual,isEqualWith,mapValues,assign,forEach,isEmpty,uniqueId,pick,pickBy"`
  * Copyright JS Foundation and other contributors <https://js.foundation/>
  * Released under MIT license <https://lodash.com/license>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -8253,6 +8253,29 @@
 
   /*--------------------------------------------------------------------------*/
 
-  // Export to the global object.
-  root.lodash = lodash;
+  // Some AMD build optimizers, like r.js, check for condition patterns like:
+  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {
+    // Expose Lodash on the global object to prevent errors when Lodash is
+    // loaded by a script tag in the presence of an AMD loader.
+    // See http://requirejs.org/docs/errors.html#mismatch for more details.
+    // Use `_.noConflict` to remove Lodash from the global object.
+    root.lodash = lodash;
+
+    // Define as an anonymous module so, through path mapping, it can be
+    // referenced as the "underscore" module.
+    define(function() {
+      return lodash;
+    });
+  }
+  // Check for `exports` after `define` in case a build optimizer adds it.
+  else if (freeModule) {
+    // Export for Node.js.
+    (freeModule.exports = lodash).lodash = lodash;
+    // Export for CommonJS support.
+    freeExports.lodash = lodash;
+  }
+  else {
+    // Export to the global object.
+    root.lodash = lodash;
+  }
 }.call(this));

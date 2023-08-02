@@ -26,7 +26,7 @@
       }
     });
     var insertDom = function(parent, el, binding) {
-      if (!el.instance.visible) {
+      if (!el.domVisible) {
         VueUtil.ownPropertyLoop(el.maskStyle, function(property) {
           el.mask.style[property] = el.maskStyle[property];
         });
@@ -37,8 +37,8 @@
           parent.style.overflow = 'hidden';
         }
         parent.appendChild(el.mask);
+        el.domVisible = true;
         el.instance.visible = true;
-        el.instance.hiding && ( el.instance.hiding = false ); // 上一个隐藏动作执行过程中进入 insertDom，此时，需要中断隐藏动作
         el.domInserted = true;
         Vue.nextTick(function() {
           if (binding.modifiers.fullscreen) {
@@ -72,11 +72,9 @@
           }
         }
       } else {
-        if (el.instance.visible) {
+        if (el.domVisible) {
           el.instance.$once('after-leave', function() {
-            if (!el.instance.hiding) {
-              return; // 隐藏被中断，不执行后续处理
-            }
+            el.domVisible = false;
             if (binding.modifiers.fullscreen && el.originalOverflow !== 'hidden') {
               document.body.style.overflow = el.originalOverflow;
             }
@@ -85,12 +83,8 @@
             } else {
               el.style.position = el.originalPosition;
             }
-            el.instance.hiding = false; // 隐藏动作未被中断，隐藏动作正常执行完
           });
           el.instance.visible = false;
-          // 用于标记隐藏动作是否有被中断（即还没执行到 after-leave ，马上又触发了一个显示的动作，进入了 insertDom 方法）
-          // 如果有被中断，则进入 after-leave 时，不执行后续隐藏动作
-          el.instance.hiding = true;
         }
       }
     };
@@ -110,7 +104,6 @@
     Vue.directive('loading', {
       bind: function(el, binding) {
         var mask = new VueLoading({
-          i18n: Vue.i18n,
           el: document.createElement('div'),
           data: {
             text: el.getAttribute('vue-loading-text'),

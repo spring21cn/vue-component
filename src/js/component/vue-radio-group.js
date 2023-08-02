@@ -16,14 +16,9 @@
   });
 
   var VueRadioGroup = {
-    template: '<div class="vue-radio-group" :class="{\'check-style\': checkStyle, \'is-split\': realSplit}" role="radiogroup" @keydown="handleKeydown"><slot></slot></div>',
+    template: '<div class="vue-radio-group" role="radiogroup" @keydown="handleKeydown"><slot></slot></div>',
     name: 'VueRadioGroup',
     mixins: [VueUtil.component.emitter],
-    inject: {
-      vueFormItem: {
-        default: ''
-      },
-    },
     props: {
       value: {},
       size: String,
@@ -33,16 +28,11 @@
       tabindex: {
         type: Number,
         default: 0
-      },
-      checkStyle: Boolean,
-      split: {
-        type: Boolean,
-        default: null,
       }
     },
     watch: {
-      value: function(value, oldValue) {
-        this.$emit('change', value, oldValue);
+      value: function(value) {
+        this.$emit('change', value);
         this.dispatch('VueFormItem', 'vue.form.change', [this.value]);
       }
     },
@@ -106,14 +96,6 @@
         if(radio) {
           radio.focus();
         }
-      }
-    },
-    computed: {
-      finalSize: function() {
-        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
-      },
-      realSplit: function() {
-        return this.split == undefined ? this.checkStyle : this.split;
       }
     },
     mounted: function() {

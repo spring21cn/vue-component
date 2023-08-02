@@ -34,11 +34,23 @@
     closeOnPressEscape: {
       type: Boolean,
       default: true
+    },
+    trapFocus: {
+      type: [Boolean, Object]
+    },
+    focusTriggerOnClose: {
+      type: Boolean,
+      default: false
     }
   };
   VuePopup.beforeMount = function() {
     this._popupId = 'popup-' + idSeed++;
     PopupManager.register(this._popupId, this);
+  };
+  VuePopup.mounted = function() {
+    if (this.trapFocus === true || (this.trapFocus && this.trapFocus.enable === true)) {
+      VueUtil.trapFocus(this.$el, this.trapFocus);
+    }
   };
   VuePopup.beforeDestroy = function() {
     PopupManager.deregister(this._popupId);
@@ -46,7 +58,8 @@
   };
   VuePopup.data = function() {
     return {
-      opened: false
+      opened: false,
+      triggerElm: null,
     };
   };
   VuePopup.watch = {
@@ -60,11 +73,12 @@
       };
       var self = this;
       if (val) {
+        this.triggerElm = document.activeElement;
         if (!self.opened) {
           self.$nextTick(function() {
             var dom = getDOM(self.$el);
             if (VueUtil.getStyle(dom, 'position') === 'static') {
-              VueUtil.setStyle(dom, 'position', 'absolute');
+              VueUtil.setStyle(dom, 'position', VueUtil.getSystemInfo().os === 'iOS' ? 'relative' : 'absolute');
             }
             dom.style.zIndex = PopupManager.nextZIndex();
             if (self.closeOnPressEscape)

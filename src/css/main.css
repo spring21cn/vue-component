@@ -22,63 +22,8 @@
 [v-cloak] {
 	display: none;
 }
-
-.vue-icon-add-row:before {
-  content: "\e90a";
-}
-.vue-icon-insert-row:before {
-  content: "\e90e";
-}
-.vue-icon-del-row:before {
-  content: "\e90b";
-}
-.vue-icon-import-file:before {
-  content: "\e90c";
-}
-.vue-icon-export-file:before {
-  content: "\e90d";
-}
-.vue-icon-dock-top:before {
-  content: "\e90f";
-}
-.vue-icon-look:before {
-  content: "\e910";
-}
-.vue-icon-helpbook:before {
-  content: "\e904";
-}
-.vue-icon-language:before {
-  content: "\e903";
-}
-.vue-icon-undo:before {
-  content: "\e905";
-}
-.vue-icon-rotate-left:before {
-  content: "\e905";
-}
-.vue-icon-repeat:before {
-  content: "\e906";
-}
-.vue-icon-rotate-right:before {
-  content: "\e906";
-}
-.vue-icon-zoom-out:before {
-  content: "\e907";
-}
-.vue-icon-edit-crop:before {
-  content: "\e908";
-}
-.vue-icon-external:before {
-  content: "\e900";
-}
-.vue-icon-keyboard:before {
-  content: "\e901";
-}
-.vue-icon-key:before {
-  content: "\e902";
-}
-.vue-icon-pj:before {
-  content: "\e909";
+.vue-icon-theme:before {
+  content: "\e913";
 }
 .vue-icon-arrow-down:before {
   content: "\e800";
@@ -410,16 +355,81 @@
 .vue-icon-scan:before {
   content: "\e86c";
 }
+.vue-icon-external:before {
+  content: "\e900";
+}
+.vue-icon-keyboard:before {
+  content: "\e901";
+}
+.vue-icon-key:before {
+  content: "\e902";
+}
+.vue-icon-language:before {
+  content: "\e903";
+}
+.vue-icon-helpbook:before {
+  content: "\e904";
+}
+.vue-icon-undo:before {
+  content: "\e905";
+}
+.vue-icon-rotate-left:before {
+  content: "\e905";
+}
+.vue-icon-repeat:before {
+  content: "\e906";
+}
+.vue-icon-rotate-right:before {
+  content: "\e906";
+}
+.vue-icon-zoom-out:before {
+  content: "\e907";
+}
+.vue-icon-edit-crop:before {
+  content: "\e908";
+}
+.vue-icon-pj:before {
+  content: "\e909";
+}
+.vue-icon-add-row:before {
+  content: "\e90a";
+}
+.vue-icon-insert-row:before {
+  content: "\e90e";
+}
+.vue-icon-del-row:before {
+  content: "\e90b";
+}
+.vue-icon-import-file:before {
+  content: "\e90c";
+}
+.vue-icon-export-file:before {
+  content: "\e90d";
+}
+.vue-icon-dock-top:before {
+  content: "\e90f";
+}
+.vue-icon-look:before {
+  content: "\e910";
+}
+.vue-icon-repair:before {
+  content: "\e911";
+}
+.vue-icon-motorcycle-circle:before {
+  content: "\e912";
+}
+.vue-icon-motorcycle:before {
+  content: "\e86d";
+}
+
 .vue-icon-loading {
 	animation: rotating 1s linear infinite;
 }
 .vue-icon--right {
   margin-left: 10px;
-  vertical-align: bottom;
 }
 .vue-icon--left {
   margin-right: 10px;
-  vertical-align: bottom;
 }
 .collapse-transition {
 	transition: height .3s,padding-top .3s,padding-bottom .3s;
@@ -465,9 +475,29 @@
 
 /* aside在ios下无法滚动的问题， _::-webkit-full-page-media, _:future, :root的意思是只在Safari生效 */
 _::-webkit-full-page-media, _:future, :root .vue-aside,.vue-form {
-  -webkit-overflow-scrolling: touch; 
 }
 
 _::-webkit-full-page-media, _:future, :root .resize-triggers{
   height: 0;
+}
+
+.tiny-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tiny-scrollbar::-webkit-scrollbar-track {
+  background: transparent
+}
+
+.tiny-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: rgba(0,0,0,.1);
+}
+
+.tiny-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,.3)
+}
+
+.tiny-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(0,0,0,.6)
 }

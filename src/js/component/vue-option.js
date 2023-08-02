@@ -87,8 +87,9 @@
         }
       },
       queryChange: function(query) {
-        if (!this.parent.lazyload && VueUtil.isFunction(this.parent.filterMethod) && this.parent.data.length > 0) {
-          this.visible = this.parent.filterMethod(query, this.parent.data[this.index], this.parent.getFormatedLabel(this));
+        if (!this.parent.lazyload && VueUtil.isFunction(this.parent.filterMethod)) {
+          var item = this.parent.data[this.index] || {label: this.label, value: this.value};
+          this.visible = this.parent.filterMethod(query, item, this.parent.getFormatedLabel(this));
         } else {
           var parsedQuery = String(query).replace(/(\^|\(|\)|\[|\]|\$|\*|\+|\.|\?|\\|\{|\}|\|)/g, '\\$1');
           this.visible = new RegExp(parsedQuery, 'i').test(this.parent.getFormatedLabel(this)) || this.created;

@@ -1,0 +1,179 @@
+.vue-code-input {
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #bfcbd9;
+  color: #1f2d3d;
+  display: inline-block;
+  line-height: 1;
+  outline: 0;
+  padding-left: 10px;
+  padding-right: 9px;
+  width: 100%;
+  cursor: text;
+}
+
+.vue-code-input:focus {
+    border-color: #409eff;
+}
+
+.vue-code-input>.vue-code-input__content {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100%;
+    white-space: nowrap;
+    position: relative;
+    padding-right: 1px;
+}
+
+.vue-code-input>.vue-code-input__content>span {
+    vertical-align: middle;
+    position: relative;
+}
+
+.vue-code-input>.vue-code-input__content::-webkit-scrollbar {
+  height: 0;
+  width: 0;
+}
+
+.vue-code-input.end-active.not-select .vue-code-input__content::after {
+  content: "";
+  border-left: 1px solid #000;
+  height: calc(1em + 2px);
+  animation: typeblink 0.5s infinite alternate;
+  visibility: hidden;
+  position: absolute;
+  top: 1px;
+}
+
+.vue-code-input.end-active.not-select:not(.is-readonly):focus .vue-code-input__content::after {
+  visibility: visible;
+}
+
+.vue-code-input .vue-code-input__content span {
+  position: relative;
+}
+
+.vue-code-input.not-select:not(.is-readonly):focus .vue-code-input__content span.active::before {
+  content: "";
+  border-left: 1px solid #000;
+  height: calc(1em + 2px);
+  animation: typeblink 0.5s infinite alternate;
+  position: absolute;
+  top: 2px;
+}
+
+.vue-code-input .vue-code-input__content:empty::before {
+  content: attr(placeholder);
+  color: #97a8be;
+  display: inline-block;
+  width: 0;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.vue-code-input.is-disabled .vue-code-input__content:empty::before {
+  color: #bfd2e6;
+}
+
+.vue-form-item.is-error .vue-code-input {
+    border-color: #fb5555;
+}
+
+.vue-code-input.is-disabled {
+  background-color: #eef1f6;
+  border-color: #d1dbe5;
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+@keyframes typeblink {
+  0% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.vue-code-input__suffix {
+  text-align: center;
+  color: #bfcbd9;
+}
+
+.vue-code-input__icon.is-clickable {
+  cursor: pointer;
+}
+
+.vue-code-input {
+  display: flex;
+  align-items: center;
+}
+.vue-code-input>.vue-code-input__content {
+  flex: 1;
+}
+
+.vue-code-input.has-icon{
+  padding-right: 0;
+}
+
+.vue-code-input__clear {
+  cursor: pointer;
+}
+
+/* size */
+.vue-code-input {
+  height: 36px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 14px;
+}
+
+.vue-code-input.vue-code-input--large {
+  height: 42px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 16px;
+}
+
+.vue-code-input.vue-code-input--small {
+  height: 30px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: 13px;
+}
+
+.vue-code-input.vue-code-input--mini {
+  height: 22px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  font-size: 12px;
+}
+
+.vue-code-input__suffix {
+  height: 36px;
+  line-height: 36px;
+}
+
+.vue-code-input__icon {
+  width: 26px;
+}
+
+.vue-code-input.vue-code-input--large+.vue-code-input__suffix {
+  height: 42px;
+  line-height: 42px;
+}
+
+.vue-code-input.vue-code-input--small+.vue-code-input__suffix {
+  height: 30px;
+  line-height: 30px;
+}
+
+.vue-code-input.vue-code-input--mini+.vue-code-input__suffix {
+  height: 22px;
+  line-height: 22px;
+}
+
+.vue-code-input.vue-code-input--mini+.vue-code-input__suffix .vue-code-input__icon{
+  width: 22px;
+}

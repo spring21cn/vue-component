@@ -239,7 +239,9 @@
           }, tools.UtilTools.formatText(list[$table.tableColumn.indexOf(column)], 1))]);
         }).concat([h('td', {
           class: 'col--gutter'
-        })]));
+        },[h('div', {
+          class: 'col--gutter-inner'
+        })])]));
       }))])]);
     },
     methods: {

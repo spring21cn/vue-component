@@ -32,7 +32,11 @@
         type: Boolean,
         default: true
       },
-      scrollbar: Boolean
+      scrollbar: Boolean,
+      itemSize: {
+        type: Number,
+        default: 0
+      },
     },
     methods: {
       updateKeyList: function() {
@@ -99,8 +103,8 @@
         delta.total = 0;
         delta.marginTop = 0;
         delta.marginBottom = 0;
-        delta.size = this.isMobile?13:20;
-        delta.remain = Math.floor(this.height * 1 / delta.size);
+        delta.size = (this.itemSize || (this.isMobile?23:36)) - 10;
+        delta.remain = Math.floor(this.height * 1 / delta.size) + 1;
         delta.end = delta.remain;
         delta.keeps = delta.remain;
         if (slots.length <= delta.remain) {
@@ -133,11 +137,11 @@
         list = createElement('div', {
           'class': ['vue-list'],
           'style': {
-            'height': this.isMobile? '100%' : this.height * 1 + 'px'
+            'height': this.height * 1 + 'px'
           }
         }, [createElement('vue-scrollbar', {
             props: {
-              height: this.isMobile? '100%' :this.height * 1
+              height: this.height * 1
             },
             'on': {
               'scrollY': this.handleScroll

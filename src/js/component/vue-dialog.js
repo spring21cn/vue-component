@@ -32,6 +32,10 @@
         type: String,
         default: 'small'
       },
+      width: {
+        type: [String, Number],
+        default: ''
+      },
       customClass: {
         type: String,
         default: ''
@@ -50,6 +54,10 @@
         type: Boolean,
         default: false
       },
+      appendToBody: {
+        type: Boolean,
+        default: false
+      },
     },
     watch: {
       visibledialog: function(val) {
@@ -64,6 +72,7 @@
         } else {
           this.opened = false;
           VueUtil.off(this.$el, 'scroll', this.updatePopper);
+          this.focusTriggerOnClose && this.triggerElm && this.triggerElm.focus();
           this.$emit('close');
         }
       },
@@ -95,10 +104,11 @@
         return VueUtil.trim(this.title) === '' ? false : true;
       },
       sizeClass: function() {
-        return 'vue-dialog--' + this.size;
+        return this.width ? '' : 'vue-dialog--' + this.size;
       },
       style: function() {
-        return this.size === 'full' ? {} : {'top': this.top};
+        var width = isNaN(this.width) ? this.width : this.width + 'px';
+        return this.size === 'full' ? {} : (this.width ? {'top': this.top, width: width, left: 'calc((100vw - ' + width + ') / 2)'} : {'top': this.top});
       },
       draggableCancelSelector: function() {
         return (this.size === 'full' || this.draggable === false) ? '.vue-dialog' : '.vue-dialog__headerbtn, .vue-dialog__body, .vue-dialog__footer';
@@ -111,6 +121,16 @@
       },
       handleClose: function() {
         this.$emit('visible-change', false);
+      }
+    },
+    mounted: function() {
+      if (this.appendToBody) {
+        document.body.appendChild(this.$el);
+      }
+    },
+    destroyed: function() {
+      if (this.appendToBody && this.$el && this.$el.parentNode) {
+        this.$el.parentNode.removeChild(this.$el);
       }
     }
   };

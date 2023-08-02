@@ -9,7 +9,7 @@
 })(this, function(Vue) {
   'use strict';
   var VueProgress = {
-    template: '<div :class="[\'vue-progress\', \'vue-progress--\' + type, status ? \'is-\' + status : \'\',{\'vue-progress--without-text\': !showText,\'vue-progress--text-inside\': textInside,}]"><div class="vue-progress-bar" v-if="type === \'line\'"><div class="vue-progress-bar__outer" :style="{height: strokeWidth + \'px\'}"><div class="vue-progress-bar__inner" :style="barStyle"><div class="vue-progress-bar__innerText" v-if="showText && textInside">{{percentage}}%</div></div></div></div><div class="vue-progress-circle" :style="{height: width + \'px\', width: width + \'px\'}" v-else><svg viewBox="0 0 100 100"><path class="vue-progress-circle__track" :d="trackPath" stroke="#e5e9f2" :stroke-width="relativeStrokeWidth" fill="none"></path><path class="vue-progress-circle__path" :d="trackPath" stroke-linecap="round" :stroke="stroke" :stroke-width="relativeStrokeWidth" fill="none" :style="circlePathStyle"></path></svg></div><div class="vue-progress__text" v-if="showText && !textInside" :style="{fontSize: progressTextSize + \'px\'}"><template v-if="!status">{{percentage}}%</template><i v-else :class="iconClass"></i></div></div>',
+    template: '<div :class="[\'vue-progress\', \'vue-progress--\' + type, status ? \'is-\' + status : \'\',{\'vue-progress--without-text\': !showText,\'vue-progress--text-inside\': textInside,}]"><div class="vue-progress-bar" v-if="type === \'line\'"><div class="vue-progress-bar__outer" :style="{height: strokeWidth + \'px\'}"><div class="vue-progress-bar__inner" :style="barStyle"><div class="vue-progress-bar__innerText" v-if="showText && textInside">{{text}}</div></div></div></div><div class="vue-progress-circle" :style="{height: width + \'px\', width: width + \'px\'}" v-else><svg viewBox="0 0 100 100"><path class="vue-progress-circle__track" :d="trackPath" stroke="#e5e9f2" :stroke-width="relativeStrokeWidth" fill="none"></path><path class="vue-progress-circle__path" :d="trackPath" stroke-linecap="round" :stroke="stroke" :stroke-width="relativeStrokeWidth" fill="none" :style="circlePathStyle"></path></svg></div><div class="vue-progress__text" v-if="showText && !textInside" :style="{fontSize: progressTextSize + \'px\'}"><template v-if="!status">{{text}}</template><i v-else :class="iconClass"></i></div></div>',
     name: 'VueProgress',
     props: {
       type: {
@@ -37,6 +37,10 @@
       showText: {
         type: Boolean,
         default: true
+      },
+      textFormatter: {
+        type: Function,
+        default: null
       }
     },
     computed: {
@@ -87,6 +91,13 @@
       },
       progressTextSize: function() {
         return this.type === 'line' ? 12 + this.strokeWidth * 0.4 : this.width * 0.25 + 6;
+      },
+      text: function() {
+        if (!this.textFormatter) {
+          return this.percentage + '%'; 
+        } else {
+          return this.textFormatter(this.percentage, this.status);
+        }
       }
     }
   };

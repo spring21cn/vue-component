@@ -1,0 +1,495 @@
+.vue-card-list {
+	overflow: hidden;
+	width: 100%;
+	max-width: 100%;
+	font-size: 14px;
+	display: flex;
+	flex-direction: column;
+}
+.vue-card-list-content {
+	position: relative;
+	display: grid;
+	gap: 8px;
+	grid-auto-rows: max-content;
+	flex: 1;
+	overflow: auto;
+}
+
+@media (max-width: 768px) {
+	/* xs */
+	.vue-card-list-content.xs-1 {
+		grid-template-columns: repeat(1, 1fr);
+	}
+	.vue-card-list-content.xs-2 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.vue-card-list-content.xs-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.vue-card-list-content.xs-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+	.vue-card-list-content.xs-5 {
+		grid-template-columns: repeat(5, 1fr);
+	}
+	.vue-card-list-content.xs-6 {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+@media (min-width: 768px) {
+	/* sm */
+	.vue-card-list-content.sm-1 {
+		grid-template-columns: repeat(1, 1fr);
+	}
+	.vue-card-list-content.sm-2 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.vue-card-list-content.sm-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.vue-card-list-content.sm-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+	.vue-card-list-content.sm-5 {
+		grid-template-columns: repeat(5, 1fr);
+	}
+	.vue-card-list-content.sm-6 {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+@media (min-width: 992px) {
+	/* md */
+	.vue-card-list-content.md-1 {
+		grid-template-columns: repeat(1, 1fr);
+	}
+	.vue-card-list-content.md-2 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.vue-card-list-content.md-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.vue-card-list-content.md-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+	.vue-card-list-content.md-5 {
+		grid-template-columns: repeat(5, 1fr);
+	}
+	.vue-card-list-content.md-6 {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+@media (min-width: 1200px) {
+	/* lg */
+	.vue-card-list-content.lg-1 {
+		grid-template-columns: repeat(1, 1fr);
+	}
+	.vue-card-list-content.lg-2 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.vue-card-list-content.lg-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.vue-card-list-content.lg-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+	.vue-card-list-content.lg-5 {
+		grid-template-columns: repeat(5, 1fr);
+	}
+	.vue-card-list-content.lg-6 {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+@media only screen and (min-width: 1900px) {
+	/* xl */
+	.vue-card-list-content.xl-1 {
+		grid-template-columns: repeat(1, 1fr);
+	}
+	.vue-card-list-content.xl-2 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.vue-card-list-content.xl-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.vue-card-list-content.xl-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+	.vue-card-list-content.xl-5 {
+		grid-template-columns: repeat(5, 1fr);
+	}
+	.vue-card-list-content.xl-6 {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+.vue-card-list-item {
+	border: 1px solid #dfe6ec;
+	border-radius: 3px;
+	position: relative;
+	transform: unset !important;
+	display: flex;
+	flex-direction: row;
+}
+
+.vue-card-list-item.current {
+	background-color: #e6f7ff;
+	z-index: 1;
+}
+
+.vue-card-list-item-wrapper {
+	padding: 8px;
+	flex: 1;
+}
+
+.vue-card-list-item-pre-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 30px;
+}
+
+.sortable-chosen .vue-card-list-item-action {
+	opacity: 0;
+}
+
+.vue-card-list-item-action {
+	position: fixed;
+	display: none;
+	top: -50px;
+	right: 20px;
+	border-radius: 8px;
+	height: 44px;
+	cursor: pointer;
+	border: 1px solid #dfe6ec;
+	background-color: #fff;
+	box-shadow: 0 0 15px 0px #eee;
+	padding: 0 7px;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.vue-card-list-item-action.bottom-action {
+	top: unset;
+	bottom: -50px;
+}
+
+.vue-card-list-item-action::before {
+	top: 100%;
+	left: 50%;
+	border: solid transparent;
+	content: "";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+	border-color: rgba(0, 0, 0, 0);
+	border-width: 6px;
+	border-top-color: #dfe6ec;
+	margin-left: -6px;
+	box-shadow: 0 0 0px;
+}
+
+.vue-card-list-item-action::after {
+	top: 100%;
+	left: 50%;
+	border: solid transparent;
+	content: "";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+	border-color: rgba(0, 0, 0, 0);
+	border-width: 5px;
+	border-top-color: white;
+	margin-left: -5px;
+}
+
+.vue-card-list-item-action.bottom-action::before {
+	bottom: 100%;
+	top: initial;
+	border-bottom-color: #dfe6ec;
+	border-top: 0;
+}
+
+.vue-card-list-item-action.bottom-action::after {
+	bottom: 100%;
+	top: initial;
+	border-bottom-color: white;
+	border-top: 0;
+}
+
+.vue-card-list-item-action > i {
+	color: #989b9f;
+	font-size: 20px;
+	padding: 11px;
+}
+
+.vue-card-list-item-action > i:hover {
+	filter: brightness(1.3);
+}
+
+.vue-card-list-item-action >.vue-card-list-item-drag {
+	transform: rotate(45deg);
+	font-size: 14px;
+}
+.vue-card-list-item-action > .vue-card-list-item-edit {
+	font-size: 22px;
+}
+
+.vue-card-list-item.current .vue-card-list-item-action {
+	display: flex;
+	align-items: center;
+}
+
+.vue-card-list-header {
+	border: 1px solid #dfe6ec;
+	border-radius: 3px;
+	display: flex;
+	flex-direction: row;
+}
+
+.vue-card-list-header .vue-card-list-item-pre-wrapper {
+	cursor: initial;
+}
+
+.vue-card-list-footer {
+	text-align: center;
+	margin-top: 10px;
+}
+
+.vue-card-list-item-wrapper .escort-vue-text, .vue-card-list-item .escort-vue-text {
+	padding: 10px 0;
+	min-height: 36px;
+}
+
+.vue-card-list-header {
+	background-color: #f7f7f7;
+}
+
+.vue-card-list-header .vue-col .escort-vue-text {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.vue-card-list-empty-wrapper {
+	height: 100%;
+	width: 100%;
+	min-height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 14px;
+	color: #606266;
+}
+
+.vue-card-list-item-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	background-color: rgba(0, 0, 0, .15);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+.vue-card-list-item-overlay .vue-icon-plus{
+	font-size: 30px;
+	color: rgb(0, 0, 0);
+	opacity: .1;
+}
+
+.vue-card-list-item-overlay:hover .vue-icon-plus {
+	opacity: .3;
+}
+
+/* list mode */
+.vue-card-list.list-mode .vue-card-list-content {
+	overflow: auto;
+}
+.vue-card-list.list-mode .vue-card-list-header {
+	border: 1px solid #dfe6ec;
+	border-bottom: 0;
+}
+.vue-card-list.list-mode .vue-card-list-content {
+	border: 1px solid #dfe6ec;
+	padding: 4px 6px;
+	display: block;
+}
+.vue-card-list.list-mode .vue-card-list-item {
+	border: 1px solid transparent;
+	border-radius: 5px;
+}
+.vue-card-list.list-mode .vue-card-list-header {
+	border-radius: 0;
+}
+
+.vue-card-list.list-mode .vue-card-list-item.current {
+	border: 1px solid #dfe6ec;
+	background-color: #fff;
+	box-shadow: 0 0 15px 0px #eee;
+}
+
+.vue-card-list.list-mode .vue-card-list-header .vue-card-list-item-wrapper {
+	padding: 6px 16px;
+}
+
+/* list mode hide header show label when mobile */
+@media (max-width: 768px) {
+	.vue-card-list.list-mode.label-responsive .vue-card-list-header {
+		display: none;
+	}
+	.vue-card-list.list-mode.label-responsive .vue-card-list-content {
+		border-top: 1px solid #dfe6ec;
+	}
+}
+@media (min-width: 769px) {
+	.vue-card-list.list-mode.label-responsive .vue-form-item__label {
+		display: none;
+	}
+	.vue-card-list.list-mode.label-responsive .vue-form-item__content {
+		margin-left: 0 !important;
+	}
+}
+/* style sub component for not editing mode */
+.list-mode .vue-card-list-item.not-editing .vue-input.is-disabled .vue-input__inner {
+	background: transparent;
+	border: 0;
+	color: black;
+	cursor: text;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-textarea.is-disabled .vue-textarea__inner {
+	background: transparent;
+	border: 0;
+	font-size: 14px;
+	color: black;
+	cursor: initial;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-textarea.is-disabled .vue-textarea__inner::-webkit-resizer {
+	display: none;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-icon-arrow-up {
+	display: none;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-input.is-disabled .vue-input__inner::placeholder {
+	visibility: hidden;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-checkbox__input {
+	display: none;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-checkbox__input.is-disabled+.vue-checkbox__label {
+	color: black;
+	font-size: 14px;
+	cursor: initial;
+	user-select: text;
+	padding-left: 10px;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-radio__input {
+	display: none;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-radio__input.is-disabled+.vue-radio__label {
+	color: black;
+	font-size: 14px;
+	cursor: initial;
+	user-select: text;
+	padding-left: 10px;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-checkbox-button:not(.is-checked) {
+	display: none;
+}
+.list-mode .vue-card-list-item.not-editing .vue-checkbox-button.is-checked .vue-checkbox-button__inner{
+	border: none !important;
+	color: black !important;
+	box-shadow: none !important;
+	cursor: initial;
+	user-select: text;
+	background-color: transparent !important;
+	padding: 0;
+	font-size: 14px;
+	vertical-align: baseline;
+	padding-left: 10px;
+	margin-right: 10px;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-radio-button:not(.is-active) {
+	display: none;
+}
+.list-mode .vue-card-list-item.not-editing .vue-radio-button.is-active .vue-radio-button__inner{
+	border: none !important;
+	color: black !important;
+	box-shadow: none !important;
+	cursor: initial;
+	user-select: text;
+	background-color: transparent !important;
+	padding: 0;
+	font-size: 14px;
+	vertical-align: baseline;
+	padding-left: 10px;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-date-editor.is-disabled .vue-input__inner {
+	padding-left: 10px;
+}
+.list-mode .vue-card-list-item.not-editing .vue-date-editor.is-disabled .vue-input__prefix {
+	display: none;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-number-input.is-disabled .vue-number-input__decrease {
+	display: none;
+}
+.list-mode .vue-card-list-item.not-editing .vue-number-input.is-disabled .vue-number-input__increase {
+	display: none;
+}
+.list-mode .vue-card-list-item.not-editing .vue-number-input.is-disabled .vue-input__inner {
+	padding: 3px 10px;
+	text-align: left;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-code-input.is-disabled {
+	background: transparent;
+	border-color: transparent;
+	color: #000;
+	cursor: text;
+}
+
+.list-mode .vue-card-list-item.not-editing .valuelist-button {
+	display: none;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-input-group__append,.list-mode .vue-card-list-item.not-editing .vue-input-group__prepend {
+	border: 0;
+	background: initial;
+	color: #000;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-range-editor.is-disabled {
+	border: 0;
+	background: initial;
+	color: #000;
+	cursor: not-allowed;
+	cursor: initial;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-range-editor.is-disabled input {
+	background: transparent;
+	border: 0;
+	color: black;
+	cursor: text;
+}
+
+.list-mode .vue-card-list-item.not-editing .vue-range-editor.is-disabled .vue-range__icon {
+	display: none;
+}

@@ -145,6 +145,7 @@
         }
       };
       var chart = new modal({
+        i18n: Vue.i18n,
         el: dialogdiv,//document.createElement('div'),
         propsData: options
       });

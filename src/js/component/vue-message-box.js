@@ -9,7 +9,11 @@
 })(this, function(Vue, VueUtil, VuePopup) {
   'use strict';
   var VueMessageBox = {
-    template: '<div><div class="vue-message-box__wrapper" v-show="visible"></div><transition name="msgbox-fade" @after-leave="doDestroy"><div :class="[\'vue-message-box\', customClass]" v-show="visible"><div class="vue-message-box__header" v-if="title !== null"><div class="vue-message-box__title">{{title || $t(\'vue.messagebox.title\')}}</div></div><div class="vue-message-box__content" v-if="message !== \'\'"><div :class="[\'vue-message-box__status\', typeClass]"></div><div class="vue-message-box__message" :style="{\'margin-left\': typeClass ? \'50px\' : \'0\'}"><slot><p>{{message}}</p></slot></div></div><div class="vue-message-box__btns"><vue-button :loading="cancelButtonLoading" :class="[cancelButtonClasses]" v-if="showCancelButton" @click.native="handleAction(\'cancel\')">{{cancelButtonText || $t(\'vue.messagebox.cancel\')}}</vue-button><vue-button :loading="confirmButtonLoading" ref="confirm" :class="[confirmButtonClasses]" @click.native="handleAction(\'confirm\')">{{confirmButtonText || $t(\'vue.messagebox.confirm\')}}</vue-button></div></div></transition></div>',
+    template: '<div><div class="vue-message-box__wrapper" v-show="visible"></div><transition name="msgbox-fade" @after-leave="doDestroy"><div :class="[\'vue-message-box\', customClass]" v-show="visible"><div class="vue-message-box__header" v-if="title !== null"><div class="vue-message-box__title">{{title || $t(\'vue.messagebox.title\')}}</div></div><div class="vue-message-box__content" v-if="message !== \'\'"><div :class="[\'vue-message-box__status\', typeClass]"></div><div class="vue-message-box__message" :style="{\'margin-left\': typeClass ? \'50px\' : \'0\'}"><slot><p>{{message}}</p></slot></div></div><div class="vue-message-box__btns">'
+    +'<vue-button :loading="confirmButtonLoading" ref="confirm" :class="[confirmButtonClasses]" @click.native="handleAction(\'confirm\')" v-if="reverseButton">{{confirmButtonText || $t(\'vue.messagebox.confirm\')}}</vue-button>'
+    +'<vue-button :loading="cancelButtonLoading"  ref="cancel"  :class="[cancelButtonClasses]"  @click.native="handleAction(\'cancel\')" v-if="showCancelButton">{{cancelButtonText || $t(\'vue.messagebox.cancel\')}}</vue-button>'
+    +'<vue-button :loading="confirmButtonLoading" ref="confirm" :class="[confirmButtonClasses]" @click.native="handleAction(\'confirm\')"  v-if="!reverseButton">{{confirmButtonText || $t(\'vue.messagebox.confirm\')}}</vue-button>'
+    +'</div></div></transition></div>',
     mixins: [VuePopup],
     computed: {
       typeClass: function() {
@@ -49,6 +53,7 @@
           self.$destroy();
           setTimeout(function() {
             if(self.$el) {
+              self.focusTriggerOnClose && self.triggerElm && self.triggerElm.focus();
               document.body.removeChild(self.$el);
             }
           }, 200);
@@ -73,7 +78,11 @@
         if (val) {
           self.uid++;
           self.$nextTick(function() {
-            self.$refs.confirm.$el.focus();
+            if (this.focusCancel === true) {
+              self.$refs.cancel && self.$refs.cancel.$el.focus();
+            } else {
+              self.$refs.confirm.$el.focus();
+            }
           });
         }
       }
@@ -94,7 +103,9 @@
         confirmButtonClass: '',
         cancelButtonClass: '',
         callback: null,
-        beforeClose: null
+        beforeClose: null,
+        focusCancel: false,
+        reverseButton: false,
       };
     }
   };
@@ -112,8 +123,17 @@
     }
   };
   var initInstance = function() {
+    var propsData;
+    if (msgQueue.length > 0) {
+      propsData = {
+        trapFocus: msgQueue[0].options.trapFocus,
+        focusTriggerOnClose: msgQueue[0].options.focusTriggerOnClose,
+      };
+    }
     instance = new MessageBoxConstructor({
-      el: document.createElement('div')
+      i18n: Vue.i18n,
+      el: document.createElement('div'),
+      propsData: propsData
     });
     instance.callback = defaultCallback;
   };

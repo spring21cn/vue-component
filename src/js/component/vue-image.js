@@ -11,6 +11,7 @@
   'use strict';
   var template = ' \
     <div :class="{\'vue-image\':true,\'vue-image__lazy\':lazy,\'vue-image__round\':round}"> \
+      <div v-html="svgContent" v-if="isTextSvg" v-show="false"></div>\
       <span v-if="showText" class="vue-image__label"\
         v-bind="$attrs" v-on="$listeners" \
         @click="clickHandler" :class="{\'vue-image__preview\': preview }">{{imgLabel}}</span>\
@@ -20,6 +21,8 @@
       <slot v-else-if="error" name="error"> \
         <div class="vue-image__error">{{$t("vue.image.error")}}</div> \
       </slot> \
+      <svg v-else-if="isTextSvg" @click="clickHandler" class="vue-image__inner" :viewBox="[0,0,imageWidth,imageHeight].join(\' \')"\
+      v-bind="$attrs" v-on="$listeners" :style="imageStyle" :class="{ \'vue-image__inner--center\': alignCenter, \'vue-image__preview\': preview }"><use :xlink:href="\'#\'+id"/></svg>\
       <img \
         v-else \
         class="vue-image__inner" \
@@ -29,7 +32,7 @@
         :src="src" \
         :style="imageStyle" \
         :class="{ \'vue-image__inner--center\': alignCenter, \'vue-image__preview\': preview }"> \
-      <vue-image-viewer :z-index="zIndex" v-if="preview && showViewer" :on-close="closeViewer" :url-list="previewSrcList"/> \
+      <vue-image-viewer :z-index="zIndex" v-if="preview && showViewer" :on-close="closeViewer" :url-list="previewSrcList" :active-index="previewActiveIndex"/> \
     </div>';
     
   var isServer = Vue.prototype.$isServer;
@@ -84,7 +87,6 @@
   };
   var isString = VueUtil.isString,
       isHtmlElement = function(node) { return node && node.nodeType === Node.ELEMENT_NODE; };
-  var throttle=VueUtil.throttle;
 
   var isSupportObjectFit = function(){
       return document.documentElement.style.objectFit !== undefined;
@@ -115,6 +117,7 @@
       src: String,
       fit: String,
       lazy: Boolean,
+      textSvg: Boolean,
       scrollContainer: {},
       previewSrcList: {
         type: Array,
@@ -125,7 +128,8 @@
         default: 2000
       },
       imgLabel: String,
-      round: Boolean
+      round: Boolean,
+      previewActiveIndex: Number
     },
 
     data:function() {
@@ -135,7 +139,9 @@
         show: !this.lazy,
         imageWidth: 0,
         imageHeight: 0,
-        showViewer: false
+        showViewer: false,
+        svgContent: '',
+        id: 'svg'+VueUtil.createUuid(),
       };
     },
 
@@ -158,6 +164,9 @@
       },
       showText: function() {
         return (typeof this.imgLabel != 'undefined' && this.imgLabel != '');
+      },
+      isTextSvg: function() {
+        return this.textSvg && this.src && this.src.indexOf('.svg') > 0;
       }
     },
 
@@ -185,30 +194,46 @@
     methods: {
       loadImage: function() {
         if (this.$isServer) return;
-
+        var self = this;
         // reset status
         this.loading = true;
         this.error = false;
 
-        var img = new Image();
-        var self = this;
-        img.onload = function(e){self.handleLoad(e, img);};
-        img.onerror = self.handleError.bind(self);
+        if (this.isTextSvg) {
+          Vue.http.get(self.src).then(function(resp) {
+            var content = resp.body;
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var svgEle = tempDiv.querySelector('svg');
+            svgEle.setAttribute('id', self.id);
+            var width = svgEle.getAttribute('width');
+            var height = svgEle.getAttribute('height');
 
-        // bind html attrs
-        // so it can behave consistently
-        Object.keys(self.$attrs)
-          .forEach(function(key){
-            var value = self.$attrs[key];
-            img.setAttribute(key, value);
-          });
-        img.src = self.src;
+            self.svgContent = svgEle.outerHTML;
+            self.handleLoad(null, {width: width, height: height});
+          }).catch(self.handleError);
+        } else {
+          var img = new Image();
+
+          img.onload = function(e){self.handleLoad(e, img);};
+          img.onerror = self.handleError.bind(self);
+  
+          // bind html attrs
+          // so it can behave consistently
+          Object.keys(self.$attrs)
+            .forEach(function(key){
+              var value = self.$attrs[key];
+              img.setAttribute(key, value);
+            });
+          img.src = self.src;
+        }
       },
       handleLoad: function(e, img) {
         this.error = false;
         this.imageWidth = img.width;
         this.imageHeight = img.height;
         this.loading = false;
+        this.$emit('load', e);
       },
       handleError: function(e) {
         this.loading = false;
@@ -218,6 +243,7 @@
       handleLazyLoad: function() {
         if (isInContainer(this.$el, this._scrollContainer)) {
           this.show = true;
+          this.$emit('lazyload');
           this.removeLazyLoadListener();
         }
       },
@@ -237,7 +263,9 @@
 
         if (_scrollContainer) {
           this._scrollContainer = _scrollContainer;
-          this._lazyLoadHandler = throttle(200, this.handleLazyLoad);
+          this._lazyLoadHandler = VueUtil._throttle(this.handleLazyLoad, 200, {
+            trailing: true
+          });
           on(_scrollContainer, 'scroll', this._lazyLoadHandler);
           this.handleLazyLoad();
         }

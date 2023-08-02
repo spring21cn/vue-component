@@ -44,7 +44,14 @@
       if(Vue.i18n) opt.i18n = Vue.i18n;
       self.popperVM = new Vue(opt).$mount();
     },
+    deactivated: function() {
+      if (this.expectedState) {
+        this.setExpectedState(false);
+        this.debounceClose();
+      }
+    },
     beforeDestroy: function() {
+      this.$refs.popper && this.$refs.popper.parentElement && this.$refs.popper.parentElement.removeChild(this.$refs.popper);
       this.popperVM.$destroy();
     },
     render: function(createElement) {
@@ -128,7 +135,7 @@
       this.referenceElm = this.$el;
     },
     methods: {
-      debounceClose: VueUtil.debounce(function() {
+      debounceClose: VueUtil.debounce(70, function() {
         this.handleClosePopper();
       }),
       addEventHandle: function(old, fn) {

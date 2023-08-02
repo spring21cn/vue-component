@@ -1357,6 +1357,9 @@
             37: -1,
             39: 1,
             offset: function (date, step) {
+              date.setMonth(0);
+              date.setDate(1);
+              date.setTime(VueUtil.clearTime(date).getTime());
               return date.setFullYear(date.getFullYear() + step);
             }
           },
@@ -1366,6 +1369,8 @@
             37: -1,
             39: 1,
             offset: function (date, step) {
+              date.setDate(1);
+              date.setTime(VueUtil.clearTime(date).getTime());
               return date.setMonth(date.getMonth() + step);
             }
           },
@@ -1394,7 +1399,11 @@
         var newDate = new Date(this.date.getTime());
   
         while (Math.abs(now - newDate.getTime()) <= year) {
+
           var map = mapping[mode];
+          if(!map) {
+            break;
+          }
           map.offset(newDate, map[keyCode]);
   
           if (typeof this.disabledDate === 'function' && this.disabledDate(newDate)) {

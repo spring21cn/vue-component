@@ -1,0 +1,149 @@
+.vue-number-input {
+  position: relative;
+  display: inline-block;
+  width: 180px;
+  line-height: 34px;
+}
+.vue-number-input .vue-input {
+  display: block;
+}
+.vue-number-input .vue-input__inner {
+  -webkit-appearance: none;
+  padding-left: 50px;
+  padding-right: 50px;
+  text-align: center;
+}
+.vue-number-input__increase, .vue-number-input__decrease {
+  position: absolute;
+  z-index: 1;
+  top: 1px;
+  width: 40px;
+  height: auto;
+  text-align: center;
+  background: #F5F7FA;
+  color: #606266;
+  cursor: pointer;
+  font-size: 13px;
+}
+.vue-number-input__increase:hover, .vue-number-input__decrease:hover {
+  color: #409EFF;
+}
+.vue-number-input__increase:hover:not(.is-disabled) ~ .vue-input .vue-input__inner:not(.is-disabled), .vue-number-input__decrease:hover:not(.is-disabled) ~ .vue-input .vue-input__inner:not(.is-disabled) {
+  border-color: #409EFF;
+}
+.vue-number-input__increase.is-disabled, .vue-number-input__decrease.is-disabled {
+  color: #C0C4CC;
+  cursor: not-allowed;
+}
+
+.vue-number-input__increase {
+  right: 1px;
+  border-radius: 0 4px 4px 0;
+  border-left: 1px solid #DCDFE6;
+}
+
+.vue-number-input__decrease {
+  left: 1px;
+  border-radius: 4px 0 0 4px;
+  border-right: 1px solid #DCDFE6;
+}
+
+.vue-number-input.is-disabled .vue-number-input__increase, .vue-number-input.is-disabled .vue-number-input__decrease {
+  border-color: #E4E7ED;
+  color: #E4E7ED;
+}
+.vue-number-input.is-disabled .vue-number-input__increase:hover, .vue-number-input.is-disabled .vue-number-input__decrease:hover {
+  color: #E4E7ED;
+  cursor: not-allowed;
+}
+
+.vue-number-input--large {
+  width: 200px;
+  line-height: 40px;
+}
+.vue-number-input--large .vue-number-input__increase, .vue-number-input--large .vue-number-input__decrease {
+  width: 36px;
+  font-size: 14px;
+}
+
+.vue-number-input--large .vue-input__inner {
+  padding-left: 43px;
+  padding-right: 43px;
+}
+
+.vue-number-input--small {
+  width: 130px;
+  line-height: 28px;
+}
+.vue-number-input--small .vue-number-input__increase, .vue-number-input--small .vue-number-input__decrease {
+  width: 32px;
+  font-size: 13px;
+}
+.vue-number-input--small .vue-number-input__increase [class*=vue-icon], .vue-number-input--small .vue-number-input__decrease [class*=vue-icon] {
+  transform: scale(0.9);
+}
+
+.vue-number-input--small .vue-input__inner {
+  padding-left: 39px;
+  padding-right: 39px;
+}
+
+.vue-number-input--mini {
+  width: 130px;
+  line-height: 20px;
+}
+.vue-number-input--mini .vue-number-input__increase, .vue-number-input--mini .vue-number-input__decrease {
+  width: 28px;
+  font-size: 12px;
+}
+.vue-number-input--mini .vue-number-input__increase [class*=vue-icon], .vue-number-input--mini .vue-number-input__decrease [class*=vue-icon] {
+  transform: scale(0.8);
+}
+
+.vue-number-input--mini .vue-input__inner {
+  padding-left: 35px;
+  padding-right: 35px;
+}
+
+.vue-number-input.is-without-controls .vue-input__inner {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.vue-number-input.is-controls-right .vue-input__inner {
+  padding-left: 15px;
+  padding-right: 50px;
+}
+.vue-number-input.is-controls-right .vue-number-input__increase, .vue-number-input.is-controls-right .vue-number-input__decrease {
+  height: auto;
+  line-height: 17px;
+}
+.vue-number-input.is-controls-right .vue-number-input__increase [class*=vue-icon], .vue-number-input.is-controls-right .vue-number-input__decrease [class*=vue-icon] {
+  transform: scale(0.8);
+}
+
+.vue-number-input.is-controls-right .vue-number-input__increase {
+  border-radius: 0 4px 0 0;
+  border-bottom: 1px solid #DCDFE6;
+}
+
+.vue-number-input.is-controls-right .vue-number-input__decrease {
+  right: 1px;
+  bottom: 1px;
+  top: auto;
+  left: auto;
+  border-right: none;
+  border-left: 1px solid #DCDFE6;
+  border-radius: 0 0 4px 0;
+}
+
+.vue-number-input.is-controls-right[class*=large] [class*=increase], .vue-number-input.is-controls-right[class*=large] [class*=decrease] {
+  line-height: 20px;
+}
+.vue-number-input.is-controls-right[class*=small] [class*=increase], .vue-number-input.is-controls-right[class*=small] [class*=decrease] {
+  line-height: 13px;
+}
+.vue-number-input.is-controls-right[class*=mini] [class*=increase], .vue-number-input.is-controls-right[class*=mini] [class*=decrease] {
+  line-height: 10px;
+  height: 10px;
+}

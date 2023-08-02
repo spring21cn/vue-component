@@ -27,7 +27,7 @@
       '$parent.menuAlign': {
         immediate: true,
         handler: function(val) {
-          this.currentPlacement = 'bottom-' + val;
+          this.currentPlacement = val ? 'bottom-' + val : 'bottom';
         }
       }
     }

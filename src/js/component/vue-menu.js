@@ -32,6 +32,12 @@
       menuTrigger: {
         type: String,
         default: 'hover'
+      },
+      indentSize: {
+        type: Number
+      },
+      indentMethod: {
+        type: Function,
       }
     },
 
@@ -83,6 +89,9 @@
     computed: {
       isMenuPopup: function() {
         return this.mode === 'horizontal' || (this.mode === 'vertical' && this.collapse);
+      },
+      indentSizeVal: function() {
+        return this.indentSize;
       }
     },
     methods: {

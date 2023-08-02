@@ -717,6 +717,25 @@
   z-index: 1
 }
 
+.vue-xtable-table.t--border-hide-outside {
+  border-left: 0;
+  border-right: 0;
+}
+
+.vue-xtable-table.t--border-hide-outside:after,
+.vue-xtable-table.t--border-hide-outside:before {
+  content: unset;
+}
+
+.vue-xtable-table.t--border-hide-outside .vue-xtable-table--footer-wrapper,
+.vue-xtable-table.t--border-hide-outside .vue-xtable-table--header-wrapper {
+  border-top: 0;
+}
+
+.vue-xtable-table.t--border-hide-outside .vue-xtable-footer--row:last-child .vue-xtable-footer--column{
+  border-bottom: 0;
+}
+
 .vue-xtable-table:before {
   top: 0
 }
@@ -818,8 +837,17 @@
   border-right-color: #e8eaec
 }
 
-.vue-xtable-table.t--checked,
-.vue-xtable-table.t--selected {
+.vue-xtable-table.t--border-hide-x .vue-xtable-body--row .vue-xtable-body--column {
+  border-bottom: 0;
+}
+
+.vue-xtable-table.t--border.t--border-hide-x .vue-xtable-footer--column, .vue-xtable-table.t--border.t--border-hide-x .vue-xtable-header--column {
+  border-bottom: 0;
+}
+
+.vue-xtable-table.t--checked
+/* ,.vue-xtable-table.t--selected  */
+{
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -945,7 +973,7 @@
   vertical-align: bottom
 }
 
-.vue-xtable-table .fixed--hidden {
+.vue-xtable-table tr:not(.sortable-chosen) .fixed--hidden {
   visibility: hidden
 }
 
@@ -1147,13 +1175,6 @@
   padding: 20px
 }
 
-.vue-xtable-table .vue-xtable-body--column.col--ellipsis,
-.vue-xtable-table.vue-xtable-editable .vue-xtable-body--column,
-.vue-xtable-table .vue-xtable-footer--column.col--ellipsis,
-.vue-xtable-table .vue-xtable-header--column.col--ellipsis {
-  line-height: inherit
-}
-
 .vue-xtable-table.virtual--x .col--ellipsis .vue-xtable-cell,
 .vue-xtable-table.virtual--y .col--ellipsis .vue-xtable-cell {
   max-height: 47px
@@ -1213,9 +1234,7 @@
   box-shadow: inset 0 0 0 2px #409eff
 }
 
-.vue-xtable-table .vue-xtable-body--column.col--actived,
-.vue-xtable-table .vue-xtable-body--column.col--dirty,
-.vue-xtable-table .vue-xtable-body--column.col--selected {
+.vue-xtable-table .vue-xtable-body--column {
   position: relative
 }
 
@@ -1465,7 +1484,7 @@
   vertical-align: middle;
   display: inline-block;
   line-height: 15px;
-  margin-top: -2px
+  margin-top: -2px;
 }
 
 .vue-xtable-filter-wrapper.is--active .vue-xtable-filter--btn {
@@ -1473,7 +1492,7 @@
 }
 
 .vue-xtable-filter-wrapper .vue-xtable-filter--btn {
-  font-size: 13px;
+  font-size: 15px;
   color: #c0c4cc;
   cursor: pointer
 }
@@ -1875,14 +1894,28 @@
   position: relative;
 }
 
+.vue-xtable-toolbar .vue-xtable-custom--wrapper>button {
+  outline: 0;
+  border: none;
+  background: 0 0;
+  padding-left: 0;
+  padding-right: 0;
+  color: unset;
+}
+
 .vue-xtable-toolbar .toolbar-right-btn {
   color: #606266;
   margin-left: 10px;
+  outline: 0;
 }
 .vue-xtable-toolbar .toolbar-right-btn:hover {
   color: #409eff;
 }
-.vue-xtable-toolbar .toolbar-right-btn:active {
+.vue-xtable-toolbar .toolbar-right-btn:focus {
+  color: #8cc5ff;
+}
+
+.vue-xtable-toolbar .toolbar-right-btn>button:focus {
   color: #8cc5ff;
 }
 .vue-xtable-toolbar .toolbar-right-btn:disabled {
@@ -3413,4 +3446,43 @@
 
 .vue-xtable-chart--wrapper .vue-xtable-chart--panel {
   flex-grow: 1;
+}
+
+th .vue-xtable-cell {
+  position: relative;
+}
+.vue-xtable-table .vue-xtable-sort-wrapper, .vue-xtable-table .vue-xtable-filter-wrapper {
+  display: none;
+  position: absolute;
+}
+.sort--active .vue-xtable-sort-wrapper, .filter--active .vue-xtable-filter-wrapper {
+  display: inline-block;
+}
+th:hover .vue-xtable-sort-wrapper, th:hover .vue-xtable-filter-wrapper {
+  display: inline-block;
+}
+.vue-xtable-sort-wrapper {
+  right: 16px;
+  top: 50%;
+  transform: translate(0, -50%);
+  background-color: #f8f8f9;
+  padding-top: 2px;
+}
+.vue-xtable-sort-wrapper:last-child {
+  right: 0px;
+}
+.vue-xtable-filter-wrapper {
+  right: 0px;
+  top: 50%;
+  background-color: #f8f8f9;
+  margin: auto;
+  transform: translate(0, -50%);
+  padding: 0 2px 2px 2px;
+}
+.vue-xtable-table.column--highlight .vue-xtable-header--column:not(.col--index):hover .vue-xtable-filter-wrapper {
+  background-color: #d7effb;
+}
+
+.vue-xtable-table.column--highlight .vue-xtable-header--column:not(.col--index):hover .vue-xtable-sort-wrapper {
+  background-color: #d7effb;
 }

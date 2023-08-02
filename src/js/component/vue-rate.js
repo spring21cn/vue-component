@@ -9,8 +9,13 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueRate = {
-    template: '<div class="vue-rate"><span v-for="item in max" class="vue-rate__item" @mousemove="setCurrentValue(item, $event)" @mouseleave="resetCurrentValue" @click="selectValue(item)" :style="{cursor: disabled ? \'auto\' : \'pointer\'}"><i :class="[\'vue-rate__icon\', classes[item - 1], {\'hover\': hoverIndex === item}]" :style="getIconStyle(item)"><i v-if="showDecimalIcon(item)" :class="[\'vue-rate__decimal\', decimalIconClass]" :style="decimalStyle"></i></i></span><span v-if="showText" class="vue-rate__text" :style="{color: textColor}">{{text}}</span></div>',
+    template: '<div class="vue-rate"><span v-for="item in max" class="vue-rate__item" @mousemove="setCurrentValue(item, $event)" @mouseleave="resetCurrentValue" @click="selectValue(item)" :style="{cursor: rateDisabled ? \'auto\' : \'pointer\'}"><i :class="[\'vue-rate__icon\', classes[item - 1], {\'hover\': hoverIndex === item}]" :style="getIconStyle(item)"><i v-if="showDecimalIcon(item)" :class="[\'vue-rate__decimal\', decimalIconClass]" :style="decimalStyle"></i></i></span><span v-if="showText" class="vue-rate__text" :style="{color: textColor}">{{text}}</span></div>',
     name: 'VueRate',
+    inject: {
+      vueForm: {
+        default: ''
+      },
+    },
     data: function() {
       return {
         classMap: {},
@@ -86,7 +91,7 @@
     computed: {
       text: function() {
         var result = '';
-        if (this.disabled) {
+        if (this.rateDisabled) {
           result = this.textTemplate.replace(/\{\s*value\s*\}/, this.value);
         } else {
           result = this.texts[Math.ceil(this.currentValue) - 1];
@@ -95,7 +100,7 @@
       },
       decimalStyle: function() {
         var width = '';
-        if (this.disabled) {
+        if (this.rateDisabled) {
           width = (this.valueDecimal < 50 ? 0 : 50) + '%';
         }
         if (this.allowHalf) {
@@ -113,7 +118,7 @@
         return this.getValueFromMap(this.value, this.classMap);
       },
       voidClass: function() {
-        return this.disabled ? this.classMap.disabledVoidClass : this.classMap.voidClass;
+        return this.rateDisabled ? this.classMap.disabledVoidClass : this.classMap.voidClass;
       },
       activeClass: function() {
         return this.getValueFromMap(this.currentValue, this.classMap);
@@ -135,6 +140,9 @@
           result.push(this.voidClass);
         }
         return result;
+      },
+      rateDisabled: function() {
+        return this.disabled || (this.vueForm || {}).disabled;
       }
     },
     watch: {
@@ -178,18 +186,18 @@
         return result;
       },
       showDecimalIcon: function(item) {
-        var showWhenDisabled = this.disabled && this.valueDecimal > 0 && item - 1 < this.value && item > this.value;
+        var showWhenDisabled = this.rateDisabled && this.valueDecimal > 0 && item - 1 < this.value && item > this.value;
         var showWhenAllowHalf = this.allowHalf && this.pointerAtLeftHalf && ((item - 0.5).toFixed(1) === this.currentValue.toFixed(1));
         return showWhenDisabled || showWhenAllowHalf;
       },
       getIconStyle: function(item) {
-        var voidColor = this.disabled ? this.colorMap.disabledVoidColor : this.colorMap.voidColor;
+        var voidColor = this.rateDisabled ? this.colorMap.disabledVoidColor : this.colorMap.voidColor;
         return {
           color: item <= this.currentValue ? this.activeColor : voidColor
         };
       },
       selectValue: function(value) {
-        if (this.disabled) {
+        if (this.rateDisabled) {
           return;
         }
         if (this.allowHalf && this.pointerAtLeftHalf) {
@@ -199,7 +207,7 @@
         }
       },
       setCurrentValue: function(value, event) {
-        if (this.disabled) {
+        if (this.rateDisabled) {
           return;
         }
         if (this.allowHalf) {
@@ -218,7 +226,7 @@
         this.hoverIndex = value;
       },
       resetCurrentValue: function() {
-        if (this.disabled) {
+        if (this.rateDisabled) {
           return;
         }
         if (this.allowHalf) {

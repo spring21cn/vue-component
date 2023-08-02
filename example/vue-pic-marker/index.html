@@ -7,7 +7,22 @@
 
 <link rel="stylesheet" href="./vue-pic-marker.css">
 
-
+<body>
+  <div style="width:100%;height:100%">
+    <div id="app"> 
+      <VuePicMarker img-url="./images/1.jpg" width="800"></VuePicMarker>
+    </div>
+  </div>
+</body>
 <script>
-console.log(vue-pic-marker)
+ 
+ var app = new Vue({
+        components: {
+          "vue-pic-marker": VuePicMarker
+        },
+        data: { 
+        }  
+      })
+
+        app.$mount("#app");
 </script>

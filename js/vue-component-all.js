@@ -517,7 +517,7 @@
 /**
  * @license
  * Lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash category="math" include="pad,padEnd,padStart,parseInt,trim,trimEnd,trimStart,clone,cloneDeep,debounce,throttle,countBy,filter,eachRight,find,findLast,includes,groupBy,map,reduce,orderBy,sortBy,some,every,compact,concat,difference,differenceBy,differenceWith,dropWhile,findIndex,findLastIndex,indexOf,intersection,intersectionBy,intersectionWith,join,last,head,pull,pullAll,pullAt,reverse,slice,tail,initial,take,takeRight,takeWhile,union,unionBy,unionWith,uniq,uniqBy,uniqWith,without,xor,xorBy,xorWith,set,isEqual,isEqualWith,mapValues,assign,forEach,isEmpty,uniqueId,pick,pickBy"`
+ * Build: `lodash category="math" include="pad,padEnd,padStart,parseInt,trim,trimEnd,trimStart,clone,cloneDeep,debounce,throttle,countBy,filter,eachRight,find,findLast,includes,groupBy,map,reduce,orderBy,sortBy,some,every,compact,concat,difference,differenceBy,differenceWith,dropWhile,findIndex,findLastIndex,indexOf,intersection,intersectionBy,intersectionWith,join,last,head,pull,pullAll,pullAt,reverse,slice,tail,initial,take,takeRight,takeWhile,union,unionBy,unionWith,uniq,uniqBy,uniqWith,without,xor,xorBy,xorWith,set,isEqual,isEqualWith,mapValues,assign,forEach,isEmpty,uniqueId,pick,pickBy" exports="global"`
  * Copyright JS Foundation and other contributors <https://js.foundation/>
  * Released under MIT license <https://lodash.com/license>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -8769,31 +8769,8 @@
 
   /*--------------------------------------------------------------------------*/
 
-  // Some AMD build optimizers, like r.js, check for condition patterns like:
-  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {
-    // Expose Lodash on the global object to prevent errors when Lodash is
-    // loaded by a script tag in the presence of an AMD loader.
-    // See http://requirejs.org/docs/errors.html#mismatch for more details.
-    // Use `_.noConflict` to remove Lodash from the global object.
-    root.lodash = lodash;
-
-    // Define as an anonymous module so, through path mapping, it can be
-    // referenced as the "underscore" module.
-    define(function() {
-      return lodash;
-    });
-  }
-  // Check for `exports` after `define` in case a build optimizer adds it.
-  else if (freeModule) {
-    // Export for Node.js.
-    (freeModule.exports = lodash).lodash = lodash;
-    // Export for CommonJS support.
-    freeExports.lodash = lodash;
-  }
-  else {
-    // Export to the global object.
-    root.lodash = lodash;
-  }
+  // Export to the global object.
+  root.lodash = lodash;
 }.call(this));
 
 /*!
@@ -9882,7 +9859,7 @@
   }
 })(this, function(Vue, SystemInfo, DateUtil) {
   'use strict';
-  var version = '1.6.30';
+  var version = '1.6.31';
   var _toString = Object.prototype.toString;
   var _map = Array.prototype.map;
   var _filter = Array.prototype.filter;
@@ -9977,6 +9954,35 @@
     var decimals = parts[1] ? dsep + parts[1] : '';
     return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + tsep) + decimals;
   };
+
+  function DoFn(D) {
+    return D;
+  }
+  var dateI18n = {};
+
+  function getDateI18n() {
+    var lang = Vue.config.lang;
+    if (dateI18n.hasOwnProperty(lang)) {
+      return dateI18n[lang];
+    } else {
+      var i18n = {
+        dayNamesShort: Vue.t('vue.dateformat.dayNamesShort').split('_'),
+        dayNames: Vue.t('vue.dateformat.dayNames').split('_'),
+        monthNamesShort: Vue.t('vue.dateformat.monthNamesShort').split('_'),
+        monthNames: Vue.t('vue.dateformat.monthNames').split('_'),
+        amPm: Vue.t('vue.dateformat.amPm').split('_'),
+        DoFn: window.DoFn || DoFn,
+      };
+
+      // 当取到星期长度不为7，证明多语言中没取到，返回undefined，按照英文显示
+      if (i18n.dayNames.length != 7) {
+        i18n = undefined;
+      }
+      dateI18n[lang] = i18n;
+      return i18n;
+    }
+  }
+  
   var formatDate = function(date, format) {
     date = toDate(date);
     if (!isDef(date)) return null;
@@ -9984,7 +9990,7 @@
     if(format == 'timestamp'){
       return date.getTime();
     }
-    return DateUtil.format(date, format || 'yyyy-MM-dd');
+    return DateUtil.format(date, format || 'yyyy-MM-dd', getDateI18n());
   };
   var range = function a(n) {
     // see https://stackoverflow.com/questions/3746725/create-a-javascript-array-containing-1-n
@@ -10064,7 +10070,7 @@
     }
 
     if (!isDef(str)) str = string;
-    return DateUtil.parse(str, format || 'yyyy-MM-dd');
+    return DateUtil.parse(str, format || 'yyyy-MM-dd', getDateI18n());
   };
   var getDayCountOfMonth = function(year, month) {
     isDef(year) && (year = year*1);
@@ -11068,6 +11074,9 @@ function toArrayTree (array, options) {
     render: function(createElement, obj) {
       var vueComponent = obj.parent;
       var children = obj.children;
+      if (obj.props && obj.props.disabled === true) {
+        return createElement('transition',{}, children);
+      }
       var data = {
         on: {
           'beforeEnter': function(el) {
@@ -11175,16 +11184,20 @@ function toArrayTree (array, options) {
             }
             
           if (isDef(binding.expression) && isFunction(vnode.context[binding.expression])) {
-            vnode.context[binding.expression]();
+            vnode.context[binding.expression](mouseup,mousedown);
           } else {
             isFunction(binding.value) && binding.value();
           }
         });
       };
-      on(document, 'mousedown', function(e) {
+
+      var isMobile = VueUtil.getSystemInfo().device == 'Mobile';
+      var startEvent = isMobile ? 'touchstart' : 'mousedown';
+      var endEvent = isMobile ? 'touchend' : 'mouseup';
+      on(document, startEvent, function(e) {
         startClick = e;
       });
-      on(document, 'mouseup', function(e) {
+      on(document, endEvent, function(e) {
         clickOutSideFn(e, startClick);
       });
     }
@@ -11218,11 +11231,14 @@ function toArrayTree (array, options) {
   var scrollingMethods = [];
   document.addEventListener('scroll', lodash.debounce(function(e) {
 
-    if (VueUtil.getSystemInfo().device == 'Mobile' && (VueUtil.getSystemInfo().isLoadMobileJs || VueUtil.disableScrollDirective) ) return;
     var className = e.target.className || '';
     if(className.indexOf('contract-trigger') > -1 || className.indexOf('expand-trigger') > -1) return;
 
     scrollingMethods.forEach(function(obj) {
+      if (!obj.force) {
+        if (VueUtil.getSystemInfo().device == 'Mobile' && (VueUtil.getSystemInfo().isLoadMobileJs || VueUtil.disableScrollDirective) ) return;
+      }
+
 
       if (e.target !== obj.el && e.target.contains(obj.el)) {
         if(typeof obj.method == 'function') {
@@ -11244,6 +11260,7 @@ function toArrayTree (array, options) {
       };
       el.__scrollingNodes__ = bindingObj;
       bindingObj.method = binding.value;
+      bindingObj.force = binding.modifiers.force;
       if(scrollingMethods.indexOf(bindingObj) == -1) {
         scrollingMethods.push(bindingObj);
       }
@@ -11750,7 +11767,9 @@ function toArrayTree (array, options) {
   }
 
   var closest = function (element, selector) {
-
+    if (element.closest) {
+      return element.closest(selector);
+    }
     while (element && element.nodeType === 1) {
       if (element.matches(selector)) {
         return element;
@@ -11950,6 +11969,22 @@ function saveAs (blob, name, opts) {
   }
 }
 
+function getUrlVars(search) {
+    var vars = {};
+    search = search || window.location.search;
+    var hashes = search.slice(search.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        var hash = hashes[i].split('=');
+        var key = hash[0];
+        var value = hash[1];
+        if (key) {
+          vars[key] = value ? decodeURIComponent(value) : value;
+        }
+    }
+    return vars;
+}
+
   var VueUtil = {
     isNull: isNull,
     isUndefined: isUndefined,
@@ -12082,6 +12117,7 @@ function saveAs (blob, name, opts) {
     trapFocus:trapFocus,
     numberWithCommas:numberWithCommas,
     saveAs:saveAs,
+    getUrlVars:getUrlVars,
   };
 
   Object.keys(lodash).forEach(function(funcName) {
@@ -18116,7 +18152,7 @@ function saveAs (blob, name, opts) {
         }
       });
       this.$on('vue.form.removeField', function(field) {
-        if (field.prop) {
+        if (field) {
           this.fields.splice(this.fields.indexOf(field), 1);
         }
       });
@@ -18124,6 +18160,12 @@ function saveAs (blob, name, opts) {
     methods: {
       initValue: function() {
         this.initModel = VueUtil.cloneDeep(this.model);
+
+        VueUtil.loop(this.fields, function(field) {
+          if (field.valuePassed) {
+            field.initPassedValue = VueUtil.cloneDeep(field.value);
+          }
+        });
       },
       isModify: function() {
         var modifyFLg = false;
@@ -18226,6 +18268,8 @@ function saveAs (blob, name, opts) {
     name: 'VueFormItem',
     mixins: [VueUtil.component.emitter],
     props: {
+      value: {},
+      valuePassed: Boolean,
       label: String,
       labelWidth: String,
       prop: String,
@@ -18312,6 +18356,7 @@ function saveAs (blob, name, opts) {
       fieldValue: {
         cache: false,
         get: function() {
+          if(this.valuePassed) return this.value;
           var model = this.form.model;
           if (!model || !this.prop) {
             return;
@@ -18372,7 +18417,8 @@ function saveAs (blob, name, opts) {
         validateDisabled: false,
         validator: {},
         isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
-        screenWidth:document.body.clientWidth
+        screenWidth:window.screen.width,
+        initPassedValue: undefined
       };
     },
     methods: {
@@ -18465,10 +18511,21 @@ function saveAs (blob, name, opts) {
         var model = this.form.model;
         var value = this.fieldValue;
         var path = this.prop;
+
+        if (!path) {
+          return;
+        }
+
         if (path.indexOf(':') !== -1) {
           path = path.replace(/:/, '.');
         }
-        var prop = this.getPropByPath(model, path);
+
+        var prop;
+        try {
+          prop = this.getPropByPath(model, path);
+        } catch (error) {
+          return;
+        }
         this.validateDisabled = true;
         var self = this;
         setTimeout(function() {
@@ -18487,6 +18544,10 @@ function saveAs (blob, name, opts) {
         this.validateMessage = '';
       },
       isModify: function() {
+        if (this.valuePassed) {
+          return this.initPassedValue !== this.value;
+        }
+
         var model = this.form.model;
         var path = this.prop;
         if (path.indexOf(':') !== -1) {
@@ -18514,14 +18575,19 @@ function saveAs (blob, name, opts) {
     },
     mounted: function() {
       var self = this;
-      if (self.prop) {
+      if (this.valuePassed) {
+        this.initPassedValue = VueUtil.cloneDeep(this.value);
+      }
+      if (self.prop || self.valuePassed) {
         self.dispatch('VueForm', 'vue.form.addField', [self]);
         self.$on('vue.form.blur', self.onFieldBlur);
         self.$on('vue.form.change', self.onFieldChange);
       }
     },
     beforeDestroy: function() {
-      this.dispatch('VueForm', 'vue.form.removeField', [this]);
+      if (this.prop || this.valuePassed) {
+        this.dispatch('VueForm', 'vue.form.removeField', [this]);
+      }
       VueUtil.removeResizeListener(this.form.$el, this.resetLabelWidth);
     }
   };
@@ -20226,7 +20292,7 @@ return /******/ (function(modules) { // webpackBootstrap
     
         if (!autosize) {
           this.textareaCalcStyle = {
-            minHeight: calcTextareaHeight(this.$refs.textarea).minHeight
+            minHeight: '33px'
           };
           return;
         }
@@ -20277,7 +20343,7 @@ return /******/ (function(modules) { // webpackBootstrap
         });
 
         var rawValue = inputValue;
-        if (self.type !== 'textarea' && self.cleave !== null) {
+        if (self.type !== 'textarea' && self.cleave !== null && self.keyBoardType !== 'onlynumber') {
           var endPos = self.$refs.input.selectionEnd;
 
           if (watchFlg && self.cleave.numeral &&
@@ -20285,6 +20351,7 @@ return /******/ (function(modules) { // webpackBootstrap
             if (typeof inputValue === 'number') inputValue = inputValue + '';
             inputValue = inputValue.replace('.', self.cleave.numeralDecimalMark);
           }
+          var inputValueBeforeFormat = self.$refs.input.value;
           self.$refs.input.value = inputValue;
           var cleaveObj = new Cleave(self.$refs.input, self.cleave);
           var cleavePps = cleaveObj.properties;
@@ -20295,7 +20362,13 @@ return /******/ (function(modules) { // webpackBootstrap
             formattedValue = cleaveObj.getFormattedValue();
           }
 
-          self.currentValue = formattedValue;
+          // 旧值比当前输入框上的值多一个分割符，表示刚刚删除掉一个分割符，此时新值应该取输入框上的值
+          // 此时如果取格式化后的值的话，删掉的分割符又会重新出现，造成分割符没法删除的问题
+          if(self.currentValue && self.currentValue.length > inputValueBeforeFormat.length && self.currentValue.replace(inputValueBeforeFormat, '') === self.cleave.delimiter){
+            self.currentValue = inputValueBeforeFormat;
+          }else {
+            self.currentValue = formattedValue;
+          }
 
           if(cleaveObj.isAndroid){
             if (cleavePps.rawValueTrimPrefix) {
@@ -20733,6 +20806,7 @@ return /******/ (function(modules) { // webpackBootstrap
          *     numeralDecimalMark
          *     delimiter
          *     customFormatter
+         *     blocks
          * }
          */
         format: {
@@ -20799,6 +20873,12 @@ return /******/ (function(modules) { // webpackBootstrap
               }
           }
       },
+      created: function () {
+        document.addEventListener('paste', this.handlePasteBeforeUserClick);
+        this.$once('hook:beforeDestroy', function () {
+            document.removeEventListener('paste', this.handlePasteBeforeUserClick);
+        });
+      },
       methods: {
         clearValue: function(){
             this.setCurrentValue('');
@@ -20806,6 +20886,63 @@ return /******/ (function(modules) { // webpackBootstrap
         },
         hasIcon: function(){
             return this.$slots.suffix || this.icon || this.showClear;
+        },
+        getMaxLength: function () {
+            var blocks = this.format && this.format.blocks || [];
+            return blocks.length > 0 ? blocks.reduce(function (previous, current) {
+                return previous + current;
+            }, 0) : (this.maxlength);
+        },
+        formatWithBlocks: function (value) {
+            // TODO 预留属性，先不实现
+            var delimiters = [],
+                delimiterLazyShow = false;
+
+            var result = '',
+                multipleDelimiters = delimiters.length > 0,
+                currentDelimiter,
+                format = this.format || {},
+                delimiter = format.delimiter,
+                blocks = (!VueUtil.isEmpty(format) && !VueUtil.isEmpty(format.blocks)) ? format.blocks : [],
+                blocksLength = blocks.length;
+
+            // no options, normal input
+            if (blocksLength === 0 || !delimiter) {
+                return value;
+            }
+
+            value = this.getRawValueWithBlocks(value);
+            blocks.forEach(function (length, index) {
+                if (value.length > 0) {
+                    var sub = value.slice(0, length),
+                        rest = value.slice(length);
+
+                    if (multipleDelimiters) {
+                        currentDelimiter = delimiters[delimiterLazyShow ? (index - 1) : index] || currentDelimiter;
+                    } else {
+                        currentDelimiter = delimiter;
+                    }
+
+                    if (delimiterLazyShow) {
+                        if (index > 0) {
+                            result += currentDelimiter;
+                        }
+
+                        result += sub;
+                    } else {
+                        result += sub;
+
+                        if (sub.length === length && index < blocksLength - 1) {
+                            result += currentDelimiter;
+                        }
+                    }
+
+                    // update remaining string
+                    value = rest;
+                }
+            });
+
+            return result;
         },
         formatValue: function(value){
             if(!VueUtil.isDef(value) || !this.format){
@@ -20857,6 +20994,8 @@ return /******/ (function(modules) { // webpackBootstrap
                 }
 
                 value = partInteger.toString() + (numeralDecimalScale > 0 ? partDecimal.toString() : '')
+            } else {
+                value = this.formatWithBlocks(value);
             }
 
             if(this.format.uppercase){
@@ -20864,6 +21003,32 @@ return /******/ (function(modules) { // webpackBootstrap
             }
 
             return value;
+        },
+        getRawValueWithBlocks: function (formattedValue) {
+            var format = this.format || {};
+            var blocks = format.blocks;
+            var delimiter = format.delimiter;
+            if (VueUtil.isEmpty(blocks) || !delimiter ||!formattedValue) {
+                return formattedValue;
+            }
+
+            // var result = '';
+            // blocks.forEach(function (length) {
+            //     if (formattedValue.length > 0) {
+            //         var sub = formattedValue.slice(0, length),
+            //             rest = formattedValue.slice(length);
+
+            //         result += sub;
+
+            //         if (rest.length > 0) {
+            //             rest = rest.replace(delimiter, '');
+            //         }
+
+            //         formattedValue = rest;
+            //     }
+            // });
+
+            return formattedValue.replace(new RegExp(delimiter,'g'), '');
         },
         getRawValue: function(formattedValue){
             if(!VueUtil.isDef(formattedValue) || !this.format){
@@ -20875,6 +21040,8 @@ return /******/ (function(modules) { // webpackBootstrap
                 rawValue = formattedValue.replace(new RegExp(this.format.delimiter || '', 'g'), '')
                 .replace(this.format.numeralDecimalMark || '.', '.');
                 return rawValue;
+            } else {
+                rawValue = this.getRawValueWithBlocks(rawValue);
             }
 
             return rawValue;
@@ -20923,13 +21090,32 @@ return /******/ (function(modules) { // webpackBootstrap
                 rawValue = parseFloat(rawValue);
             }
 
-            this.currentValue = formattedValue;
+            // 旧值比当前输入框上的值多一个分割符，表示刚刚删除掉一个分割符，此时新值应该取输入框上的值
+            // 此时如果取格式化后的值的话，删掉的分割符又会重新出现，造成分割符没法删除的问题
+            var oldFormattedValue = this.currentValue;
+            var format = this.format || {};
+            var delimiter = format.delimiter;
+            if (this.currentValue.length > inputValue.length && delimiter && this.currentValue.replace(inputValue, '') === delimiter) {
+                this.currentValue = inputValue;
+            } else {
+                this.currentValue = formattedValue;
+            } 
 
             this.$nextTick(function(){
                 if(watchFlg || this.activeIndex >= this.currentValue.length){
                     this.activeIndex = -1;
                 }else {
-                    this.activeIndex += this.getIndexOffset(inputValue, formattedValue, this.activeIndex);
+                    var indexOffset = 0;
+                    if (oldFormattedValue.length === formattedValue.length && formattedValue.length - inputValue.length === delimiter.length) {
+                        indexOffset = -(delimiter.length - 1);
+                    } else {
+                        indexOffset = this.getIndexOffset(inputValue, formattedValue, this.activeIndex);
+                    }
+                    this.activeIndex += indexOffset;
+
+                    if (this.activeIndex !== -1 && delimiter && this.currentValue.endsWith(delimiter)) {
+                        this.currentValue = this.currentValue.substring(0, this.currentValue.length - delimiter.length);
+                    }
                 }
             });
 
@@ -20973,6 +21159,12 @@ return /******/ (function(modules) { // webpackBootstrap
         },
         handleMousedown: function(event){
             this.selectRange = true;//隐藏光标
+        },
+        // 用户点击 div 之前，@paste 黏贴事件触发不了，但是通过 document.addEventListener('paste', ...) 添加的黏贴事件可以触发
+        handlePasteBeforeUserClick: function(event) {
+            if (document.activeElement === this.$refs.inputContainer && event.target === document.body) {
+                this.handlePaste(event);
+            }
         },
         handlePaste: function(event){
             if(this.inputDisabled || this.readonly){
@@ -21530,12 +21722,14 @@ return /******/ (function(modules) { // webpackBootstrap
             
         },
         modifyTextAtActiveIndex: function(type, insertText){
-            if(VueUtil.isNumber(this.maxlength) && type === 'insert'){
+            var maxlength = this.getMaxLength();
+            if(VueUtil.isNumber(maxlength) && type === 'insert'){
                 var rawValueString = (!VueUtil.isDef(this.rawValue) || (VueUtil.isNumber(this.rawValue && isNaN(this.rawValue)))) ? '' : (this.rawValue + '');
-                if( rawValueString.length >= this.maxlength){
+                if( rawValueString.length >= maxlength){
                     return;
                 }else if(insertText.length > 1){
-                    insertText = insertText.substring(0, this.maxlength - rawValueString.length);
+                    insertText = this.getRawValueWithBlocks(insertText);
+                    insertText = insertText.substring(0, maxlength - rawValueString.length);
                 }
             }
 
@@ -21575,13 +21769,15 @@ return /******/ (function(modules) { // webpackBootstrap
             var currentLeftStr = this.currentValue.slice(0, startIndex);
             var currentRightStr = ( endIndex === -1 ? '' : this.currentValue.slice(endIndex) );
 
-            if(VueUtil.isNumber(this.maxlength) && VueUtil.isString(insertText) && insertText.length > 0){
+            var maxlength = this.getMaxLength();
+            if(VueUtil.isNumber(maxlength) && VueUtil.isString(insertText) && insertText.length > 0){
                 var rawValueString = this.getRawValue(currentLeftStr + currentRightStr);
                 insertText = this.getRawValue( this.formatValue(insertText) );
-                if(rawValueString.length >= this.maxlength){
+                if(rawValueString.length >= maxlength){
                     return;
                 }else if(insertText.length > 1){
-                    insertText = insertText.substring(0, this.maxlength - rawValueString.length);
+                    insertText = this.getRawValueWithBlocks(insertText);
+                    insertText = insertText.substring(0, maxlength - rawValueString.length);
                 }
             }
             
@@ -22111,7 +22307,10 @@ return /******/ (function(modules) { // webpackBootstrap
         default: 'button'
       },
       loading: Boolean,
-      disabled: Boolean,
+      disabled: {
+        type: Boolean,
+        default: null
+      },
       plain: Boolean,
       circle: Boolean,
       autofocus: Boolean,
@@ -22127,7 +22326,7 @@ return /******/ (function(modules) { // webpackBootstrap
     },
     computed: {
       buttonDisabled: function() {
-        return this.disabled || (this.vueForm || {}).disabled;
+        return this.disabled != undefined ? this.disabled : (this.vueForm || {}).disabled;
       },
       finalSize: function() {
         return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
@@ -22148,7 +22347,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCheckboxGroup = {
-    template: '<div class="vue-checkbox-group"><slot></slot></div>',
+    template: '<div class="vue-checkbox-group" :class="{\'check-style\': checkStyle, \'is-split\': realSplit}"><slot></slot></div>',
     name: 'VueCheckboxGroup',
     mixins: [VueUtil.component.emitter],
     inject: {
@@ -22167,6 +22366,11 @@ return /******/ (function(modules) { // webpackBootstrap
       tabindex: {
         type: Number,
         default: 0
+      },
+      checkStyle: Boolean,
+      split: {
+        type: Boolean,
+        default: null,
       }
     },
     methods: {
@@ -22186,6 +22390,9 @@ return /******/ (function(modules) { // webpackBootstrap
       finalSize: function() {
         return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
       },
+      realSplit: function() {
+        return this.split == undefined ? this.checkStyle : this.split;
+      }
     }
   };
   Vue.component(VueCheckboxGroup.name, VueCheckboxGroup);
@@ -22282,12 +22489,15 @@ return /******/ (function(modules) { // webpackBootstrap
       store: function() {
         return this._checkboxGroup ? this._checkboxGroup.value : this.value;
       },
+      checkStyle: function() {
+        return this._checkboxGroup.checkStyle;
+      },
       activeStyle: function() {
         return {
           backgroundColor: this._checkboxGroup.fill || '',
-          borderColor: this._checkboxGroup.fill || '',
+          borderColor: (this.checkStyle ? this._checkboxGroup.textColor : this._checkboxGroup.fill) || '',
           color: this._checkboxGroup.textColor || '',
-          'box-shadow': '-1px 0 0 0 ' + this._checkboxGroup.fill
+          'box-shadow': this.checkStyle? '' : '-1px 0 0 0 ' + this._checkboxGroup.fill
         };
       },
       size: function() {
@@ -22337,7 +22547,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCheckbox = {
-    template: '<label class="vue-checkbox"><span :class="[\'vue-checkbox__input\', {\'is-disabled\': isDisabled, \'is-checked\': isChecked, \'is-indeterminate\': indeterminate, \'is-focus\': isFocus}]"><span class="vue-checkbox__inner"></span><input v-if="trueLabel || falseLabel" class="vue-checkbox__original" z-index="0" type="checkbox" :name="name" :disabled="isDisabled" :true-value="trueLabel" :false-value="falseLabel" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><input v-else class="vue-checkbox__original" type="checkbox" :disabled="isDisabled" :value="label" :name="name" v-model="model" @change="handleChange" :tabindex="tabIndex"  @focus="isFocus = true" @blur="isFocus = false"></span><span class="vue-checkbox__label" v-if="$slots.default || label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
+    template: '<label v-show="isDisplay ? isChecked : true"  class="vue-checkbox"><span :class="[\'vue-checkbox__input\', {\'is-disabled\': isDisabled, \'is-checked\': isChecked, \'is-indeterminate\': indeterminate, \'is-focus\': isFocus}]"><span class="vue-checkbox__inner"></span><input v-if="trueLabel || falseLabel" class="vue-checkbox__original" z-index="0" type="checkbox" :name="name" :disabled="isDisabled" :true-value="trueLabel" :false-value="falseLabel" v-model="model" @change="handleChange" :tabindex="tabIndex" @focus="isFocus = true" @blur="isFocus = false"><input v-else class="vue-checkbox__original" type="checkbox" :disabled="isDisabled" :value="label" :name="name" v-model="model" @change="handleChange" :tabindex="tabIndex"  @focus="isFocus = true" @blur="isFocus = false"></span><span class="vue-checkbox__label" v-if="$slots.default || label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
     name: 'VueCheckbox',
     mixins: [VueUtil.component.emitter],
     inject: {
@@ -22381,6 +22591,9 @@ return /******/ (function(modules) { // webpackBootstrap
         return this.isGroup
           ? this._checkboxGroup.disabled || this.disabled || (this.vueForm || {}).disabled
           : this.disabled || (this.vueForm || {}).disabled;
+      },
+      isDisplay: function() {
+        return this.isDisabled && (this.vueForm || {}).display;
       },
       isGroup: function() {
         var parent = this.$parent;
@@ -23049,7 +23262,7 @@ return /******/ (function(modules) { // webpackBootstrap
   });
 
   var VueRadioGroup = {
-    template: '<div class="vue-radio-group" role="radiogroup" @keydown="handleKeydown"><slot></slot></div>',
+    template: '<div class="vue-radio-group" :class="{\'check-style\': checkStyle, \'is-split\': realSplit}" role="radiogroup" @keydown="handleKeydown"><slot></slot></div>',
     name: 'VueRadioGroup',
     mixins: [VueUtil.component.emitter],
     inject: {
@@ -23066,6 +23279,11 @@ return /******/ (function(modules) { // webpackBootstrap
       tabindex: {
         type: Number,
         default: 0
+      },
+      checkStyle: Boolean,
+      split: {
+        type: Boolean,
+        default: null,
       }
     },
     watch: {
@@ -23140,6 +23358,9 @@ return /******/ (function(modules) { // webpackBootstrap
       finalSize: function() {
         return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
       },
+      realSplit: function() {
+        return this.split == undefined ? this.checkStyle : this.split;
+      }
     },
     mounted: function() {
       this.handleTabindex();
@@ -23201,11 +23422,14 @@ return /******/ (function(modules) { // webpackBootstrap
         }
         return false;
       },
+      checkStyle: function() {
+        return this._radioGroup.checkStyle;
+      },
       activeStyle: function() {
         return {
           backgroundColor: this._radioGroup.fill || '',
-          borderColor: this._radioGroup.fill || '',
-          boxShadow: this._radioGroup.fill ? '-1px 0 0 0 ' + this._radioGroup.fill : '',
+          borderColor: (this.checkStyle ? this._radioGroup.textColor : this._radioGroup.fill) || '',
+          boxShadow: this.checkStyle ? '' : (this._radioGroup.fill ? '-1px 0 0 0 ' + this._radioGroup.fill : ''),
           color: this._radioGroup.textColor || ''
         };
       },
@@ -23398,7 +23622,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueRadio = {
-    template: '<label role="radio" @keydown.space.stop.prevent="model = isDisabled ? model : label" :tabindex="tabIndex" class="vue-radio" :class="[{\'is-disabled\': isDisabled}]"><span :class="[\'vue-radio__input\', {\'is-disabled\': isDisabled, \'is-checked\': model === label, \'is-focus\': isFocus}]"><span class="vue-radio__inner"></span><input class="vue-radio__original" :value="label" type="radio" v-model="model" @focus="isFocus=true" @blur="isFocus=false" :name="name" :disabled="isDisabled" tabindex="-1"></span><span class="vue-radio__label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
+    template: '<label v-show="isDisplay ? model === label : true" role="radio" @keydown.space.stop.prevent="model = isDisabled ? model : label" :tabindex="tabIndex" class="vue-radio" :class="[{\'is-disabled\': isDisabled}]"><span :class="[\'vue-radio__input\', {\'is-disabled\': isDisabled, \'is-checked\': model === label, \'is-focus\': isFocus}]"><span class="vue-radio__inner"></span><input class="vue-radio__original" :value="label" type="radio" v-model="model" @focus="isFocus=true" @blur="isFocus=false" :name="name" :disabled="isDisabled" tabindex="-1"></span><span class="vue-radio__label"><slot></slot><template v-if="!$slots.default">{{label}}</template></span></label>',
     name: 'VueRadio',
     mixins: [VueUtil.component.emitter],
     inject: {
@@ -23450,6 +23674,9 @@ return /******/ (function(modules) { // webpackBootstrap
         return this.isGroup 
         ? this._radioGroup.disabled || this.disabled || (this.vueForm || {}).disabled
         : this.disabled || (this.vueForm || {}).disabled;
+      },
+      isDisplay: function() {
+        return this.isDisabled && (this.vueForm || {}).display;
       },
       tabIndex: function() {
         return (this.isDisabled || (this.isGroup && this.model !== this.label)) ? -1 : this.isGroup ? this._radioGroup.tabindex : this.tabindex;
@@ -23722,6 +23949,16 @@ return /******/ (function(modules) { // webpackBootstrap
             submenu.style.height = '';
             submenu.style.overflow = '';
           }, 0);
+          return;
+        }
+
+        if (this.mode === 'horizontal') {
+          verticalMenu.style.left = menu.offsetWidth + 5 + 'px';
+          verticalMenu.style.top = 0;
+          
+          if (this.level > 1) {
+            verticalMenu.style.position = 'absolute';
+          }
           return;
         }
         
@@ -24769,7 +25006,7 @@ return /******/ (function(modules) { // webpackBootstrap
         :disabled="selectDisabled" :readonly="isReadOnly" :validate-event="false" @click="handleIconClick" \
         @mousedown.native="handleMouseDown" @keyup.native="debouncedOnInputChange" @input="keepMenu" @keydown.native.down.prevent.stop="navigateOptions(\'next\')" \
         @keydown.native.up.prevent.stop="navigateOptions(\'prev\')" @keydown.native.enter.prevent.stop="selectOption" \
-        @keydown.native.esc.prevent="handleEsc" @keydown.native.tab="visible = false" @paste.native="debouncedOnInputChange" \
+        @keydown.native.esc.prevent="handleEsc" @keydown.native.tab="handleTab" @paste.native="debouncedOnInputChange" \
         @mouseenter.native="inputHovering = true" @mouseleave.native="inputHovering = false" :icon="iconClass" :class="{focusing: focusing}"></vue-input> \
       <transition @leave="destroyPopper" @after-enter="handleMenuEnter"> \
         <vue-select-dropdown ref="popper" v-show="visible && emptyText !== false"  :append="append" :auto-width="autoWidth"> \
@@ -24787,7 +25024,7 @@ return /******/ (function(modules) { // webpackBootstrap
               :icon="iconClass" @click="handleIconClick"></vue-input>\
               <div :class="{\'vue-select-dropdown_list_main\':isMobile && visible && emptyText !== false}">\
                 <ul :class="[\'vue-select-dropdown__list\', {\'is-empty\': !allowCreate && filteredOptionsCount === 0}]" \
-                  v-show="options.length > 0 && !loading"> \
+                  v-show="options.length > 0 && !loading" ref="itemContainer"> \
                   <vue-option :value="query" created v-if="showNewOption"></vue-option> \
                   <vue-recycle-scroller \
                   ref="scroller" \
@@ -24795,7 +25032,8 @@ return /******/ (function(modules) { // webpackBootstrap
                   :items="lazyData" \
                   :item-size="itemSize" \
                   :key-field="valueMember" \
-                  v-slot="ref" \
+                  v-slot="ref"\
+                  :emit-update="emitUpdate"\
                   v-if="lazyload"> \
                     <slot :item="ref.item"></slot> \
                   </vue-recycle-scroller> \
@@ -25029,6 +25267,14 @@ return /******/ (function(modules) { // webpackBootstrap
         type: Boolean,
         default: true
       },
+      selectOnTab: {
+        type: Boolean,
+        default: false
+      },
+      hoverFirstOnFilter: {
+        type: Boolean,
+        default: false
+      },
       tooltipPlacement: {
         type: String,
         default: 'bottom'
@@ -25067,6 +25313,7 @@ return /******/ (function(modules) { // webpackBootstrap
         filterAllSelectedStatus:false,
         maxDisplayTags: 9999,
         focusing: false,
+        emitUpdate: false,
       };
     },
     watch: {
@@ -25154,6 +25401,7 @@ return /******/ (function(modules) { // webpackBootstrap
         var self = this;
         self.$nextTick(function() {
           self.visible && self.broadcast('VueSelectDropdown', 'updatePopper');
+          self.hoverFirstOnFilter && self.hoverFirst();
         });
         self.hoverIndex = -1;
         if (self.multiple && self.filterable) {
@@ -25283,6 +25531,11 @@ return /******/ (function(modules) { // webpackBootstrap
       placeholder: function(val) {
         this.cachedPlaceHolder = val;
         this.managePlaceholder();
+      },
+      disabled: function() {
+        if (this.multiple) {
+          this.resetInputHeight();
+        }
       }
     },
     methods: {
@@ -25600,15 +25853,16 @@ return /******/ (function(modules) { // webpackBootstrap
           scrollPanel.scrollTop += topOverflowDistance;
         }
       },
-      selectOption: function(event) {
+      selectOption: function(event, targetIndex) {
         if (this.visible) {
-          event.stopPropagation();
+          event && event.stopPropagation();
         } else {
           this.visible = true;
           return;
         }
-        if (this.options[this.hoverIndex]) {
-          this.handleOptionSelect(this.options[this.hoverIndex]);
+        var index = targetIndex == undefined ? this.hoverIndex : targetIndex;
+        if (this.options[index]) {
+          this.handleOptionSelect(this.options[index]);
         }
       },
       deleteSelected: function(event) {
@@ -25672,7 +25926,7 @@ return /******/ (function(modules) { // webpackBootstrap
         });
       },
       handleResize: function() {
-        this.resetInputWidth();
+        if (this.multiple) this.resetInputWidth();
         if (this.multiple) this.resetInputHeight();
       },
       debouncedOnInputChange: VueUtil.debounce(function() {
@@ -25727,6 +25981,60 @@ return /******/ (function(modules) { // webpackBootstrap
           });
         }
       },
+      hoverFirst: function() {
+        var el;
+        if(this.lazyload) {
+          el = this.$refs.scroller && this.$refs.scroller.$el;
+        } else {
+          el = this.$refs.itemContainer && this.$refs.itemContainer;
+        }
+
+        if (el) {
+          el.scrollTo({
+            top: 0,
+            left: 0,
+          });
+        }
+        this.emitUpdate = true;
+        this.$nextTick(function() {
+          if (this.visible && this.lazyload && this.lazyData.length > 0) {
+            var val = this.lazyData[0][this.valueMember];
+            var self =this;
+            var scroller = this.$refs.scroller;
+
+            var debouncedHoverIndex = VueUtil._debounce(function() {
+              var index = scroller.pool.findIndex(function(pool) {
+                return pool.position > -1 && pool.item[self.valueMember] == val;
+              });
+
+              self.hoverIndex = index;
+              setTimeout(function() {
+                self.emitUpdate = false;
+                scroller.$off('update');
+              }, 100);
+            }, 60);
+
+            scroller.$on('update', debouncedHoverIndex);
+            setTimeout(function() {
+              debouncedHoverIndex();
+            }, 30);
+          }
+          
+          if (!this.lazyload) {
+            this.hoverIndex = this.options.findIndex(function(option) {
+              return option.disabled != true && option.groupDisabled != true && option.visible;
+            });
+          }
+        });
+
+      },
+      handleTab: function() {
+        if (this.selectOnTab) {
+          this.selectOption();
+        }
+
+        this.visible = false;
+      }
     },
     created: function() {
       this.cachedPlaceHolder = this.currentPlaceholder = this.placeholder;
@@ -26483,7 +26791,7 @@ return /******/ (function(modules) { // webpackBootstrap
     }
   };
   var VueTreeNode = {
-    template: '<div @click.stop="handleClick" @dblclick.stop="handleDblclick" v-show="node.visible" :class="[\'vue-tree-node\', {\'is-expanded\': childNodeRendered && expanded,\'is-current\': isCurrent,\'is-hidden\': !node.visible}]"><div class="vue-tree-node__content" :style="{\'padding-left\': (node.level - 1) * tree.indent + \'px\'}"><span @click.stop="handleExpandIconClick" :class="[\'vue-tree-node__expand-icon\', {\'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded}]"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
+    template: '<div @click.stop="handleClick" @dblclick.stop="handleDblclick" v-show="node.visible" :class="[\'vue-tree-node\', {\'is-expanded\': childNodeRendered && expanded,\'is-current\': isCurrent,\'is-hidden\': !node.visible}]"><div class="vue-tree-node__content" :style="{\'padding-left\': (node.level - 1) * tree.indent + \'px\'}"><span @click.stop="handleExpandIconClick" :class="[\'vue-tree-node__expand-icon\', {\'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded}]"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition :disabled="!transition"><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" :transition="transition" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
     name: 'VueTreeNode',
     mixins: [VueUtil.component.emitter],
     props: {
@@ -26492,6 +26800,7 @@ return /******/ (function(modules) { // webpackBootstrap
           return {};
         }
       },
+      transition: Boolean,
       props: {},
       renderContent: Function
     },
@@ -26624,8 +26933,8 @@ return /******/ (function(modules) { // webpackBootstrap
   };
   var VueTree = {
     template: 
-    '<div :class="[\'vue-tree\', {\'vue-tree--highlight-current\': highlightCurrent}]"> \
-      <vue-tree-node v-for="child in root.childNodes" :node="child" :props="props" :key="getNodeKey(child)" \
+    '<div :class="[\'vue-tree\', {\'vue-tree--highlight-current\': highlightCurrent}]" @scroll="handleScroll"> \
+      <vue-tree-node v-for="child in root.childNodes" :node="child" :transition="transition" :props="props" :key="getNodeKey(child)" \
         :render-content="renderContent" @node-expand="handleNodeExpand"></vue-tree-node> \
       <div class="vue-tree__empty-block" v-if="!root.childNodes || root.childNodes.length === 0"><span class="vue-tree__empty-text">{{$t(\'vue.tree.emptyText\')}}</span></div> \
     </div>',
@@ -26635,6 +26944,7 @@ return /******/ (function(modules) { // webpackBootstrap
       VueTreeNode: VueTreeNode
     },
     data: function() {
+      this.scrollTop = null;
       return {
         store: null,
         root: null,
@@ -26679,6 +26989,10 @@ return /******/ (function(modules) { // webpackBootstrap
       indent: {
         type: Number,
         default: 16
+      },
+      transition: {
+        type: Boolean,
+        default: true,
       }
     },
     computed: {
@@ -26801,6 +27115,10 @@ return /******/ (function(modules) { // webpackBootstrap
       reloadNode: function(nodeKey) {
         var node = this.getNativeNode(nodeKey);
         node && node.reloadData();
+      },
+
+      handleScroll: function() {
+        this.scrollTop = this.$el && this.$el.scrollTop;
       }
     },
     created: function() {
@@ -26822,6 +27140,11 @@ return /******/ (function(modules) { // webpackBootstrap
         tree: self
       });
       self.root = self.store.root;
+    },
+    activated: function() {
+      this.$nextTick(function() {
+        this.$el.scrollTop = this.scrollTop;
+      });
     }
   };
   Vue.component(VueTree.name, VueTree);
@@ -26838,7 +27161,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCarousel = {
-    template: '<div :class="[\'vue-carousel\', {\'vue-carousvue--card\': type === \'card\'}]" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave" @touchstart.stop="handleTouchStart" @mousedown="handleMouseDrag"><div class="vue-carousel__container" :style="{height: height}"><transition name="carousel-arrow-left"><button type="button" v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousel-arrow-right"><button type="button" v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul v-if="indicatorPosition !== \'none\'" :class="[\'vue-carousel__indicators\', {\'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\'}]"><li v-for="(item, index) in items" :class="[\'vue-carousel__indicator\', {\'is-active\': index === activeIndex}]" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button type="button" class="vue-carousel__button"></button></li></ul></div>',
+    template: '<div :class="[\'vue-carousel\', {\'vue-carousvue--card\': type === \'card\'}]" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave" @touchstart.stop="handleTouchStart" @mousedown="handleMouseDrag"><div class="vue-carousel__container" :style="{height: height}"><transition name="carousel-arrow-left"><button type="button" v-if="arrowShowLeft" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousel-arrow-right"><button type="button" v-if="arrowShowRight" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul v-if="indicatorPosition !== \'none\'" :class="[\'vue-carousel__indicators\', {\'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\'}]"><li v-for="(item, index) in items" :class="[\'vue-carousel__indicator\', {\'is-active\': index === activeIndex}]" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button type="button" class="vue-carousel__button"></button></li></ul></div>',
     name: 'VueCarousel',
     props: {
       initialIndex: {
@@ -26903,6 +27226,17 @@ return /******/ (function(modules) { // webpackBootstrap
         this.resetItemPosition();
         this.$emit('change', val, oldVal);
       }
+    },
+    computed: {
+      arrowShow: function() {
+        return this.arrow !== 'never';
+      },
+      arrowShowLeft: function() {
+        return this.arrowShow && (this.wrap || this.activeIndex !== 0);
+      },
+      arrowShowRight: function() {
+        return this.arrowShow && (this.wrap || this.activeIndex !== this.items.length - 1);
+      },
     },
     methods: {
       handleMouseEnter: function() {
@@ -26997,11 +27331,7 @@ return /******/ (function(modules) { // webpackBootstrap
         });
       },
       playSlides: function() {
-        if (this.activeIndex < this.items.length - 1) {
-          this.activeIndex++;
-        } else {
-          this.activeIndex = 0;
-        }
+        this.setActiveItem(this.activeIndex + 1);
 
         var activeItem = this.items[this.activeIndex];
         var interval = (activeItem && activeItem.interval) || this.interval;
@@ -27269,6 +27599,760 @@ return /******/ (function(modules) { // webpackBootstrap
 (function(context, definition) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
+    define(['Vue'], definition);
+  } else {
+    definition(context.Vue);
+  }
+})(this, function(Vue) {
+  'use strict';
+  var VueCardListItem = {
+    template: '<div class="vue-card-list-item" :class="itemClass"\
+    @click.capture="handleClickCapture" @click="handleClick" v-clickoutside="closeEditState"\
+    @touchstart="handleTouchstart" @touchmove="handleTouchmove" @touchend="handleTouchend">\
+      <div v-if="showIndex" class="vue-card-list-item-pre-wrapper">\
+        <span  class="vue-card-list-item-index"> {{index + 1}}</span> \
+      </div>\
+      <div class="vue-card-list-item-wrapper">\
+        <slot></slot>\
+      </div>\
+      <div class="vue-card-list-item-action" :class="{\'bottom-action\': bottomAction}" v-if="itemButton && itemButton.length > 0">\
+        <i v-for="button in itemButton" :class="[button.icon].concat(button.class)" @click.stop="callClickFunc(button, $event)" @touchstart="iconTouchstart($event, button)"></i>\
+      </div>\
+      <div class="vue-card-list-item-overlay" v-if="isPlaceholder" @mousedown.stop @touchstart.stop @touchmove.stop @touchend.stop @dblclick.stop @click.stop="addData"><i class="vue-icon-plus"></i></div>\
+    </div>',
+    directives: {
+      Clickoutside: VueUtil.component.clickoutside(),
+    },
+    props: {
+      data: Object,
+      readonly: Boolean,
+      index: Number,
+      isPlaceholder: Boolean,
+      itemButton: Array,
+    },
+    data: function() {
+      return {
+        itemControl: {
+          disabled: true,
+        },
+        isCurrent: false,
+        isNewRow: false,
+        showIndex: this.$parent.showIndex,
+        listMode: this.$parent.listMode,
+        bottomAction: false,
+      };
+    },
+    provide: function() {
+      return {
+        vueForm: this.itemControl
+      };
+    },
+    watch: {
+      isCurrentVal: function() {
+        this.isCurrent = this.isCurrentVal;
+        if (this.isCurrent) {
+          this.$parent.currentNode = this;
+        }
+      },
+      index: function() {
+        this.resetActionPosition(true);
+      }
+    },
+    created: function() {
+      var isNewRow = this.$parent.insertRows.indexOf(this.data) > -1;
+      this.isNewRow = isNewRow;
+
+      if (!isNewRow) {
+        this.originData = VueUtil.cloneDeep(this.data);
+      }
+    },
+    computed: {
+      itemClass: function() {
+        return {
+          'editing': this.itemControl.disabled === false,
+          'not-editing': this.itemControl.disabled !== false,
+          'current': this.isCurrent,
+        };
+      },
+      isCurrentVal: function() {
+        return this.$parent.currentRowId === this.data._rowId;
+      }
+    },
+    methods: {
+      startEditState: function() {
+        if (!this.readonly) {
+          this.itemControl.disabled = false;
+        }
+      },
+      closeEditState: function(mouseup, mousedown) {
+        if (mousedown.target && !mousedown.target.closest('.vue-popper') && !mousedown.target.closest('.vue-select-dropdown')) {
+          this.itemControl.disabled = true;
+        }
+      },
+      setCurrentRow: function() {
+        this.$parent.currentNode = this;
+        this.$parent.currentRowId = this.data._rowId;
+        this.resetActionPosition(true);
+      },
+      focus: function() {
+        this.$nextTick(function() {
+          var focusableElms = this.$el.querySelector('input:not([disabled]):not([tabindex=\'-1\']),select:not([disabled]):not([tabindex=\'-1\']),textarea:not([disabled]):not([tabindex=\'-1\']),button:not([disabled]):not([tabindex=\'-1\']),[tabindex]:not([tabindex=\'-1\'])');
+          focusableElms && focusableElms.focus();
+        });
+      },
+      handleTouchstart: function(e) {
+        this.setCurrentRow();
+
+        if (this.itemControl.disabled) {
+          this.touchData = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY,
+          };
+        }
+      },
+      handleTouchmove: function(e) {
+        if (!this.touchData) {
+          return;
+        } else {
+          var deltaY = e.changedTouches[0].clientY - this.touchData.y;
+          if (Math.abs(deltaY) > 50) {
+            this.touchData = null;
+          }
+        }
+      },
+      handleTouchend: function(e) {
+        if (!e.changedTouches[0] || !this.touchData) {
+          return;
+        }
+        var deltaX = e.changedTouches[0].clientX - this.touchData.x;
+        var deltaY = e.changedTouches[0].clientY - this.touchData.y;
+
+        this.touchData = null;
+  
+        if (deltaX < -100 && Math.abs(deltaY) < 50) {
+          this.$emit('drag-left');
+          return;
+        } else if (deltaX > 100 && Math.abs(deltaY) < 50) {
+          this.$emit('drag-right');
+          return;
+        }
+
+        var self = this;
+
+        // if (this.waitForSecondTouch) {
+          if (this.itemControl.disabled) {
+            setTimeout(function() {
+              self.startEditState();
+              self.focus();
+            }, 100);
+          }
+        // } else {
+        //   this.waitForSecondTouch = true;
+        //   setTimeout(function() {
+        //     self.waitForSecondTouch = false;
+        //   }, 500);
+        // }
+      },
+      handleClickCapture: function() {
+        if (!this.isPlaceholder) {
+          this.setCurrentRow();
+        }
+      },
+      handleClick: function() {
+        if (this.itemControl.disabled) {
+          this.startEditState();
+          this.focus();
+        }
+      },
+      addData: function() {
+        if(!this.$parent.readonly) {
+          this.$parent.addData();
+        }
+        this.$emit('placeholder-click');
+      },
+      forceResetLabel: function() {
+        var broadcast = function() {
+          VueUtil.loop(this.$children, function(child) {
+            var name = child.$options.name;
+            if (name === 'VueFormItem') {
+              child.resetLabelWidth();
+            } else {
+              broadcast.apply(child);
+            }
+          });
+        };
+        broadcast.call(this);
+      },
+      resetActionPosition: function(forceShow) {
+        var self = this;
+        var actionBtn = self.$el.querySelector('.vue-card-list-item-action'); 
+        if (!actionBtn) return;
+
+
+        var el = this.$el;
+        var container = el.parentElement;
+        var containerHeight = container.offsetHeight;
+        var buttonHeight = 56; //button容器高
+
+        var elRect = el.getBoundingClientRect();
+
+        var elToContainerTop = el.offsetTop - container.scrollTop;
+        var elToContainerBottom = container.offsetHeight - elToContainerTop - elRect.height;
+
+        var top;
+        var right = window.innerWidth - elRect.right + 20;
+
+        if (actionBtn.actionHidden !== 1) {
+          if (elToContainerBottom > containerHeight || elToContainerTop > containerHeight) {
+            actionBtn.style.display = 'none';
+          } else {
+            actionBtn.style.display = null;
+          }
+        }
+
+        if (elToContainerBottom < buttonHeight && elToContainerTop >= buttonHeight) {
+          top = elRect.top - buttonHeight;
+          this.bottomAction = false;
+        } else {
+          this.bottomAction = true;
+          top = elRect.top + elRect.height + 10;
+        }
+
+        if (forceShow) {
+          setTimeout(function() {
+            actionBtn.actionHidden = null;
+            actionBtn.style.display = null;
+          }, 100);
+        }
+        
+        actionBtn.style.top = top + 'px';
+        actionBtn.style.right = right + 'px';
+      },
+      callClickFunc: function(button, event) {
+        if (typeof button.click === 'function') {
+          button.click(this.data, event);
+        } else if (button.click) {
+          if (button.click === 'edit') {
+            this.handleClick();
+          }
+          this.$emit(button.click);
+        }
+      },
+      iconTouchstart: function(event, button) {
+        if (button.click !== 'drag') {
+          event.stopPropagation();
+        }
+      }
+    },
+  };
+
+  var VueCardList = {
+    template: '<div class="vue-card-list" :class="{\'list-mode\': listMode, readonly: readonly, draggable:canDrag, \'label-responsive\': labelResponsive}" :style="{height: height, flex: flex}" v-clickoutside="hideActionPanel">\
+      <div class="vue-card-list-header" v-if="showHeader && $slots.header">\
+        <div class="vue-card-list-item-pre-wrapper" v-if="showIndex">\
+        </div>\
+        <div class="vue-card-list-item-wrapper">\
+          <slot name="header"></slot>\
+        </div>\
+        <div class="vue-card-list-gutter" ref="gutter"></div>\
+      </div>\
+      <div class="vue-card-list-content" :class="contentClass" ref="content" @scroll="handleScroll">\
+        <vue-card-list-item v-if="placeholderItemShow" :data="defaultData || {}" :index="0" :readonly="true" is-placeholder @placeholder-click="$emit(\'placeholder-click\')">\
+            <slot v-bind="{data:defaultData || {}, index:1}"></slot>\
+        </vue-card-list-item>\
+        <vue-card-list-item ref="items" v-for="(d, i) in renderData" :key="d._rowId" :data="d" :index="i" :readonly="readonly" :item-button="itemButton" @drag-left="handleDragLeft(d)" @drag-right="handleDragRight(d)" @edit="handleEdit(d)" @delete="handleDelete(d)" @click.native="handleClick(d)">\
+            <slot v-bind="{data:d, index:i + 1}"></slot>\
+        </vue-card-list-item>\
+        <div v-if="!placeholderRow && renderData.length === 0" class="vue-card-list-empty-wrapper"><slot name="empty-content">{{emptyLabel || $t(\'vue.cardList.noData\')}}</slot></div>\
+      </div>\
+      <div class="vue-card-list-footer" v-if="!readonly && !placeholderItemShow">\
+        <vue-button size="large" type="text" @click="addData()">\
+          <i class="vue-icon-plus"></i> \
+          {{$t(\'vue.cardList.addButton\')}} \
+        </vue-button>\
+      </div> \
+    </div>',
+    name: 'VueCardList',
+    components: {
+      VueCardListItem: VueCardListItem,
+    },
+    directives: {
+      Clickoutside: VueUtil.component.clickoutside(),
+      Scrolling: VueUtil.component.scrolling
+    },
+    props: {
+      data: {
+        type: Array,
+      },
+      draggable: {
+        type: Boolean,
+        default: false,
+      },
+      showHeader: {
+        type: Boolean,
+        default: false,
+      },
+      listMode: {
+        type: Boolean,
+        default: false,
+      },
+      readonly: {
+        type: Boolean,
+        default: false,
+      },
+      showIndex: {
+        type: Boolean,
+        default: true,
+      },
+      defaultData: {
+        type: Object,
+      },
+      beforeDelete: {
+        type: Function,
+      },
+      placeholderRow: {
+        type: Boolean,
+        default: false,
+      },
+      height: {
+        type: String,
+        default: null
+      },
+      buttons: {
+        type: Array,
+        default: null
+      },
+      labelResponsive: {
+        type: Boolean,
+        default: false,
+      },
+      fitContent: {
+        type: Boolean,
+        default: false,
+      },
+      xs: {
+        type: Number
+      },
+      sm: {
+        type: Number
+      },
+      md: {
+        type: Number
+      },
+      lg: {
+        type: Number
+      },
+      xl: {
+        type: Number
+      },
+      emptyLabel: {
+        type: String,
+        default: null
+      },
+    },
+    data: function() {
+      return {
+        fullData: [],
+        currentRowId: null,
+        insertRows: [],
+        removedRows: [],
+        filters: null,
+        sorts: null,
+        isMobile: VueUtil.getSystemInfo().device == 'Mobile',
+      };
+    },
+    created: function() {
+      this.loadData(this.data);
+    },
+    computed: {
+      flex: function() {
+        return this.fitContent ? '0 0 auto': '1';
+      },
+      canDrag: function() {
+        return !this.readonly && this.draggable;
+      },
+      contentClass: function() {
+        if (this.listMode) {return null;}
+
+        var contentClass = [];
+        var self = this;
+
+        if (this.fullData.length > 0 || this.placeholderItemShow) {
+          ['xs', 'sm', 'md', 'lg', 'xl'].forEach(function(size) {
+            if (self[size] != null && self[size] > 0) {
+              contentClass.push(size + '-' + self[size]);
+            }
+          });
+        }
+
+        return contentClass;
+      },
+      placeholderItemShow: function() {
+        return this.placeholderRow && this.fullData.length === 0;
+      },
+      itemButton: function() {
+        var buttonConfig = [];
+
+        if (this.buttons == null && !this.readonly) {
+          buttonConfig = (this.draggable ? ['drag'] : []).concat(['edit', 'delete']);
+        } else {
+          buttonConfig = this.buttons || [];
+        }
+
+        return buttonConfig.map(function(button) {
+          if (typeof button === 'string') {
+            return {
+              drag: {
+                icon: 'vue-icon-enlarge',
+                class: ['vue-card-list-item-drag'],
+              },
+              edit: {
+                icon: 'vue-icon-edit2',
+                class: ['vue-card-list-item-edit'],
+                click: 'edit',
+              },
+              delete: {
+                icon: 'vue-icon-delete',
+                class: ['vue-card-list-item-delete'],
+                click: 'delete'
+              }
+            }[button];
+          } else {
+            return button;
+          }
+        });
+      },
+      afterFullData: function() {
+        var filteredData = VueUtil._filter(this.fullData, this.filters);
+        var sortedData = (this.sorts && this.sorts[0]) ? VueUtil.orderBy.call(this, filteredData, this.sorts[0], this.sorts[1]) : filteredData;
+        return sortedData;
+      },
+      renderData: function() {
+        return this.afterFullData;
+      },
+    },
+    watch: {
+      data: function(val) {
+        if (val != this.fullData) {
+          this.loadData(val);
+        }
+      },
+      fullData: function(data) {
+        var self = this;
+        data.forEach(function(item, index) {
+          if (self.draggable) {
+            if (item._order !== index) {
+              item._order = index;
+            }
+          }
+
+          if (!item._rowId) {
+            item._rowId = VueUtil.createUuid();
+          }
+        });
+      },
+      currentRowId: function(newVal, oldVal) {
+        this.$emit('current-change', this.getRowByRowId(newVal), this.getRowByRowId(oldVal));
+      }
+    },
+    methods: {
+      initDrag: function() {
+
+        if (this.sortable) {
+          this.sortable.destroy();
+        }
+
+        var el = this.$el.querySelector('.vue-card-list-content');
+        var self = this;
+
+        this.sortable = Sortable.create(el, {
+          handle: '.vue-card-list-item-drag',
+          scroll: true,
+          group: {
+            put: false
+          },
+          animation: 200,
+          onEnd: function (obj) {
+            var newIndex = obj.newIndex,
+            oldIndex = obj.oldIndex;
+
+            var element = self.fullData.splice(oldIndex, 1)[0];
+            if (element) {
+              self.fullData.splice(newIndex, 0, element);
+              self.$emit('drag', obj);
+            }
+          }
+        });
+      },
+      addData: function(data) {
+        var dataToAdd;
+        if (data) {
+          dataToAdd = VueUtil.cloneDeep(data);
+        } else if (this.defaultData) {
+          dataToAdd = VueUtil.cloneDeep(this.defaultData);
+        } else if (this.fullData.length > 0) {
+          var newData = VueUtil.cloneDeep(this.fullData[0]);
+          Object.keys(newData).forEach(function(key) {
+            var field = newData[key];
+            if (typeof field === 'string') {
+              newData[key] = '';
+            } else if (typeof field === 'number') {
+              newData[key] = 0;
+            } else if (typeof field === 'boolean') {
+              newData[key] = false;
+            } else if (Array.isArray(field)) {
+              newData[key] = [];
+            } else {
+              newData[key] = null;
+            }
+          });
+
+          dataToAdd = newData;
+        } else {
+          dataToAdd = {};
+        }
+
+        dataToAdd._rowId = VueUtil.createUuid();
+
+        this.fullData.push(dataToAdd);
+        this.insertRows.push(dataToAdd);
+
+        this.$nextTick(function() {
+          var last = VueUtil.last(this.$refs.items);
+          if (last && last.startEditState) {
+            last.startEditState();
+            last.setCurrentRow();
+            last.focus();
+            last.forceResetLabel();
+          }
+        });
+
+      },
+      handleDelete: function(d) {
+        if (!this.readonly) {
+          this.deleteData();
+        }
+
+        this.$emit('delete', d);
+      },
+      deleteData: function(row) {
+        var self = this;
+        var rowIdToDel = row ? row._rowId : self.currentRowId;
+
+        if (!rowIdToDel) return;
+
+        var delIndex = VueUtil.findIndex(this.fullData, function(dataItem) {
+          return dataItem._rowId === rowIdToDel;
+        });
+
+        if (this.beforeDelete) {
+          var result = this.beforeDelete(this.fullData[delIndex]);
+          if (result && result.then) {
+            result.then(function() {
+              self.doDelete(delIndex);
+            }, function() {
+              // 删除取消
+            });
+          } else if (result !== false) {
+            this.doDelete(delIndex);
+          }
+        } else {
+          this.doDelete(delIndex);
+        }
+      },
+      doDelete: function(delIndex) {
+        if (delIndex != null && delIndex > -1) {
+          var removedRow = this.fullData.splice(delIndex, 1)[0];
+          var insertIndex = this.insertRows.indexOf(removedRow);
+
+          if (insertIndex > -1) {
+            this.insertRows.splice(insertIndex, 1);
+          } else {
+            this.removedRows.push(removedRow);
+          }
+
+          var nextCurrentRow = this.fullData[delIndex] ? this.fullData[delIndex] : VueUtil.last(this.fullData);
+          this.currentRowId = nextCurrentRow ? nextCurrentRow._rowId : null;
+        }
+      },
+      handleEdit: function(row) {
+        this.$emit('edit', row);
+      },
+      handleDragLeft: function(data) {
+        if (!this.readonly && this.isMobile) {
+          this.deleteData();
+        }
+        this.$emit('drag-left', data);
+      },
+      handleDragRight: function(data) {
+        this.$emit('drag-right', data);
+      },
+      handleClick: function(data) {
+        this.$emit('click', data);
+      },
+      getRowByRowId: function(id) {
+        return VueUtil.find(this.fullData, function(item) {
+          return item._rowId === id;
+        } );
+      },
+      getCurrentRow: function() {
+        return this.getRowByRowId(this.currentRowId);
+      },
+      setCurrentRow: function(row) {
+        if (typeof row === 'string') {
+          this.currentRowId = row;
+        } else {
+          this.currentRowId = row._rowId;
+        }
+      },
+      getInsertRows: function() {
+        return this.insertRows;
+      },
+      getRemovedRows: function() {
+        return this.removedRows;
+      },
+      getUpdateRows: function() {
+
+        if (!this.$refs.items || this.$refs.items.length === 0) {
+          return [];
+        }
+
+        var updateRows = this.$refs.items.filter(function(item) {
+          return !item.isNewRow && !VueUtil.isEqual(item.data, item.originData);
+        }).map(function(item) {
+          return item.data;
+        });
+        return updateRows;
+      },
+      getChangedData: function() {
+        return {
+          insertRows: this.getInsertRows(),
+          updateRows: this.getUpdateRows(),
+          removedRows: this.getRemovedRows(),
+        };
+      },
+      loadData: function(data) {
+        if (!Array.isArray(data)) return;
+        
+        // 先把传入的数据按照_order字段进行排序
+        if(this.draggable) {
+          data.sort(VueUtil.firstBy(function(item) { return (item._order == undefined ? 99999999 : item._order);}, 'desc'));
+        }
+
+        //创建 rowid
+        data.forEach(function(item) {
+          if (!item._rowId) {
+            item._rowId = VueUtil.createUuid();
+          }
+        });
+
+        // 赋值给fullData 触发视图更新
+        this.fullData = data;
+
+        // 重置默认状态，如选中行等等
+        this.reset();
+
+        // 恢复changedData数据
+        this.resetChangedStatus();
+      },
+      resetChangedStatus: function() {
+        this.$nextTick(function() {
+          this.insertRows = [];
+          this.removedRows = [];
+        });
+      },
+      resetGutter: function() {
+        var contentEl = this.$refs.content;
+        if (!contentEl) return;
+
+        var overflowY = contentEl.scrollHeight > contentEl.clientHeight;
+        var gutter = this.$refs.gutter;
+
+        if (!gutter) return;
+
+        if (overflowY) {
+          if (this.scrollWidth == null) {
+            this.scrollWidth = (contentEl.offsetWidth - contentEl.clientWidth - 2) || 0;
+          }
+          gutter.style.width = this.scrollWidth + 'px';
+        } else {
+          gutter.style.width = 0;
+        }
+      },
+      reset: function() {
+        this.currentRowId = null;
+        this.filters = null;
+        this.sorts = null;
+
+        this.$nextTick(function() {
+          this.resetGutter();
+        });
+      },
+      handleScroll: VueUtil._debounce(function() {
+        if (this.isListenerScrollEnd) {
+          var content = this.$refs.content;
+          var isEnd = content.offsetHeight + content.scrollTop >= content.scrollHeight;
+          if (isEnd) {
+            this.$emit('scroll-end');
+          }
+        }
+      }, 300),
+      handleGlobalScroll: function() {
+        if (!this.currentNode) return;
+        this.currentNode.resetActionPosition();
+      },
+      hideActionPanel: function() {
+        var actionBtn = this.$el.querySelector('.current .vue-card-list-item-action');
+        if (actionBtn) {
+          actionBtn.style.display = 'none';
+          actionBtn.actionHidden = 1;
+        }
+      },
+      doFilter: function(filters) {
+        this.filters = filters;
+      },
+      doSort: function() {
+        this.sorts = arguments;
+      }
+    },
+    mounted: function() {
+      this.initDrag();
+      document.addEventListener('scroll', this.handleGlobalScroll, true);
+
+      var self = this;
+
+      if (this.$listeners['scroll-end']) {
+        this.isListenerScrollEnd = true;
+      }
+      if (window.ResizeObserver) {
+        this.resizeObserver = new ResizeObserver(function() {
+          self.resetGutter();
+        });
+        this.resizeObserver.observe(this.$refs.content);
+      } else {
+        VueUtil.addResizeListener(this.$refs.content, self.resetGutter);
+      }
+    },
+    beforeDestroy: function() {
+      if (this.sortable) {
+        this.sortable.destroy();
+      }
+      document.removeEventListener('scroll', this.handleGlobalScroll);
+
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+        this.resizeObserver = null;
+      } else {
+        VueUtil.removeResizeListener(this.$refs.content, self.resetGutter);
+      }
+    },
+  };
+  Vue.component(VueCardList.name, VueCardList);
+});
+
+(function(context, definition) {
+  'use strict';
+  if (typeof define === 'function' && define.amd) {
     define(['Vue', 'VueUtil', 'VuePopper'], definition);
   } else {
     context.VuePopover = definition(context.Vue, context.VueUtil, context.VuePopper);
@@ -27277,7 +28361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })(this, function(Vue, VueUtil, VuePopper) {
   'use strict';
   var VuePopover = {
-    template: '<span><transition :name="transition" @after-leave="destroyPopper"><div :class="[\'vue-popover\', popperClass, {\'no-arrow\': !visibleArrow}]" ref="popper" v-show="!disabled && showPopper" :style="{width: popoverWidth + \'px\' \}"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{content}}</slot></div></transition><slot name="reference"></slot></span>',
+    template: '<span><transition :name="transition" @after-leave="destroyPopper"><div :class="[\'vue-popover\', popperClass, {\'no-arrow\': !visibleArrow}]" ref="popper" v-show="!disabled && showPopper" :style="{width: popoverWidth + \'px\', height: popoverHeight}"><div class="vue-popover__title" v-if="title" v-text="title"></div><slot>{{content}}</slot></div></transition><slot name="reference"></slot></span>',
     name: 'VuePopover',
     mixins: [VuePopper],
     props: {
@@ -27294,6 +28378,7 @@ return /******/ (function(modules) { // webpackBootstrap
       reference: {},
       popperClass: String,
       width: [String, Number],
+      height: [String, Number],
       visibleArrow: {
         type: Boolean,
         default: true
@@ -27302,16 +28387,38 @@ return /******/ (function(modules) { // webpackBootstrap
     },
     data: function() {
       return {
-        popoverWidth: null
+        popoverWidth: null,
+        popoverHeight: null
       };
     },
     watch: {
       showPopper: function(newVal, oldVal) {
         if (newVal) {
           this.popoverWidth = this.width;
+          var reference = this.reference || this.$refs.reference;
           if (!this.popoverWidth) {
-            var reference = this.reference || this.$refs.reference;
             this.popoverWidth = parseInt(VueUtil.getStyle(reference, 'width'));
+          }
+          
+          if (this.height === 'auto-max') {
+            var placement = this.placement.split('-')[0];
+            var totalHeight = window.innerHeight;
+            if (['top', 'bottom'].indexOf(placement) !== -1) {
+              var rect = reference.getBoundingClientRect();
+              
+              var bottomRemain = totalHeight - rect.bottom;
+              var topRemain = rect.top;
+              var height = Math.max(bottomRemain, topRemain);
+  
+              this.popoverHeight = (height - (this.visibleArrow ? 25 : 20)) + 'px';
+            } else {
+              this.popoverHeight = (totalHeight - 20) + 'px';
+            }
+
+          } else if (this.height) {
+            this.popoverHeight = this.height + 'px';
+          } else {
+            this.popoverHeight = null;
           }
           this.$emit('show');
         } else {
@@ -27734,7 +28841,8 @@ return /******/ (function(modules) { // webpackBootstrap
         default: 'bottom-start'
       },
       offset: VuePopper.props.offset,
-      popperOptions: VuePopper.props.options
+      popperOptions: VuePopper.props.options,
+      appendToDirectParent: Boolean
     },
     methods: VuePopper.methods,
     data: VuePopper.data,
@@ -28099,6 +29207,13 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     beforeCreate: function() {
       this.$parent.steps.push(this);
     },
+    beforeDestroy: function beforeDestroy() {
+      var steps = this.$parent.steps;
+      var index = steps.indexOf(this);
+      if (index >= 0) {
+        steps.splice(index, 1);
+      }
+    },
     computed: {
       currentStatus: function() {
         return this.status || this.internalStatus;
@@ -28274,7 +29389,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         type: Boolean,
         default: true
       },
-      tabindex: Number
+      tabindex: Number,
+      disabled: Boolean
     },
     data: function() {
       return {
@@ -28355,6 +29471,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         , splitButton = self.splitButton
         , type = self.type
         , size = self.size
+        , disabled = self.disabled
         , tabindex = self.tabindex;
       var handleClick = function() {
         self.$emit('click');
@@ -28363,7 +29480,8 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         attrs: {
           type: type,
           size: size,
-          tabindex: tabindex
+          tabindex: tabindex,
+          disabled: disabled,
         },
         nativeOn: {
           click: handleClick
@@ -28448,7 +29566,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       '$parent.menuAlign': {
         immediate: true,
         handler: function(val) {
-          this.currentPlacement = 'bottom-' + val;
+          this.currentPlacement = val ? 'bottom-' + val : 'bottom';
         }
       }
     }
@@ -29079,6 +30197,10 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         if (VueUtil.getSystemInfo().device != 'Mobile') {
           return;
         }
+
+        if (!vnode.context.popperElm) {
+          return;
+        }
         var pel= vnode.context.popperElm.querySelector('.vue-picker-panel');
         if(mousedown.target.classList=='vue-aside__wrapper'){
           
@@ -29172,6 +30294,11 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       };
     },
     watch: {
+      pickerDisabled: function(val) {
+        if (val) {
+          this.hidePicker();
+        }
+      },
       pickerVisible: function (val) {
         if (this.readonly || this.pickerDisabled) return;
         if (val) {
@@ -29510,7 +30637,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       handleMousedown: function(event){
         var type = this.type;
         if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1 && event.target === this.$refs.reference.$refs.input) {
-          this.pickerVisible = !this.pickerVisible;
+          this.pickerVisible = true;
         }
       },
       handleClick: function() {
@@ -29614,7 +30741,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         var type = this.type;
   
         if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1) {
-          this.pickerVisible = !this.pickerVisible;
+          this.pickerVisible = true;
         }
   
         this.$emit('focus', this);
@@ -34117,7 +35244,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 })(this, function(Vue) {
   'use strict';
   var VueProgress = {
-    template: '<div :class="[\'vue-progress\', \'vue-progress--\' + type, status ? \'is-\' + status : \'\',{\'vue-progress--without-text\': !showText,\'vue-progress--text-inside\': textInside,}]"><div class="vue-progress-bar" v-if="type === \'line\'"><div class="vue-progress-bar__outer" :style="{height: strokeWidth + \'px\'}"><div class="vue-progress-bar__inner" :style="barStyle"><div class="vue-progress-bar__innerText" v-if="showText && textInside">{{percentage}}%</div></div></div></div><div class="vue-progress-circle" :style="{height: width + \'px\', width: width + \'px\'}" v-else><svg viewBox="0 0 100 100"><path class="vue-progress-circle__track" :d="trackPath" stroke="#e5e9f2" :stroke-width="relativeStrokeWidth" fill="none"></path><path class="vue-progress-circle__path" :d="trackPath" stroke-linecap="round" :stroke="stroke" :stroke-width="relativeStrokeWidth" fill="none" :style="circlePathStyle"></path></svg></div><div class="vue-progress__text" v-if="showText && !textInside" :style="{fontSize: progressTextSize + \'px\'}"><template v-if="!status">{{percentage}}%</template><i v-else :class="iconClass"></i></div></div>',
+    template: '<div :class="[\'vue-progress\', \'vue-progress--\' + type, status ? \'is-\' + status : \'\',{\'vue-progress--without-text\': !showText,\'vue-progress--text-inside\': textInside,}]"><div class="vue-progress-bar" v-if="type === \'line\'"><div class="vue-progress-bar__outer" :style="{height: strokeWidth + \'px\'}"><div class="vue-progress-bar__inner" :style="barStyle"><div class="vue-progress-bar__innerText" v-if="showText && textInside">{{text}}</div></div></div></div><div class="vue-progress-circle" :style="{height: width + \'px\', width: width + \'px\'}" v-else><svg viewBox="0 0 100 100"><path class="vue-progress-circle__track" :d="trackPath" stroke="#e5e9f2" :stroke-width="relativeStrokeWidth" fill="none"></path><path class="vue-progress-circle__path" :d="trackPath" stroke-linecap="round" :stroke="stroke" :stroke-width="relativeStrokeWidth" fill="none" :style="circlePathStyle"></path></svg></div><div class="vue-progress__text" v-if="showText && !textInside" :style="{fontSize: progressTextSize + \'px\'}"><template v-if="!status">{{text}}</template><i v-else :class="iconClass"></i></div></div>',
     name: 'VueProgress',
     props: {
       type: {
@@ -34145,6 +35272,10 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       showText: {
         type: Boolean,
         default: true
+      },
+      textFormatter: {
+        type: Function,
+        default: null
       }
     },
     computed: {
@@ -34195,6 +35326,13 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       progressTextSize: function() {
         return this.type === 'line' ? 12 + this.strokeWidth * 0.4 : this.width * 0.25 + 6;
+      },
+      text: function() {
+        if (!this.textFormatter) {
+          return this.percentage + '%'; 
+        } else {
+          return this.textFormatter(this.percentage, this.status);
+        }
       }
     }
   };
@@ -34889,36 +36027,37 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
   };
   var UploadList = {
     template: '<transition-group tag="ul" :class="[\'vue-upload-list\', \'vue-upload-list--\' + listType, {\'is-disabled\': disabled}]" name="vue-list">\
-                <li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file.uid">\
+                <li v-for="(file, index) in files" :class="[\'vue-upload-list__item\', \'is-\' + file.status]" :key="file.uid" @click="$emit(\'click\', file)">\
                   <slot :file="file" :is-mobile="isMobile" >\
                   <img class="vue-upload-list__item-thumbnail" v-if="!isMobile && file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1"\
                    :src="file.url" :alt="file.name"/>\
-                  <a v-if="!isMobile" class="vue-upload-list__item-name" @click="handleClick(file, index, files)">\
+                  <a v-if="!isMobile" class="vue-upload-list__item-name" @click.stop="handleClick(file, index, files)">\
                    <i class="vue-icon-document"></i>{{file.name}}</a>\
                   <label v-if="!isMobile" class="vue-upload-list__item-status-label">\
                     <i v-if="file.status !== \'fail\'" :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
                     <i v-else  :class="{\'vue-icon-upload-fail\': true}">!</i>\
                   </label>\
-                  <i class="vue-icon-close" v-if="!isMobile && !disabled" @click="$emit(\'remove\', file)"></i>\
+                  <i class="vue-icon-close" v-if="!isMobile && !disabled" @click.stop="$emit(\'remove\', file)"></i>\
                   <vue-progress v-if="!isMobile && file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" :stroke-width="listType === \'picture-card\' ? 6 : 2" \
                   :percentage="parsePercentage(file.percentage)"></vue-progress>\
                   <span class="vue-upload-list__item-actions" v-if="!isMobile && listType === \'picture-card\'">\
-                    <span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click="handlePreview(file,index,files)">\
+                    <span class="vue-upload-list__item-preview" v-if="handlePreview && listType === \'picture-card\'" @click.stop="handlePreview(file,index,files)">\
                       <i class="vue-icon-view"></i>\
                     </span>\
-                    <span v-if="!disabled" class="vue-upload-list__item-delete" @click="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span>\
+                    <span v-if="!disabled" class="vue-upload-list__item-delete" @click.stop="$emit(\'remove\', file)"><i class="vue-icon-delete2"></i></span>\
+                    <span v-if="showDownload" class="vue-upload-list__item-download" @click.stop="$emit(\'download\', file)"><i class="vue-icon-download2"></i></span>\
                   </span>\
                   <div v-if="isMobile" style="position:relative;overflow:hidden;width:100%;height:100%;">\
                     <img class="vue-upload-list__item-thumbnail" v-if="file.status !== \'uploading\' && [\'picture-card\', \'picture\'].indexOf(listType) !== -1" \
-                        :src="file.url" :alt="listType === \'picture-card\'?file.name:\'load failed\'" @click="handlePreview(file,index,files)" />\
-                    <a class="vue-upload-list__item-name" @click="handleClick(file,index,files)"><i class="vue-icon-document"></i>{{file.name}}</a>\
+                        :src="file.url" :alt="listType === \'picture-card\'?file.name:\'load failed\'" @click.stop="handlePreview(file,index,files)" />\
+                    <a class="vue-upload-list__item-name" @click.stop="handleClick(file,index,files)"><i class="vue-icon-document"></i>{{file.name}}</a>\
                     <label class="vue-upload-list__item-status-label">\
                       <i :class="{\'vue-icon-upload-success\': true, \'vue-icon-success\': listType === \'text\', \'vue-icon-check\': [\'picture-card\', \'picture\'].indexOf(listType) !== -1}"></i>\
                     </label>\
                     <vue-progress v-if="file.status === \'uploading\'" :type="listType === \'picture-card\' ? \'circle\' : \'line\'" \
                     :stroke-width="listType === \'picture-card\' ? 6 : 2" :percentage="parsePercentage(file.percentage)"></vue-progress>\
                   </div>\
-                  <i v-if="isMobile && !disabled" class="vue-icon-error" @click="$emit(\'remove\', file)"></i></slot>\
+                  <i v-if="isMobile && !disabled" class="vue-icon-error" @click.stop="$emit(\'remove\', file)"></i></slot>\
                 </li></transition-group>',
     props: {
       files: {
@@ -34928,6 +36067,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         }
       },
       disabled: Boolean,
+      showDownload: Boolean,
       handlePreview: Function,
       listType: String
     },
@@ -34966,6 +36106,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       multiple: Boolean,
       max: Number,
       accept: String,
+      capture: String,
       onStart: Function,
       onProgress: Function,
       onSuccess: Function,
@@ -35136,6 +36277,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       var handleChange = this.handleChange;
       var multiple = this.multiple;
       var accept = this.accept;
+      var capture = this.capture;
       var listType = this.listType;
       var uploadFiles = this.uploadFiles;
       var disabled = this.disabled;
@@ -35160,7 +36302,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         }
       };
       data.class['vue-upload--' + listType] = true;
-      return createElement('div', data, [drag ? createElement('upload-dragger', {attrs: {disabled: disabled}, on: {'file': uploadFiles}}, [this.$slots.default]) : this.$slots.default, createElement('input', {class: 'vue-upload__input', attrs: {type: 'file', name: name, multiple: multiple, accept: accept}, ref: 'input', on: {'change': handleChange}}, [])]);
+      return createElement('div', data, [drag ? createElement('upload-dragger', {attrs: {disabled: disabled}, on: {'file': uploadFiles}}, [this.$slots.default]) : this.$slots.default, createElement('input', {class: 'vue-upload__input', attrs: {type: 'file', name: name, multiple: multiple, accept: accept, capture: capture}, ref: 'input', on: {'change': handleChange}}, [])]);
     }
   };
   var IframeUpload = {
@@ -35180,6 +36322,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       withCredentials: Boolean,
       accept: String,
+      capture: String,
       onStart: Function,
       onProgress: Function,
       onSuccess: Function,
@@ -35281,7 +36424,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       var disabled = this.disabled;
       var oClass = {'vue-upload': true};
       oClass['vue-upload--' + listType] = true;
-      return createElement('div', {'class': oClass, on: {'click': this.handleClick}, nativeOn: {'drop': this.onDrop, 'dragover': this.handleDragover, 'dragleave': this.handleDragleave}}, [createElement('iframe', {on: {'load': this.onload}, ref: 'iframe', attrs: {name: frameName}}, []), createElement('form', {ref: 'form', attrs: {action: this.action, target: frameName, enctype: 'multipart/form-data', method: 'POST'}}, [createElement('input', {'class': 'vue-upload__input', attrs: {type: 'file', name: 'file', accept: this.accept}, ref: 'input', on: {'change': this.handleChange}}, []), createElement('input', {attrs: {type: 'hidden', name: 'documentDomain', value: document.domain}}, []), createElement('span', {ref: 'data'}, [])]), drag ? createElement('upload-dragger', {on: {'file': uploadFiles}, attrs: {disabled: disabled}}, [this.$slots.default]) : this.$slots.default]);
+      return createElement('div', {'class': oClass, on: {'click': this.handleClick}, nativeOn: {'drop': this.onDrop, 'dragover': this.handleDragover, 'dragleave': this.handleDragleave}}, [createElement('iframe', {on: {'load': this.onload}, ref: 'iframe', attrs: {name: frameName}}, []), createElement('form', {ref: 'form', attrs: {action: this.action, target: frameName, enctype: 'multipart/form-data', method: 'POST'}}, [createElement('input', {'class': 'vue-upload__input', attrs: {type: 'file', name: 'file', accept: this.accept, capture: this.capture}, ref: 'input', on: {'change': this.handleChange}}, []), createElement('input', {attrs: {type: 'hidden', name: 'documentDomain', value: document.domain}}, []), createElement('span', {ref: 'data'}, [])]), drag ? createElement('upload-dragger', {on: {'file': uploadFiles}, attrs: {disabled: disabled}}, [this.$slots.default]) : this.$slots.default]);
     }
   };
   var migrating = {
@@ -35346,6 +36489,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         default: true
       },
       accept: String,
+      capture: String,
       type: {
         type: String,
         default: 'select'
@@ -35353,6 +36497,12 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       beforeUpload: Function,
       beforeRemove: Function,
       onRemove: {
+        type: Function,
+        default: function() {}
+      },
+      beforeDownload: Function,
+      download: Function,
+      onDownload: {
         type: Function,
         default: function() {}
       },
@@ -35391,6 +36541,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       },
       httpRequest: Function,
       disabled: Boolean,
+      showDownload: Boolean,
       clickable: {
         type: Boolean,
         default: true
@@ -35508,6 +36659,37 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           }
         }
       },
+      handleDownload: function(file, raw) {
+        var self = this;
+        if (raw) {
+          file = this.getFile(raw);
+        }
+
+        function doDownload() {
+          if (self.download) {
+            self.download(file, self.uploadFiles);
+          } else {
+            VueUtil.saveAs(file.raw || file.url, file.name);
+          }
+          self.onDownload(file);
+        }
+
+        if (!this.beforeDownload) {
+          doDownload();
+        } else if (typeof this.beforeDownload === 'function') {
+          var before = this.beforeDownload(file);
+          if (before && before.then) {
+            before.then(function() {
+              doDownload();
+            }, noop);
+          } else if (before !== false) {
+            doDownload();
+          }
+        }
+      },
+      handleClick: function(file) {
+        this.$emit('list-click', file);
+      },
       getFile: function(rawFile) {
         var fileList = this.uploadFiles;
         var target;
@@ -35546,7 +36728,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       var uploadList;
       var self = this;
       if (this.showFileList) {
-        uploadList = createElement('UploadList', {attrs: {disabled: this.uploadDisabled, listType: this.listType, files: this.uploadFiles, handlePreview: this.onPreview}, on: {'remove': this.handleRemove}}, [
+        uploadList = createElement('UploadList', {attrs: {disabled: this.uploadDisabled, showDownload: this.showDownload, listType: this.listType, files: this.uploadFiles, handlePreview: this.onPreview}, on: {'remove': this.handleRemove, 'download': this.handleDownload, 'click': this.handleClick}}, [
 
           function (props) {
             if (self.$scopedSlots.file) {
@@ -35576,6 +36758,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           name: this.name,
           data: this.data,
           accept: this.accept,
+          capture: this.capture,
           fileList: this.uploadFiles,
           autoUpload: this.autoUpload,
           listType: this.listType,
@@ -35707,7 +36890,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 })(this, function(Vue) {
   'use strict';
   var VueNote = {
-    template: '<div :class="[\'vue-note\', typeClass, typeBox]"><div class="vue-note__content"><span class="vue-note__title is-bold" v-if="title">{{title}}</span><div class="vue-note__description"><slot></slot></div></div></div>',
+    template: '<div :class="[\'vue-note\', typeClass, typeBox]"><div class="vue-note__content"><span class="vue-note__title is-bold" v-if="title">{{title}}</span><div v-if="$slots.default" class="vue-note__description"><slot></slot></div></div></div>',
     name: 'VueNote',
     props: {
       title: {
@@ -37923,6 +39106,31 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
     }
     return url;
   };
+
+  var httpGet = function(url, requestConfig) {
+    return Vue.http ? httpGetVue(url, requestConfig) : httpGetAxios(url, requestConfig);
+  };
+
+  var httpGetVue = function(url, requestConfig) {
+    return new Promise(function(resolve, reject) {
+      Vue.http.get(url, requestConfig).then(function(response) {
+        resolve(response.bodyText);
+      }, function(response) {
+        reject(response.status);
+      });
+    });
+  };
+
+  var httpGetAxios = function(url, requestConfig) {
+    return new Promise(function(resolve, reject) {
+      axios.get(url, requestConfig).then(function(response) {
+        resolve(response.data);
+      }, function(response) {
+        reject(response.status);
+      });
+    });
+  };
+
   var StyleContext = function(component, elt) {
     this.component = component;
     this.elt = elt;
@@ -38028,13 +39236,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       this.elt.textContent = content + this.elt.textContent;
     },
     asynReadContent: function(url) {
-      return new Promise(function(resolve, reject) {
-        Vue.http.get(url).then(function(reqponse) {
-          resolve(reqponse.bodyText);
-        }, function(reqponse) {
-          reject(reqponse.status);
-        });
-      });
+      return httpVueLoader.httpRequest(url);
     },
     compile: function() {
       var childModuleRequire = function(childURL) {
@@ -38226,13 +39428,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
       return window[moduleName];
     },
     httpRequest: function(url, requestConfig) {
-      return new Promise(function(resolve, reject) {
-        Vue.http.get(url, requestConfig).then(function(reqponse) {
-          resolve(reqponse.bodyText);
-        }, function(reqponse) {
-          reject(reqponse.status);
-        });
-      });
+      return httpGet(url, requestConfig);
     },
     langProcessor: {
       html: identity,
@@ -38925,6 +40121,10 @@ return SignaturePad;
         type: String,
         default: 'image/png'
       },
+      saveQuality: {
+        type: Number,
+        default: 0.8
+      },
       options: {
         type: Object,
         default: function () {
@@ -38943,7 +40143,6 @@ return SignaturePad;
         signaturePad: {},
         cacheImages: [],
         signatureData: TRANSPARENT_PNG,
-        onResizeHandler: null
       };
     },
     mounted: function() {
@@ -38952,16 +40151,11 @@ return SignaturePad;
       var signaturePad = new SignaturePad(canvas, VueUtil.merge({}, DEFAULT_OPTIONS, options));
       this.signaturePad = signaturePad;
   
-      this.onResizeHandler = this.resizeCanvas.bind(this);
-  
-      window.addEventListener('resize', this.onResizeHandler, false);
-  
+      VueUtil.addResizeListener(this.$el, this.resizeCanvas);
       this.resizeCanvas();
     },
     beforeDestroy: function() {
-      if (this.onResizeHandler) {
-        window.removeEventListener('resize', this.onResizeHandler, false);
-      }
+      VueUtil.removeResizeListener(this.$el, this.resizeCanvas);
     },
     methods: {
       resizeCanvas: function() {
@@ -38979,7 +40173,7 @@ return SignaturePad;
         var signaturePad = this.signaturePad;
         var saveType = this.saveType;
   
-        if (['image/png', 'image/jpeg', 'image/svg+xml'].indexOf(saveType) == -1) {
+        if (['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'].indexOf(saveType) == -1) {
           throw new Error('Image type is incorrect!');
         }
   
@@ -38989,7 +40183,7 @@ return SignaturePad;
             isEmpty: true
           };
         } else {
-          this.signatureData = signaturePad.toDataURL(saveType);
+          this.signatureData = signaturePad.toDataURL(saveType, this.saveQuality);
   
           return {
             isEmpty: false,
@@ -41689,6 +42883,9 @@ var RecycleScroller = {
 
         // No view assigned to item
         if (!view) {
+          if (_i3 === items.length - 1) this.$emit('scroll-end');
+          if (_i3 === 0) this.$emit('scroll-start');
+
           type = item[typeField];
 
           if (continuous) {
@@ -42346,6 +43543,12 @@ Object.defineProperty(exports, '__esModule', { value: true });
   var VueLang = {
     zh: {
       vue: {
+        attachment: {
+          view: {
+              directory: '导航',
+              loading: '正在加载,请稍等'
+          }
+        },
         colorpicker: {
           confirm: '确定',
           clear: '清空'
@@ -42463,6 +43666,11 @@ Object.defineProperty(exports, '__esModule', { value: true });
         image:{
           error: '加载失败'
         },
+        cardList:{
+          addButton: '追加数据',
+          deleteButton: '删除数据',
+          noData: '暂无数据',
+        },
         xtable: {
           error: {
             groupFixed: '如果使用分组表头，固定列必须在左右两侧',
@@ -42518,6 +43726,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
             xml: 'XML 数据(*.xml)',
             txt: '文本文件(制表符分隔)(*.txt)',
             xlsx: 'Excel 工作簿(*.xlsx)',
+            xls: 'Excel 工作簿(*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -42553,11 +43762,24 @@ Object.defineProperty(exports, '__esModule', { value: true });
             fixed: '固定列',
             setting: '显示/隐藏列',
           }
+        },
+        dateformat: {
+          dayNamesShort: '周日_周一_周二_周三_周四_周五_周六',
+          dayNames: '星期日_星期一_星期二_星期三_星期四_星期五_星期六',
+          monthNamesShort: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
+          monthNames: '一月_二月_三月_四月_五月_六月_七月_八月_九月_十月_十一月_十二月',
+          amPm: '上午_下午',
         }
       }
     },
     ja: {
       vue: {
+        attachment: {
+          view: {
+              directory: 'ナビゲーション',
+              loading: '読み込み中、しばらくお待ちください。'
+          }
+        },
         colorpicker: {
           confirm: 'はい',
           clear: 'クリア'
@@ -42675,6 +43897,11 @@ Object.defineProperty(exports, '__esModule', { value: true });
         image: {
           error: '読み込みに失敗しました'
         },
+        cardList:{
+          addButton: 'データを追加',
+          deleteButton: 'データを削除',
+          noData: 'データなし',
+        },
         xtable: {
           error: {
             groupFixed: 'Grouping headersが使われている場合、fixed columnsは左右になくてはなりません',
@@ -42730,6 +43957,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
             xml: 'XML データ(*.xml)',
             txt: 'テキスト(タブ区切り)(*.txt)',
             xlsx: 'Excel ワークブック(*.xlsx)',
+            xls: 'Excel ワークブック(*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -42764,12 +43992,25 @@ Object.defineProperty(exports, '__esModule', { value: true });
             delRow: '行削除',
             fixed: '固定列',
             setting: '表示／非表示列',
-          }
+          },
+        },
+        dateformat: {
+          dayNamesShort: '日_月_火_水_木_金_土',
+          dayNames: '日曜日_月曜日_火曜日_水曜日_木曜日_金曜日_土曜日',
+          monthNamesShort: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
+          monthNames: '1月_2月_3月_4月_5月_6月_7月_8月_9月_10月_11月_12月',
+          amPm: '午前_午後',
         }
       }
     },
     en: {
       vue: {
+        attachment: {
+          view: {
+              directory: 'Navigation',
+              loading: 'Loading, please wait.'
+          }
+        },
         colorpicker: {
           confirm: 'OK',
           clear: 'Clear'
@@ -42887,6 +44128,11 @@ Object.defineProperty(exports, '__esModule', { value: true });
         image:{
           error: 'Failed to load'
         },
+        cardList:{
+          addButton: 'Add Data',
+          deleteButton: 'Delete Data',
+          noData: 'No Data',
+        },
         xtable: {
           error: {
             groupFixed: 'If grouping headers are used, fixed columns must be on the left and right sides.',
@@ -42942,6 +44188,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
             xml: 'XML Data(*.xml)',
             txt: 'Text (Tab delimited) (*.txt)',
             xlsx: 'Excel Workbook (*.xlsx)',
+            xls: 'Excel Workbook (*.xls)',
             pdf: 'PDF (*.pdf)'
           },
           toolbar: {
@@ -43576,6 +44823,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
   'use strict';
   var template = ' \
     <div :class="{\'vue-image\':true,\'vue-image__lazy\':lazy,\'vue-image__round\':round}"> \
+      <div v-html="svgContent" v-if="isTextSvg" v-show="false"></div>\
       <span v-if="showText" class="vue-image__label"\
         v-bind="$attrs" v-on="$listeners" \
         @click="clickHandler" :class="{\'vue-image__preview\': preview }">{{imgLabel}}</span>\
@@ -43585,6 +44833,8 @@ Object.defineProperty(exports, '__esModule', { value: true });
       <slot v-else-if="error" name="error"> \
         <div class="vue-image__error">{{$t("vue.image.error")}}</div> \
       </slot> \
+      <svg v-else-if="isTextSvg" @click="clickHandler" class="vue-image__inner" :viewBox="[0,0,imageWidth,imageHeight].join(\' \')"\
+      v-bind="$attrs" v-on="$listeners" :style="imageStyle" :class="{ \'vue-image__inner--center\': alignCenter, \'vue-image__preview\': preview }"><use :xlink:href="\'#\'+id"/></svg>\
       <img \
         v-else \
         class="vue-image__inner" \
@@ -43649,7 +44899,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
   };
   var isString = VueUtil.isString,
       isHtmlElement = function(node) { return node && node.nodeType === Node.ELEMENT_NODE; };
-  var throttle=VueUtil.throttle;
 
   var isSupportObjectFit = function(){
       return document.documentElement.style.objectFit !== undefined;
@@ -43680,6 +44929,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
       src: String,
       fit: String,
       lazy: Boolean,
+      textSvg: Boolean,
       scrollContainer: {},
       previewSrcList: {
         type: Array,
@@ -43701,7 +44951,9 @@ Object.defineProperty(exports, '__esModule', { value: true });
         show: !this.lazy,
         imageWidth: 0,
         imageHeight: 0,
-        showViewer: false
+        showViewer: false,
+        svgContent: '',
+        id: 'svg'+VueUtil.createUuid(),
       };
     },
 
@@ -43724,6 +44976,9 @@ Object.defineProperty(exports, '__esModule', { value: true });
       },
       showText: function() {
         return (typeof this.imgLabel != 'undefined' && this.imgLabel != '');
+      },
+      isTextSvg: function() {
+        return this.textSvg && this.src && this.src.indexOf('.svg') > 0;
       }
     },
 
@@ -43751,30 +45006,46 @@ Object.defineProperty(exports, '__esModule', { value: true });
     methods: {
       loadImage: function() {
         if (this.$isServer) return;
-
+        var self = this;
         // reset status
         this.loading = true;
         this.error = false;
 
-        var img = new Image();
-        var self = this;
-        img.onload = function(e){self.handleLoad(e, img);};
-        img.onerror = self.handleError.bind(self);
+        if (this.isTextSvg) {
+          Vue.http.get(self.src).then(function(resp) {
+            var content = resp.body;
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var svgEle = tempDiv.querySelector('svg');
+            svgEle.setAttribute('id', self.id);
+            var width = svgEle.getAttribute('width');
+            var height = svgEle.getAttribute('height');
 
-        // bind html attrs
-        // so it can behave consistently
-        Object.keys(self.$attrs)
-          .forEach(function(key){
-            var value = self.$attrs[key];
-            img.setAttribute(key, value);
-          });
-        img.src = self.src;
+            self.svgContent = svgEle.outerHTML;
+            self.handleLoad(null, {width: width, height: height});
+          }).catch(self.handleError);
+        } else {
+          var img = new Image();
+
+          img.onload = function(e){self.handleLoad(e, img);};
+          img.onerror = self.handleError.bind(self);
+  
+          // bind html attrs
+          // so it can behave consistently
+          Object.keys(self.$attrs)
+            .forEach(function(key){
+              var value = self.$attrs[key];
+              img.setAttribute(key, value);
+            });
+          img.src = self.src;
+        }
       },
       handleLoad: function(e, img) {
         this.error = false;
         this.imageWidth = img.width;
         this.imageHeight = img.height;
         this.loading = false;
+        this.$emit('load', e);
       },
       handleError: function(e) {
         this.loading = false;
@@ -43784,6 +45055,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
       handleLazyLoad: function() {
         if (isInContainer(this.$el, this._scrollContainer)) {
           this.show = true;
+          this.$emit('lazyload');
           this.removeLazyLoadListener();
         }
       },
@@ -43803,7 +45075,9 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
         if (_scrollContainer) {
           this._scrollContainer = _scrollContainer;
-          this._lazyLoadHandler = throttle(200, this.handleLazyLoad);
+          this._lazyLoadHandler = VueUtil._throttle(this.handleLazyLoad, 200, {
+            trailing: true
+          });
           on(_scrollContainer, 'scroll', this._lazyLoadHandler);
           this.handleLazyLoad();
         }
@@ -44121,13 +45395,26 @@ Object.defineProperty(exports, '__esModule', { value: true });
       // On splitter dbl click or dbl tap maximize this pane.
       onSplitterDblClick: function (event, splitterIndex) {
         var totalMinSizes = 0;
-        this.panes = this.panes.map(function (pane, i) {
-          pane.size = i === splitterIndex ? pane.max : pane.min;
-          if (i !== splitterIndex) totalMinSizes += pane.min;
-          return pane;
-        });
-        this.panes[splitterIndex].size -= totalMinSizes;
-        this.$emit('pane-maximize', this.panes[splitterIndex]);
+
+        var targetSplitter = this.panes[splitterIndex];
+
+        if (targetSplitter.maximized) {
+          this.panes.map(function(pane) {
+            pane.size = pane.originSize || pane.size;
+          });
+          targetSplitter.maximized = false;
+          this.$emit('pane-restore', targetSplitter);
+        } else {
+          this.panes = this.panes.map(function (pane, i) {
+            pane.originSize = pane.size;
+            pane.size = i === splitterIndex ? pane.max : pane.min;
+            if (i !== splitterIndex) totalMinSizes += pane.min;
+            return pane;
+          });
+          targetSplitter.maximized = true;
+          targetSplitter.size -= totalMinSizes;
+          this.$emit('pane-maximize', targetSplitter);
+        }
       },
       onPaneClick: function (event, paneId) {
         this.$emit('pane-click', this.indexedPanes[paneId]);
@@ -44811,6 +46098,341 @@ Object.defineProperty(exports, '__esModule', { value: true });
   Vue.component(VueSplitPane.name, VueSplitPane);
 });
 
+
+/***************************************************************************************
+ *
+ *  attachmen view image - layout 上下 布局
+ *  
+****************************************************************************************/
+        
+Vue.component('VueAttachmentView', {
+    template: '<div :class="[\'vue-attachment-view\',isScreenFull?\'is-fullscreen\':\'\']" :style="{height:isScreenFull?\'100vh\':height}" \
+                    v-bind="$attrs" \
+                    v-on="$listeners" \
+                    >\
+                <vue-row class="tools v-flex">\
+                    <vue-col class="left-tools v-flex">\
+                        <vue-button type="text" icon="vue-icon-menu" class="v-button" @click="showFlyout"></vue-button>\
+                        <div class="file-name text-ellipsis" :title="fileName">{{fileName}}</div>\
+                    </vue-col>\
+                    <vue-col class="center-tools v-flex">\
+                        <div class="tools-buttons v-flex">\
+                            <vue-button type="text" icon="vue-icon-zoom-out" class="v-button" @click="zoomOut"></vue-button>\
+                            <vue-button type="text" icon="vue-icon-zoom-in" class="v-button" @click="zoomIn"></vue-button>\
+                            <vue-button type="text" icon="vue-icon-sort" class="v-button" @click="maxSize"></vue-button>\
+                            <vue-button type="text" icon="vue-icon-document" class="v-button" @click="zoomReset"></vue-button>\
+                           <div class="v-hr"></div>\
+                        </div>\
+                        <div class="pageselector-container v-flex">\
+                            <vue-input class="page-no" type="text" width="20" v-model="currentPageNo" @change="currentPageNoChange"></vue-input>\
+                            <p class="page-length">/&nbsp;{{filePageSize}}</p>\
+                        </div>\
+                        <div class="v-flex">\
+                            <vue-button type="text" icon="vue-icon-arrow-left" class="v-button" @click="prePageNo"></vue-button>\
+                            <vue-button type="text" icon="vue-icon-arrow-right" class="v-button" @click="nextPageNo"></vue-button>\
+                            <vue-button type="text" icon="vue-icon-refresh" class="v-button" @click="rotateItem"></vue-button>\
+                        </div>\
+                      </vue-col>\
+                    <vue-col class="right-tools v-flex">\
+                        <div class="tools-buttons v-flex">\
+                            <vue-button type="text" icon="vue-icon-enlarge" class="v-button" @click="screenFull"></vue-button>\
+                        </div>\
+                    </vue-col>\
+                </vue-row>\
+                <vue-row class="file-body">\
+                    <div size="tiny" :class="[\'contents-flyout\', showFlyoutVisible ? \'is-display\':\'\']">\
+                        <vue-row type="flex" justify="space-between" class="flyout-title">\
+                            <span class="text-ellipsis" :title="$t(\'vue.attachment.view.directory\')">{{$t(\'vue.attachment.view.directory\')}}</span>\
+                            <vue-button type="text" icon="vue-icon-close" @click="showFlyout"></vue-button>\
+                        </vue-row>\
+                        <div class="flyout-view tiny-scrollbar" ref="flyoutView">\
+                           <div class="item" v-for="(item,index) in imageList">\
+                               <vue-image :class="[index+1 === currentPageNo?\'is-selected\':\'\']" :src="item" :page-no="index+1" @click="flyImgClick">\
+                                    <div slot="placeholder" class="image-slot">\
+                                         {{$t("vue.attachment.view.loading")}}<span class="dot">...</span>\
+                                    </div>\
+                                </vue-image>\
+                               <div class="page-no">{{index+1}}</div>\
+                            </div>\
+                        </div>\
+                    </div>\
+                    <div class="contents tiny-scrollbar" ref="contents" @scroll="handleScroll">\
+                       <div class="content-view" ref="contentView" :style="contentStyle">\
+                           <div :class="[\'item\',isMaxSizeItem?\'is-width\':\'\',imgConfig[index].img.rotate?\'is-rotate\':\'\', isAutoItemConten?\'is-content\':\'\']" v-for="(item,index) in imageList" :id="\'content-view-item_\'+(index+1)" :style="imgConfig[index].item">\
+                               <vue-image :src="item" lazy @load="imgConfig[index].img.onload(item,index)" :text-svg="textSvg" \
+                                    v-bind="$attrs" \
+                                    v-on="$listeners" \
+                                    :scroll-container="$refs.contents"\
+                                    >\
+                                    <div slot="placeholder" class="image-slot">\
+                                          {{$t("vue.attachment.view.loading")}}<span class="dot">...</span>\
+                                     </div>\
+                               </vue-image>\
+                            </div>\
+                       </div>\
+                    </div>\
+                </vue-row>\
+                </div>',
+    props: {
+        height: String,
+        imageList: {
+            'type': Array,
+            'default': function () {
+                return [];
+            }
+        },
+        fileName: String,
+        textSvg: Boolean
+    },
+    data: function () {
+        return {
+            currentPageNo: 1,
+            showFlyoutVisible: false,
+            flyoutPages: [],
+            isScreenFull: false,
+            contentStyle: {
+                zoom: 1,
+                width: null
+            },
+            itemStyle: {
+                width: ''
+            },
+            itemStyleDefaultWidth: '60%',
+            changeFlyView: true,
+            //自动宽度
+            isMaxSizeItem: false,
+            //自动适应内容
+            isAutoItemConten: true,
+            // itemAutoStyle: {},
+            //图片展示配置
+            imgConfig: []
+        };
+    },
+    computed: {
+        filePageSize: function () {
+            return this.imageList ? Math.max(this.imageList.length, 0) : 0;
+        }
+    },
+    watch: {
+        imageList: function (val) {
+            this.setImageConfig();
+        }
+    },
+    mounted: function () {
+        this.setImageConfig();
+    },
+    methods: {
+        currentPageNoChange: function () {
+            var self = this;
+            self.changeContentView();
+            if (self.changeFlyView) {
+                self.changeFlyoutView();
+            }
+            self.changeFlyView = true;
+        },
+        getItemConfig: function () {
+            var self = this;
+            return {
+                item: {
+                    width: null,
+                    height: null
+                },
+                img: {
+                    naturalWidth: 0,
+                    naturalHeight: 0,
+                    rotate: '',
+                    onload: function (src, index) {
+                        self.autoContentItem(index + 1, self.isMaxSizeItem, self.isAutoItemConten);
+                    }
+                }
+            };
+        },
+        setImageConfig: function () {
+            var self = this;
+            var data = self.imageList;
+            self.imgConfig.splice(0);
+            for (var i = 0; i < data.length; i++) {
+                var item = VueUtil.merge({
+                    img: {
+                        url: data[i]
+                    }
+                }, self.getItemConfig());
+                self.imgConfig.push(item);
+            }
+        },
+        showFlyout: function () {
+            this.showFlyoutVisible = !this.showFlyoutVisible;
+        },
+        prePageNo: function () {
+            this.currentPageNo = Math.max(Number(this.currentPageNo) - 1, 1);
+            this.currentPageNoChange();
+        },
+        nextPageNo: function () {
+            this.currentPageNo = Math.min(Number(this.currentPageNo) + 1, this.filePageSize);
+            this.currentPageNoChange();
+        },
+        flyImgClick: function (evt) {
+            this.changeFlyView = false;
+            this.currentPageNo = Number(evt.target.getAttribute('page-no'));
+            this.currentPageNoChange();
+        },
+        changeFlyoutView: function () {
+            var pageNo = this.currentPageNo;
+            var flyoutImg = this.$refs.flyoutView.querySelector('img[page-no=\'' + pageNo + '\']');
+            if (flyoutImg) {
+                flyoutImg.scrollIntoView(false);
+            }
+        },
+        getContentView: function (pageNo) {
+            var self = this;
+            return self.$refs.contentView.querySelector('div[id=\'content-view-item_' + pageNo + '\']');
+        },
+        getCurrentContentView: function () {
+            var self = this;
+            return self.getContentView(self.currentPageNo);
+        },
+        changeContentView: function () {
+            var img = this.getCurrentContentView();
+            if (img) {
+                this.$nextTick(function () {
+                    img.scrollIntoView(false);
+                });
+            }
+        },
+        //适应容器宽度
+        maxSize: function () {
+            var self = this;
+            self.resetContent();
+            self.isMaxSizeItem = true;
+            self.isAutoItemConten = false;
+            self.autoContentAllItem();
+            self.changeContentView();
+        },
+        screenFull: function () {
+            this.isScreenFull = !this.isScreenFull;
+        },
+        changeContenViewWidth: function (changeNum) {
+            var self = this;
+            var style = self.contentStyle;
+            var zoom = style.zoom + changeNum;
+            if(zoom){
+              style.zoom = zoom;
+            }
+        },
+        zoomIn: function () {
+            this.changeContenViewWidth(0.1);
+        },
+        zoomOut: function () {
+            this.changeContenViewWidth(-0.1);
+        },
+        autoContentAllItem: function () {
+            var self = this;
+            var imgConfig = self.imgConfig;
+            for (var i in imgConfig) {
+                self.autoContentItem(Number(i) + 1, self.isMaxSizeItem, self.isAutoItemConten);
+            }
+        },
+        autoContentItem: function (pageNo, isMaxSizeItem, isAutoItemConten) {
+            var self = this;
+            var contentsDom = self.$refs.contentView;
+            var contentWidth = contentsDom.clientWidth;
+            var contentHeight = contentsDom.clientHeight;
+            var targetPageNo = pageNo ? pageNo : self.currentPageNo;
+            var img = self.getContentView(targetPageNo).getElementsByTagName('img')[0];
+            if (img) {
+                var itemConfig = self.imgConfig[targetPageNo - 1].item;
+                var imgConfig = self.imgConfig[targetPageNo - 1].img;
+                var contentPer = contentWidth / contentHeight;
+                var imgPer = img.naturalWidth / img.naturalHeight;
+                var isWidthBigger = imgPer > contentPer || isMaxSizeItem;
+                img.style.objectFit = isAutoItemConten ? 'contain' : null;
+
+                imgConfig.naturalWidth = img.naturalWidth;
+                imgConfig.naturalHeight = img.naturalHeight;
+                imgConfig.objectFit = img.style.objectFit;
+
+                if(['rotate(90deg)', 'rotate(270deg)'].indexOf(imgConfig.rotate) > -1){
+                    //旋转
+                    if(isWidthBigger){ //宽>高
+                        itemConfig.width = contentWidth + 'px';
+                        itemConfig.height = contentHeight + 'px';
+                        imgConfig.width = contentHeight - 16 + 'px';
+                        imgConfig.height = (contentHeight - 16) * imgPer + 'px';
+                    }else{
+                        itemConfig.width = contentWidth + 'px';
+                        itemConfig.height = (contentWidth - 16) * imgPer + 16 + 'px';
+                        imgConfig.width = (contentWidth - 16) * imgPer + 'px';
+                        imgConfig.height = contentWidth - 16 + 'px';
+                    }
+                }else{
+                    if(isWidthBigger){ //宽>高
+                        itemConfig.width = contentWidth + 'px';
+                        itemConfig.height = 'auto';
+                        imgConfig.width = contentWidth - 16 + 'px';
+                        imgConfig.height = 'auto';
+                    }else{
+                        itemConfig.width = contentWidth + 'px';
+                        itemConfig.height = contentHeight + 'px';
+                        imgConfig.width = 'auto';
+                        imgConfig.height = contentHeight - 16 + 'px';
+                    }
+                }
+                img.style.width = imgConfig.width;
+                img.style.height = imgConfig.height;
+            }
+        },
+        //重置内容缩放
+        resetContent: function () {
+            var self = this;
+            self.contentStyle.zoom = 1;
+        },
+        //自适应内容大小
+        zoomReset: function () {
+            var self = this;
+            self.resetContent();
+            self.isAutoItemConten = true;
+            self.isMaxSizeItem = false;
+            self.autoContentAllItem();
+            self.changeContentView();
+        },
+        rotateItem: function () {
+            var self = this;
+            var img = this.getCurrentContentView().getElementsByTagName('img')[0];
+            var rotate = img.style.transform;
+            switch (rotate) {
+                case 'rotate(90deg)':
+                    rotate = 'rotate(180deg)';
+                    break;
+                case 'rotate(180deg)':
+                    rotate = 'rotate(270deg)';
+                    break;
+                case 'rotate(270deg)':
+                    rotate = '';
+                    break;
+                case '':
+                    rotate = 'rotate(90deg)';
+            }
+            img.style.transform = rotate;
+            self.imgConfig[self.currentPageNo - 1].img.rotate = rotate;
+            self.autoContentItem(self.currentPageNo, false, true);
+        },
+        handleScroll: VueUtil.debounce(100, function (event) {
+            var currentEl;
+            var els = Array.from(this.$refs.contentView.querySelectorAll('.item'));
+
+            for (var index = 0; index < els.length; index++) {
+                var el = els[index];
+                var container = el.parentElement.parentElement;
+                currentEl = el;
+
+                if (el.offsetTop + el.offsetHeight > container.scrollTop + 300) {
+                    break;
+                }
+            }
+            this.currentPageNo = els.indexOf(currentEl) + 1;
+        })
+    }
+});
 
 (function (context, definition) {
   'use strict';
@@ -47050,7 +48672,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
             rest = rest.then(_this2.recalculate);
           }
     
-          return rest.then(_this2.refreshScroll);
+          return rest.then();
         });
       },
     
@@ -47921,7 +49543,12 @@ Object.defineProperty(exports, '__esModule', { value: true });
         var scrollX = optimizeOpts.scrollX; // 如果是分组表头，如果子列全部被隐藏，则根列也隐藏
     
         if (isGroup) {
-          VueUtil.eachTree(this.collectColumn, function (column) {
+          VueUtil.eachTree(this.collectColumn, function (column, index, items, path, parent) {
+
+            if (parent && parent.fixed) {
+              column.fixed = parent.fixed;
+            }
+            
             if (column.children && column.children.length) {
               column.visible = !!VueUtil.findTree(column.children, function (subColumn) {
                 return subColumn.children && subColumn.children.length ? 0 : subColumn.visible;
@@ -48794,26 +50421,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
                   if (isBack) {
                     _this17.handleActived(selected.args, evnt);
                   }
-                }
-              } else if (isBack && keyboardConfig.isArrow && treeConfig && highlightCurrentRow && currentRow) {
-                // 如果树形表格回退键关闭当前行返回父节点
-                var findTreeData = VueUtil.findTree(_this17.afterFullData, function (item) {
-                  return item === currentRow;
-                }, treeConfig),
-                    parentRow = findTreeData.parent;
-    
-                if (parentRow) {
-                  evnt.preventDefault();
-                  params = {
-                    $table: _this17,
-                    row: parentRow
-                  };
-    
-                  _this17.setTreeExpansion(parentRow, false).then(function () {
-                    return _this17.scrollToRow(parentRow);
-                  }).then(function () {
-                    return _this17.triggerCurrentRowEvent(evnt, params);
-                  });
                 }
               }
             } else if (keyboardConfig.isCut && isCtrlKey && (isA || isX || isC)) {
@@ -50649,7 +52256,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
           if (rightBody) {
             rightBody.$el.scrollTop = scrollTop;
           }
-    
           bodyElem.scrollTop = scrollTop;
         }
     
@@ -51025,6 +52631,8 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
         this.handleTableData(true);
         this.cacheColumnMap();
+
+        this.$emit('set-user-setting', setting);
         return this.refreshColumn();
       },
 
@@ -52243,7 +53851,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
             filterStore: filterStore
           },
           ref: 'filterWrapper'
-        }) : _e(),
+        }) : undefined,
         /**
          * 快捷菜单
          */
@@ -53382,7 +54990,8 @@ Object.defineProperty(exports, '__esModule', { value: true });
               visible: settingStore.fixedVisible,
               tableFullColumn: tableFullColumn,
               toolbar: _this2
-            }
+            },
+            ref: 'fixedPanel'
           })]
           )
         ]
@@ -53427,6 +55036,13 @@ Object.defineProperty(exports, '__esModule', { value: true });
         });
 
         this.comp = this.$table || this.$grid;
+        var table = (this.$table || this.$grid.$refs.xTable);
+
+        var self = this;
+        table && table.$on('set-user-setting', function() {
+          var fixedPanel = self.$refs.fixedPanel;
+          fixedPanel && fixedPanel.updateFixed(fixedPanel.cols);
+        });
       },
       openSetting: function openSetting() {
         this.settingStore.visible = true;
@@ -54434,7 +56050,7 @@ var convertToRows = function convertToRows(originColumns) {
   var maxLevel = 1;
 
   var traverse = function traverse(column, parent) {
-    if (parent && !column.fixed) {
+    if (parent) {
       column.level = parent.level + 1;
 
       if (maxLevel < column.level) {
@@ -54442,9 +56058,6 @@ var convertToRows = function convertToRows(originColumns) {
       }
     }
 
-    if(column.fixed) {
-      column.level = 1;
-    }
     if (column.children && column.children.length && column.children.some(function (column) {
       return column.visible;
     })) {
@@ -54452,8 +56065,10 @@ var convertToRows = function convertToRows(originColumns) {
       column.children.forEach(function (subColumn) {
         if (subColumn.visible) {
           traverse(subColumn, column);
-          if(!subColumn.fixed) {
+          if(subColumn.fixed === column.fixed || (!subColumn.fixed && !column.fixed)) {
             colSpan += subColumn.colSpan;
+          } else {
+            subColumn.level = 1;
           }
         }
       });
@@ -56012,11 +57627,17 @@ var VueXtableHeader = {
               },
               visible: true
             });
+            
+            // 复原状态
+            filterStore.options.forEach(function(option) {
+              option._checked = option.checked;
+            });
+
             filterStore.isAllSelected = filterStore.options.every(function (item) {
-              return item.checked;
+              return item._checked;
             });
             filterStore.isIndeterminate = !filterStore.isAllSelected && filterStore.options.some(function (item) {
-              return item.checked;
+              return item._checked;
             });
             this.$nextTick(function () {
               var filterWrapperElem = filterWrapper.$el;
@@ -56123,6 +57744,7 @@ var VueXtableHeader = {
       resetFilterEvent: function resetFilterEvent(evnt) {
         this.filterStore.options.forEach(function (item) {
           item.checked = false;
+          item._checked = false;
           item.data = item._data;
         });
         this.confirmFilterEvent(evnt);
@@ -56144,6 +57766,7 @@ var VueXtableHeader = {
           if (filters && filters.length) {
             filters.forEach(function (item) {
               item.checked = false;
+              item._checked = false;
               item.data = item._data;
             });
           }
@@ -56259,7 +57882,7 @@ var VueXtableHeader = {
               type: 'checkbox'
             },
             domProps: {
-              checked: item.checked
+              checked: item._checked
             },
             on: {
               change: function change(evnt) {
@@ -56274,7 +57897,7 @@ var VueXtableHeader = {
             class: 'vue-xtable-table--filter-label',
             on: {
               click: function click(evnt) {
-                return _this.changeRadioOption(evnt, !item.checked, item);
+                return _this.changeRadioOption(evnt, !item._checked, item);
               }
             }
           }, item.label)]));
@@ -56308,7 +57931,7 @@ var VueXtableHeader = {
       filterCheckAllEvent: function filterCheckAllEvent(evnt, value) {
         var filterStore = this.filterStore;
         filterStore.options.forEach(function (item) {
-          item.checked = value;
+          item._checked = value;
         });
         filterStore.isAllSelected = value;
         filterStore.isIndeterminate = false;
@@ -56316,10 +57939,10 @@ var VueXtableHeader = {
       checkOptions: function checkOptions() {
         var filterStore = this.filterStore;
         filterStore.isAllSelected = filterStore.options.every(function (item) {
-          return item.checked;
+          return item._checked;
         });
         filterStore.isIndeterminate = !filterStore.isAllSelected && filterStore.options.some(function (item) {
-          return item.checked;
+          return item._checked;
         });
       },
 
@@ -56337,7 +57960,7 @@ var VueXtableHeader = {
       },
       // （多选）筛选发生改变
       changeMultipleOption: function changeMultipleOption(evnt, checked, item) {
-        item.checked = checked;
+        item._checked = checked;
         this.checkOptions();
       },
       // 筛选发生改变
@@ -56350,6 +57973,9 @@ var VueXtableHeader = {
       },
       // 确认筛选
       confirmFilter: function confirmFilter() {
+        this.filterStore.options.forEach(function(option) {
+          option.checked = option._checked;
+        });
         this.$parent.confirmFilterEvent();
       },
       // 重置筛选
@@ -57064,7 +58690,7 @@ var VueXtableHeader = {
             // 判断是否禁用编辑
             var type = 'edit-disabled';
 
-            if (!activeMethod || activeMethod(params)) {
+            if (!activeMethod || activeMethod(params) || editConfig.mode === 'row') {
               if (this.keyboardConfig || this.mouseConfig) {
                 this.clearCopyed(evnt);
                 this.clearChecked();
@@ -57080,7 +58706,14 @@ var VueXtableHeader = {
               actived.column = column;
 
               this.currentActiveRowOldValue = VueUtil.cloneDeep(row);
-              if (clearColumn) tools.UtilTools.setCellValue(row, clearColumn, null, _this4);
+              if (clearColumn) {
+                if (Array.isArray(clearColumn.property)) {
+                  // property 绑定多个字段时， 按键输入激活前清空第一个字段值
+                  tools.UtilTools.setCellValue(row, {property: clearColumn.property[0]}, null, _this4);
+                } else {
+                  tools.UtilTools.setCellValue(row, clearColumn, null, _this4);
+                }
+              }
               if (editConfig.mode === 'row') {
                 tableColumn.forEach(function (column) {
                   return _this4._getColumnModel(row, column);
@@ -57092,6 +58725,8 @@ var VueXtableHeader = {
               this.$nextTick(function () {
                 _this4.handleFocus(params, evnt);
               });
+            } else {
+              this.clearActived(evnt);
             }
 
             tools.UtilTools.emitEvent(this, type, [params, evnt]);
@@ -58250,7 +59885,12 @@ var VueXtableHeader = {
             return GlobalConfig.i18n('vue.xtable.types.'.concat(storeData.type));
           }
     
-          return '*.'.concat((this.defaultOptions.types || baseTable.importTypes).join(', *.'));
+          var types = this.defaultOptions.types || baseTable.importTypes;
+
+          if (types.indexOf('xlsx') > -1) {
+            types = types.concat('xls');
+          }
+          return '*.'.concat((types).join(', *.'));
         }
       },
       render: function render(h) {
@@ -59127,7 +60767,7 @@ var VueXtableHeader = {
           rest = parseCsv(tableFullColumn, content, $table);
           break;
 
-        case 'xlsx':
+        case 'xlsx', 'xls':
           rest = parseXlsx(tableFullColumn, content, $table, book);
           break;
     
@@ -59278,6 +60918,9 @@ var VueXtableHeader = {
             });
             var types = options.types || baseTable.importTypes;
     
+            if (types.indexOf('xlsx') > -1) {
+              types = types.concat('xls');
+            }
             if (VueUtil.includes(types, type)) {
               this.preventEvent(null, 'event.import', {
                 $table: this,
@@ -59286,7 +60929,7 @@ var VueXtableHeader = {
                 columns: this.tableFullColumn
               }, function () {
 
-                if(type == 'xlsx') {
+                if(type == 'xlsx' || type == 'xls') {
                   VueUtil.Excel.importExcel([file], {cellDates: true}, function(data, book) {
                     handleImport(_this, data, options, book);
                   });
@@ -59342,6 +60985,11 @@ var VueXtableHeader = {
           }
     
           var types = options.types || baseTable.importTypes;
+
+          if (types.indexOf('xlsx') > -1) {
+            types = types.concat('xls');
+          }
+
           impInput.accept = '.'.concat(types.join(', .'));
     
           impInput.onchange = function (evnt) {
@@ -60500,6 +62148,7 @@ function getFooterData($table, columns, opts) {
               table.addColSdCls();
             });
           }
+          this.updateFooter();
         }
       },
 

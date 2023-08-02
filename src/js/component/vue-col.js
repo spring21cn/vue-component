@@ -21,7 +21,8 @@
       xs: [Number, Object],
       sm: [Number, Object],
       md: [Number, Object],
-      lg: [Number, Object]
+      lg: [Number, Object],
+      xl: [Number, Object]
     },
     computed: {
       gutter: function() {
@@ -44,7 +45,7 @@
           classList.push(prop !== 'span' ? 'vue-col-' + prop + '-' + self[prop] : 'vue-col-' + self[prop]);
         }
       });
-      VueUtil.loop(['xs', 'sm', 'md', 'lg'], function(size) {
+      VueUtil.loop(['xs', 'sm', 'md', 'lg', 'xl'], function(size) {
         if (VueUtil.isNumber(self[size])) {
           classList.push('vue-col-' + size + '-' + self[size]);
         } else if (VueUtil.isObject(self[size])) {

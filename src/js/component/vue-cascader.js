@@ -289,7 +289,8 @@
         default: 'bottom-start'
       },
       offset: VuePopper.props.offset,
-      popperOptions: VuePopper.props.options
+      popperOptions: VuePopper.props.options,
+      appendToDirectParent: Boolean
     },
     methods: VuePopper.methods,
     data: VuePopper.data,
@@ -298,12 +299,12 @@
   var VueCascader = {
     template:'' +
 '<span \
-:class="[\'vue-cascader\', {\'is-opened\': menuVisible, \'is-disabled\': disabled},size ? \'vue-cascader--\' + size : \'\']" \
+:class="[\'vue-cascader\', {\'is-opened\': menuVisible, \'is-disabled\': isDisabled},finalSize ? \'vue-cascader--\' + finalSize : \'\']" \
 @click="handleClick" @mouseenter="inputHover = true" @mouseleave="inputHover = false" ref="reference" \
 v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 <vue-input :text-align="textAlign" ref="input" :autofocus="autofocus" :tabindex="tabindex" :readonly="!filterable" \
   :placeholder="currentLabels.length ? \'\' : placeholderLang" v-model="inputValue" @input="debouncedInputChange" \
-  :validate-event="false" :size="size" :disabled="disabled" @keydown.native.down.prevent="navigateOptions(\'down\')" \
+  :validate-event="false" :size="finalSize" :disabled="isDisabled" @keydown.native.down.prevent="navigateOptions(\'down\')" \
   @keydown.native.up.prevent="navigateOptions(\'up\')" @keydown.native.left.prevent="navigateOptions(\'left\')" \
   @keydown.native.right.prevent="navigateOptions(\'right\')" @keydown.native.enter.prevent="selectOption" \
   @keydown.native.esc.prevent="menuVisible = false" @keydown.native.tab="menuVisible = false"> \
@@ -325,6 +326,14 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
 </span> \
 </span>',
     name: 'VueCascader',
+    inject: {
+      vueForm: {
+        default: ''
+      },
+      vueFormItem: {
+        default: ''
+      },
+    },
     directives: {
       Clickoutside: VueUtil.component.clickoutside(),
       Scrolling: VueUtil.component.scrolling
@@ -410,7 +419,13 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
           }
         });
         return labels;
-      }
+      },
+      isDisabled: function() {
+        return this.disabled || (this.vueForm || {}).disabled;
+      },
+      finalSize: function() {
+        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
+      },
     },
     watch: {
       menuVisible: function(value) {
@@ -474,6 +489,12 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         self.$emit('active-item-change', value);
       },
       handlePick: function(value, close) {
+
+        var self = this;
+        self.$nextTick(function() {
+          self.updatePopper();
+        });
+        
         if (!VueUtil.isDef(close)) close = true;
         this.currentValue = value;
         this.$emit('input', value);
@@ -567,7 +588,7 @@ v-clickoutside="handleClickoutside" v-scrolling="handleClickoutside"> \
         this.menuVisible = false;
       },
       handleClick: function() {
-        if (this.disabled)
+        if (this.isDisabled)
           return;
         if (this.filterable) {
           this.menuVisible = true;

@@ -30,7 +30,9 @@
       hideOnClick: {
         type: Boolean,
         default: true
-      }
+      },
+      tabindex: Number,
+      disabled: Boolean
     },
     data: function() {
       return {
@@ -110,14 +112,18 @@
       var hide = self.hide
         , splitButton = self.splitButton
         , type = self.type
-        , size = self.size;
+        , size = self.size
+        , disabled = self.disabled
+        , tabindex = self.tabindex;
       var handleClick = function() {
         self.$emit('click');
       };
       var triggerElm = !splitButton ? self.$slots.default : createElement('vue-button-group', null, [createElement('vue-button', {
         attrs: {
           type: type,
-          size: size
+          size: size,
+          tabindex: tabindex,
+          disabled: disabled,
         },
         nativeOn: {
           click: handleClick
@@ -126,7 +132,8 @@
         ref: 'trigger',
         attrs: {
           type: type,
-          size: size
+          size: size,
+          tabindex: tabindex
         },
         class: 'vue-dropdown__caret-button'
       }, [createElement('i', {

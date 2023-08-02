@@ -124,15 +124,28 @@
 	content: "";
 	top: 0; right: 0; bottom: 0; left: 0;  
 	background: rgba(0, 0, 0, 0.1);
+	z-index: 1;
+	box-shadow: 0 0 0 2px rgba(155, 155, 155, 1);
+}
+
+.vue-radio-button:first-child .vue-radio-button__inner:before {
+	border-top-left-radius: 4px;
+	border-bottom-left-radius: 4px;
+}
+.vue-radio-button:last-child .vue-radio-button__inner:before {
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
 }
 
 .vue-radio-button:first-child .vue-radio-button__inner {
 	border-left: 1px solid #bfcbd9;
-	border-radius: 4px 0 0 4px;
 	box-shadow: none!important;
+	border-top-left-radius: 4px;
+	border-bottom-left-radius: 4px;
 }
 .vue-radio-button:last-child .vue-radio-button__inner {
-	border-radius: 0 4px 4px 0;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
 }
 .vue-radio-button__inner {
 	line-height: 1;
@@ -197,4 +210,47 @@
 	padding: 4px;
 	font-size: 12px;
 	border-radius: 0;
+}
+
+.vue-radio-group.check-style .vue-radio-button.is-active .vue-radio-button__inner {
+	background-color: #fff;
+	border-color: #0AC172;
+	color: #0AC172;
+	box-shadow: none;
+}
+
+.vue-radio-group.check-style .vue-radio-button.is-active .vue-radio-button__inner::after {
+	bottom: 0px;
+	content: "✔";
+	color: rgb(255, 255, 255);
+	display: block;
+	font-size: 12px;
+	height: 0px;
+	line-height: 6px;
+	position: absolute;
+	right: 0px;
+	width: 0px;
+	border-width: 10px;
+	border-style: solid;
+	border-image: initial;
+	border-color: transparent rgb(10, 193, 114) rgb(10, 193, 114) transparent;
+}
+
+
+.vue-radio-group.is-split .vue-radio-button{
+	margin-right: 10px;
+}
+
+.vue-radio-group.is-split .vue-radio-button .vue-radio-button__inner{
+	border-radius: 4px;
+	border-left: 1px solid #bfcbd9;
+}
+
+.vue-radio-group.is-split .vue-radio-button:last-child .vue-radio-button__inner{
+	margin-right: 0px;
+}
+
+.vue-radio-group.is-split .vue-radio-button.is-focus .vue-radio-button__inner:before,
+.vue-radio-group.is-split .vue-radio-button:focus .vue-radio-button__inner:before {
+	border-radius: 4px;
 }

@@ -7,16 +7,31 @@
   }
 })(this, function (tools, baseTable) {
 
+  function getHotKey(hotKeys, btnType) {
+    var btnHotKey = hotKeys[btnType];
+    var focusClickTypes = ['setting', 'fixed'];
+    if(btnHotKey) {
+      return [
+        {
+          name: 'hotkey',
+          arg: btnHotKey.key,
+          value: btnHotKey.keyAction || (focusClickTypes.indexOf(btnType) > -1 ? 'focusClick' : undefined)
+        }
+      ];
+    }
+    return;
+  }
+
   var vueFixedPanel = {
     template: '<div class="vue-xtable-toolbar-fixed-panel">\
     <vue-form label-width="100px"> \
       <vue-form-item :label="$t(\'vue.table.leftPin\')"> \
-        <vue-select ref="left" clearable v-model="left" multiple @change="leftPin" > \
+        <vue-select append-to-self ref="left" clearable v-model="left" multiple @change="leftPin" > \
           <vue-option v-for="(column, index) in options" :key="index" :label="column.label" :value="column.value"></vue-option> \
         </vue-select> \
       </vue-form-item> \
       <vue-form-item :label="$t(\'vue.table.rightPin\')"> \
-        <vue-select ref="right" clearable v-model="right" multiple @change="rightPin"> \
+        <vue-select append-to-self  ref="right" clearable v-model="right" multiple @change="rightPin"> \
           <vue-option v-for="(column, index) in options" :key="index" :label="column.label" :value="column.value"></vue-option> \
         </vue-select> \
       </vue-form-item> \
@@ -185,7 +200,19 @@
       },
       size: String,
       data: Array,
-      customs: Array
+      customs: Array,
+      tabKey: {
+        type: [Boolean, Object],
+        default: function _default() {
+          return GlobalConfig.toolbar.tabKey;
+        }
+      },
+      hotKey: {
+        type: Object,
+        default: function _default() {
+          return GlobalConfig.toolbar.hotKey;
+        }
+      }
     },
     inject: {
       $grid: {
@@ -243,10 +270,10 @@
         return VueUtil.assign({}, GlobalConfig.toolbar.refresh, this.refresh);
       },
       importOpts: function importOpts() {
-        return VueUtil.assign({}, GlobalConfig.toolbar.import, typeof this.import == 'object' ? this.import : {display: this.import});
+        return VueUtil.assign({}, GlobalConfig.toolbar.import, typeof this.import == 'object' ? VueUtil.assign({display: true},this.import) : {display: this.import});
       },
       exportOpts: function exportOpts() {
-        return VueUtil.assign({}, GlobalConfig.toolbar.export, typeof this.export == 'object' ? this.export : {display: this.export});
+        return VueUtil.assign({}, GlobalConfig.toolbar.export, typeof this.export == 'object' ? VueUtil.assign({display: true},this.export) : {display: this.export});
       },
       resizableOpts: function resizableOpts() {
         return VueUtil.assign({
@@ -347,6 +374,11 @@
       var customWrapperOns = {};
       var $buttons = $scopedSlots.buttons;
       var $tools = $scopedSlots.tools;
+      var tabKey = _this2.tabKey;
+      if (tabKey === true) {
+        tabKey = {};
+      }
+      var hotKey = _this2.hotKey || {};
 
       if (setting || fixed) {
         if (settingOpts.trigger === 'manual') {// 手动触发
@@ -358,7 +390,23 @@
           customWrapperOns.mouseleave = this.handleWrapperMouseleaveEvent;
         } else {
           // 点击触发
+          var self =this;
           customBtnOns.click = this.handleClickSettingEvent;
+          customBtnOns.keydown = function (e) {
+            if (e.keyCode == 27) {
+              e.stopPropagation();
+              self.handleClickSettingEvent(e);
+            }
+          };
+          customWrapperOns.keydown = function (e) {
+            if (e.keyCode == 27) {
+              e.stopPropagation();
+              self.handleClickSettingEvent(e);
+            }
+          };
+          customWrapperOns.click = function (e) {
+            e.stopPropagation();
+          };
         }
       }
 
@@ -379,8 +427,22 @@
           props: {
             disabled: item.disabled
           },
+          directives: item.key ? [
+            {
+              name: 'hotkey',
+              arg: item.key,
+              value: item.keyAction
+            }
+          ] : undefined,
+          attrs: {
+            tabindex: tabKey || item.tabIndex !== undefined ? item.tabIndex : -1
+          }
         }, item.dropdowns && item.dropdowns.length ? [
-          h('vue-button', null, [tools.UtilTools.getFuncText(item.name),
+          h('vue-button', {
+            attrs: {
+              tabindex: tabKey || item.tabIndex !== undefined ? item.tabIndex : -1
+            }
+          }, [tools.UtilTools.getFuncText(item.name),
           h('i', {
             class: 'vue-icon-arrow-down vue-icon--right'
           })
@@ -410,8 +472,10 @@
             type: 'text',
             icon: GlobalConfig.icon.addRow,
           },
+          directives: getHotKey(hotKey, 'addRow'),
           attrs: {
-            title: GlobalConfig.i18n('vue.xtable.toolbar.addRow')
+            title: GlobalConfig.i18n('vue.xtable.toolbar.addRow'),
+            tabindex: tabKey ? tabKey['addRow'] : -1
           },
           on: {
             click: this.addRowEvent
@@ -425,8 +489,10 @@
             type: 'text',
             icon: GlobalConfig.icon.insertRow,
           },
+          directives: getHotKey(hotKey, 'insertRow'),
           attrs: {
-            title: GlobalConfig.i18n('vue.xtable.toolbar.insertRow')
+            title: GlobalConfig.i18n('vue.xtable.toolbar.insertRow'),
+            tabindex: tabKey ? tabKey['insertRow'] : -1
           },
           on: {
             click: this.insertRowEvent
@@ -440,8 +506,10 @@
             icon: GlobalConfig.icon.delRow,
             disabled: this.disableDelRow
           },
+          directives: getHotKey(hotKey, 'delRow'),
           attrs: {
-            title: GlobalConfig.i18n('vue.xtable.toolbar.delRow')
+            title: GlobalConfig.i18n('vue.xtable.toolbar.delRow'),
+            tabindex: tabKey ? tabKey['delRow'] : -1
           },
           on: {
             click: this.delRowEvent
@@ -456,8 +524,10 @@
           type: 'text',
           icon: GlobalConfig.icon.import,
         },
+        directives: getHotKey(hotKey, 'import'),
         attrs: {
-          title: GlobalConfig.i18n('vue.xtable.toolbar.impConfirm')
+          title: GlobalConfig.i18n('vue.xtable.toolbar.impConfirm'),
+          tabindex: tabKey ? tabKey['import'] : -1
         },
         on: {
           click: this.importEvent
@@ -468,8 +538,10 @@
           type: 'text',
           icon: GlobalConfig.icon.export
         },
+        directives: getHotKey(hotKey, 'export'),
         attrs: {
-          title: GlobalConfig.i18n('vue.xtable.toolbar.expConfirm')
+          title: GlobalConfig.i18n('vue.xtable.toolbar.expConfirm'),
+          tabindex: tabKey ? tabKey['export'] : -1
         },
         on: {
           click: this.exportEvent
@@ -481,8 +553,10 @@
           icon: GlobalConfig.icon.refresh,
           loading: this.isRefresh
         },
+        directives: getHotKey(hotKey, 'refresh'),
         attrs: {
-          title: GlobalConfig.i18n('vue.xtable.toolbar.refresh')
+          title: GlobalConfig.i18n('vue.xtable.toolbar.refresh'),
+          tabindex: tabKey ? tabKey['refresh'] : -1
         },
         on: {
           click: this.refreshEvent
@@ -494,9 +568,15 @@
           'is--active': settingStore.visible
         }],
         ref: 'customWrapper'
-      }, [h('div', {
+      }, [h('button', {
         class: 'vue-xtable-custom--setting-btn',
-        on: customBtnOns
+        on: customBtnOns,
+        directives: getHotKey(hotKey, 'setting'),
+        attrs: {
+          type: 'button',
+          title: GlobalConfig.i18n('vue.xtable.toolbar.setting'),
+          tabindex: tabKey ? tabKey['setting'] : -1
+        }
       }, [h('i', {
         class: GlobalConfig.icon.custom
       })]), h('div', {
@@ -538,9 +618,15 @@
             'is--active': settingStore.fixedVisible
           }],
           ref: 'fixedWrapper'
-        }, [h('div', {
+        }, [h('button', {
           class: 'vue-xtable-custom--setting-btn',
-          on: customBtnOns
+          on: customBtnOns,
+          directives: getHotKey(hotKey, 'fixed'),
+          attrs: {
+            type: 'button',
+            title: GlobalConfig.i18n('vue.xtable.toolbar.fixed'),
+            tabindex: tabKey ? tabKey['fixed'] : -1
+          },
         }, [h('i', {
           class: GlobalConfig.icon.fixed
         })]), h('div', {
@@ -554,7 +640,8 @@
               visible: settingStore.fixedVisible,
               tableFullColumn: tableFullColumn,
               toolbar: _this2
-            }
+            },
+            ref: 'fixedPanel'
           })]
           )
         ]
@@ -599,6 +686,13 @@
         });
 
         this.comp = this.$table || this.$grid;
+        var table = (this.$table || this.$grid.$refs.xTable);
+
+        var self = this;
+        table && table.$on('set-user-setting', function() {
+          var fixedPanel = self.$refs.fixedPanel;
+          fixedPanel && fixedPanel.updateFixed(fixedPanel.cols);
+        });
       },
       openSetting: function openSetting() {
         this.settingStore.visible = true;
@@ -1015,17 +1109,19 @@
           footerData = _comp$getTableData.footerData;
 
         var selectRecords = comp.getSelectRecords();
-        var exportColumns = fullColumn.filter(function (column) {
+        var defOpts = VueUtil.assign({
+          original: true,
+          message: true,
+          isPrint: true,
+          showOriginal: true,
+        }, exportOpts, options);
+
+        var exportColumns = fullColumn.filter(defOpts.columnFilterMethod || function (column) {
           return column.type === 'index' || column.property && ['checkbox', 'selection', 'radio'].indexOf(column.type) === -1;
         });
         var treeStatus = comp.getTreeStatus();
         var forceOriginal = !!treeStatus;
         var hasFooter = !!footerData.length;
-        var defOpts = VueUtil.assign({
-          original: true,
-          message: true,
-          isPrint: true,
-        }, exportOpts, options);
         var types = defOpts.types || baseTable.exportTypes; // 处理类型
 
         defOpts.types = types.map(function (value) {
@@ -1036,7 +1132,7 @@
         }); // 索引列默认不选中
 
         exportColumns.forEach(function (column) {
-          column.checked = column.type !== 'index';
+          column.checked = defOpts.columnCheckMethod ? defOpts.columnCheckMethod(column) : column.type !== 'index';
         }); // 更新条件
 
         VueUtil.assign(exportStore, {
@@ -1054,6 +1150,7 @@
           type: defOpts.type || defOpts.types[0].value,
           types: defOpts.types,
           original: forceOriginal || defOpts.original,
+          showOriginal: defOpts.showOriginal,
           message: defOpts.message,
           isPrint: defOpts.isPrint,
           isHeader: true,

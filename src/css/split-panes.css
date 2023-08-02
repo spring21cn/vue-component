@@ -1,0 +1,123 @@
+.vue-split-panes {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.vue-split-panes--vertical {
+  flex-direction: row;
+}
+.vue-split-panes--horizontal {
+  flex-direction: column;
+}
+.vue-split-panes--dragging * {
+  user-select: none;
+}
+.vue-split-panes__pane {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.vue-split-panes--vertical .vue-split-panes__pane {
+  transition: width 0.2s ease-out;
+}
+.vue-split-panes--horizontal .vue-split-panes__pane {
+  transition: height 0.2s ease-out;
+}
+.vue-split-panes--dragging .vue-split-panes__pane {
+  transition: none;
+}
+.vue-split-panes__splitter {
+  touch-action: none;
+}
+.vue-split-panes--vertical > .vue-split-panes__splitter {
+  min-width: 1px;
+  cursor: col-resize;
+}
+.vue-split-panes--horizontal > .vue-split-panes__splitter {
+  min-height: 1px;
+  cursor: row-resize;
+}
+
+.vue-split-panes.default-theme .vue-split-panes__splitter {
+  background-color: #fff;
+  box-sizing: border-box;
+  position: relative;
+  flex-shrink: 0;
+}
+.vue-split-panes.default-theme .vue-split-panes__splitter:before, .vue-split-panes.default-theme .vue-split-panes__splitter:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background-color: rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s;
+}
+.vue-split-panes.default-theme .vue-split-panes__splitter:hover:before, .vue-split-panes.default-theme .vue-split-panes__splitter:hover:after {
+  background-color: rgba(0, 0, 0, 0.25);
+}
+.vue-split-panes.default-theme .vue-split-panes__splitter:first-child {
+  cursor: auto;
+}
+
+.default-theme.vue-split-panes .vue-split-panes .vue-split-panes__splitter {
+  z-index: 1;
+}
+.default-theme.vue-split-panes--vertical > .vue-split-panes__splitter,
+.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter {
+  width: 7px;
+  /* border-left: 1px solid #f2f2f2; */
+  background-color: #f2f2f2;
+  /* margin-left: -1px; */
+}
+.default-theme.vue-split-panes--vertical > .vue-split-panes__splitter:before, .default-theme.vue-split-panes--vertical > .vue-split-panes__splitter:after,
+.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter:before,
+.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter:after {
+  transform: translateY(-50%);
+  width: 1px;
+  height: 30px;
+}
+.default-theme.vue-split-panes--vertical > .vue-split-panes__splitter:before,
+.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter:before {
+  margin-left: -2px;
+}
+.default-theme.vue-split-panes--vertical > .vue-split-panes__splitter:after,
+.default-theme .vue-split-panes--vertical > .vue-split-panes__splitter:after {
+  margin-left: 1px;
+}
+.default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter,
+.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter {
+  height: 7px;
+  /* border-top: 1px solid #f2f2f2; */
+  background-color: #f2f2f2;
+  /* margin-top: -1px; */
+}
+.default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:before, .default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:after,
+.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:before,
+.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:after {
+  transform: translateX(-50%);
+  width: 30px;
+  height: 1px;
+}
+.default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:before,
+.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:before {
+  margin-top: -2px;
+}
+.default-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:after,
+.default-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:after {
+  margin-top: 1px;
+}
+
+.line-theme .vue-split-panes__splitter {background-color: #ccc;position: relative;}
+.line-theme .vue-split-panes__splitter:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  z-index: 1;
+}
+.line-theme.vue-split-panes--vertical > .vue-split-panes__splitter:before, 
+.line-theme .vue-split-panes--vertical > .vue-split-panes__splitter:before {left: -5px;right: -5px;height: 100%;}
+
+.line-theme.vue-split-panes--horizontal > .vue-split-panes__splitter:before,
+.line-theme .vue-split-panes--horizontal > .vue-split-panes__splitter:before {top: -5px;bottom: -5px;width: 100%;}

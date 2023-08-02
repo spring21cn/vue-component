@@ -16,7 +16,7 @@
     'Presto': ua.indexOf('Presto') !== -1,
     'WebKit': ua.indexOf('AppleWebKit') !== -1,
     'Gecko': ua.indexOf('Gecko/') !== -1,
-    'Safari': ua.indexOf('Safari') !== -1 || ua.indexOf('iPhone') !== -1,
+    'Safari': ua.indexOf('Safari') !== -1 || ua.indexOf('iPhone') !== -1 || (ua.indexOf('Macintosh') !== -1 && ua.indexOf('Mobile') !== -1),
     'Chrome': ua.indexOf('Chrome') !== -1 || ua.indexOf('CriOS') !== -1,
     'IE': ua.indexOf('MSIE') !== -1 || ua.indexOf('Trident') !== -1,
     'Edge': ua.indexOf('Edge') !== -1,
@@ -49,7 +49,7 @@
     'iQiYi': ua.indexOf('IqiyiApp') !== -1,
     'Windows': ua.indexOf('Windows') !== -1,
     'Linux': ua.indexOf('Linux') !== -1 || ua.indexOf('X11') !== -1,
-    'Mac OS': ua.indexOf('Macintosh') !== -1,
+    'Mac OS': ua.indexOf('Macintosh') !== -1 && navigator.maxTouchPoints && navigator.maxTouchPoints == 0,
     'Android': ua.indexOf('Android') !== -1 || ua.indexOf('Adr') !== -1,
     'Ubuntu': ua.indexOf('Ubuntu') !== -1,
     'FreeBSD': ua.indexOf('FreeBSD') !== -1,
@@ -58,10 +58,10 @@
     'BlackBerry': ua.indexOf('BlackBerry') !== -1 || ua.indexOf('RIM') !== -1,
     'MeeGo': ua.indexOf('MeeGo') !== -1,
     'Symbian': ua.indexOf('Symbian') !== -1,
-    'iOS': ua.indexOf('like Mac OS X') !== -1,
+    'iOS': ua.indexOf('like Mac OS X') !== -1 || (ua.indexOf('Macintosh') !== -1 && navigator.maxTouchPoints && navigator.maxTouchPoints > 0),
     'Chrome OS': ua.indexOf('CrOS') !== -1,
     'WebOS': ua.indexOf('hpwOS') !== -1,
-    'Mobile': ua.indexOf('Android') !== -1 || ua.indexOf('Adr') !== -1 ||  ua.indexOf('Mobile') !== -1 || ua.indexOf('Ios') !== -1 || ua.indexOf('like Mac OS X') !== -1 || ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1 || ua.indexOf('iPod') !== -1  || ua.indexOf('Tablet') !== -1 
+    'Mobile': ua.indexOf('Android') !== -1 || ua.indexOf('Adr') !== -1 ||  ua.indexOf('Mobile') !== -1 || ua.indexOf('Ios') !== -1 || ua.indexOf('like Mac OS X') !== -1 || ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1 || ua.indexOf('iPod') !== -1  || (ua.indexOf('Trident') === -1 && ua.indexOf('Tablet') !== -1) || (ua.match(/Mac/) && navigator.maxTouchPoints && navigator.maxTouchPoints > 2)
   };
   if (match['Mobile']) {
     // match['Mobile'] = !(ua.indexOf('iPad') !== -1);
@@ -113,7 +113,7 @@
       return ua.replace(/^.*Android ([\d.]+);.*$/, '$1');
     },
     'iOS': function() {
-      return ua.replace(/^.*OS ([\d_]+) like.*$/, '$1').replace(/_/g, '.');
+      return ua.indexOf('Macintosh') > -1 ? ua.replace(/^.*Version\/([\d.]+).*$/, '$1') : ua.replace(/^.*OS ([\d_]+) like.*$/, '$1').replace(/_/g, '.');
     },
     'Debian': function() {
       return ua.replace(/^.*Debian\/([\d.]+).*$/, '$1');
@@ -235,8 +235,8 @@
     device: self.device,
     os: self.os,
     osVersion: self.osVersion,
-    browser: self.browser,
-    version: self.version,
+    browser: self.browser || '',
+    version: self.version || '',
     language: self.language,
   };
 });

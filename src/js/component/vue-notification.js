@@ -67,6 +67,7 @@
       },
       doDestroy: function() {
         this.$destroy();
+        this.$el.parentNode.removeChild(this.$el);
       }
     },
     mounted: function() {
@@ -128,6 +129,7 @@
       Notification.close(id, userOnClose);
     };
     var instance = new NotificationConstructor({
+      i18n: Vue.i18n,
       data: options
     });
     if (VueUtil.isVNode(options.message)) {

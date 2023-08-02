@@ -130,6 +130,12 @@
     border-radius: 22px
 }
 
+.vue-image-viewer__wrapper.preview .vue-image-viewer__actions {
+    bottom: 80px;
+}
+
+
+
 .vue-image-viewer__actions__inner {
     width: 100%;
     height: 100%;
@@ -210,4 +216,39 @@
     display:flex;
     align-items: center;
     justify-content: center;
+}
+
+.vue-image-viewer__preview {
+    width: 100%;
+    bottom: 0;
+    height: 60px;
+    background: rgba(0,0,0, 0.4);
+    border-radius: 0;
+    cursor: default;
+    display: -ms-flexbox;
+    display: block;
+    opacity: 1;
+}
+
+.vue-image-viewer__preview__img {
+    height: 60px;
+    min-width: 35px;
+    opacity: .5;
+    transition: opacity .15s;
+    cursor: pointer;
+}
+
+.vue-image-viewer__preview__img.active, .vue-image-viewer__preview__img:hover {
+    opacity: .95;
+}
+
+.vue-image-viewer__preview__scroll {
+    overflow: hidden;
+    width: 100%;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.vue-image-viewer__preview__scroll .vue-scrollbar__thumb {
+    background: rgba(0,0,0, 0.4);
 }

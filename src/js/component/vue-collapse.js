@@ -22,7 +22,15 @@
       expandOnClickHeader: {
         type: Boolean,
         default: true
-      }
+      },
+      noHide: {
+        type: Boolean,
+        default: false,
+      },
+      initAfterOpen: {
+        type: Boolean,
+        default: false,
+      },
     },
     data: function() {
       return {

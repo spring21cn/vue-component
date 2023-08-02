@@ -88,20 +88,20 @@
 
   var VueInput = {
     template: 
-    '<div :class="[type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', size ? \'vue-input--\' + size : \'\', {\'is-disabled\': disabled, '+
+    '<div :class="[type === \'textarea\' ? \'vue-textarea\' : \'vue-input\', finalSize ? \'vue-input--\' + finalSize : \'\', {\'is-disabled\': inputDisabled, '+
     '     \'vue-input-group\': $slots.prepend || $slots.append, \'vue-input-group--append\': $slots.append, \'vue-input-group--prepend\': $slots.prepend,'+
     '     \'is-readonly\': readonly, \'vue-input--prefix\': $slots.prefix || prefixIcon'+
-    '     }, size&& ($slots.prefix || prefixIcon) ? \'vue-input--prefix--\' + size : \'\']" >'+
+    '     }, finalSize&& ($slots.prefix || prefixIcon) ? \'vue-input--prefix--\' + finalSize : \'\']" >'+
 
     '    <template v-if="type !== \'textarea\'">'+
     '        <div class="vue-input-group__prepend" v-if="$slots.prepend">'+
     '            <slot name="prepend"></slot>'+
     '        </div>'+
     '        <slot name="icon">'+
-    '            <i :class="[\'vue-input__icon\', icon, size ? \'vue-icon--\' + size : \'\', onIconClick ? \'is-clickable\' : \'\']" v-if="icon" @click="handleIconClick" ref="icon"></i>'+
+    '            <i :class="[\'vue-input__icon\', icon, finalSize ? \'vue-icon--\' + finalSize : \'\', onIconClick ? \'is-clickable\' : \'\']" v-if="icon" @click="handleIconClick" ref="icon"></i>'+
     '        </slot>'+
     '        <input :style="inputStyle" v-if="type !== \'textarea\'" class="vue-input__inner" :pattern="isMobile && keyBoardType==\'onlynumber\' ? \'[0-9]*\' : null" :type="isMobile && keyBoardType ? keyBoardType==\'onlynumber\'?\'number\':keyBoardType : type==\'number\' ? \'input\' : type" :name="name" '+
-    '               :placeholder="placeholder" :disabled="disabled" :readonly="readonly" :maxlength="maxlength" '+
+    '               :placeholder="placeholder" :disabled="inputDisabled" :readonly="readonly" :maxlength="maxlength" '+
     '               :minlength="minlength" :autocomplete="autoComplete" :autofocus="autofocus" :tabindex="tabindex" '+
     '               :min="min" :max="max" :form="form" :value="currentValue" ref="input" @input="handleInput" '+
     '               @focus="handleFocus" @blur="handleBlur" @change="handleChange" @compositionstart="handleComposition" '+
@@ -111,7 +111,7 @@
     '          <slot name="prefix"></slot> '+
     '          <i class="vue-input__icon" '+
     '             v-if="prefixIcon" '+
-    '             :class="[prefixIcon,size ? \'vue-icon--\' + size : \'\']"> '+
+    '             :class="[prefixIcon,finalSize ? \'vue-icon--\' + finalSize : \'\']"> '+
     '          </i> '+
     '        </span> '+
 
@@ -121,18 +121,29 @@
     '        </div>'+
     '    </template>'+
     '    <textarea v-else class="vue-textarea__inner" :value="currentValue" @input="handleInput" ref="textarea" '+
-    '             :name="name" :placeholder="placeholder" :disabled="disabled" :style="textareaStyle" :readonly="readonly" '+
+    '             :name="name" :placeholder="placeholder" :disabled="inputDisabled" :style="textareaStyle" :readonly="readonly" '+
     '             :rows="rows" :form="form" :autofocus="autofocus" :tabindex="tabindex" :maxlength="maxlength" :minlength="minlength" '+
     '             @focus="handleFocus" @blur="handleBlur" @change="handleChange" @compositionstart="handleComposition" @compositionupdate="handleComposition" '+
     '             @compositionend="handleComposition"></textarea>'+
     '</div>',
     name: 'VueInput',
     mixins: [VueUtil.component.emitter],
+    inject: {
+      vueForm: {
+        default: ''
+      },
+      vueFormItem: {
+        default: ''
+      },
+    },
     data: function() {
       return {
         currentValue: this.value,
         textareaCalcStyle: {},
         isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
+        isComposing: false, //for IE, event.isComposing is not working in IE, record composing state with isComposing
+        focusValue: '',
+        inputFlag: false,
       };
     },
     props: {
@@ -187,6 +198,9 @@
           resize: this.resize
         });
       },
+      finalSize: function() {
+        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
+      },
       validating: function() {
         return this.$parent.validateState === 'validating';
       },
@@ -196,7 +210,10 @@
           style.textAlign = this.textAlign;
         }
         return style;
-      }
+      },
+      inputDisabled: function() {
+        return this.disabled || (this.vueForm || {}).disabled;
+      },
     },
     watch: {
       'value': function(val) {
@@ -212,9 +229,17 @@
         }
       },
       handleChange: function(event) {
-        this.$emit('change', event.target.value);
+        if (!VueUtil.isIE && !(VueUtil.getSystemInfo().os === 'iOS')) {
+          this.$emit('change', event.target.value);
+        }
       },
       handleBlur: function(event) {
+
+        if (this.inputFlag && (VueUtil.isIE || (VueUtil.getSystemInfo().os === 'iOS')) && this.focusValue != event.target.value) {
+          this.$emit('change', event.target.value);
+        }
+        this.inputFlag = false;
+        
         this.$emit('blur', event);
         if (this.validateEvent) {
           this.dispatch('VueFormItem', 'vue.form.blur', [this.currentValue]);
@@ -230,7 +255,7 @@
     
         if (!autosize) {
           this.textareaCalcStyle = {
-            minHeight: calcTextareaHeight(this.$refs.textarea).minHeight
+            minHeight: '33px'
           };
           return;
         }
@@ -241,22 +266,28 @@
       },
       handleFocus: function(event) {
         this.$emit('focus', event);
+
+        this.focusValue = event.target.value;
+        this.inputFlag = false;
+
       },
       handleComposition: function(event) {
-        if (event.type === 'compositionend') {
-          this.handleInput(event);
+        if (!VueUtil.isDef(event.isComposing) && event.type === 'compositionstart') {
+          this.isComposing = true;// for IE
+        }
+        
+        if (!VueUtil.isDef(event.isComposing) && event.type === 'compositionend') {
+          this.isComposing = false;// for IE
+          !(VueUtil.getSystemInfo().os === "iOS" && VueUtil.getSystemInfo().osVersion < '10.3') && this.setCurrentValue(event.target.value);
         }
       },
       handleInput: function(event) {
-        if (this.noime) {
-          if(!event.isComposing) {
-            this.setCurrentValue(event.target.value);
-          } else {
-            this.setCurrentValue(this.currentValue,true);
-          }
-        } else {
+        /* triggered except compositionstart, compositionupdate and compositionend */
+        if((VueUtil.isDef(event.isComposing) && !event.isComposing) || (!this.isComposing /* for IE */ && this.currentValue !== event.target.value /* for IE AND Microsoft Pinyin, input event triggered after compositionend event*/)) {
           this.setCurrentValue(event.target.value);
         }
+
+        this.inputFlag = true;
       },
       handleIconClick: function(event) {
         if (this.onIconClick) {
@@ -264,41 +295,76 @@
         }
         this.$emit('click', event);
       },
-      setCurrentValue: function(value, watchFlg) {
-        if (!VueUtil.isDef(value)) value = '';
+      setCurrentValue: function(inputValue, watchFlg) {
+        if (!VueUtil.isDef(inputValue)) inputValue = '';
+        var originInputValue = inputValue;
         var self = this;
-        if (value === self.currentValue && !watchFlg)
+        if (inputValue === self.currentValue && !watchFlg)
           return;
         self.$nextTick(function() {
           self.resizeTextarea();
         });
-        if (self.type !== 'textarea' && self.cleave !== null) {
+
+        var rawValue = inputValue;
+        if (self.type !== 'textarea' && self.cleave !== null && self.keyBoardType !== 'onlynumber') {
           var endPos = self.$refs.input.selectionEnd;
-          self.$refs.input.value = value;
-          var cleaveObj = new Cleave(self.$refs.input, self.cleave);
-          self.currentValue = cleaveObj.getFormattedValue();
-          if (cleaveObj.getFormattedValue().length >= value.length && !watchFlg) { 
-            self.currentValue = value;
+
+          if (watchFlg && self.cleave.numeral &&
+             (self.cleave.numeralDecimalMark && self.cleave.numeralDecimalMark != '.')) {
+            if (typeof inputValue === 'number') inputValue = inputValue + '';
+            inputValue = inputValue.replace('.', self.cleave.numeralDecimalMark);
           }
-          value = cleaveObj.getRawValue();
+          var inputValueBeforeFormat = self.$refs.input.value;
+          self.$refs.input.value = inputValue;
+          var cleaveObj = new Cleave(self.$refs.input, self.cleave);
+          var cleavePps = cleaveObj.properties;
+          var formattedValue;
+          if(cleaveObj.isAndroid){
+            formattedValue = cleaveObj.properties.result;
+          }else {
+            formattedValue = cleaveObj.getFormattedValue();
+          }
+
+          // 旧值比当前输入框上的值多一个分割符，表示刚刚删除掉一个分割符，此时新值应该取输入框上的值
+          // 此时如果取格式化后的值的话，删掉的分割符又会重新出现，造成分割符没法删除的问题
+          if(self.currentValue && self.currentValue.length > inputValueBeforeFormat.length && self.currentValue.replace(inputValueBeforeFormat, '') === self.cleave.delimiter){
+            self.currentValue = inputValueBeforeFormat;
+          }else {
+            self.currentValue = formattedValue;
+          }
+
+          if(cleaveObj.isAndroid){
+            if (cleavePps.rawValueTrimPrefix) {
+              rawValue = Cleave.Util.getPrefixStrippedValue(self.currentValue, cleavePps.prefix, cleavePps.prefixLength, cleavePps.result);
+            }
+
+            if (cleavePps.numeral) {
+              rawValue = cleavePps.numeralFormatter.getRawValue(self.currentValue);
+            } else {
+              rawValue = Cleave.Util.stripDelimiters(self.currentValue, cleavePps.delimiter, cleavePps.delimiters);
+            }
+          }else {
+            rawValue = cleaveObj.getRawValue();
+          }
           cleaveObj.destroy && cleaveObj.destroy();
 
-          var pos = Cleave.Util.getNextCursorPosition(endPos, self.currentValue, cleaveObj.properties.result, cleaveObj.properties.delimiter, cleaveObj.properties.delimiters);
+          var pos = Cleave.Util.getNextCursorPosition(endPos, !watchFlg ? originInputValue : formattedValue, formattedValue, cleaveObj.properties.delimiter, cleaveObj.properties.delimiters);
           if (document.activeElement == self.$refs.input) {
             self.$refs.input.setSelectionRange(pos, pos);
           }
           
         } else {
-          self.currentValue = value;
+          self.currentValue = inputValue;
         }
-        if (self.type == 'number' && VueUtil.isNumberStr(value)) {
-          value = parseFloat(value);
+
+        if (self.type == 'number' && VueUtil.isNumberStr(rawValue)) {
+          rawValue = parseFloat(rawValue);
         }
         if (!watchFlg) {
-          self.$emit('input', value);
+          self.$emit('input', rawValue);
         }
         if (self.validateEvent) {
-          self.dispatch('VueFormItem', 'vue.form.change', [value]);
+          self.dispatch('VueFormItem', 'vue.form.change', [rawValue]);
         }
       }
     },

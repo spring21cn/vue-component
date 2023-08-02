@@ -259,6 +259,10 @@
       noHide: {
         type: Boolean,
         default: false,
+      },
+      swipeChange: {
+        type: Boolean,
+        default: true,
       }
     },
     data: function() {
@@ -327,10 +331,12 @@
         }
       },
       touchStart:function(event) {
+        if(!this.isMobile) return;
         this.mTouchStartX = event.changedTouches[0].clientX;
         this.mTouchStartY = event.changedTouches[0].clientY;
       },
       touchEnd:function(event) {
+        if(!this.isMobile) return;
         this.mTouchEndX = event.changedTouches[0].clientX;
         this.mTouchEndY = event.changedTouches[0].clientY;
         var moveRangeX = this.mTouchStartX - this.mTouchEndX;
@@ -407,10 +413,10 @@
       }, [newButton, createElement('tab-nav', navData, [])]);
       var panels = createElement('div', {
         'class': 'vue-tabs__content',
-        on: {
+        on: this.swipeChange ? {
           'touchstart': self.touchStart,
           'touchend': self.touchEnd,
-        }
+        } : {}
       }, [this.$slots.default]);
       return createElement('div', {
         'class': {

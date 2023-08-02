@@ -9,7 +9,7 @@
 })(this, function(Vue, VuePopup, VueUtil) {
   'use strict';
   var VueAside = {
-    template: '<div v-show="visibleaside" :class="[{\'vue-aside-outter\': true, \'vue-aside__static\':relative}]"><div v-show="visibleaside" :class="[\'vue-aside__wrapper\', {\'vue-aside__absolute\':relative}, {\'is-cleanness\': cleannessModal}]" @click.self="handleWrapperClick"></div><transition :name="transitionName"><div v-show="visibleaside" :class="[\'vue-aside\', {\'vue-aside__absolute\':relative}, sizeClass, customClass, positionClass]" ref="aside"><div class="vue-aside__header"><span class="vue-aside__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot><div v-if="showClose" class="vue-aside__headerbtn"><i class="vue-aside__close vue-icon-close" @click=\'handleClose\'></i></div></div><div class="vue-aside__body"><slot></slot></div><div class="vue-aside__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></transition></div>',
+    template: '<div v-show="visibleaside" :class="[{\'vue-aside-outter\': true, \'vue-aside__static\':relative}]"><div v-show="visibleaside" @touchmove.prevent :class="[\'vue-aside__wrapper\', {\'vue-aside__absolute\':relative}, {\'is-cleanness\': cleannessModal}]" @click.self="handleWrapperClick"></div><transition :name="transitionName"><div v-show="visibleaside" :class="[\'vue-aside\', {\'vue-aside__absolute\':relative}, sizeClass, customClass, positionClass]" :style="style" ref="aside"><div class="vue-aside__header"><span class="vue-aside__title" v-if="showTitle && !$slots.header">{{title}}</span><slot name="header"></slot><div v-if="showClose" class="vue-aside__headerbtn"><i class="vue-aside__close vue-icon-close" @click=\'handleClose\'></i></div></div><div class="vue-aside__body"><slot></slot></div><div class="vue-aside__footer" v-if="$slots.footer"><slot name="footer"></slot></div></div></transition></div>',
     name: 'VueAside',
     mixins: [VuePopup],
     data: function() {
@@ -31,6 +31,14 @@
       size: {
         type: String,
         default: 'small'
+      },
+      width: {
+        type: [String, Number],
+        default: ''
+      },
+      height: {
+        type: [String, Number],
+        default: ''
       },
       position: {
         type: String,
@@ -61,6 +69,7 @@
         } else {
           this.opened = false;
           VueUtil.off(this.$el, 'scroll', this.updatePopper);
+          this.focusTriggerOnClose && this.triggerElm && this.triggerElm.focus();
           this.$emit('close');
         }
       },
@@ -87,12 +96,24 @@
         }
       }
     },
+    mounted: function() {
+      if (this.visible) {
+        var self = this;
+        var watchs = this._watchers.filter(function (watch) {return  watch.expression === 'visible';} );
+        watchs.map(function (watch) {watch.cb.bind(self)(true);});
+      }
+    },
     computed: {
       showTitle: function() {
         return VueUtil.trim(this.title) === '' ? false : true;
       },
       sizeClass: function() {
-        return 'vue-aside--' + this.size;
+        return (this.width || this.height) ? '' : 'vue-aside--' + this.size;
+      },
+      style: function() {
+        var width = isNaN(this.width) ? this.width : this.width + 'px';
+        var height = isNaN(this.height) ? this.height : this.height + 'px';
+        return (this.width || this.height) ? {width: width, height: height} : '';
       },
       positionClass: function() {
         var position = this.position;

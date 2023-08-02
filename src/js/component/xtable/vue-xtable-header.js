@@ -29,7 +29,7 @@ var convertToRows = function convertToRows(originColumns) {
   var maxLevel = 1;
 
   var traverse = function traverse(column, parent) {
-    if (parent && !column.fixed) {
+    if (parent) {
       column.level = parent.level + 1;
 
       if (maxLevel < column.level) {
@@ -37,9 +37,6 @@ var convertToRows = function convertToRows(originColumns) {
       }
     }
 
-    if(column.fixed) {
-      column.level = 1;
-    }
     if (column.children && column.children.length && column.children.some(function (column) {
       return column.visible;
     })) {
@@ -47,8 +44,10 @@ var convertToRows = function convertToRows(originColumns) {
       column.children.forEach(function (subColumn) {
         if (subColumn.visible) {
           traverse(subColumn, column);
-          if(!subColumn.fixed) {
+          if(subColumn.fixed === column.fixed || (!subColumn.fixed && !column.fixed)) {
             colSpan += subColumn.colSpan;
+          } else {
+            subColumn.level = 1;
           }
         }
       });
@@ -317,9 +316,13 @@ var VueXtableHeader = {
           };
         }
         return column.colSpan === 0 ? null : h('th', {
-          class: ['vue-xtable-header--column', column.id, (_ref = {}, _defineProperty(_ref, 'col--'.concat(headAlign), headAlign), _defineProperty(_ref, 'col--fixed', column.fixed), _defineProperty(_ref, 'col--index', column.type === 'index'), _defineProperty(_ref, 'col--drag', column.type === 'drag'), _defineProperty(_ref, 'col--group', isColGroup), _defineProperty(_ref, 'col--ellipsis', hasEllipsis), _defineProperty(_ref, 'fixed--hidden', fixedHiddenColumn), _defineProperty(_ref, 'is--sortable', column.sortable), _defineProperty(_ref, 'is--filter', column.filters.length), _defineProperty(_ref, 'filter--active', column.filters.some(function (item) {
+          class: ['vue-xtable-header--column', column.id, (_ref = {}, _defineProperty(_ref, 'col--'.concat(headAlign), headAlign), _defineProperty(_ref, 'col--fixed', column.fixed),
+            _defineProperty(_ref, 'col--index', column.type === 'index'), _defineProperty(_ref, 'col--drag', column.type === 'drag'), _defineProperty(_ref, 'col--group', isColGroup),
+            _defineProperty(_ref, 'col--ellipsis', hasEllipsis), _defineProperty(_ref, 'fixed--hidden', fixedHiddenColumn), _defineProperty(_ref, 'is--sortable', column.sortable),
+            _defineProperty(_ref, 'is--editable', column.editRender), _defineProperty(_ref, 'is--required', $table.getIsRequiredByOne(column.property)), _defineProperty(_ref, 'is--filter', column.filters.length),
+            _defineProperty(_ref, 'filter--active', column.filters.some(function (item) {
             return item.checked;
-          })), _ref), tools.UtilTools.getClass(headerClassName, params), tools.UtilTools.getClass(headerCellClassName, params)],
+          })),_defineProperty(_ref, 'sort--active', (column.order === 'asc' || column.order === 'desc')) , _ref), tools.UtilTools.getClass(headerClassName, params), tools.UtilTools.getClass(headerCellClassName, params)],
           attrs: {
             'data-colid': column.id,
             colspan: column.colSpan,
@@ -356,7 +359,7 @@ var VueXtableHeader = {
          */
         !fixedHiddenColumn && !isColGroup && (VueUtil.isBoolean(column.resizable) ? column.resizable : resizable) ? h('div', {
           class: ['vue-xtable-resizable', {
-            'is--line': !border
+            'is--line': typeof border === 'object' ? !border.y : !border
           }],
           on: {
             mousedown: function mousedown(evnt) {
@@ -374,12 +377,14 @@ var VueXtableHeader = {
         }) : null]);
       }).concat([h('th', {
         class: 'col--gutter'
-      })]));
+      }, [h('div', {
+        class: 'col--gutter-inner'
+      })])]));
     }))]),
     /**
      * 其他
      */
-    h('div', {
+     (typeof border === 'object' && border.x === false) ?   undefined : h('div', {
       class: 'vue-xtable-table--repair',
       ref: 'repair'
     })]);

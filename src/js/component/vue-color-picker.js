@@ -193,6 +193,11 @@
         r = parseHexChannel(hex.substring(0, 2));
         g = parseHexChannel(hex.substring(2, 4));
         b = parseHexChannel(hex.substring(4));
+      } else if (hex.length === 8) {
+        r = parseHexChannel(hex.substring(0, 2));
+        g = parseHexChannel(hex.substring(2, 4));
+        b = parseHexChannel(hex.substring(4, 6));
+        this._alpha = parseHexChannel(hex.substring(6)) / 255 * 100;
       }
       var _rgb2hsv = rgb2hsv(r, g, b);
       var h = _rgb2hsv.h;
@@ -561,32 +566,134 @@
       self.update();
     }
   };
+
+  var VueColorPanel = {
+    template: '<div class="vue-color-panel" @mousedown="handleMouseup"><div class="vue-color-dropdown__main-wrapper">\
+    <hue-slider ref="hue" :color="color" vertical style="float: right;"></hue-slider>\
+    <sv-panel ref="sl" :color="color"></sv-panel>\
+  </div>\
+  <alpha-slider v-if="showAlpha" ref="alpha" :color="color"></alpha-slider>\
+  <template v-if="showColors" >\
+  <div class="vue-color-dropdown__colors-wrapper" v-for="grp in colorsGrp">\
+    <span class="vue-color-dropdown__colors-block is-alpha" v-for="color in grp" @click="selectColor(color)"><div :style="{backgroundColor: color}"></div></span>\
+  </div></template></div>',
+      name: 'VueColorPanel',
+      components: {
+        SvPanel: SvPanel,
+        HueSlider: HueSlider,
+        AlphaSlider: AlphaSlider
+      },
+
+      props: {
+        value: String,
+        colorFormat: String,
+        showAlpha: Boolean,
+        showColors: Boolean,
+        disabled: Boolean,
+        color: {
+          type: Object,
+          default: function() {
+            return new Color({
+              enableAlpha: this.showAlpha,
+              format: this.colorFormat
+            });
+          }
+        },
+
+        colors: {
+          type: Array,
+          default: function() {
+            return ['#000000', '#ffffff', '#eeece1', '#1e497b', '#4e81bb', '#e2534d', '#9aba60', '#8165a0', '#47acc5', '#f9974c', '#f6a9a9', '#faad80', '#b5eaea', 'rgba(0,0,0,0)'];
+          }
+        },
+      },
+      computed: {
+        colorsGrp: function() {
+          if (this.colors && typeof this.colors[0] === 'string') {
+            return [this.colors];
+          }
+          return this.colors;
+        },
+      },
+      
+      watch: {
+        value: function(val) {
+          if (val && val !== this.color.value) {
+            this.color.fromString(val);
+            this.update();
+          }
+        },
+        // color: {
+        //   handler: function() {
+        //     this.$emit('input', this.color.value);
+        //     this.$emit('change', this.color.value);
+        //   },
+        //   deep: true
+        // }
+      },
+
+      methods: {
+        selectColor: function(value) {
+          this.color._alpha = 100;
+          this.color.fromString(value);
+          this.$emit('input', this.color.value);
+          this.$emit('change', this.color.value);
+        },
+        update: function() {
+          var _$refs = this.$refs;
+          var sl = _$refs.sl;
+          var hue = _$refs.hue;
+          var alpha = _$refs.alpha;
+          sl && sl.update();
+          hue && hue.update();
+          alpha && alpha.update();
+        },
+        handleMouseup: function() {
+          document.addEventListener('mouseup', this.triggerValueChange);
+        },
+        triggerValueChange: function() {
+          document.removeEventListener('mouseup', this.triggerValueChange);
+          if (this.value !== this.color.value) {
+            this.$emit('input', this.color.value);
+            this.$emit('change', this.color.value);
+          }
+        }
+      },
+
+      mounted: function() {
+        var value = this.value;
+        if (value) {
+          this.color.fromString(value);
+        }
+      },
+
+  };
+
+  Vue.component(VueColorPanel.name, VueColorPanel);
+
   var PickerDropdown = {
     template: '<transition @after-leave="destroyPopper">\
                 <div class="vue-color-dropdown" v-show="showPopper">\
-                  <div class="vue-color-dropdown__main-wrapper">\
-                    <hue-slider ref="hue" :color="color" vertical style="float: right;"></hue-slider>\
-                    <sv-panel ref="sl" :color="color"></sv-panel>\
-                  </div>\
-                  <alpha-slider v-if="showAlpha" ref="alpha" :color="color"></alpha-slider>\
-                  <div class="vue-color-dropdown__btns">\
-                    <vue-row type="flex" justify="space-between">\
-                      <vue-col :span="14"><vue-input size="small" class="vue-color-dropdown__value" v-model="currentColor" @blur="formatColor"></vue-input></vue-col>\
-                      <vue-col :span="10">\
-                        <vue-button type="text" @click="$emit(\'clear\')">{{$t(\'vue.colorpicker.clear\')}}</vue-button>\
-                        <vue-button @click="confirmValue">{{$t(\'vue.colorpicker.confirm\')}}</vue-button>\
-                      </vue-col></vue-row></div></div></transition>',
+                <vue-color-panel ref="panel" :color="color" :showAlpha="showAlpha" :showColors="showColors" :colors="colors"></vue-color-panel>\
+                <div class="vue-color-dropdown__btns">\
+                <vue-row type="flex" justify="space-between">\
+                  <vue-col :span="14"><vue-input size="small" class="vue-color-dropdown__value" v-model="currentColor" @blur="formatColor"></vue-input></vue-col>\
+                  <vue-col :span="10">\
+                    <vue-button type="text" @click="$emit(\'clear\')">{{$t(\'vue.colorpicker.clear\')}}</vue-button>\
+                    <vue-button @click="confirmValue">{{$t(\'vue.colorpicker.confirm\')}}</vue-button>\
+                  </vue-col></vue-row></div>\
+                  </div></transition>',
     mixins: [VuePopper],
     components: {
-      SvPanel: SvPanel,
-      HueSlider: HueSlider,
-      AlphaSlider: AlphaSlider
+      VueColorPanel: VueColorPanel,
     },
     props: {
       color: {
         required: true
       },
-      showAlpha: Boolean
+      showAlpha: Boolean,
+      showColors: Boolean,
+      colors: Array,
     },
     data: function() {
       return {
@@ -599,6 +706,10 @@
       },
       formatColor: function() {
         this.$parent.color.fromString(this.currentColor);
+      },
+      selectColor: function(value) {
+        this.color._alpha = 100;
+        this.color.fromString(value);
       }
     },
     mounted: function() {
@@ -614,20 +725,16 @@
         if (val === true) {
           self.$nextTick(function() {
             var _$refs = self.$refs;
-            var sl = _$refs.sl;
-            var hue = _$refs.hue;
-            var alpha = _$refs.alpha;
-            sl && sl.update();
-            hue && hue.update();
-            alpha && alpha.update();
+            var panel = _$refs.panel;
+            panel && panel.update();
           });
         }
       }
     }
   };
   var VueColorPicker = {
-    template: '<div class="vue-color-picker" :class="[disabled ? \'is-disabled\' : \'\']" v-clickoutside="hide" v-scrolling="hide"> \
-                <div class="vue-color-picker__mask" v-if="disabled"></div> \
+    template: '<div class="vue-color-picker" :class="[colorDisabled ? \'is-disabled\' : \'\']" v-clickoutside="hide" v-scrolling="hide"> \
+                <div class="vue-color-picker__mask" v-if="colorDisabled"></div> \
                 <div class="vue-color-picker__trigger" @click="handleTrigger"> \
                   <slot>\
                   <span :class="[\'vue-color-picker__color\', {\'is-alpha\': showAlpha}]">\
@@ -637,18 +744,26 @@
                   <span class="vue-color-picker__icon vue-icon-arrow-down"></span>\
                   </slot>\
                 </div> \
-                <picker-dropdown ref="dropdown" \
+                <picker-dropdown ref="dropdown" :class="popperClass" \
                   class="vue-color-picker__panel" v-model="showPicker" @pick="confirmValue" @clear="clearValue" :color="color" \
-                  :show-alpha="showAlpha">\
+                  :show-alpha="showAlpha" :colors="colors" :showColors="showColors">\
                 </picker-dropdown> \
                 <div @touchmove.prevent v-if="isMobile && showPicker" class="color_dropdown_mask_view" @click="showPicker=false"></div> \
               </div>',
     name: 'VueColorPicker',
+    inject: {
+      vueForm: {
+        default: ''
+      },
+    },
     props: {
       value: String,
       showAlpha: Boolean,
       colorFormat: String,
-      disabled: Boolean
+      disabled: Boolean,
+      colors: Array,
+      showColors: Boolean,
+      popperClass: String,
     },
     directives: {
       Clickoutside: VueUtil.component.clickoutside(),
@@ -665,6 +780,9 @@
           var b = colorToRgb.b;
           return this.showAlpha ? 'rgba(' + r + ', ' + g + ', ' + b + ', ' + this.color.get('alpha') / 100 + ')' : 'rgb(' + r + ', ' + g + ', ' + b + ')';
         }
+      },
+      colorDisabled: function() {
+        return this.disabled || (this.vueForm || {}).disabled;
       }
     },
     watch: {
@@ -681,7 +799,7 @@
           this.showPanelColor = true;
         }
       },
-      disabled: function(val) {
+      colorDisabled: function(val) {
         if(val === true) {
           this.showPicker = false;
         }
@@ -689,7 +807,7 @@
     },
     methods: {
       handleTrigger: function() {
-        if (this.disabled) return;
+        if (this.colorDisabled) return;
         this.showPicker = !this.showPicker;
       },
       confirmValue: function(value) {

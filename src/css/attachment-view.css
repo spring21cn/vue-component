@@ -1,0 +1,224 @@
+.vue-attachment-view {
+  overflow: hidden;
+}
+
+.vue-attachment-view .v-flex {
+  display: flex;
+  align-items: center;
+}
+
+.vue-attachment-view .text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.vue-attachment-view .v-hr {
+  margin: 0 4px;
+  width: 1px;
+  height: 16px;
+  background: #B6B6B6;
+}
+
+.vue-attachment-view.is-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  background-color: white;
+  z-index: 2;
+}
+
+.vue-attachment-view .tools {
+  border-bottom: 1px solid #BEBEBE;
+  padding: 0 4px;
+}
+
+.vue-attachment-view .tools .left-tools {
+  min-width: 24%;
+}
+
+.vue-attachment-view .tools .center-tools {
+  justify-content: center;
+}
+
+.vue-attachment-view .tools .center-tools .vue-icon-sort {
+  transform: rotateZ(90deg);
+}
+
+.vue-attachment-view .tools .right-tools {
+  justify-content: flex-end;
+}
+
+.vue-attachment-view .tools .v-button {
+  padding: 0 8px;
+  margin-left: 0;
+  height: 36px;
+  color: #363636;
+}
+
+.vue-attachment-view .tools .v-button i {
+  line-height: 36px;
+}
+
+.vue-attachment-view .tools .v-button:hover:enabled, .vue-attachment-view .tools .v-button:hover {
+  background-color: #EAEAEA;
+}
+
+.vue-attachment-view .tools .vue-col {
+  height: 40px;
+}
+
+.vue-attachment-view .tools .pageselector-container {
+}
+
+.vue-attachment-view .tools .pageselector-container .page-length {
+  margin: 0 8px 0 10px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.vue-attachment-view .tools .page-no {
+  width: 40px;
+}
+
+.vue-attachment-view .tools .page-no .vue-input__inner {
+  text-align: center;
+  padding-left: 4px;
+  border-radius: 2px;
+  padding-right: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  margin: 0;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+  font-family: inherit;
+  font-weight: 400;
+  background: #F7F7F7;
+  border: 1px solid #B6B6B6;
+  height: 28px;
+}
+
+.vue-attachment-view .file-body {
+  position: relative;
+  width: 100%;
+  background-color: #E6E6E6;
+  height: calc(100% - 41px);
+  overflow: auto;
+}
+
+.vue-attachment-view .contents-flyout {
+  background-color: #fff;
+  float: left;
+  width: 200px;
+  border-right: 1px solid #B6B6B6;
+  height: 100%;
+  display: none;
+  box-shadow: 0 2px 4px 0 rgba(0,0,0,.12),0 0 6px 0 rgba(0,0,0,.04);
+}
+
+.vue-attachment-view .contents-flyout.is-display {
+  display: block;
+}
+
+.vue-attachment-view .contents-flyout .flyout-title, .vue-attachment-view .contents-flyout .flyout-view {
+  align-items: center;
+  margin: 16px;
+}
+
+.vue-attachment-view .contents-flyout .flyout-view {
+  height: calc(100% - 68px);
+  overflow: auto;
+  margin: 16px 0;
+}
+
+.vue-attachment-view .contents-flyout .flyout-title {
+  border-bottom: 1px solid #E2E2E2;
+  margin: 8px 16px;
+  height: 36px;
+}
+
+.vue-attachment-view .contents-flyout .flyout-view .page-no {
+  text-align: center;
+}
+
+.vue-attachment-view .contents-flyout .flyout-view .item {
+  text-align: center;
+}
+
+.vue-attachment-view .contents-flyout .flyout-view .item+.item {
+  margin-top: 16px;
+}
+
+.vue-attachment-view .contents-flyout .flyout-view .item:hover .vue-image {
+  outline: 1px solid #0078D4;
+}
+
+.vue-attachment-view .contents-flyout .flyout-view .item .vue-image.is-selected {
+  outline: 1px solid #0078D4;
+  outline-width: 4px;
+  margin-top: 4px;
+}
+
+.vue-attachment-view .contents-flyout .flyout-view img {
+  width: 120px;
+  height: 160px;
+}
+
+.vue-attachment-view .contents {
+  height: 100%;
+  overflow: auto;
+  position: relative;
+}
+
+.vue-attachment-view .contents .content-view {
+  text-align: center;
+  height: 100%;
+  transform-origin: left top;
+  margin: auto;
+}
+
+.vue-attachment-view .contents .content-view .item {
+  padding: 8px;
+  transition: all 0.5s;
+  margin: auto;
+}
+
+.vue-attachment-view .contents .content-view .item.is-rotate .vue-image {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.vue-attachment-view .contents .content-view .item .vue-image {
+  width: 100%;
+  min-height: auto;
+  height: 100%;
+}
+
+.vue-attachment-view .contents .content-view .item .vue-image .image-slot, .vue-attachment-view .contents .content-view .item .vue-image .vue-image__error {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c0c4cc;
+  min-width: 100%;
+}
+
+.vue-attachment-view .contents .content-view .item.is-width {
+  width: 100%;
+  height: max-content;
+}
+
+.vue-attachment-view .contents .content-view img {
+  /* max-width: 100%; */
+  /* height: auto; */
+  /* max-height: 100%; */
+  transition: all 0.2s;
+}
+
+.vue-attachment-view .contents .content-view .item.is-width img {
+  width: 100%;
+  height: max-content;
+}

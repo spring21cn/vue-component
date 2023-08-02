@@ -33,7 +33,7 @@
     },
     computed: {
       disabled: function() {
-        return this.$parent.disabled;
+        return this.$parent.sliderDisabled;
       },
       max: function() {
         return this.$parent.max;
@@ -153,8 +153,13 @@
     }
   };
   var VueSlider = {
-    template: '<div class="vue-slider" :class="{\'is-vertical\': vertical}"><div :class="[\'vue-slider__runway\', {\'disabled\': disabled}]" :style="runwayStyle" @click="onSliderClick" ref="slider"><div class="vue-slider__bar" :style="barStyle"></div><slider-button :vertical="vertical" v-model="firstValue" ref="button1"></slider-button><slider-button :vertical="vertical" v-model="secondValue" ref="button2" v-if="range"></slider-button><div class="vue-slider__stop" v-for="item in stops" :style="vertical ? {\'bottom\': item + \'%\'} : {\'left\': item + \'%\'}" v-if="showStops"></div></div></div>',
+    template: '<div class="vue-slider" :class="{\'is-vertical\': vertical}"><div :class="[\'vue-slider__runway\', {\'disabled\': sliderDisabled}]" :style="runwayStyle" @click="onSliderClick" ref="slider"><div class="vue-slider__bar" :style="barStyle"></div><slider-button :vertical="vertical" v-model="firstValue" ref="button1"></slider-button><slider-button :vertical="vertical" v-model="secondValue" ref="button2" v-if="range"></slider-button><div class="vue-slider__stop" v-for="item in stops" :style="vertical ? {\'bottom\': item + \'%\'} : {\'left\': item + \'%\'}" v-if="showStops"></div></div></div>',
     name: 'VueSlider',
+    inject: {
+      vueForm: {
+        default: ''
+      },
+    },
     mixins: [VueUtil.component.emitter],
     props: {
       min: {
@@ -292,7 +297,7 @@
         this.$refs[button].setPosition(percent);
       },
       onSliderClick: function(event) {
-        if (this.disabled || this.dragging) return;
+        if (this.sliderDisabled || this.dragging) return;
         var sliderSize = 1;
         if (this.$refs.slider) {
           sliderSize = this.$refs.slider['client' + (this.vertical ? 'Height' : 'Width')];
@@ -348,6 +353,9 @@
       },
       barStyle: function() {
         return this.vertical ? {height: this.barSize, bottom: this.barStart} : {width: this.barSize, left: this.barStart};
+      },
+      sliderDisabled: function() {
+        return this.disabled || (this.vueForm || {}).disabled;
       }
     },
     mounted: function() {

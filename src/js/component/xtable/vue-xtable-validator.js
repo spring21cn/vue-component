@@ -60,13 +60,21 @@
       */
       handleValidError: function handleValidError(params) {
         var _this = this;
-
-        this.handleActived(params, {
+        var evnt = {
           type: 'valid-error',
           trigger: 'call'
-        }).then(function () {
-          return _this.showValidTooltip(params);
-        });
+        };
+
+        if (this.validOpts.cellActive === false) {
+          this.clearSelected(evnt);
+          this.handleSelected(params, evnt).then(function () {
+            return _this.showValidTooltip(params);
+          });
+        } else {
+          this.handleActived(params, evnt).then(function () {
+            return _this.showValidTooltip(params);
+          });
+        }
       },
 
       /**
@@ -252,7 +260,7 @@
       validCellRules: function validCellRules(type, row, column, val) {
         var _this3 = this;
 
-        var editRules = this.editRules,
+        var editRules = this.enabledEditRules,
             treeConfig = this.treeConfig;
         var property = column.property;
         var errorRules = [];
@@ -261,7 +269,8 @@
 
         if (property && editRules) {
 //if prop is Array
-		  function validOne(propertyItem){
+      // eslint-disable-next-line no-inner-declarations
+      function validOne(propertyItem){
               var rules = VueUtil.get(editRules, propertyItem);
               var cellValue = VueUtil.isUndefined(val) ? VueUtil.get(row, propertyItem) : val;
 
@@ -316,7 +325,7 @@
                     }
                   }));
                 });
-			  }
+        }
 			}
             if(VueUtil.isArray(property)){
                 property.forEach(function(propertyItem){
@@ -441,16 +450,25 @@
         var validTip = $refs.validTip;
         var content = rule.message;
         this.$nextTick(function () {
-          VueUtil.assign(_this5.validStore, {
+          if(!VueUtil.isEqual({
             row: row,
             column: column,
             rule: rule,
             content: content,
-            visible: true
-          });
-
-          if (validTip && (validOpts.message === 'tooltip' || validOpts.message === 'default' && !height && tableData.length < 2)) {
-            validTip.toVisible(cell, content);
+            visible: true,
+            isArrow: _this5.validStore.isArrow
+          }, _this5.validStore)){
+            VueUtil.assign(_this5.validStore, {
+              row: row,
+              column: column,
+              rule: rule,
+              content: content,
+              visible: true
+            });
+  
+            if (validTip && (validOpts.message === 'tooltip' || validOpts.message === 'default' && !height && tableData.length < 2)) {
+              validTip.toVisible(cell, content);
+            }
           }
 
           tools.UtilTools.emitEvent(_this5, 'valid-error', [params]);

@@ -29,31 +29,46 @@
     '<div :class="[\'vue-select\', {\'filter-vue-select\': isMobile && visible && filterable}]" v-clickoutside="handleClose" v-scrolling="handleClose"> \
       <div :class="[\'vue-select__tags\', {\'no-reset-height\': !autoHeight}]" v-if="multiple" @click.stop="toggleMenu" \
         ref="tags" :style="{\'max-width\': inputWidth - 32 + \'px\'}"> \
-        <transition-group @after-leave="resetInputHeight"> \
-          <vue-tag v-for="(item, index) in selected" :key="getValueKey(item)" :closable="!disabled" hit :type="disabled ? \'\' : \'info\'" \
+        <template v-if="!autoHeight && selected.length > 0">\
+        \
+          <vue-tag :closable="!selectDisabled" hit :type="selectDisabled ? \'\' : \'info\'" v-for="s in selected.slice(0, maxDisplayTags)" :key="getValueKey(s)" class="vue-select__tags_item"\
+            @close="deleteTag($event, s)"><span class="vue-select__tags-text">{{getFormatedLabel(s)}}</span></vue-tag>\
+\
+<vue-tooltip ref="tooltip" v-if="!isMobile && showTooltip && selected.length > maxDisplayTags" :placement="tooltipPlacement" :effect="tooltipEffect" :enterable="true">\
+              <div slot="content" class="vue-select-tooltip-content" ><vue-tag v-for="(item, index) in selected.slice(maxDisplayTags)" :key="getValueKey(item)" :closable="!selectDisabled" hit :type="selectDisabled ? \'\' : \'info\'" \
+              @close="deleteTag($event, item)"><span class="vue-select__tags-text">{{getFormatedLabel(item)}}</span></vue-tag></div>\
+              <vue-tag :closable="false" hit :type="selectDisabled ? \'\' : \'info\'" class="vue-select__tags_more" \
+              ><span class="vue-select__tags-text">+ {{ selected.length - maxDisplayTags }}</span></vue-tag>\
+            </vue-tooltip>\
+            \
+            <vue-tag v-if="(isMobile || !showTooltip) && selected.length > maxDisplayTags" :closable="false" hit :type="selectDisabled ? \'\' : \'info\'" class="vue-select__tags_more" \
+              ><span class="vue-select__tags-text">+ {{ selected.length - maxDisplayTags }}</span></vue-tag>\
+        </template>\
+        <transition-group v-if="autoHeight" @after-leave="resetInputHeight"> \
+          <vue-tag v-for="(item, index) in selected" :key="getValueKey(item)" :closable="!selectDisabled" hit :type="selectDisabled ? \'\' : \'info\'" \
             @close="deleteTag($event, item)"><span class="vue-select__tags-text">{{getFormatedLabel(item)}}</span></vue-tag> \
         </transition-group>\
-        <input type="text" :class="[\'vue-select__input\', {\'is-mini\': size===\'mini\'}]" @focus="visible == true" \
-          :disabled="disabled" @keyup="managePlaceholder" @keydown="resetInputState" @keydown.down.prevent="navigateOptions(\'next\')" \
-          @keydown.up.prevent="navigateOptions(\'prev\')" @keydown.enter.prevent="selectOption" @keydown.esc.prevent="visible = false" \
+        <input :tabindex="tabindex" @keydown.tab="visible = false" type="text" :class="[\'vue-select__input\', {\'is-mini\': finalSize===\'mini\'}]" @focus="visible = true; focusing=true;" @blur="focusing=false" \
+          :disabled="selectDisabled" @keyup="managePlaceholder" @keydown="resetInputState" @keydown.down.prevent.stop="navigateOptions(\'next\')" \
+          @keydown.up.prevent.stop="navigateOptions(\'prev\')" @keydown.enter.prevent.stop="selectOption" @keydown.esc.prevent="handleEsc" \
           @keydown.delete="deletePrevTag" v-model="query" v-if="filterable" :readonly="isMobile" :style="{width: multipleInputLength + \'px\', \'max-width\': inputWidth - 42 + \'px\'}" \
           ref="input" />\
       </div> \
       <vue-input ref="reference" v-model="selectedLabel" type="text" :text-align="textAlign" \
-        :placeholder="placeholderLang" :autofocus="autofocus" :tabindex="tabindex" :name="name" :size="size" \
-        :disabled="disabled" :readonly="isMobile || !filterable || multiple" :validate-event="false" @click="handleIconClick" \
-        @mousedown.native="handleMouseDown" @keyup.native="debouncedOnInputChange" @input="keepMenu" @keydown.native.down.prevent="navigateOptions(\'next\')" \
-        @keydown.native.up.prevent="navigateOptions(\'prev\')" @keydown.native.enter.prevent="selectOption" \
-        @keydown.native.esc.prevent="visible = false" @keydown.native.tab="visible = false" @paste.native="debouncedOnInputChange" \
-        @mouseenter.native="inputHovering = true" @mouseleave.native="inputHovering = false" :icon="iconClass"></vue-input> \
-      <transition @after-leave="destroyPopper" @after-enter="handleMenuEnter"> \
-        <vue-select-dropdown ref="popper" v-show="visible && emptyText !== false"  :append="append" > \
+        :placeholder="placeholderLang" :autofocus="autofocus" :tabindex="multiple && filterable ? -1 : tabindex" :name="name" :size="finalSize" \
+        :disabled="selectDisabled" :readonly="isReadOnly" :validate-event="false" @click="handleIconClick" \
+        @mousedown.native="handleMouseDown" @keyup.native="debouncedOnInputChange" @input="keepMenu" @keydown.native.down.prevent.stop="navigateOptions(\'next\')" \
+        @keydown.native.up.prevent.stop="navigateOptions(\'prev\')" @keydown.native.enter.prevent.stop="selectOption" \
+        @keydown.native.esc.prevent="handleEsc" @keydown.native.tab="handleTab" @paste.native="debouncedOnInputChange" \
+        @mouseenter.native="inputHovering = true" @mouseleave.native="inputHovering = false" :icon="iconClass" :class="{focusing: focusing}"></vue-input> \
+      <transition @leave="destroyPopper" @after-enter="handleMenuEnter"> \
+        <vue-select-dropdown ref="popper" v-show="visible && emptyText !== false"  :append="append" :auto-width="autoWidth"> \
         <div :class="{\'vue-select-dropdown_main\':isMobile}">\
           <div @touchmove.prevent v-if="isMobile && visible && emptyText !== false" class="vue-aside__wrapper" @click="handleClose"></div> \
-            <div :class="{\'vue-aside vue-aside-bottom\':isMobile && visible && emptyText !== false}">\
-              <div class="tag_view" v-if="isMobile && visible && emptyText !== false && filterable && multiple && selected.length>0" @click.stop="toggleMenu">\
+            <div @touchmove.stop :class="{\'vue-aside vue-aside-bottom\':isMobile && visible && emptyText !== false}">\
+              <div class="tag_view" v-if="isMobile && visible && emptyText !== false && multiple && selected.length>0" @click.stop="toggleMenu">\
                 <transition-group   @after-leave="resetInputHeight" > \
-                  <vue-tag v-for="(item, index) in selected" :key="getValueKey(item)" :closable="!disabled" hit :type="disabled ? \'\' : \'info\'" \
+                  <vue-tag v-for="(item, index) in selected" :key="getValueKey(item)" :closable="!selectDisabled" hit :type="selectDisabled ? \'\' : \'info\'" \
                   @close="deleteTag($event, item)"><span class="vue-select__tags-text">{{getFormatedLabel(item)}}</span></vue-tag> \
                 </transition-group>\
               </div>\
@@ -62,7 +77,7 @@
               :icon="iconClass" @click="handleIconClick"></vue-input>\
               <div :class="{\'vue-select-dropdown_list_main\':isMobile && visible && emptyText !== false}">\
                 <ul :class="[\'vue-select-dropdown__list\', {\'is-empty\': !allowCreate && filteredOptionsCount === 0}]" \
-                  v-show="options.length > 0 && !loading"> \
+                  v-show="options.length > 0 && !loading" ref="itemContainer"> \
                   <vue-option :value="query" created v-if="showNewOption"></vue-option> \
                   <vue-recycle-scroller \
                   ref="scroller" \
@@ -70,7 +85,8 @@
                   :items="lazyData" \
                   :item-size="itemSize" \
                   :key-field="valueMember" \
-                  v-slot="ref" \
+                  v-slot="ref"\
+                  :emit-update="emitUpdate"\
                   v-if="lazyload"> \
                     <slot :item="ref.item"></slot> \
                   </vue-recycle-scroller> \
@@ -85,30 +101,41 @@
     </div>',
     mixins: [VueUtil.component.emitter],
     name: 'VueSelect',
+    inject: {
+      vueForm: {
+        default: ''
+      },
+      vueFormItem: {
+        default: ''
+      },
+    },
     computed: {
+      finalSize: function() {
+        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
+      },
       iconClass: function() {
         var criteria;
         var resultCss;
         if (this.multiple) {
           if (this.visible) {
-            criteria = this.clearable && !this.disabled && this.inputHovering;
+            criteria = this.clearable && !this.selectDisabled && this.inputHovering;
             resultCss = criteria && !this.multipleLimit && !this.lazyload ? 'vue-icon-success is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up is-reverse');
             if(this.isMobile){
-              criteria = this.clearable && !this.disabled;
+              criteria = this.clearable && !this.selectDisabled;
               resultCss = criteria && !this.multipleLimit && !this.lazyload ? this.filterAllSelectedStatus ? 'vue-icon-success is-show-check is-all-select' : 'vue-icon-success is-show-check' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up is-reverse');
             }
             return resultCss;
           } else {
-            criteria = this.clearable && !this.disabled && this.inputHovering && VueUtil.isDef(this.value) && this.value.length > 0;
+            criteria = this.clearable && !this.selectDisabled && this.inputHovering && VueUtil.isDef(this.value) && this.value.length > 0;
             if(this.isMobile)
-              criteria = this.clearable && !this.disabled && VueUtil.isDef(this.value) && this.value.length > 0;
+              criteria = this.clearable && !this.selectDisabled && VueUtil.isDef(this.value) && this.value.length > 0;
             return criteria ? 'vue-icon-error is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up');
           }
         } else {
-          criteria = this.clearable && !this.disabled && this.inputHovering && VueUtil.isDef(this.value) && this.value !== '';
+          criteria = this.clearable && !this.selectDisabled && this.inputHovering && VueUtil.isDef(this.value) && this.value !== '';
           resultCss = criteria ? 'vue-icon-error is-show-close' : (this.remote && this.filterable ? '' : 'vue-icon-arrow-up');
           if(this.isMobile){
-            criteria = this.clearable && !this.disabled && VueUtil.isDef(this.value) && this.value !== '' && !this.visible;
+            criteria = this.clearable && !this.selectDisabled && VueUtil.isDef(this.value) && this.value !== '' && !this.visible;
             resultCss = criteria ? 'vue-icon-error is-show-close' : (this.remote || this.filterable) && this.visible ? '' : 'vue-icon-arrow-up';
           }
           return resultCss;
@@ -153,7 +180,7 @@
         var hasExistingOption = VueUtil.filter(self.options, function(option) {
           return !option.created;
         }).some(function(option) {
-          return option.currentLabel === self.query;
+          return option.currentLabel === self.query || (self.query ===  option.value && option.value === self.value);
         });
         return self.filterable && self.allowCreate && self.query !== '' && !hasExistingOption;
       },
@@ -173,7 +200,56 @@
         if (!this.placeholder)
           return this.$t('vue.select.placeholder');
         return this.placeholder;
+      },
+
+      selectDisabled: function() {
+        return this.disabled || (this.vueForm || {}).disabled;
+      },
+
+      isReadOnly: function() {
+        return (this.isMobile || !this.filterable || this.multiple);
       }
+    },
+    beforeUpdate: function() {
+      var self = this;
+      if (!this.$el || this.autoHeight || this.selected.length == 0) return;
+      var elWidth = this.$el.clientWidth;
+      var tags = this.$el.querySelector('.vue-select__tags');
+      if (!tags) return;
+      
+      var max = 9999;
+      var div = document.createElement('div');
+      div.style.position = 'absolute';
+      tags.appendChild(div);
+      
+      for (var i = 0; i < this.selected.length; i++) {
+        var selectedTag = this.selected[i];
+        div.innerHTML = div.innerHTML + '<div class="vue-select__tags_item vue-tag vue-tag--info is-hit"><span style="float: left;"><span class="vue-select__tags-text">' + 
+        self.getFormatedLabel(selectedTag)
+        + '</span></span><i class="vue-tag__close vue-icon-close"></i></div>';
+
+        var noPlusBtnOff = this.filterable ? 45 : 35; //需要显示 +n tag时，剩余宽度大小
+        var hasPlusBtnOff = this.filterable ? 90 : 80; //不需要显示 +n tag时，剩余宽度大小
+        var offset = elWidth - div.clientWidth;
+
+        // 当当前所有的tag都能显示，不要出现+n按钮时，只需要剩余宽度大于 35 或45即可
+        if (offset > noPlusBtnOff && (i + 1) == this.selected.length) {
+          max = i + 1;
+          break;
+        }
+
+        //否则需要预留+n按钮位置
+        if (offset < hasPlusBtnOff) {
+          max = i;
+          break;
+        }
+      }
+
+      div.parentElement.removeChild(div);
+
+      self.$nextTick(function() {
+        self.maxDisplayTags = max;
+      });
     },
     directives: {
       Clickoutside: VueUtil.component.clickoutside(),
@@ -208,6 +284,10 @@
         type: Boolean,
         default: true
       },
+      autoWidth: {
+        type: Boolean,
+        default: true
+      },
       valueKey: {
         type: String,
         default: 'value'
@@ -235,7 +315,27 @@
         }
       },
       labelFormatter: Function,
-      appendToSelf: Boolean
+      appendToSelf: Boolean,
+      showTooltip: {
+        type: Boolean,
+        default: true
+      },
+      selectOnTab: {
+        type: Boolean,
+        default: false
+      },
+      hoverFirstOnFilter: {
+        type: Boolean,
+        default: false
+      },
+      tooltipPlacement: {
+        type: String,
+        default: 'bottom'
+      },
+      tooltipEffect: {
+        type: String,
+        default: 'light'
+      },
     },
     data: function() {
       return {
@@ -264,6 +364,9 @@
         append: null,
         isMobile: VueUtil.getSystemInfo().device == 'Mobile' && VueUtil.getSystemInfo().isLoadMobileJs ? true : false,
         filterAllSelectedStatus:false,
+        maxDisplayTags: 9999,
+        focusing: false,
+        emitUpdate: false,
       };
     },
     watch: {
@@ -272,6 +375,7 @@
         handler: function(val) {
           formatedLabelCache = [];
           this.lazyData = val;
+          this.setSelected();
         }
       },
       multiple: function(val) {
@@ -339,13 +443,18 @@
           }
         }
         this.setSelected();
+
+        if (val != null && oldVal != null && val.length == 0 && oldVal.length == 0) {
+          return;
+        }
         this.$emit('change', val, valueItem, oldVal);
         this.dispatch('VueFormItem', 'vue.form.change', val);
       },
       query: function(val) {
         var self = this;
         self.$nextTick(function() {
-          self.broadcast('VueSelectDropdown', 'updatePopper');
+          self.visible && self.broadcast('VueSelectDropdown', 'updatePopper');
+          self.hoverFirstOnFilter && self.hoverFirst();
         });
         self.hoverIndex = -1;
         if (self.multiple && self.filterable) {
@@ -428,13 +537,22 @@
           if (self.filterable) {
             self.query = self.selectedLabel;
             if (self.multiple) {
+              if (!self.remote && !self.lazyload) {
+                self.filteredOptionsCount = self.optionsCount;
+                self.broadcast('VueOption', 'queryChange', '');
+                self.broadcast('VueOptionGroup', 'queryChange');
+              }
               if(self.$refs.input && !self.isMobile)
                 self.$refs.input.focus();
             } else {
               if (!self.remote && !self.lazyload) {
+                self.filteredOptionsCount = self.optionsCount;
                 self.broadcast('VueOption', 'queryChange', '');
                 self.broadcast('VueOptionGroup', 'queryChange');
               }
+            }
+            if (!self.remote && self.lazyload) {
+              this.lazyData = this.data;
             }
             if(self.isMobile && self.remote){
               setTimeout(function(){
@@ -466,6 +584,11 @@
       placeholder: function(val) {
         this.cachedPlaceHolder = val;
         this.managePlaceholder();
+      },
+      disabled: function() {
+        if (this.multiple) {
+          this.resetInputHeight();
+        }
       }
     },
     methods: {
@@ -540,8 +663,9 @@
             self.selectedLabel = self.getFormatedLabel(option);
 
           self.selected = option;
-          if (self.filterable)
+          if (self.filterable) {
             self.query = self.selectedLabel;
+          }
           return;
         }
         var result = [];
@@ -562,7 +686,7 @@
           this.filterAllSelectedStatus = false;
         } else if (this.iconClass.indexOf('vue-icon-success is-show-check') !== -1) {
           VueUtil.loop(this.options, function(option) {
-            if (!option.disabled) {
+            if (option.visible && !option.disabled) {
               value.push(option.value);
             }
           });
@@ -623,8 +747,16 @@
             newHeight += size;
           }
 
+          var newHeightInt = newHeight;
           newHeight !== size ? newHeight += 'px' : newHeight = '';
           input.style.height = newHeight;
+
+          if (this.multiple && this.$refs.input &&
+            this.$refs.input.getBoundingClientRect().bottom > input.getBoundingClientRect().bottom) {
+              newHeightInt += size;
+              newHeight = newHeightInt += 'px';
+              input.style.height = newHeight;
+          }
           if(icon) icon.style.lineHeight = newHeight;
           if (self.visible && self.emptyText !== false) {
             self.broadcast('VueSelectDropdown', 'updatePopper');
@@ -676,12 +808,12 @@
         if (this.filterable && this.query === '' && this.visible) {
           return;
         }
-        if (!this.disabled) {
+        if (!this.selectDisabled) {
           this.visible = !this.visible;
         }
       },
       keepMenu: function() {
-        if (!this.visible) {
+        if (!this.isReadOnly && !this.visible) {
           this.visible = true;
         }
       },
@@ -723,6 +855,12 @@
             }
           }
         }
+      },
+      handleEsc: function(event) {
+        if (this.visible) {
+          event.stopPropagation();
+        }
+        this.visible = false;
       },
       getHoverIndexLazy: function(direction) {
         var self = this;
@@ -768,15 +906,16 @@
           scrollPanel.scrollTop += topOverflowDistance;
         }
       },
-      selectOption: function(event) {
+      selectOption: function(event, targetIndex) {
         if (this.visible) {
-          event.stopPropagation();
+          event && event.stopPropagation();
         } else {
           this.visible = true;
           return;
         }
-        if (this.options[this.hoverIndex]) {
-          this.handleOptionSelect(this.options[this.hoverIndex]);
+        var index = targetIndex == undefined ? this.hoverIndex : targetIndex;
+        if (this.options[index]) {
+          this.handleOptionSelect(this.options[index]);
         }
       },
       deleteSelected: function(event) {
@@ -787,15 +926,21 @@
           this.$emit('input', '');
         }
         this.visible = false;
+        this.$emit('clear');
       },
       deleteTag: function(event, tag) {
         var index = this.selected.indexOf(tag);
-        if (index !== -1 && !this.disabled) {
+        if (index !== -1 && !this.selectDisabled) {
           var value = VueUtil.mergeArray([], this.value);
           value.splice(index, 1);
           this.$emit('input', value);
           this.$emit('remove-tag', tag);
         }
+        var self = this;
+        this.$nextTick(function() {
+          self.$refs.tooltip && self.$refs.tooltip.updatePopper();
+        });
+
         event.stopPropagation();
       },
       onInputChange: function() {
@@ -809,6 +954,11 @@
         var index = this.options.indexOf(option);
         if (index !== -1) {
           this.options.splice(index, 1);
+        }
+        
+        var cachedIndex = this.cachedOptions.indexOf(option);
+        if (cachedIndex !== -1) {
+          this.cachedOptions.splice(cachedIndex, 1);
         }
         
         var self = this;
@@ -829,7 +979,7 @@
         });
       },
       handleResize: function() {
-        this.resetInputWidth();
+        if (this.multiple) this.resetInputWidth();
         if (this.multiple) this.resetInputHeight();
       },
       debouncedOnInputChange: VueUtil.debounce(function() {
@@ -875,7 +1025,7 @@
                   }
                 }
               }
-              self.multipleInputLength = totalLength - 45;
+              self.multipleInputLength = totalLength - 65;
 
               if (sameLineTagCount === 0) {
                 self.resetInputHeight();
@@ -883,6 +1033,60 @@
             }, 100);
           });
         }
+      },
+      hoverFirst: function() {
+        var el;
+        if(this.lazyload) {
+          el = this.$refs.scroller && this.$refs.scroller.$el;
+        } else {
+          el = this.$refs.itemContainer && this.$refs.itemContainer;
+        }
+
+        if (el) {
+          el.scrollTo({
+            top: 0,
+            left: 0,
+          });
+        }
+        this.emitUpdate = true;
+        this.$nextTick(function() {
+          if (this.visible && this.lazyload && this.lazyData.length > 0) {
+            var val = this.lazyData[0][this.valueMember];
+            var self =this;
+            var scroller = this.$refs.scroller;
+
+            var debouncedHoverIndex = VueUtil._debounce(function() {
+              var index = scroller.pool.findIndex(function(pool) {
+                return pool.position > -1 && pool.item[self.valueMember] == val;
+              });
+
+              self.hoverIndex = index;
+              setTimeout(function() {
+                self.emitUpdate = false;
+                scroller.$off('update');
+              }, 100);
+            }, 60);
+
+            scroller.$on('update', debouncedHoverIndex);
+            setTimeout(function() {
+              debouncedHoverIndex();
+            }, 30);
+          }
+          
+          if (!this.lazyload) {
+            this.hoverIndex = this.options.findIndex(function(option) {
+              return option.disabled != true && option.groupDisabled != true && option.visible;
+            });
+          }
+        });
+
+      },
+      handleTab: function() {
+        if (this.selectOnTab) {
+          this.selectOption();
+        }
+
+        this.visible = false;
       }
     },
     created: function() {

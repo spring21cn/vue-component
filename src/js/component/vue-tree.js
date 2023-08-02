@@ -278,7 +278,7 @@
   Node.prototype.updateLeafState = function() {
     var self = this;
     if (self.store.lazy === true && self.loaded !== true && VueUtil.isDef(self.isLeafByUser)) {
-      self.isLeaf = selfk.isLeafByUser;
+      self.isLeaf = self.isLeafByUser;
       return;
     }
     var childNodes = self.childNodes;
@@ -401,6 +401,10 @@
       }
     }
   };
+  Node.prototype.reloadData = function(callback, defaultProps) {
+    this.loaded = false;
+    this.loadData(callback, defaultProps);
+  };
   var TreeStore = function(options) {
     var self = this;
     self.currentNode = null;
@@ -448,6 +452,11 @@
         node.expand();
     };
     traverse(self);
+
+    if (this.currentNode && !this.currentNode.visible) {
+      self.setCurrentNodeKey(null);
+      self.tree.$emit('current-change', null, null);
+    }
   };
   TreeStore.prototype.setData = function(newVal) {
     var self = this;
@@ -529,13 +538,13 @@
       return;
     var nodeKey = node.key || node.getKey();
     if (nodeKey)
-      self.nodesMap[nodeKey] = node;
+    self.nodesMap[nodeKey] = node;
   };
   TreeStore.prototype.deregisterNode = function(node) {
     var self = this;
     var key = self.key;
     if (!key || !node || !node.data)
-      return;
+    return;
     var nodeKey = node.key || node.getKey();
     delete self.nodesMap[nodeKey];
   };
@@ -674,21 +683,48 @@
     return this.currentNode;
   };
   TreeStore.prototype.setCurrentNode = function(node) {
+    // this.currentNode && this.currentNode.vm && (this.currentNode.vm.isCurrent = false);
+
+    var self = this;
+
+    if (this.currentNode) {
+      var currentVm = VueUtil.findTree([this.tree], function(vm) {
+        return vm.node === self.currentNode;
+      }, {children: '$children'});
+
+      if (currentVm && currentVm.item) {
+        currentVm.item.isCurrent = false;
+      }
+    }
+
+    
     this.currentNode = node;
+
+    if (node) {
+      // node.vm.isCurrent = true;
+
+      var newVm = VueUtil.findTree([this.tree], function(vm) {
+        return vm.node === node;
+      }, {children: '$children'});
+
+      if (newVm && newVm.item) {
+        newVm.item.isCurrent = true;
+      }
+    }
   };
   TreeStore.prototype.setCurrentNodeKey = function(key) {
     var self = this;
     if (!key) {
-      self.currentNode = null;
+      self.setCurrentNode(null);
     } else {
       var node = self.getNode(key);
       if (node) {
-        self.currentNode = node;
+        self.setCurrentNode(node);
       }
     }
   };
   var VueTreeNode = {
-    template: '<div @click.stop="handleClick" @dblclick.stop="handleDblclick" v-show="node.visible" :class="[\'vue-tree-node\', {\'is-expanded\': childNodeRendered && expanded,\'is-current\': tree.store.currentNode === node,\'is-hidden\': !node.visible}]"><div class="vue-tree-node__content" :style="{\'padding-left\': (node.level - 1) * tree.indent + \'px\'}"><span @click.stop="handleExpandIconClick" :class="[\'vue-tree-node__expand-icon\', {\'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded}]"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
+    template: '<div @click.stop="handleClick" @dblclick.stop="handleDblclick" v-show="node.visible" :class="[\'vue-tree-node\', {\'is-expanded\': childNodeRendered && expanded,\'is-current\': isCurrent,\'is-hidden\': !node.visible}]"><div class="vue-tree-node__content" :style="{\'padding-left\': (node.level - 1) * tree.indent + \'px\'}"><span @click.stop="handleExpandIconClick" :class="[\'vue-tree-node__expand-icon\', {\'is-leaf\': node.isLeaf, expanded: !node.isLeaf && expanded}]"></span><vue-checkbox v-if="showCheckbox" v-model="node.checked" :indeterminate="node.indeterminate" :disabled="!!node.disabled" @change="handleCheckChange"></vue-checkbox><span v-if="node.loading" class="vue-tree-node__loading-icon vue-icon-loading"></span><node-content :node="node"></node-content></div><collapse-transition :disabled="!transition"><div class="vue-tree-node__children" v-show="expanded"><vue-tree-node :render-content="renderContent" v-for="child in node.childNodes" :key="getNodeKey(child)" :node="child" :transition="transition" @node-expand="handleChildNodeExpand"></vue-tree-node></div></collapse-transition></div>',
     name: 'VueTreeNode',
     mixins: [VueUtil.component.emitter],
     props: {
@@ -697,6 +733,7 @@
           return {};
         }
       },
+      transition: Boolean,
       props: {},
       renderContent: Function
     },
@@ -731,7 +768,8 @@
         childNodeRendered: false,
         showCheckbox: false,
         oldChecked: null,
-        oldIndeterminate: null
+        oldIndeterminate: null,
+        isCurrent: false
       };
     },
     watch: {
@@ -746,7 +784,7 @@
         if (val) {
           this.childNodeRendered = true;
         }
-      }
+      },
     },
     methods: {
       getNodeKey: function(node, index) {
@@ -828,8 +866,8 @@
   };
   var VueTree = {
     template: 
-    '<div :class="[\'vue-tree\', {\'vue-tree--highlight-current\': highlightCurrent}]"> \
-      <vue-tree-node v-for="child in root.childNodes" :node="child" :props="props" :key="getNodeKey(child)" \
+    '<div :class="[\'vue-tree\', {\'vue-tree--highlight-current\': highlightCurrent}]" @scroll="handleScroll"> \
+      <vue-tree-node v-for="child in root.childNodes" :node="child" :transition="transition" :props="props" :key="getNodeKey(child)" \
         :render-content="renderContent" @node-expand="handleNodeExpand"></vue-tree-node> \
       <div class="vue-tree__empty-block" v-if="!root.childNodes || root.childNodes.length === 0"><span class="vue-tree__empty-text">{{$t(\'vue.tree.emptyText\')}}</span></div> \
     </div>',
@@ -839,6 +877,7 @@
       VueTreeNode: VueTreeNode
     },
     data: function() {
+      this.scrollTop = null;
       return {
         store: null,
         root: null,
@@ -883,6 +922,10 @@
       indent: {
         type: Number,
         default: 16
+      },
+      transition: {
+        type: Boolean,
+        default: true,
       }
     },
     computed: {
@@ -909,6 +952,7 @@
         this.store.currentNodeKey = newVal;
       },
       data: function(newVal) {
+        this.store.nodesMap = {};
         this.store.setData(newVal);
       }
     },
@@ -965,15 +1009,49 @@
         this.$emit('node-expand', nodeData, node, instance);
       },
       expandAll: function() {
-        this.store._getAllNodes().forEach(function(node) {
-          node.expanded = true;
-        });
+        var allNodes = this.store._getAllNodes();
+
+        VueUtil.eachTree(allNodes, function(node) {
+          if (node && node.visible && !node.isLeaf) {
+            node.expand();
+          }
+        }, {children: 'childNodes'});
       },
 
       collapseAll: function() {
         this.store._getAllNodes().forEach(function(node) {
           node.expanded = false;
         });
+      },
+      getNativeNode: function(nodeKey) {
+        function find(parentNode) {
+          var target = VueUtil.find(parentNode.childNodes, function(child) {
+            return child.key === nodeKey;
+          });
+
+          if (target) {
+            return target;
+          } else {
+            for (var i = 0; i < parentNode.childNodes.length; i++) {
+              var child = parentNode.childNodes[i];
+              target = find(child);
+              if (target) {
+                return target;
+              }
+            }
+          }
+        }
+
+        return find(this.store.root);
+      },
+
+      reloadNode: function(nodeKey) {
+        var node = this.getNativeNode(nodeKey);
+        node && node.reloadData();
+      },
+
+      handleScroll: function() {
+        this.scrollTop = this.$el && this.$el.scrollTop;
       }
     },
     created: function() {
@@ -991,9 +1069,15 @@
         defaultExpandedKeys: self.defaultExpandedKeys,
         autoExpandParent: self.autoExpandParent,
         defaultExpandAll: self.defaultExpandAll,
-        filterNodeMethod: self.filterNodeMethod
+        filterNodeMethod: self.filterNodeMethod,
+        tree: self
       });
       self.root = self.store.root;
+    },
+    activated: function() {
+      this.$nextTick(function() {
+        this.$el.scrollTop = this.scrollTop;
+      });
     }
   };
   Vue.component(VueTree.name, VueTree);

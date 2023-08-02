@@ -129,6 +129,10 @@
       height: Number,
       width: Number,
       noresize: Boolean,
+      doScroll: {
+        type: Boolean,
+        default: true
+      },
       tag: {
         type: String,
         default: 'div'
@@ -209,6 +213,7 @@
         return this.isScrollCancel(el.parentElement);
       },
       scrollMouseWheel: function(e) {
+        if (!this.doScroll) return;
         if (this.isScrollCancel(e.target)) return;
         e.stopPropagation();
         e.preventDefault();

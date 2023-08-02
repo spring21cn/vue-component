@@ -1879,6 +1879,9 @@ var RecycleScroller = {
 
         // No view assigned to item
         if (!view) {
+          if (_i3 === items.length - 1) this.$emit('scroll-end');
+          if (_i3 === 0) this.$emit('scroll-start');
+
           type = item[typeField];
 
           if (continuous) {

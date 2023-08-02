@@ -33,6 +33,31 @@
     }
     return url;
   };
+
+  var httpGet = function(url, requestConfig) {
+    return Vue.http ? httpGetVue(url, requestConfig) : httpGetAxios(url, requestConfig);
+  };
+
+  var httpGetVue = function(url, requestConfig) {
+    return new Promise(function(resolve, reject) {
+      Vue.http.get(url, requestConfig).then(function(response) {
+        resolve(response.bodyText);
+      }, function(response) {
+        reject(response.status);
+      });
+    });
+  };
+
+  var httpGetAxios = function(url, requestConfig) {
+    return new Promise(function(resolve, reject) {
+      axios.get(url, requestConfig).then(function(response) {
+        resolve(response.data);
+      }, function(response) {
+        reject(response.status);
+      });
+    });
+  };
+
   var StyleContext = function(component, elt) {
     this.component = component;
     this.elt = elt;
@@ -128,7 +153,8 @@
   };
   ScriptContext.prototype = {
     getContent: function() {
-      return this.elt.textContent;
+      var content = this.elt.textContent;
+      return content.replace('export default', 'module.exports = ');
     },
     setContent: function(content) {
       this.elt.textContent = content;
@@ -137,13 +163,7 @@
       this.elt.textContent = content + this.elt.textContent;
     },
     asynReadContent: function(url) {
-      return new Promise(function(resolve, reject) {
-        Vue.http.get(url).then(function(reqponse) {
-          resolve(reqponse.bodyText);
-        }, function(reqponse) {
-          reject(reqponse.status);
-        });
-      });
+      return httpVueLoader.httpRequest(url);
     },
     compile: function() {
       var childModuleRequire = function(childURL) {
@@ -204,11 +224,24 @@
       }
       return this._scopeId;
     },
-    load: function(componentURL) {
-      this.url = componentURL;
-      return httpVueLoader.httpRequest(componentURL).then(function(responseText) {
+    load: function(componentURL, requestConfig) {
+      var isTextContent = false;
+      var options = {};
+      if (typeof componentURL === 'object') {
+        options = componentURL;
+        
+        if (options.content) {
+          isTextContent = true;
+        } else {
+          this.url = options.url;
+        }
+      } else if (typeof componentURL === 'string') {
+        this.url = componentURL;
+      }
+
+      return (isTextContent ? Promise.resolve(options.content) : httpVueLoader.httpRequest(componentURL, requestConfig)).then(function(responseText) {
         scriptScopedCache = [];
-        this.baseURI = componentURL.substr(0, componentURL.lastIndexOf('/') + 1);
+        this.baseURI = isTextContent ? '' : componentURL.substr(0, componentURL.lastIndexOf('/') + 1);
         var doc = document.implementation.createHTMLDocument('');
         doc.body.innerHTML = (this.baseURI ? '<base href="' + this.baseURI + '">' : '') + responseText;
         for (var it = doc.body.firstChild; it; it = it.nextSibling) {
@@ -294,9 +327,9 @@
     }
   };
   var httpVueLoader = {
-    load: function(url) {
+    load: function(url, requestConfig) {
       return function() {
-        return new Component().load(url).then(function(component) {
+        return new Component().load(url, requestConfig).then(function(component) {
           if (VueUtil.isDef(component.script)) {
             return promiseLoop(scriptScopedCache, component.script.asynReadContent).then(function(responseText){
               component.script.addContent(responseText);
@@ -321,14 +354,8 @@
     require: function(moduleName) {
       return window[moduleName];
     },
-    httpRequest: function(url) {
-      return new Promise(function(resolve, reject) {
-        Vue.http.get(url).then(function(reqponse) {
-          resolve(reqponse.bodyText);
-        }, function(reqponse) {
-          reject(reqponse.status);
-        });
-      });
+    httpRequest: function(url, requestConfig) {
+      return httpGet(url, requestConfig);
     },
     langProcessor: {
       html: identity,
@@ -336,8 +363,8 @@
       css: identity
     }
   };
-  var VueLoader = function(url) {
-    return httpVueLoader.load(url);
+  var VueLoader = function(url, requestConfig) {
+    return httpVueLoader.load(url, requestConfig);
   };
   return VueLoader;
 });

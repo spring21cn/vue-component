@@ -17,6 +17,22 @@
             return this.$refs.xTable[name].apply(this.$refs.xTable[name], arguments);
         };
     });
+    
+    function emptyAndCopyAttrs(target, values) {
+      
+      //empty attrs not in values
+      Object.keys(target).forEach(function(key) {
+        if (!values.hasOwnProperty(key)) {
+          Vue.delete(target, key);
+        }
+      });
+      
+      //copy attrs from values
+      Object.keys(values).forEach(function(key) {
+        Vue.set(target, key, values[key]);
+      });
+    }
+    
     var VueXgrid = {
         name: 'VueXgrid',
         props: _objectSpread({
@@ -42,7 +58,9 @@
                     total: 0,
                     pageSize: 10,
                     currentPage: 1
-                }
+                },
+                listeners_: {},
+                actualEditConfig: {}
             };
         },
         computed: {
@@ -76,6 +94,12 @@
                 if (toolbar && $refs.toolbar) {
                     $refs.toolbar.loadStorage();
                 }
+            },
+            $listeners: {
+              immediate: true,
+              handler: function(val){
+                  emptyAndCopyAttrs(this.listeners_, val);
+              }
             }
         },
         created: function created() {
@@ -122,7 +146,7 @@
 
             var $slots = this.$slots,
                 $scopedSlots = this.$scopedSlots,
-                $listeners = this.$listeners,
+                $listeners = this.listeners_,
                 pagerConfig = this.pagerConfig,
                 vSize = this.vSize,
                 loading = this.loading,
@@ -139,9 +163,11 @@
             var props = VueUtil.assign({}, tableProps, {
                 optimization: VueUtil.assign({}, GlobalConfig.optimization, optimization)
             });
-            var tableOns = VueUtil.assign({}, $listeners);
+            var tableOns = $listeners;
             var $buttons = $scopedSlots.buttons;
             var $tools = $scopedSlots.tools;
+            var $pagerLeft = $scopedSlots['pager-left'];
+            var $pagerRight = $scopedSlots['pager-right'];
 
             if (proxyConfig) {
                 VueUtil.assign(props, {
@@ -179,7 +205,7 @@
             }
 
             if (editConfig) {
-                props.editConfig = VueUtil.assign({}, editConfig, {
+                props.editConfig = VueUtil.merge(this.actualEditConfig, editConfig, {
                     activeMethod: this.handleActiveMethod
                 });
             }
@@ -192,6 +218,16 @@
 
             if ($tools) {
                 toolbarScopedSlots.tools = $tools;
+            }
+
+            var pagerScopedSlots = {};
+
+            if($pagerLeft){
+                pagerScopedSlots.left = $pagerLeft;
+            }
+
+            if($pagerRight){
+                pagerScopedSlots.right = $pagerRight;
             }
 
             return h('div', {
@@ -215,7 +251,8 @@
                 on: {
                     'page-change': this.pageChangeEvent
                 },
-                ref: 'pager'
+                ref: 'pager',
+                scopedSlots: pagerScopedSlots
             }) : null]);
         },
         methods: _objectSpread({}, methods, {

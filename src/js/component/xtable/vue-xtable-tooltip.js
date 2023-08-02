@@ -95,6 +95,9 @@
         this.show();
       }
     },
+    deactivated: function() {
+      this.wrapperMouseleaveEvent({});
+    },
     beforeDestroy: function beforeDestroy() {
       var $el = this.$el,
           target = this.target,

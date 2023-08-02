@@ -1,4 +1,15 @@
-(function() {
+(function (root, factory) {
+  if (root === undefined && window !== undefined) root = window;
+  if (typeof define === 'function' && define.amd) {
+    define('Excel', [], function () {
+      return (root['Excel'] = factory());
+    });
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root['Excel'] = factory();
+  }
+}(this, function () {
   var _$;
   
   var class2type = {'[object Boolean]':'boolean','[object Number]':'number','[object String]':'string','[object Function]':'function','[object Array]':'array','[object Date]':'date','[object RegExp]':'regexp','[object Object]':'object','[object Error]':'error'};
@@ -175,9 +186,9 @@
       var wb = XLSX.utils.book_new();
       // 1. 定义excel对的基本属性
       var Props = {
-        Title: filename,
-        Subject: 'Export From web browser',
-        Author: 'excel.wj2015.com',
+        Title: '',
+        Subject: '',
+        Author: '',
         Manager: '',
         Company: '',
         Category: '',
@@ -259,7 +270,13 @@
       var wbout = XLSX.write(wb, {bookType: type, type: 'binary', cellStyles: true, compression: wb.compression});
 
       // 5. 跨浏览器支持，采用 FileSaver 三方库
-      saveAs(new Blob([this.s2ab(wbout)], {type: 'application/octet-stream'}), filename);
+      var fileBlob = new Blob([this.s2ab(wbout)], {type: 'application/octet-stream'});
+      if(opt && opt.download === false) {
+        return fileBlob;
+      } else {
+        saveAs(fileBlob, filename);
+      }
+
     },
     /**
      * 分离内容和样式
@@ -797,7 +814,9 @@
             excelContent = ev.target.result;
           }
           var wb = XLSX.read(excelContent, {
-            type: 'binary'
+            type: 'binary',
+            cellDates: true
+            
           });
           var excelData = {};
           _$.each(wb.Sheets, function(sheet, sheetObj) {
@@ -826,15 +845,120 @@
         };
         reader.readAsBinaryString(item);
       });
+    },
+
+     /**
+     * EXCEL日期码转换为Date对象
+     * @param code double excel中存储的日期格式码
+     */
+    dateCodeToDate: function(code)
+    {
+      var obj = XLSX.SSF.parse_date_code(code);
+      return (new Date(obj.y + '-' + obj.m + '-' + obj.d + ' ' + obj.H + ':' + obj.M + ':' + obj.S));
+    },
+    /**
+     * 字符补全函数
+     * @param str
+     * @param maxLength
+     * @param padString
+     * @returns {*}
+     */
+    strPad: function(str, maxLength, padString) {
+      str = str + '';
+      if (typeof maxLength === 'undefined') {
+        maxLength = 2;
+      }
+      if (typeof padString === 'undefined') {
+        padString = '0';
+      }
+
+      if (padString.length <= 0) {
+        console.error('strPad error');
+        return str;
+      }
+
+      if (str.length < maxLength) {
+        var repeatCount = Math.floor((maxLength - str.length) / padString.length);
+        var exceptStr = '';
+        if (repeatCount * padString.length < maxLength - 1) {
+          exceptStr = padString.substr(0, maxLength - 1 - repeatCount * padString.length);
+        }
+        return padString * repeatCount + exceptStr  + str;
+      } else {
+        return str;
+      }
+    },
+    /**
+     * 简易格式转换
+     * @param date Date 待转换时间
+     * @param format String 日期格式 YYYY-MM-DD HH:ii:ss
+     */
+    dateFormat: function(date, format)
+    {
+      if (!(date instanceof Date)) {
+        console.error(date+'需要是时间日期对象');
+      }
+      if (typeof format === 'undefined') {
+        format = 'YYYY-MM-DD HH:ii:ss';
+      }
+      // 制造 format 相关参数
+      var YYYY = date.getFullYear();
+      var YY = (YYYY + '').substr(2, 2);
+      var M = date.getMonth();
+      var MM = this.strPad(M, 2, '0');
+      var D = date.getDay();
+      var DD = this.strPad(D, 2, '0');
+      var H = date.getHours();
+      var HH = this.strPad(H, 2, '0');
+      var i = date.getMinutes();
+      var ii = this.strPad(i, 2, '0');
+      var s = date.getSeconds();
+      var ss = this.strPad(s, 2, '0');
+
+      var config = {
+        'YYYY': YYYY,
+        'YY': YY,
+        'MM': MM,
+        'M': M,
+        'DD': DD,
+        'D': D,
+        'HH': HH,
+        'H': H,
+        'ii': ii,
+        'i': i,
+        'ss': ss,
+        's': s
+      };
+
+      for (var key in config) {
+        if (!config.hasOwnProperty(key)) {
+          continue;
+        }
+
+        var reg = RegExp(key, 'g');
+
+        format = format.replace(reg, config[key]);
+      }
+
+      return format;
+    },
+    /**
+     * excel的日期CODE格式化
+     * @param code
+     * @param format
+     * @returns {*|void|string}
+     */
+    dateCodeFormat: function (code, format) {
+      return this.dateFormat(this.dateCodeToDate(code), format);
     }
   };
 
-  if (typeof jQuery !== 'undefined') {
-    window.Excel = Vue_EXCEL;
-  } else if(typeof VueUtil !== 'undefined') {
+  if (typeof VueUtil !== 'undefined') {
     VueUtil.Excel = Vue_EXCEL;
   }
-})();/*---------split--------*//* Blob.js
+
+  return Vue_EXCEL;
+}));/*---------split--------*//* Blob.js
  * A Blob, File, FileReader & URL implementation.
  * 2018-08-09
  *

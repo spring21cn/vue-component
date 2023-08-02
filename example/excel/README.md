@@ -36,7 +36,7 @@
 > 由于插件规模扩大和功能的增加，导致插件上手难度有一定的增加。但如果只使用核心功能，其实没有必要去研究插件的所有方法，故在此把此插件解决核心需求的方法展示出来。
 
 ```html
-<!--先加载js-->
+<!--先加载viy-->
 <script src="https://spring21cn.github.io/vue-component/js/vue-all.min.js"></script>
 <script src="https://spring21cn.github.io/vue-component/js/vue-component-all.min.js"></script>
 

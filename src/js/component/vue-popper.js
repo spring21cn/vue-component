@@ -670,8 +670,8 @@
       updatePopper: function() {
         this.popperJS ? this.popperJS.update() : this.createPopper();
       },
-      destroyPopper: function() {
-        if (this.showPopper || !this.popperJS) return;
+      destroyPopper: function(forceDestroy) {
+        if ((this.showPopper && !forceDestroy) || !this.popperJS) return;
         this.popperJS.destroy();
         this.popperJS = null;
       },
@@ -697,7 +697,7 @@
     },
     beforeDestroy: function() {
       !VueUtil.isIE && VueUtil.off(this.popperElm, 'click', this.stop);
-      this.destroyPopper();
+      this.destroyPopper(true);
     }
   };
   return VuePopper;

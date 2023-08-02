@@ -139,6 +139,10 @@
 .vue-upload-list__item .vue-icon-upload-success {
 	color: #67c23a;
 }
+.vue-upload-list__item .vue-icon-upload-fail {
+	color: #ffc1c1;
+	font-weight: bolder;
+}
 .vue-upload-list__item .vue-icon-close {
 	display:none;
 	position: absolute;
@@ -162,11 +166,19 @@
 .vue-upload-list__item.is-success .vue-upload-list__item-status-label {
 	display: block;
 }
+.vue-upload-list__item.is-fail .vue-upload-list__item-status-label {
+	display: block;
+}
 .vue-upload-list__item.is-success .vue-upload-list__item-name:hover {
 	color: #409eff;
 	cursor: pointer;
 }
+.vue-upload-list__item.is-fail .vue-upload-list__item-name:hover {
+	color: #409eff;
+	cursor: pointer;
+}
 .vue-upload-list__item.is-success:hover .vue-upload-list__item-status-label,
+.vue-upload-list__item.is-fail:hover .vue-upload-list__item-status-label,
 .vue-upload-list__item:hover .vue-progress__text {
 	display: none;
 }
@@ -243,6 +255,9 @@
 	text-align: center;
 	transform: rotate3d(0,0,1,45deg);
 	box-shadow: 0 0 1pc 1px rgba(0,0,0,.2);
+}
+.vue-upload-list--picture-card .is-fail .vue-upload-list__item-status-label {
+	background: #cc2b2b;
 }
 .vue-upload-list--picture-card .vue-upload-list__item-status-label i {
 	font-size: 12px;
@@ -323,7 +338,7 @@
 	line-height: 70px;
 	margin-top: 0;
 }
-.vue-upload-list--picture .vue-upload-list__item.is-success .vue-upload-list__item-name i {
+.vue-upload-list--picture .vue-upload-list__item .vue-upload-list__item-name i {
 	display: none;
 }
 .vue-upload-list--picture .vue-upload-list__item-thumbnail {
@@ -359,6 +374,16 @@
 	transform: rotate3d(0,0,1,45deg);
 	box-shadow: 0 1px 1px #ccc;
 }
+.vue-upload-list--picture .is-fail .vue-upload-list__item-status-label {
+	background: #cc2b2b;
+}
+
+.vue-upload-list--text .vue-icon-upload-fail {
+	border-radius: 50%;
+	background-color: #cc2b2b;
+	padding: 0px 5px;
+}
+
 .vue-upload-list--picture .vue-upload-list__item-status-label i {
 	font-size: 12px;
 	margin-top: 12px;

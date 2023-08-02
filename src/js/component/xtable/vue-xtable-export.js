@@ -66,6 +66,7 @@
             // lockView: true,
             // showFooter: false,
             // maskClosable: true
+            appendToBody: VueUtil.getSystemInfo().os === 'iOS'
           },
           on: {
             open: this.showEvent
@@ -183,7 +184,7 @@
               defaultOptions.isFooter = value;
             }
           }
-        }, GlobalConfig.i18n('vue.xtable.toolbar.expOptFooter')), h('vue-checkbox', {
+        }, GlobalConfig.i18n('vue.xtable.toolbar.expOptFooter')), defaultOptions.showOriginal ? h('vue-checkbox', {
           props: {
             disabled: storeData.forceOriginal
           },
@@ -193,7 +194,7 @@
               defaultOptions.original = value;
             }
           }
-        }, GlobalConfig.i18n('vue.xtable.toolbar.expOptOriginal'))])])]), h('div', {
+        }, GlobalConfig.i18n('vue.xtable.toolbar.expOptOriginal')) : null])])]), h('div', {
           class: 'vue-xtable-export--panel-btns'
         }, [defaultOptions.isPrint ? h('vue-button', {
           on: {
@@ -296,7 +297,12 @@
             return GlobalConfig.i18n('vue.xtable.types.'.concat(storeData.type));
           }
     
-          return '*.'.concat((this.defaultOptions.types || baseTable.importTypes).join(', *.'));
+          var types = this.defaultOptions.types || baseTable.importTypes;
+
+          if (types.indexOf('xlsx') > -1) {
+            types = types.concat('xls');
+          }
+          return '*.'.concat((types).join(', *.'));
         }
       },
       render: function render(h) {
@@ -321,6 +327,7 @@
             // lockView: true,
             // showFooter: false,
             // maskClosable: true
+            appendToBody: VueUtil.getSystemInfo().os === 'iOS'
           }
         }, [h('div', {
           class: 'vue-xtable-export--panel'
@@ -420,7 +427,7 @@
 
 
   (function() {
-    var defaultHtmlStyle = 'body{margin:0;font-size:14px}table{text-align:left;border-width:1px 0 0 1px}table,td,th{border-style:solid;border-color:#e8eaec}tfoot,thead{background-color:#f8f8f9}td,th{padding:6px;border-width:0 1px 1px 0}.tree-icon-wrapper{position:relative;display:inline-block;width:18px}.tree-icon{position:absolute;top:-9px;left:0;width:0;height:0;border-style:solid;border-width:6px;border-top-color:#939599;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent}.tree-node{text-align:left}.tree-indent{display:inline-block}'; // 导入
+    var defaultHtmlStyle = 'body{margin:0;font-size:14px}table{text-align:left;border-width:1px 0 0 1px}tbody{white-space:pre-wrap;}table,td,th{border-style:solid;border-color:#e8eaec}tfoot,thead{background-color:#f8f8f9}td,th{padding:6px;border-width:0 1px 1px 0}.tree-icon-wrapper{position:relative;display:inline-block;width:18px}.tree-icon{position:absolute;top:-9px;left:0;width:0;height:0;border-style:solid;border-width:6px;border-top-color:#939599;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent}.tree-node{text-align:left}.tree-indent{display:inline-block}'; // 导入
 
     var impForm = document.createElement('form');
     var impInput = document.createElement('input');
@@ -446,8 +453,7 @@
       var _getExportData = getExportData($table, opts, fullData, oColumns),
           columns = _getExportData.columns,
           datas = _getExportData.datas;
-
-      return $table.preventEvent(null, 'event.export', {
+      return $table.preventEvent(null, 'event.export' + (opts.silent ? '.silent' : ''), {
         $table: $table,
         options: opts,
         columns: columns,
@@ -519,11 +525,13 @@
       });
     
       if (opts.isFooter) {
-        var footerData = $table.footerData;
+        var footerData = getFooterData($table, columns, opts);
+
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
+
         footers.forEach(function (rows) {
-          content += columns.map(function (column) {
-            return '"'.concat(rows[$table.getColumnIndex(column)] || '', '"');
+          content += columns.map(function (column, index) {
+            return '"'.concat(rows[index] || '', '"');
           }).join(',') + '\n';
         });
       }
@@ -537,11 +545,14 @@
 
       var indexKey = 'xtable-column-index';
       var exportDatas = [];
-      var fields = columns.map(function(column) {
+      var fields = {};
+      VueUtil.loop(columns, function(column){
         if (column.type === 'index') {
-          return indexKey;
+          fields[indexKey] = indexKey;
+        } else if (!isOriginal && VueUtil.isFunction(column.excelExportConfig)) {
+          fields[column.property] = column.excelExportConfig;
         } else {
-          return column.property;
+          fields[column.property] = column.property;
         }
       });
 
@@ -585,12 +596,12 @@
         exportDatas.push(data);
       });
       if (opts.isFooter) {
-        var footerData = $table.footerData;
+        var footerData = getFooterData($table, columns, opts);
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
         footers.forEach(function (rows) {
           var data = {};
-          columns.map(function (column) {
-            var content = rows[$table.getColumnIndex(column)] || '';
+          columns.map(function (column, index) {
+            var content = rows[index] || '';
             data[column.type === 'index'? indexKey : column.property] = content;
           });
           exportDatas.push(data);
@@ -636,11 +647,11 @@
       });
     
       if (opts.isFooter) {
-        var footerData = $table.footerData;
+        var footerData = getFooterData($table, columns, opts);
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
         footers.forEach(function (rows) {
-          content += columns.map(function (column) {
-            return ''.concat(rows[$table.getColumnIndex(column)] || '');
+          content += columns.map(function (column, index) {
+            return ''.concat(rows[index] || '');
           }).join(',') + '\n';
         });
       }
@@ -750,14 +761,14 @@
       }
     
       if (opts.isFooter) {
-        var footerData = $table.footerData;
+        var footerData = getFooterData($table, columns, opts);
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
     
         if (footers.length) {
           html += '<tfoot>';
           footers.forEach(function (rows) {
-            html += '<tr>'.concat(columns.map(function (column) {
-              return '<td>'.concat(rows[$table.getColumnIndex(column)] || '', '</td>');
+            html += '<tr>'.concat(columns.map(function (column, index) {
+              return '<td>'.concat(rows[index] || '', '</td>');
             }).join(''), '</tr>');
           });
           html += '</tfoot>';
@@ -807,11 +818,11 @@
       });
     
       if (opts.isFooter) {
-        var footerData = $table.footerData;
+        var footerData = getFooterData($table, columns, opts);
         var footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData;
         footers.forEach(function (rows) {
-          xml += '<Row>'.concat(columns.map(function (column) {
-            return '<Cell><Data ss:Type="String">'.concat(rows[$table.getColumnIndex(column) || ''], '</Data></Cell>');
+          xml += '<Row>'.concat(columns.map(function (column, index) {
+            return '<Cell><Data ss:Type="String">'.concat(rows[index] || '', '</Data></Cell>');
           }).join(''), '</Row>');
         });
       }
@@ -866,22 +877,33 @@
       }
     }
     
-    function getLabelData($table, columns, datas) {
+    function getLabelData($table, columns, datas, opts) {
       var treeConfig = $table.treeConfig;
       var virtualScroller = $table.getVirtualScroller();
-      return datas.map(function (row) {
+      return datas.map(function (row, rowIndex) {
         var item = {
           hasChild: treeConfig && hasTreeChildren($table, row)
         };
-        columns.forEach(function (column) {
-          if (virtualScroller.scrollX || virtualScroller.scrollY) {
+        columns.forEach(function (column, columnIndex) {
+          if (virtualScroller.scrollX || virtualScroller.scrollY || opts.dataSource || column.visible === false) {
             var params = {
               $table:$table,
               column:column,
               row:row
             };
-            var cellLabel = tools.UtilTools.formatText(tools.UtilTools.getCellLabel(row, column, params), 1);
-            item[column.id] = cellLabel || '';
+            var cellLabel;
+            if (column.type === 'index') {
+              cellLabel = column.indexMethod ? column.indexMethod({
+                row: row,
+                rowIndex: rowIndex,
+                column: column,
+                columnIndex: columnIndex
+              }) : rowIndex + 1;
+            } else {
+              cellLabel = tools.UtilTools.formatText(tools.UtilTools.getCellLabel(row, column, params), 1);
+            }
+
+            item[column.id] = cellLabel ? (VueUtil.isString(cellLabel) ? cellLabel.trim() : cellLabel) : '';
           } else {
             var cell = tools.DomTools.getCell($table, {
               row: row,
@@ -908,7 +930,7 @@
     
       return {
         columns: columns,
-        datas: opts.original ? datas : getLabelData($table, columns, datas)
+        datas: opts.original ? datas : getLabelData($table, columns, datas, opts)
       };
     }
     
@@ -1157,7 +1179,7 @@
           rest = parseCsv(tableFullColumn, content, $table);
           break;
 
-        case 'xlsx':
+        case 'xlsx', 'xls':
           rest = parseXlsx(tableFullColumn, content, $table, book);
           break;
     
@@ -1245,12 +1267,18 @@
             download: true,
             type: 'csv',
             data: null,
+            dataSource: null,
+            silent: false,
             columns: null,
             columnFilterMethod: null,
             dataFilterMethod: null,
             footerFilterMethod: null
-          }, GlobalConfig.export, options);
+          }, GlobalConfig.export, this.exportConfig, options);
     
+          if (opts.dataSource) {
+            opts.data = opts.dataSource;
+          }
+
           if (!opts.filename) {
             opts.filename = 'export';
           }
@@ -1263,7 +1291,7 @@
             throw new Error(tools.UtilTools.getLog('vue.xtable.error.notType', [opts.type]));
           }
     
-          if (!options || !options.columns) {
+          if ((!options || !options.columns) && !opts.columnFilterMethod) {
             // 在 v3.0 中废弃 type=selection
             opts.columnFilterMethod = function (column) {
               return column.property && ['index', 'checkbox', 'selection', 'radio'].indexOf(column.type) === -1;
@@ -1302,6 +1330,9 @@
             });
             var types = options.types || baseTable.importTypes;
     
+            if (types.indexOf('xlsx') > -1) {
+              types = types.concat('xls');
+            }
             if (VueUtil.includes(types, type)) {
               this.preventEvent(null, 'event.import', {
                 $table: this,
@@ -1310,7 +1341,7 @@
                 columns: this.tableFullColumn
               }, function () {
 
-                if(type == 'xlsx') {
+                if(type == 'xlsx' || type == 'xls') {
                   VueUtil.Excel.importExcel([file], {cellDates: true}, function(data, book) {
                     handleImport(_this, data, options, book);
                   });
@@ -1342,7 +1373,7 @@
         _importData: function _importData(options) {
           var _this2 = this;
     
-          var opts = VueUtil.assign({}, GlobalConfig.import, options);
+          var opts = VueUtil.assign({}, GlobalConfig.import, this.importConfig, options);
           var rest = new Promise(function (resolve, reject) {
             _this2._importResolve = resolve;
             _this2._importReject = reject;
@@ -1366,6 +1397,11 @@
           }
     
           var types = options.types || baseTable.importTypes;
+
+          if (types.indexOf('xlsx') > -1) {
+            types = types.concat('xls');
+          }
+
           impInput.accept = '.'.concat(types.join(', .'));
     
           impInput.onchange = function (evnt) {
@@ -1443,3 +1479,15 @@
 
   return mod;
 });
+
+function getFooterData($table, columns, opts) {
+  var footerData = $table.footerData;
+
+  if ($table.showFooter && $table.footerMethod) {
+    footerData = $table.tableColumn.length ? $table.footerMethod({
+      columns: columns,
+      data: opts.data || $table.afterFullData
+    }) : [];
+  }
+  return footerData;
+}

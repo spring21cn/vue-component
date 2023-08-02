@@ -173,3 +173,6 @@
 .vue-step__description.is-process {
 	color: #8391a5;
 }
+.vue-step.is-vertical {
+	white-space: nowrap;
+}

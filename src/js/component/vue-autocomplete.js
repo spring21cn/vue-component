@@ -45,7 +45,7 @@
     }
   };
   var VueAutocomplete = {
-    template: '<div class="vue-autocomplete" v-clickoutside="close" v-scrolling="close"><vue-input :text-align="textAlign" :autofocus="autofocus" :tabindex="tabindex" ref="input" v-bind="$props" @compositionstart.native="handleComposition" @compositionupdate.native="handleComposition" @compositionend.native="handleComposition" @input="handleInput" @focus="handleFocus" @keydown.up.native.prevent="highlight(highlightedIndex - 1)" @keydown.down.native.prevent="highlight(highlightedIndex + 1)" @keydown.enter.native.prevent="handleKeyEnter" @keydown.native.tab="close"><template slot="prepend" v-if="$slots.prepend"><slot name="prepend"></slot></template><template slot="append" v-if="$slots.append"><slot name="append"></slot></template></vue-input><vue-autocomplete-suggestions :props="props" :class="[popperClass ? popperClass : \'\']" ref="suggestions" :suggestions="suggestions" v-if="suggestionVisible"></vue-autocomplete-suggestions></div>',
+    template: '<div class="vue-autocomplete" v-clickoutside="close" v-scrolling="close"><vue-input :size="size" :text-align="textAlign" :autofocus="autofocus" :tabindex="tabindex" ref="input" v-bind="$props" @compositionstart.native="handleComposition" @compositionupdate.native="handleComposition" @compositionend.native="handleComposition" @input="handleInput" @focus="handleFocus" @keydown.up.native.prevent="highlight(highlightedIndex - 1)" @keydown.down.native.prevent="highlight(highlightedIndex + 1)" @keydown.enter.native.prevent="handleKeyEnter" @keydown.native.tab="close"><template slot="prepend" v-if="$slots.prepend"><slot name="prepend"></slot></template><template slot="append" v-if="$slots.append"><slot name="append"></slot></template></vue-input><vue-autocomplete-suggestions :props="props" :class="[popperClass ? popperClass : \'\']" ref="suggestions" :suggestions="suggestions" v-if="suggestionVisible"></vue-autocomplete-suggestions></div>',
     name: 'VueAutocomplete',
     mixins: [VueUtil.component.emitter],
     components: {
@@ -80,6 +80,7 @@
         default: true
       },
       customItem: String,
+      maxlength: Number,
       icon: String,
       onIconClick: Function
     },
@@ -125,7 +126,7 @@
       handleComposition: function(event) {
         if (event.type === 'compositionend') {
           this.isOnComposition = false;
-          this.handleChange(event.data);
+          this.handleChange(event.target.value);
         } else {
           this.isOnComposition = true;
         }

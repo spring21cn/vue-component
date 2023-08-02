@@ -247,6 +247,15 @@
         });
       } 
     };
+
+
+    if (column.type === 'drag') {
+      tdOns['!pointerdown'] = function (evnt) {
+        if ($table.expandeds && $table.expandeds.length > 0) {
+          $table.expandeds = [];
+        }
+      };
+    }
   
   // 合并行或列
     if (spanMethod) {
@@ -283,7 +292,9 @@
       attrs: attrs,
       style: cellStyle ? VueUtil.isFunction(cellStyle) ? cellStyle(params) : cellStyle : null,
       on: tdOns
-    }, allColumnOverflow && fixedHiddenColumn ? [] : [h('div', {
+    }, allColumnOverflow && fixedHiddenColumn ? [h('div', {
+      class: ['vue-xtable-cell'],
+    })] : [h('div', {
       class: ['vue-xtable-cell', {
         'c--title': showTitle,
         'c--tooltip': showTooltip,
@@ -313,28 +324,22 @@
         rowStyle = $table.rowStyle,
         treeConfig = $table.treeConfig,
         treeExpandeds = $table.treeExpandeds,
-        scrollYLoad = $table.scrollYLoad,
-        scrollYStore = $table.scrollYStore,
         editStore = $table.editStore,
         expandeds = $table.expandeds,
         getColumnIndex = $table.getColumnIndex,
         validResultsCell = $table.validResultsCell;
     var rows = [];
-    tableData.forEach(function (row, $rowIndex) {
+    tableData.forEach(function (row) {
+      
       var _ref3;
   
       var trOn = {};
+      var $rowIndex = row.$rowIndex;
+      var seq = $rowIndex + 1;
       var rowIndex = $rowIndex;
-      var seq = rowIndex + 1;
-  
-      if (scrollYLoad) {
-        seq += scrollYStore.startIndex;
-      } // 确保任何情况下 rowIndex 都精准指向真实 data 索引
-  
   
       rowIndex = $table.getRowIndex(row); // 事件绑定
   
-      row.$rowIndex = $rowIndex;
       row.rowIndex = rowIndex;
 
       var rowid = tools.UtilTools.getRowid($table, row);
@@ -489,9 +494,9 @@
    */
   
   
-  var scrollProcessTimeout;
   
   function syncBodyScroll(scrollTop, elem1, elem2) {
+    var scrollProcessTimeout;
     if (elem1 || elem2) {
       if (elem1) {
         elem1.onscroll = null;
@@ -503,7 +508,7 @@
         elem2.scrollTop = scrollTop;
       }
   
-      clearTimeout(scrollProcessTimeout);
+      clearTimeout(elem1 ? elem1.scrollProcessTimeout : elem2 ? elem2.scrollProcessTimeout : null);
       scrollProcessTimeout = setTimeout(function () {
         if (elem1) {
           elem1.onscroll = elem1._onscroll;
@@ -513,6 +518,14 @@
           elem2.onscroll = elem2._onscroll;
         }
       }, 100);
+
+      if (elem1) {
+        elem1.scrollProcessTimeout = scrollProcessTimeout;
+      }
+  
+      if (elem2) {
+        elem2.scrollProcessTimeout = scrollProcessTimeout;
+      }
     }
   }
   

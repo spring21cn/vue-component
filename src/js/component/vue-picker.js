@@ -264,12 +264,14 @@
     '    v-clickoutside="handleClose" v-scrolling="handleClose"'+
     '    :placeholder="placeholder"'+
     '    @focus="handleFocus"'+
+    '    @click.native="handleClick"'+
     '    @keydown.native="handleKeydown"'+
     '    :value="displayValue"'+
     '    @input="function (value) {return userInput = value;}"'+
     '    @change="handleChange"'+
     '    @mouseenter.native="handleMouseEnter"'+
     '    @mouseleave.native="showClose = false"'+
+    '    @mousedown.native="handleMousedown"'+
     '    :validateEvent="false"'+
     '    :tabindex="tabindex"'+
     '    :icon="showClose ? \'\' + clearIcon : \'\'"'+
@@ -305,7 +307,7 @@
     '    v-else>'+
     '    <i :class="[\'vue-input__icon\', \'vue-range__icon\', triggerClass]"></i>'+
     '    <input'+
-    '      autocompvare="off"'+
+    '      autocomplete="off"'+
     '      :placeholder="startPlaceholder"'+
     '      :value="displayValue && displayValue[0]"'+
     '      :disabled="pickerDisabled"'+
@@ -322,7 +324,7 @@
     '      <span class="vue-range-separator">{{ rangeSeparator }}</span>'+
     '    </slot>'+
     '    <input'+
-    '      autocompvare="off"'+
+    '      autocomplete="off"'+
     '      :placeholder="endPlaceholder"'+
     '      :value="displayValue && displayValue[1]"'+
     '      :disabled="pickerDisabled"'+
@@ -348,6 +350,10 @@
         if (VueUtil.getSystemInfo().device != 'Mobile') {
           return;
         }
+
+        if (!vnode.context.popperElm) {
+          return;
+        }
         var pel= vnode.context.popperElm.querySelector('.vue-picker-panel');
         if(mousedown.target.classList=='vue-aside__wrapper'){
           
@@ -371,6 +377,14 @@
         
       }),
       Scrolling: VueUtil.component.scrolling
+    },
+    inject: {
+      vueForm: {
+        default: ''
+      },
+      vueFormItem: {
+        default: ''
+      },
     },
     props: {
       size: String,
@@ -433,25 +447,18 @@
       };
     },
     watch: {
+      pickerDisabled: function(val) {
+        if (val) {
+          this.hidePicker();
+        }
+      },
       pickerVisible: function (val) {
         if (this.readonly || this.pickerDisabled) return;
         if (val) {
           this.showPicker();
-          this.valueOnOpen = Array.isArray(this.value) ?  this.value.slice() : this.value;
         } else {
-          this.hidePicker();
-          this.emitChange(this.value);
-          this.userInput = null;
-  
-          if (this.validateEvent) {
-            this.dispatch('VueFormItem', 'vue.form.blur');
-          }
-  
-          this.$emit('blur', this);
-          this.blur();
+          this.finishEdit();
         }
-       
-
       },
       parsedValue: {
         immediate: true,
@@ -565,16 +572,13 @@
   
         return Array.isArray(this.value) ? this.value.map(function (val) {
           return new Date(val);
-        }) : new Date(this.value);
+        }) : isNaN(new Date(this.value).getTime()) ? '' : new Date(this.value);
       },
-      _elFormItemSize: function _elFormItemSize() {
-        return (this.elFormItem || {}).elFormItemSize;
-      },
-      pickerSize: function () {
-        return this.size || this._elFormItemSize || (this.$ELEMENT || {}).size;
+      pickerSize: function() {
+        return this.size || (this.vueFormItem || {}).vueFormItemSize || (this.$VIY || {}).size;
       },
       pickerDisabled: function () {
-        return this.disabled || (this.elForm || {}).disabled;
+        return this.disabled || (this.vueForm || {}).disabled;
       },
       firstInputId: function () {
         var obj = {};
@@ -681,8 +685,14 @@
   
         if (this.userInput === '') {
           this.emitInput(null);
-          this.emitChange(null);
           this.userInput = null;
+        }
+
+        if (!this.pickerVisible) {
+          var self = this;
+          setTimeout(function() {
+            self.finishEdit();
+          },0);
         }
       },
       handleStartInput: function (event) {
@@ -769,10 +779,22 @@
       handleFocus: function () {
         var type = this.type;
         if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1 && !this.pickerVisible) {
-          this.pickerVisible = true;
+          if (!this.picker) {
+            this.mountPicker();
+          }
+          this.valueOnOpen = Array.isArray(this.value) ?  this.value.slice() : this.value;
         }
   
         this.$emit('focus', this);
+      },
+      handleMousedown: function(event){
+        var type = this.type;
+        if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1 && event.target === this.$refs.reference.$refs.input) {
+          this.pickerVisible = true;
+        }
+      },
+      handleClick: function() {
+        this.$emit('click', this);
       },
       handleKeydown: function (event) {
         var self = this;
@@ -787,17 +809,32 @@
         if (keyCode === 9) {
           if (!this.ranged) {
             this.handleChange();
+            if (!this.pickerVisible) {
+              this.$nextTick(function() {
+                this.$nextTick(function() {
+                  this.finishEdit();
+                });
+              });
+            }
             this.pickerVisible = this.picker.visible = false;
-            this.blur();
-
+            
             // grid内部无法捕获到tab事件
             if (!(this.$el && this.$el.parentNode.className.indexOf('vue-xtable-cell') > -1)) {
               event.stopPropagation();
             }
-          } else if(!event.shiftKey) {
+          } else {
             // user may change focus between two input
             setTimeout(function () {
               if (self.refInput.indexOf(document.activeElement) === -1) {
+
+                if (!self.pickerVisible) {
+                  self.$nextTick(function() {
+                    self.$nextTick(function() {
+                      self.finishEdit();
+                    });
+                  });
+                }
+
                 self.pickerVisible = false;
   
                 self.blur();
@@ -817,11 +854,23 @@
         if (keyCode === 13) {
           if (this.userInput === '' || this.isValidValue(this.parseString(this.displayValue))) {
             this.handleChange();
+            
+            if (!this.pickerVisible) {
+              this.$nextTick(function() {
+                this.$nextTick(function() {
+                  this.finishEdit();
+                });
+              });
+            }
+
             this.pickerVisible = this.picker.visible = false;
-            this.blur();
           }
-  
-          event.stopPropagation();
+
+          // grid内部无法捕获到enter事件
+          if (!(this.$el && this.$el.parentNode.className.indexOf('vue-xtable-cell') > -1)) {
+            event.stopPropagation();
+          }
+
           return;
         } // if user is typing, do not let picker handle key input
   
@@ -831,7 +880,12 @@
           return;
         } // delegate other keys to panel
   
-  
+        if (keyCode === 40 && HAVE_TRIGGER_TYPES.indexOf(this.type) !== -1 && !this.pickerVisible) {
+          event.stopPropagation();
+          this.pickerVisible = true;
+          return;
+        }
+
         if (this.picker && this.picker.handleKeydown) {
           this.picker.handleKeydown(event);
         }
@@ -839,7 +893,7 @@
       handleRangeClick: function () {
         var type = this.type;
   
-        if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1 && !this.pickerVisible) {
+        if (HAVE_TRIGGER_TYPES.indexOf(type) !== -1) {
           this.pickerVisible = true;
         }
   
@@ -985,6 +1039,19 @@
         } else {
           return true;
         }
+      },
+      finishEdit: function() {
+        this.hidePicker();
+        this.emitChange(this.value);
+        this.userInput = null;
+
+        if (this.validateEvent) {
+          this.dispatch('VueFormItem', 'vue.form.blur');
+        }
+
+        this.$emit('blur', this);
+        this.blur();
+      
       }
     }
   };

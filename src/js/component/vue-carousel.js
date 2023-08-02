@@ -9,7 +9,7 @@
 })(this, function(Vue, VueUtil) {
   'use strict';
   var VueCarousel = {
-    template: '<div :class="[\'vue-carousel\', {\'vue-carousvue--card\': type === \'card\'}]" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave" @touchstart.stop="handleTouchStart" @mousedown="handleMouseDrag"><div class="vue-carousel__container" :style="{height: height}"><transition name="carousel-arrow-left"><button type="button" v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousel-arrow-right"><button type="button" v-if="arrow !== \'never\'" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul v-if="indicatorPosition !== \'none\'" :class="[\'vue-carousel__indicators\', {\'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\'}]"><li v-for="(item, index) in items" :class="[\'vue-carousel__indicator\', {\'is-active\': index === activeIndex}]" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button type="button" class="vue-carousel__button"></button></li></ul></div>',
+    template: '<div :class="[\'vue-carousel\', {\'vue-carousvue--card\': type === \'card\'}]" @mouseenter.stop="handleMouseEnter" @mouseleave.stop="handleMouseLeave" @touchstart.stop="handleTouchStart" @mousedown="handleMouseDrag"><div class="vue-carousel__container" :style="{height: height}"><transition name="carousel-arrow-left"><button type="button" v-if="arrowShowLeft" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'left\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex - 1)" class="vue-carousel__arrow vue-carousel__arrow--left"><i class="vue-icon-arrow-left"></i></button></transition><transition name="carousel-arrow-right"><button type="button" v-if="arrowShowRight" v-show="arrow === \'always\' || hover" @mouseenter="handleButtonEnter(\'right\')" @mouseleave="handleButtonLeave" @click.stop="throttledArrowClick(activeIndex + 1)" class="vue-carousel__arrow vue-carousel__arrow--right"><i class="vue-icon-arrow-right"></i></button></transition><slot></slot></div><ul v-if="indicatorPosition !== \'none\'" :class="[\'vue-carousel__indicators\', {\'vue-carousel__indicators--outside\': indicatorPosition === \'outside\' || type === \'card\'}]"><li v-for="(item, index) in items" :class="[\'vue-carousel__indicator\', {\'is-active\': index === activeIndex}]" @mouseenter="throttledIndicatorHover(index)" @click.stop="handleIndicatorClick(index)"><button type="button" class="vue-carousel__button"></button></li></ul></div>',
     name: 'VueCarousel',
     props: {
       initialIndex: {
@@ -65,13 +65,26 @@
     },
     watch: {
       items: function(val) {
-        if (val.length > 0)
+        if (val.length > 0) {
           this.setActiveItem(0);
+          this.resetItemPosition();
+        }
       },
       activeIndex: function(val, oldVal) {
         this.resetItemPosition();
         this.$emit('change', val, oldVal);
       }
+    },
+    computed: {
+      arrowShow: function() {
+        return this.arrow !== 'never';
+      },
+      arrowShowLeft: function() {
+        return this.arrowShow && (this.wrap || this.activeIndex !== 0);
+      },
+      arrowShowRight: function() {
+        return this.arrowShow && (this.wrap || this.activeIndex !== this.items.length - 1);
+      },
     },
     methods: {
       handleMouseEnter: function() {
@@ -166,18 +179,21 @@
         });
       },
       playSlides: function() {
-        if (this.activeIndex < this.items.length - 1) {
-          this.activeIndex++;
-        } else {
-          this.activeIndex = 0;
-        }
+        this.setActiveItem(this.activeIndex + 1);
+
+        var activeItem = this.items[this.activeIndex];
+        var interval = (activeItem && activeItem.interval) || this.interval;
+        
+        this.timer = setTimeout(this.playSlides, interval);
       },
       pauseTimer: function() {
-        clearInterval(this.timer);
+        clearTimeout(this.timer);
       },
       startTimer: function() {
-        if (this.interval <= 0 || !this.autoplay) return;
-        this.timer = setInterval(this.playSlides, this.interval);
+        var activeItem = this.items[this.activeIndex];
+        var interval = (activeItem && activeItem.interval) || this.interval;
+        if (interval <= 0 || !this.autoplay) return;
+        this.timer = setTimeout(this.playSlides, interval);
       },
       setActiveItem: function(index) {
         if (VueUtil.isString(index)) {

@@ -86,6 +86,10 @@
             };
   
             if (columnTargetNode.flag) {
+
+              if (VueUtil.closest(columnTargetNode.targetElem, '.vue-xtable-table') !== columnTargetNode.container) {
+                return;
+              }
               var cell = columnTargetNode.targetElem;
               var column = this.getColumnNode(cell).item;
               var typePrefix = ''.concat(layout, '-');

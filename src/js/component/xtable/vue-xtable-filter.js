@@ -83,11 +83,17 @@
               },
               visible: true
             });
+            
+            // 复原状态
+            filterStore.options.forEach(function(option) {
+              option._checked = option.checked;
+            });
+
             filterStore.isAllSelected = filterStore.options.every(function (item) {
-              return item.checked;
+              return item._checked;
             });
             filterStore.isIndeterminate = !filterStore.isAllSelected && filterStore.options.some(function (item) {
-              return item.checked;
+              return item._checked;
             });
             this.$nextTick(function () {
               var filterWrapperElem = filterWrapper.$el;
@@ -95,7 +101,7 @@
               var wrapperLeft = left - clientWidth / 2 + 10;
 
               if (pageX + clientWidth > visibleWidth) {
-                wrapperLeft = left - clientWidth;
+                wrapperLeft = left - clientWidth - 22;
               }
 
               filterStore.style.left = ''.concat(Math.max(20, wrapperLeft + 20), 'px');
@@ -130,6 +136,7 @@
         filterStore.visible = false; // 如果是服务端筛选，则跳过本地筛选处理
 
         if (!remoteFilter) {
+          this.clearOrderIndex();
           this.handleTableData(true);
         }
 
@@ -181,6 +188,7 @@
         }
 
         this.closeFilter();
+        this.checkSelectionStatus();
         this.$nextTick(this.recalculate);
       },
 
@@ -192,9 +200,11 @@
       resetFilterEvent: function resetFilterEvent(evnt) {
         this.filterStore.options.forEach(function (item) {
           item.checked = false;
+          item._checked = false;
           item.data = item._data;
         });
         this.confirmFilterEvent(evnt);
+        this.checkSelectionStatus();
       },
 
       /**
@@ -212,6 +222,7 @@
           if (filters && filters.length) {
             filters.forEach(function (item) {
               item.checked = false;
+              item._checked = false;
               item.data = item._data;
             });
           }
@@ -327,7 +338,7 @@
               type: 'checkbox'
             },
             domProps: {
-              checked: item.checked
+              checked: item._checked
             },
             on: {
               change: function change(evnt) {
@@ -342,7 +353,7 @@
             class: 'vue-xtable-table--filter-label',
             on: {
               click: function click(evnt) {
-                return _this.changeRadioOption(evnt, !item.checked, item);
+                return _this.changeRadioOption(evnt, !item._checked, item);
               }
             }
           }, item.label)]));
@@ -376,7 +387,7 @@
       filterCheckAllEvent: function filterCheckAllEvent(evnt, value) {
         var filterStore = this.filterStore;
         filterStore.options.forEach(function (item) {
-          item.checked = value;
+          item._checked = value;
         });
         filterStore.isAllSelected = value;
         filterStore.isIndeterminate = false;
@@ -384,10 +395,10 @@
       checkOptions: function checkOptions() {
         var filterStore = this.filterStore;
         filterStore.isAllSelected = filterStore.options.every(function (item) {
-          return item.checked;
+          return item._checked;
         });
         filterStore.isIndeterminate = !filterStore.isAllSelected && filterStore.options.some(function (item) {
-          return item.checked;
+          return item._checked;
         });
       },
 
@@ -405,7 +416,7 @@
       },
       // （多选）筛选发生改变
       changeMultipleOption: function changeMultipleOption(evnt, checked, item) {
-        item.checked = checked;
+        item._checked = checked;
         this.checkOptions();
       },
       // 筛选发生改变
@@ -418,6 +429,9 @@
       },
       // 确认筛选
       confirmFilter: function confirmFilter() {
+        this.filterStore.options.forEach(function(option) {
+          option.checked = option._checked;
+        });
         this.$parent.confirmFilterEvent();
       },
       // 重置筛选
